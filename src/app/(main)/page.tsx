@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ArrowUpIcon, MessageCircleIcon, ExternalLinkIcon, TrendingUpIcon } from "lucide-react"
-import { SubmitGameModal } from "@/components/games/submit-game-modal"
+import { EnhancedSubmitGameModal } from "@/components/games/enhanced-submit-game-modal"
 import { GameCard } from "@/components/games/game-card"
-import { TapTapGameCard } from "@/components/games/taptap-game-card"
+import { TapTapGameCardNoScale } from "@/components/games/taptap-game-card-no-scale"
 import { FeaturedGamesCarousel } from "@/components/games/featured-games-carousel"
+import { TiltedGameCard } from "@/components/games/tilted-game-card"
 import { toast } from "sonner"
 
 // Mock data - In a real app, this would come from your database
@@ -201,11 +202,11 @@ export default function HomePage() {
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Discover the best mobile games, curated by the gaming community.
           </p>
-          <SubmitGameModal onGameSubmitted={handleGameSubmitted}>
+          <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
             <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-soft">
               Submit Your Game
             </Button>
-          </SubmitGameModal>
+          </EnhancedSubmitGameModal>
         </div>
 
         <div className="grid lg:grid-cols-4 gap-8">
@@ -251,21 +252,23 @@ export default function HomePage() {
                   <div className="text-6xl mb-4">🎮</div>
                   <h3 className="text-xl font-semibold mb-2">No games yet</h3>
                   <p className="text-gray-600 mb-4">Be the first to submit a game to the community!</p>
-                  <SubmitGameModal onGameSubmitted={handleGameSubmitted}>
+                  <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
                     <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl">
                       Submit First Game
                     </Button>
-                  </SubmitGameModal>
+                  </EnhancedSubmitGameModal>
                 </Card>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {allGames.map((game) => (
-                    <TapTapGameCard 
-                      key={game.id} 
-                      game={game} 
-                      onVote={handleVote}
-                      showAuthor={true}
-                    />
+                    <TiltedGameCard key={`tilted-${game.id}`} className="h-full">
+                      <TapTapGameCardNoScale 
+                        key={game.id} 
+                        game={game} 
+                        onVote={handleVote}
+                        showAuthor={true}
+                      />
+                    </TiltedGameCard>
                   ))}
                 </div>
               )}
@@ -305,11 +308,11 @@ export default function HomePage() {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="p-4 pt-0 space-y-3">
-                <SubmitGameModal onGameSubmitted={handleGameSubmitted}>
+                <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
                   <Button className="w-full rounded-2xl bg-orange-500 hover:bg-orange-600 text-white">
                     Submit New Game
                   </Button>
-                </SubmitGameModal>
+                </EnhancedSubmitGameModal>
                 <Button variant="outline" asChild className="w-full rounded-2xl">
                   <Link href="/products">Browse All Games</Link>
                 </Button>

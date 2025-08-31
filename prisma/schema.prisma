@@ -91,9 +91,14 @@ model Product {
   tagline     String?  // Added tagline field for Submit Game feature
   description String   @db.Text
   url         String   // Changed from 'link' to 'url' as requested
-  image       String?
+  image       String?  // Main image for backward compatibility
+  images      String[] // Array of image URLs for carousel
+  video       String?  // Optional video URL
   categoryId  String
   userId      String
+  appStoreUrl String?  // App Store link
+  playStoreUrl String? // Play Store link
+  socialLinks Json?    // Social media links (Twitter, etc.)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

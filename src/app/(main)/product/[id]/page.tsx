@@ -21,6 +21,8 @@ import {
   Globe
 } from "lucide-react"
 import { toast } from "sonner"
+import { MediaCarousel } from "@/components/product/media-carousel"
+import { InfoPanel } from "@/components/product/info-panel"
 
 interface Product {
   id: string
@@ -29,6 +31,11 @@ interface Product {
   description: string
   url: string
   image?: string | null
+  images: string[]
+  video?: string | null
+  appStoreUrl?: string | null
+  playStoreUrl?: string | null
+  socialLinks?: any
   createdAt: string
   user: {
     id: string
@@ -225,81 +232,24 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
           </Link>
         </div>
 
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            {/* Product Hunt Style Header */}
-            <div className="flex flex-col lg:flex-row gap-6 mb-8">
-              {/* Product Image */}
-              <div className="lg:w-32 lg:h-32 w-full aspect-square lg:aspect-auto">
-                <div className="relative w-full h-full rounded-2xl overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100">
-                  {product.image ? (
-                    <Image
-                      src={product.image}
-                      alt={product.title}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 1024px) 100vw, 128px"
-                      unoptimized={true}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-4xl">
-                      🎮
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Product Info */}
-              <div className="flex-1">
-                {/* Title and Tagline */}
-                <div className="mb-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <h1 className="text-2xl lg:text-3xl font-bold mb-2">{product.title}</h1>
-                      {product.tagline && (
-                        <p className="text-lg text-muted-foreground mb-3">{product.tagline}</p>
-                      )}
-                    </div>
-                    
-                    {/* Vote Button - Product Hunt Style */}
-                    <div className="flex flex-col items-center">
-                      <Button
-                        onClick={handleVote}
-                        disabled={hasVoted}
-                        className={`rounded-xl px-6 py-3 flex flex-col items-center gap-1 h-auto ${
-                          hasVoted ? 'bg-orange-500 hover:bg-orange-600' : ''
-                        }`}
-                      >
-                        <ArrowUpIcon className="w-4 h-4" />
-                        <span className="text-xs font-semibold">{product._count.votes}</span>
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Badges */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <Badge className="rounded-full">{product.category.name}</Badge>
-                    <Badge variant="outline" className="rounded-full">
-                      Launching today
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex items-center gap-3 mb-4">
-                  <Button asChild className="rounded-xl">
-                    <a href={product.url} target="_blank" rel="noopener noreferrer">
-                      <Globe className="w-4 h-4 mr-2" />
-                      Visit website
-                    </a>
-                  </Button>
-                  <Button variant="outline" onClick={handleShare} className="rounded-xl">
-                    <ShareIcon className="w-4 h-4 mr-2" />
-                    Share
-                  </Button>
-                </div>
-
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Media Carousel - Left Side */}
+          <div className="lg:col-span-2">
+            <MediaCarousel 
+              images={product.images || (product.image ? [product.image] : [])}
+              video={product.video}
+              title={product.title}
+            />
+            
+            {/* Product Info Below Carousel */}
+            <div className="mt-8">
+              {/* Title and Basic Info */}
+              <div className="mb-6">
+                <h1 className="text-2xl lg:text-3xl font-bold mb-2">{product.title}</h1>
+                {product.tagline && (
+                  <p className="text-lg text-muted-foreground mb-4">{product.tagline}</p>
+                )}
+                
                 {/* Maker Info */}
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
@@ -318,14 +268,15 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Description */}
-            <Card className="rounded-2xl shadow-soft mb-6">
-              <CardContent className="p-6">
-                <p className="text-muted-foreground leading-relaxed">{product.description}</p>
-              </CardContent>
-            </Card>
+              {/* Description */}
+              <Card className="rounded-2xl shadow-soft mb-6">
+                <CardContent className="p-6">
+                  <h2 className="text-xl font-semibold mb-4">About {product.title}</h2>
+                  <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Comments Section */}
             <Card className="rounded-2xl shadow-soft">
@@ -402,64 +353,53 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
             </Card>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Related Products */}
-            <Card className="rounded-2xl shadow-soft">
-              <CardContent className="p-6">
-                <h3 className="font-semibold mb-4">Related games</h3>
-                <div className="space-y-3">
-                  {relatedProducts.map((game) => (
-                    <Link key={game.id} href={`/product/${game.id}`} className="block">
-                      <div className="flex gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors">
-                        <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100 flex-shrink-0">
-                          {game.image ? (
-                            <Image
-                              src={game.image}
-                              alt={game.title}
-                              fill
-                              className="object-cover"
-                              sizes="48px"
-                              unoptimized={true}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-lg">
-                              🎮
+          {/* Info Panel - Right Side */}
+          <div className="lg:col-span-1">
+            <div className="lg:sticky lg:top-6">
+              <InfoPanel 
+                product={product}
+                onVote={handleVote}
+                hasVoted={hasVoted}
+              />
+              
+              {/* Related Products */}
+              <Card className="rounded-2xl shadow-soft mt-6">
+                <CardContent className="p-6">
+                  <h3 className="font-semibold mb-4">Related games</h3>
+                  <div className="space-y-3">
+                    {relatedProducts.map((game) => (
+                      <Link key={game.id} href={`/product/${game.id}`} className="block">
+                        <div className="flex gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors">
+                          <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100 flex-shrink-0">
+                            {game.image ? (
+                              <Image
+                                src={game.image}
+                                alt={game.title}
+                                fill
+                                className="object-cover"
+                                sizes="48px"
+                                unoptimized={true}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-lg">
+                                🎮
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm truncate">{game.title}</div>
+                            <div className="text-xs text-muted-foreground">{game.category.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {game._count.votes} votes
                             </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm truncate">{game.title}</div>
-                          <div className="text-xs text-muted-foreground">{game.category.name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {game._count.votes} votes
                           </div>
                         </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Company Info */}
-            <Card className="rounded-2xl shadow-soft">
-              <CardContent className="p-6">
-                <h3 className="font-semibold mb-4">Maker</h3>
-                <div className="flex items-center gap-3">
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage src={product.user.image || undefined} />
-                    <AvatarFallback>
-                      {product.user.name?.[0]?.toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="font-medium">{product.user.name || 'Anonymous'}</div>
-                    <div className="text-sm text-muted-foreground">Game Developer</div>
+                      </Link>
+                    ))}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

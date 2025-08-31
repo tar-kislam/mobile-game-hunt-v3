@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { SubmitGameModal } from "@/components/games/submit-game-modal"
+import { EnhancedSubmitGameModal } from "@/components/games/enhanced-submit-game-modal"
 import { ArrowLeftIcon, GamepadIcon, TrophyIcon, UsersIcon, InfoIcon } from "lucide-react"
 
 export default function SubmitPage() {
@@ -101,12 +101,12 @@ export default function SubmitPage() {
                   </p>
                 </div>
 
-                <SubmitGameModal onGameSubmitted={handleGameSubmitted}>
+                <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
                   <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-soft px-8 py-4 text-lg">
                     <GamepadIcon className="w-5 h-5 mr-2" />
                     Submit Your Game
                   </Button>
-                </SubmitGameModal>
+                </EnhancedSubmitGameModal>
 
                 <div className="pt-6 border-t">
                   <p className="text-sm text-gray-500">

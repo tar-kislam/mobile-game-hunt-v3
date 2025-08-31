@@ -20,6 +20,13 @@ const createProductSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters").max(1000, "Description must be less than 1000 characters"),
   url: z.string().url("Please enter a valid URL"),
   image: z.string().url("Please enter a valid image URL").optional(),
+  images: z.array(z.string().url("Please enter valid image URLs")).optional(),
+  video: z.string().url("Please enter a valid video URL").optional(),
+  appStoreUrl: z.string().url("Please enter a valid App Store URL").optional(),
+  playStoreUrl: z.string().url("Please enter a valid Play Store URL").optional(),
+  socialLinks: z.object({
+    twitter: z.string().url("Please enter a valid Twitter URL").optional()
+  }).optional(),
   categoryId: z.string().min(1, "Category is required"),
 })
 
@@ -122,6 +129,11 @@ export async function POST(request: NextRequest) {
         description: validatedData.description,
         url: validatedData.url,
         image: validatedData.image,
+        images: validatedData.images || [],
+        video: validatedData.video,
+        appStoreUrl: validatedData.appStoreUrl,
+        playStoreUrl: validatedData.playStoreUrl,
+        socialLinks: validatedData.socialLinks,
         categoryId: validatedData.categoryId,
         userId: user.id,
       },
