@@ -4,13 +4,6 @@ import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel"
 import { Star, Play } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -100,32 +93,24 @@ function TapTapInteractiveLayout({ sideGames, onGameClick }: TapTapInteractiveLa
         />
       </div>
       
-      {/* Side Games - Right Side (Vertical Carousel) */}
+      {/* Side Games - Right Side (Scrollable List) */}
       <div className="flex-1 min-h-0">
-        <Carousel
-          opts={{
-            align: "start",
-          }}
-          orientation="vertical"
-          className="w-full h-full"
+        <div 
+          className="h-[320px] overflow-y-auto featured-games-scroll"
         >
-          <CarouselContent className="-mt-1 h-[320px]">
+          <div className="space-y-3 p-1">
             {sideGames.map((game, index) => (
-              <CarouselItem key={game.id} className="pt-1 basis-1/4">
-                <div className="p-1">
-                  <SideGameCard 
-                    game={game} 
-                    onClick={() => onGameClick(game.id)}
-                    onHover={() => setSelectedGame(game)}
-                    isSelected={selectedGame.id === game.id}
-                  />
-                </div>
-              </CarouselItem>
+              <div key={game.id}>
+                <SideGameCard 
+                  game={game} 
+                  onClick={() => onGameClick(game.id)}
+                  onHover={() => setSelectedGame(game)}
+                  isSelected={selectedGame.id === game.id}
+                />
+              </div>
             ))}
-          </CarouselContent>
-          <CarouselPrevious className="hidden md:flex" />
-          <CarouselNext className="hidden md:flex" />
-        </Carousel>
+          </div>
+        </div>
       </div>
     </div>
   )
