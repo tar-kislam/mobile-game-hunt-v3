@@ -16,8 +16,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Copy environment variables for build time
-COPY .env.local.example .env.local
+# Copy environment variables for build time (optional)
+# COPY .env.local.example .env.local
 
 # Generate Prisma client
 RUN npx prisma generate

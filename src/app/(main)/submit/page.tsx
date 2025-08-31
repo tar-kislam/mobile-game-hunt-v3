@@ -1,51 +1,23 @@
 "use client"
 
-import { useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { ImageIcon, LinkIcon, TagIcon, InfoIcon, ArrowLeftIcon } from "lucide-react"
-
-const categories = [
-  "Action", "Adventure", "Arcade", "Board", "Card", "Casino", "Casual", 
-  "Educational", "Music", "Puzzle", "Racing", "Role Playing", "Simulation", 
-  "Sports", "Strategy", "Trivia", "Word"
-]
-
-const platforms = ["iOS", "Android", "Both"]
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { SubmitGameModal } from "@/components/games/submit-game-modal"
+import { ArrowLeftIcon, GamepadIcon, TrophyIcon, UsersIcon, InfoIcon } from "lucide-react"
 
 export default function SubmitPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    url: "",
-    imageUrl: "",
-    category: "",
-    platform: "",
-    tags: [] as string[],
-  })
-  
-  const [newTag, setNewTag] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Redirect if not authenticated
+  const handleGameSubmitted = () => {
+    // Redirect to home page after successful submission
+    router.push('/')
+  }
+
+  // Loading state
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -57,15 +29,16 @@ export default function SubmitPage() {
     )
   }
 
+  // Unauthenticated state
   if (status === "unauthenticated") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="w-full max-w-md rounded-2xl shadow-soft">
           <CardHeader className="p-4 text-center">
             <CardTitle>Authentication Required</CardTitle>
-            <CardDescription>
+            <p className="text-muted-foreground">
               You need to be signed in to submit a game
-            </CardDescription>
+            </p>
           </CardHeader>
           <CardContent className="p-4 pt-0 space-y-3">
             <Button asChild className="w-full rounded-2xl">
@@ -74,359 +47,161 @@ export default function SubmitPage() {
             <Button variant="outline" asChild className="w-full rounded-2xl">
               <Link href="/auth/signup">Create Account</Link>
             </Button>
+            <Button variant="ghost" asChild className="w-full rounded-2xl">
+              <Link href="/">
+                <ArrowLeftIcon className="w-4 h-4 mr-2" />
+                Back to Home
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
     )
   }
 
-  const handleAddTag = () => {
-    if (newTag.trim() && !formData.tags.includes(newTag.trim()) && formData.tags.length < 5) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, newTag.trim()]
-      }))
-      setNewTag("")
-    }
-  }
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-
-    try {
-      // Here you would submit to your API
-      console.log("Submitting:", formData)
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Redirect to success page or product page
-      router.push("/")
-    } catch (error) {
-      console.error("Error submitting game:", error)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center gap-4 mb-8">
-            <Button variant="outline" size="sm" asChild className="rounded-2xl">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <Button variant="outline" asChild className="rounded-2xl">
               <Link href="/">
                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                Back
+                Back to Home
               </Link>
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold">Submit Your Game</h1>
-              <p className="text-muted-foreground">Share your mobile game with the community</p>
-            </div>
+          </div>
+          
+          <div className="text-center space-y-4 mb-12">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+              Submit Your Game
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Share your amazing mobile game with our gaming community and get discovered by thousands of players.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {/* Main Content */}
+          <div className="lg:col-span-2">
+            <Card className="rounded-2xl shadow-soft p-8">
+              <div className="text-center space-y-6">
+                <div className="flex justify-center">
+                  <div className="h-20 w-20 bg-orange-100 rounded-2xl flex items-center justify-center">
+                    <GamepadIcon className="h-10 w-10 text-orange-600" />
+                  </div>
+                </div>
+                
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Ready to Submit Your Game?</h2>
+                  <p className="text-gray-600 mb-6">
+                    Click the button below to open our submission form and share your game with the community.
+                  </p>
+                </div>
+
+                <SubmitGameModal onGameSubmitted={handleGameSubmitted}>
+                  <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-soft px-8 py-4 text-lg">
+                    <GamepadIcon className="w-5 h-5 mr-2" />
+                    Submit Your Game
+                  </Button>
+                </SubmitGameModal>
+
+                <div className="pt-6 border-t">
+                  <p className="text-sm text-gray-500">
+                    By submitting your game, you agree to our community guidelines and terms of service.
+                  </p>
+                </div>
+              </div>
+            </Card>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Main Form */}
-            <div className="lg:col-span-2">
-              <form onSubmit={handleSubmit}>
-                <Card className="rounded-2xl shadow-soft">
-                  <CardHeader className="p-4">
-                    <CardTitle className="flex items-center gap-2">
-                      <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                        <span className="text-primary-foreground font-bold text-sm">MG</span>
-                      </div>
-                      Game Submission
-                    </CardTitle>
-                    <CardDescription>
-                      Fill out the details below to submit your mobile game
-                    </CardDescription>
-                  </CardHeader>
-                  
-                  <CardContent className="p-4 pt-0 space-y-6">
-                    {/* Basic Information */}
-                    <div className="space-y-4">
-                      <h3 className="font-semibold text-lg">Basic Information</h3>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="title">Game Title *</Label>
-                        <Input
-                          id="title"
-                          placeholder="Enter your game title..."
-                          value={formData.title}
-                          onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                          className="rounded-2xl border-border focus:ring-2 focus:ring-ring"
-                          required
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="description">Description *</Label>
-                        <Textarea
-                          id="description"
-                          placeholder="Describe your game in detail..."
-                          value={formData.description}
-                          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                          className="rounded-2xl border-border focus:ring-2 focus:ring-ring min-h-[120px]"
-                          required
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Minimum 50 characters. Be descriptive and highlight what makes your game unique.
-                        </p>
-                      </div>
-
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="category">Category *</Label>
-                          <Select 
-                            value={formData.category} 
-                            onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-                          >
-                            <SelectTrigger className="rounded-2xl">
-                              <SelectValue placeholder="Select category" />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-2xl">
-                              {categories.map((category) => (
-                                <SelectItem key={category} value={category.toLowerCase()}>
-                                  {category}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="platform">Platform *</Label>
-                          <Select 
-                            value={formData.platform} 
-                            onValueChange={(value) => setFormData(prev => ({ ...prev, platform: value }))}
-                          >
-                            <SelectTrigger className="rounded-2xl">
-                              <SelectValue placeholder="Select platform" />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-2xl">
-                              {platforms.map((platform) => (
-                                <SelectItem key={platform} value={platform.toLowerCase()}>
-                                  {platform}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Links and Media */}
-                    <div className="space-y-4">
-                      <h3 className="font-semibold text-lg">Links & Media</h3>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="url" className="flex items-center gap-2">
-                          <LinkIcon className="h-4 w-4" />
-                          Game URL *
-                        </Label>
-                        <Input
-                          id="url"
-                          type="url"
-                          placeholder="https://example.com/your-game"
-                          value={formData.url}
-                          onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
-                          className="rounded-2xl border-border focus:ring-2 focus:ring-ring"
-                          required
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Link to App Store, Google Play, or your website
-                        </p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="image" className="flex items-center gap-2">
-                          <ImageIcon className="h-4 w-4" />
-                          Game Image URL
-                        </Label>
-                        <Input
-                          id="image"
-                          type="url"
-                          placeholder="https://example.com/game-image.jpg"
-                          value={formData.imageUrl}
-                          onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
-                          className="rounded-2xl border-border focus:ring-2 focus:ring-ring"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Optional: Direct link to your game's main image or logo
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Tags */}
-                    <div className="space-y-4">
-                      <h3 className="font-semibold text-lg flex items-center gap-2">
-                        <TagIcon className="h-5 w-5" />
-                        Tags
-                      </h3>
-                      
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Add a tag..."
-                          value={newTag}
-                          onChange={(e) => setNewTag(e.target.value)}
-                          onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), handleAddTag())}
-                          className="rounded-2xl border-border focus:ring-2 focus:ring-ring"
-                          disabled={formData.tags.length >= 5}
-                        />
-                        <Button 
-                          type="button" 
-                          onClick={handleAddTag}
-                          disabled={!newTag.trim() || formData.tags.length >= 5}
-                          className="rounded-2xl"
-                        >
-                          Add
-                        </Button>
-                      </div>
-                      
-                      {formData.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {formData.tags.map((tag, index) => (
-                            <Badge 
-                              key={index} 
-                              variant="secondary" 
-                              className="rounded-2xl cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
-                              onClick={() => handleRemoveTag(tag)}
-                            >
-                              {tag} ×
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                      
-                      <p className="text-xs text-muted-foreground">
-                        Add up to 5 tags to help people discover your game. Click tags to remove them.
-                      </p>
-                    </div>
-
-                    {/* Submit Button */}
-                    <div className="pt-6 border-t">
-                      <Button 
-                        type="submit" 
-                        className="w-full rounded-2xl shadow-soft"
-                        disabled={isSubmitting || !formData.title || !formData.description || !formData.url || !formData.category || !formData.platform}
-                      >
-                        {isSubmitting ? "Submitting..." : "Submit Game"}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </form>
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* User Info */}
-              <Card className="rounded-2xl shadow-soft">
-                <CardHeader className="p-4">
-                  <CardTitle>Submitting as</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={session?.user?.image || ""} />
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        {session?.user?.name?.[0]?.toUpperCase() || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">{session?.user?.name}</div>
-                      <div className="text-sm text-muted-foreground">{session?.user?.email}</div>
-                    </div>
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* User Info */}
+            <Card className="rounded-2xl shadow-soft">
+              <CardHeader className="p-4">
+                <CardTitle className="flex items-center gap-2">
+                  <div className="h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <UsersIcon className="h-4 w-4 text-blue-600" />
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Guidelines */}
-              <Card className="rounded-2xl shadow-soft">
-                <CardHeader className="p-4">
-                  <CardTitle className="flex items-center gap-2">
-                    <InfoIcon className="h-5 w-5" />
-                    Submission Guidelines
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <div className="space-y-3 text-sm text-muted-foreground">
-                    <div className="flex items-start gap-2">
-                      <span className="text-primary">•</span>
-                      <span>Make sure your game is publicly available</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-primary">•</span>
-                      <span>Write a clear, descriptive title</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-primary">•</span>
-                      <span>Provide a detailed description highlighting unique features</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-primary">•</span>
-                      <span>Use relevant tags to help with discoverability</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-primary">•</span>
-                      <span>Only submit games you own or have permission to promote</span>
-                    </div>
+                  Submitting as
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                    {session?.user?.name?.[0]?.toUpperCase() || "U"}
                   </div>
-                </CardContent>
-              </Card>
+                  <div>
+                    <p className="font-medium">{session?.user?.name}</p>
+                    <p className="text-sm text-muted-foreground">{session?.user?.email}</p>
+                    {session?.user?.role === "ADMIN" && (
+                      <span className="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full mt-1">
+                        Admin
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-              {/* Preview */}
-              {formData.title && (
-                <Card className="rounded-2xl shadow-soft">
-                  <CardHeader className="p-4">
-                    <CardTitle>Preview</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                    <div className="space-y-3">
-                      {formData.imageUrl && (
-                        <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-muted">
-                          <img 
-                            src={formData.imageUrl} 
-                            alt={formData.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <div>
-                        <h3 className="font-semibold">{formData.title}</h3>
-                        {formData.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {formData.description}
-                          </p>
-                        )}
-                        <div className="flex gap-2 mt-2">
-                          {formData.category && (
-                            <Badge variant="secondary" className="rounded-2xl text-xs">
-                              {formData.category}
-                            </Badge>
-                          )}
-                          {formData.platform && (
-                            <Badge variant="outline" className="rounded-2xl text-xs">
-                              {formData.platform}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+            {/* Guidelines */}
+            <Card className="rounded-2xl shadow-soft">
+              <CardHeader className="p-4">
+                <CardTitle className="flex items-center gap-2">
+                  <div className="h-8 w-8 bg-green-100 rounded-lg flex items-center justify-center">
+                    <InfoIcon className="h-4 w-4 text-green-600" />
+                  </div>
+                  Submission Guidelines
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0 space-y-3 text-sm">
+                <div className="flex items-start gap-3">
+                  <div className="h-2 w-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <p>Make sure your game is mobile-focused and available on iOS or Android</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="h-2 w-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <p>Provide a clear and engaging description of your game</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="h-2 w-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <p>Include high-quality screenshots or promotional images</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="h-2 w-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <p>Choose the most appropriate category for better discoverability</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Community Stats */}
+            <Card className="rounded-2xl shadow-soft">
+              <CardHeader className="p-4">
+                <CardTitle className="flex items-center gap-2">
+                  <div className="h-8 w-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <TrophyIcon className="h-4 w-4 text-purple-600" />
+                  </div>
+                  Community Stats
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Games Submitted</span>
+                  <span className="font-bold text-lg">1,247</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Active Users</span>
+                  <span className="font-bold text-lg">3,892</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Total Votes</span>
+                  <span className="font-bold text-lg">15,634</span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

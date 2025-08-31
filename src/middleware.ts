@@ -14,6 +14,10 @@ export default withAuth(
         if (
           pathname.startsWith('/auth') ||
           pathname.startsWith('/api/auth') ||
+          pathname.startsWith('/api/health') ||
+          pathname.startsWith('/api/categories') ||
+          pathname.startsWith('/api/products') ||
+          pathname.startsWith('/api/user') ||
           pathname === '/' ||
           pathname.startsWith('/public') ||
           pathname.startsWith('/_next') ||

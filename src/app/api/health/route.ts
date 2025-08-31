@@ -1,10 +1,19 @@
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { PrismaClient } from '@prisma/client'
+
+// Create a separate Prisma client for health checks with development database
+const healthPrisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: "postgresql://postgres:password@localhost:5432/mobile_game_hunt_dev",
+    },
+  },
+})
 
 export async function GET() {
   try {
     // Check database connection
-    await prisma.$queryRaw`SELECT 1`
+    await healthPrisma.$queryRaw`SELECT 1`
     
     // Get basic system info
     const healthData = {
@@ -38,7 +47,7 @@ export async function GET() {
 export async function HEAD() {
   // Simple health check for load balancers
   try {
-    await prisma.$queryRaw`SELECT 1`
+    await healthPrisma.$queryRaw`SELECT 1`
     return new NextResponse(null, { status: 200 })
   } catch {
     return new NextResponse(null, { status: 503 })

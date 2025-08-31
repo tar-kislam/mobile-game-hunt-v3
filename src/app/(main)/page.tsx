@@ -1,9 +1,16 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ArrowUpIcon, MessageCircleIcon, ExternalLinkIcon, TrendingUpIcon } from "lucide-react"
+import { SubmitGameModal } from "@/components/games/submit-game-modal"
+import { GameCard } from "@/components/games/game-card"
+import { TapTapGameCard } from "@/components/games/taptap-game-card"
+import { FeaturedGamesCarousel } from "@/components/games/featured-games-carousel"
+import { toast } from "sonner"
 
 // Mock data - In a real app, this would come from your database
 const featuredGame = {
@@ -122,7 +129,67 @@ function ProductCard({ product, rank }: { product: typeof dailyProducts[0], rank
   )
 }
 
+interface Game {
+  id: string
+  title: string
+  tagline?: string | null
+  description: string
+  url: string
+  image?: string | null
+  createdAt: string
+  user: {
+    id: string
+    name: string | null
+    image?: string | null
+  }
+  category: {
+    id: string
+    name: string
+    slug: string
+  }
+  _count: {
+    votes: number
+    comments: number
+  }
+}
+
 export default function HomePage() {
+  const [games, setGames] = useState<Game[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    fetchGames()
+  }, [])
+
+  const fetchGames = async () => {
+    try {
+      const response = await fetch('/api/products')
+      if (response.ok) {
+        const data = await response.json()
+        setGames(data)
+      } else {
+        toast.error('Failed to load games')
+      }
+    } catch (error) {
+      console.error('Error fetching games:', error)
+      toast.error('Failed to load games')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleGameSubmitted = () => {
+    fetchGames() // Refresh the games list
+  }
+
+  const handleVote = async (gameId: string) => {
+    // TODO: Implement voting functionality
+    toast.info('Voting feature coming soon!')
+  }
+
+  const featuredGame = games[0]
+  const allGames = games
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
@@ -134,91 +201,74 @@ export default function HomePage() {
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Discover the best mobile games, curated by the gaming community.
           </p>
-          <Button asChild size="lg" className="rounded-2xl shadow-soft">
-            <Link href="/submit">Submit Your Game</Link>
-          </Button>
+          <SubmitGameModal onGameSubmitted={handleGameSubmitted}>
+            <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-soft">
+              Submit Your Game
+            </Button>
+          </SubmitGameModal>
         </div>
 
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-8">
-            {/* Featured Game */}
-            <section>
-              <div className="flex items-center gap-2 mb-6">
-                <h2 className="text-2xl font-bold">🏆 Featured Game</h2>
-              </div>
-              
-              <Card className="rounded-2xl shadow-soft">
-                <CardContent className="p-0">
-                  <div className="md:flex">
-                    <div className="relative md:w-1/3 h-48 md:h-auto">
-                      <img 
-                        src={featuredGame.image} 
-                        alt={featuredGame.title}
-                        className="w-full h-full object-cover rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none"
-                      />
-                    </div>
-                    
-                    <div className="p-6 md:w-2/3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge className="rounded-2xl">{featuredGame.category}</Badge>
-                          </div>
-                          <h3 className="text-xl font-bold mb-2">{featuredGame.title}</h3>
-                          <p className="text-muted-foreground mb-4">{featuredGame.description}</p>
-                          
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={featuredGame.maker.avatar} />
-                              <AvatarFallback>{featuredGame.maker.name[0]}</AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm text-muted-foreground">by {featuredGame.maker.name}</span>
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-col items-center gap-2 ml-6">
-                          <Button className="rounded-xl">
-                            <ArrowUpIcon className="h-4 w-4 mr-1" />
-                            Upvote
-                          </Button>
-                          <span className="text-sm font-medium">{featuredGame.votes} votes</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-4 mt-4 pt-4 border-t">
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <MessageCircleIcon className="h-4 w-4" />
-                          {featuredGame.comments} comments
-                        </div>
-                        <Button variant="outline" size="sm" className="rounded-2xl">
-                          <ExternalLinkIcon className="h-4 w-4 mr-1" />
-                          Visit Game
-                        </Button>
-                        <Button variant="outline" size="sm" asChild className="rounded-2xl">
-                          <Link href={`/product/${featuredGame.id}`}>View Details</Link>
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
+            {/* Featured Games Carousel */}
+            {!isLoading && games.length > 0 && (
+              <FeaturedGamesCarousel 
+                games={games} 
+                onGameClick={(gameId) => {
+                  // Navigate to game detail page (handled by Link in component)
+                  console.log('Featured game clicked:', gameId)
+                }}
+              />
+            )}
 
-            {/* Daily Top Games */}
+            {/* All Games */}
             <section>
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">🔥 Today's Top Games</h2>
+                <h2 className="text-2xl font-bold">🎮 Discover Games</h2>
                 <Button variant="outline" asChild className="rounded-2xl">
                   <Link href="/products">View All</Link>
                 </Button>
               </div>
               
-              <div className="space-y-4">
-                {dailyProducts.map((product, index) => (
-                  <ProductCard key={product.id} product={product} rank={index + 1} />
-                ))}
-              </div>
+              {isLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div key={i} className="animate-pulse">
+                      <Card className="rounded-xl shadow-sm">
+                        <div className="aspect-square bg-gray-200 rounded-t-xl"></div>
+                        <CardContent className="p-3 space-y-2">
+                          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                          <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                          <div className="h-3 bg-gray-200 rounded w-full"></div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  ))}
+                </div>
+              ) : games.length === 0 ? (
+                <Card className="rounded-2xl shadow-soft p-8 text-center">
+                  <div className="text-6xl mb-4">🎮</div>
+                  <h3 className="text-xl font-semibold mb-2">No games yet</h3>
+                  <p className="text-gray-600 mb-4">Be the first to submit a game to the community!</p>
+                  <SubmitGameModal onGameSubmitted={handleGameSubmitted}>
+                    <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl">
+                      Submit First Game
+                    </Button>
+                  </SubmitGameModal>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {allGames.map((game) => (
+                    <TapTapGameCard 
+                      key={game.id} 
+                      game={game} 
+                      onVote={handleVote}
+                      showAuthor={true}
+                    />
+                  ))}
+                </div>
+              )}
             </section>
           </div>
 
@@ -255,9 +305,11 @@ export default function HomePage() {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="p-4 pt-0 space-y-3">
-                <Button asChild className="w-full rounded-2xl">
-                  <Link href="/submit">Submit New Game</Link>
-                </Button>
+                <SubmitGameModal onGameSubmitted={handleGameSubmitted}>
+                  <Button className="w-full rounded-2xl bg-orange-500 hover:bg-orange-600 text-white">
+                    Submit New Game
+                  </Button>
+                </SubmitGameModal>
                 <Button variant="outline" asChild className="w-full rounded-2xl">
                   <Link href="/products">Browse All Games</Link>
                 </Button>

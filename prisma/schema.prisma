@@ -87,6 +87,7 @@ model Category {
 model Product {
   id          String   @id @default(cuid())
   title       String
+  tagline     String?  // Added tagline field for Submit Game feature
   description String   @db.Text
   url         String   // Changed from 'link' to 'url' as requested
   image       String?
