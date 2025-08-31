@@ -74,6 +74,7 @@ model User {
   products      Product[]
   votes         Vote[]
   comments      Comment[]
+  commentVotes  CommentVote[]
   notifications Notification[]
 }
 
@@ -123,10 +124,23 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
-  replies  Comment[] @relation("CommentReplies")
-  product  Product   @relation(fields: [productId], references: [id])
-  user     User      @relation(fields: [userId], references: [id])
+  parent   Comment?      @relation("CommentReplies", fields: [parentId], references: [id])
+  replies  Comment[]     @relation("CommentReplies")
+  product  Product       @relation(fields: [productId], references: [id])
+  user     User          @relation(fields: [userId], references: [id])
+  votes    CommentVote[]
+}
+
+model CommentVote {
+  id        String   @id @default(cuid())
+  userId    String
+  commentId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  comment Comment @relation(fields: [commentId], references: [id])
+
+  @@unique([userId, commentId])
 }
 
 enum NotificationType {

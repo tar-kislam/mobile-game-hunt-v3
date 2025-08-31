@@ -18,6 +18,7 @@ export default withAuth(
           pathname.startsWith('/api/categories') ||
           pathname.startsWith('/api/products') ||
           pathname.startsWith('/api/user') ||
+          pathname.startsWith('/product') ||       // Added product detail pages
           pathname === '/' ||
           pathname.startsWith('/public') ||
           pathname.startsWith('/_next') ||
