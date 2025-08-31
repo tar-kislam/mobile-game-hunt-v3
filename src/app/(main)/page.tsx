@@ -1,0 +1,289 @@
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ArrowUpIcon, MessageCircleIcon, ExternalLinkIcon, TrendingUpIcon } from "lucide-react"
+
+// Mock data - In a real app, this would come from your database
+const featuredGame = {
+  id: "1",
+  title: "Clash of Clans",
+  description: "A popular strategy mobile game where you build and defend your village.",
+  image: "https://images.unsplash.com/photo-1556438064-2d7646166914?w=400&h=300&fit=crop",
+  votes: 152,
+  comments: 23,
+  url: "https://clashofclans.com",
+  category: "Strategy",
+  maker: {
+    name: "Supercell",
+    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
+  }
+}
+
+const dailyProducts = [
+  {
+    id: "2",
+    title: "Pokemon GO",
+    description: "Augmented reality mobile game that lets you catch Pokemon in the real world.",
+    image: "https://images.unsplash.com/photo-1606503153255-59d8b8b91448?w=300&h=200&fit=crop",
+    votes: 89,
+    comments: 15,
+    category: "AR",
+    maker: { name: "Niantic", avatar: "" }
+  },
+  {
+    id: "3",
+    title: "Genshin Impact",
+    description: "Open-world action RPG with gacha mechanics and stunning visuals.",
+    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=300&h=200&fit=crop",
+    votes: 134,
+    comments: 28,
+    category: "RPG",
+    maker: { name: "miHoYo", avatar: "" }
+  },
+  {
+    id: "4",
+    title: "Among Us",
+    description: "Social deduction game where you find the impostor among crewmates.",
+    image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=300&h=200&fit=crop",
+    votes: 76,
+    comments: 19,
+    category: "Social",
+    maker: { name: "InnerSloth", avatar: "" }
+  }
+]
+
+const trendingGames = [
+  { name: "Subway Surfers", category: "Endless Runner", votes: 245 },
+  { name: "Candy Crush Saga", category: "Puzzle", votes: 198 },
+  { name: "PUBG Mobile", category: "Battle Royale", votes: 187 },
+  { name: "Minecraft", category: "Sandbox", votes: 156 },
+]
+
+function ProductCard({ product, rank }: { product: typeof dailyProducts[0], rank?: number }) {
+  return (
+    <Card className="rounded-2xl shadow-soft hover:shadow-medium transition-shadow">
+      <CardContent className="p-0">
+        <div className="flex gap-4 p-4">
+          {rank && (
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted text-muted-foreground font-bold text-sm">
+              {rank}
+            </div>
+          )}
+          
+          <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-muted">
+            <img 
+              src={product.image} 
+              alt={product.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <Link href={`/product/${product.id}`} className="hover:underline">
+                  <h3 className="font-semibold text-sm leading-tight">{product.title}</h3>
+                </Link>
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                  {product.description}
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge variant="secondary" className="rounded-2xl text-xs">
+                    {product.category}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">by {product.maker.name}</span>
+                </div>
+              </div>
+              
+              <div className="flex flex-col items-center gap-1 ml-4">
+                <Button variant="outline" size="sm" className="rounded-xl h-8 w-12 p-0">
+                  <ArrowUpIcon className="h-3 w-3" />
+                </Button>
+                <span className="text-xs font-medium">{product.votes}</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <MessageCircleIcon className="h-3 w-3" />
+                {product.comments}
+              </div>
+              <Button variant="ghost" size="sm" className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground">
+                <ExternalLinkIcon className="h-3 w-3 mr-1" />
+                Visit
+              </Button>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+export default function HomePage() {
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        {/* Hero Section */}
+        <div className="text-center space-y-4 mb-12">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+            Mobile Game Hunt
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Discover the best mobile games, curated by the gaming community.
+          </p>
+          <Button asChild size="lg" className="rounded-2xl shadow-soft">
+            <Link href="/submit">Submit Your Game</Link>
+          </Button>
+        </div>
+
+        <div className="grid lg:grid-cols-4 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-3 space-y-8">
+            {/* Featured Game */}
+            <section>
+              <div className="flex items-center gap-2 mb-6">
+                <h2 className="text-2xl font-bold">🏆 Featured Game</h2>
+              </div>
+              
+              <Card className="rounded-2xl shadow-soft">
+                <CardContent className="p-0">
+                  <div className="md:flex">
+                    <div className="relative md:w-1/3 h-48 md:h-auto">
+                      <img 
+                        src={featuredGame.image} 
+                        alt={featuredGame.title}
+                        className="w-full h-full object-cover rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none"
+                      />
+                    </div>
+                    
+                    <div className="p-6 md:w-2/3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge className="rounded-2xl">{featuredGame.category}</Badge>
+                          </div>
+                          <h3 className="text-xl font-bold mb-2">{featuredGame.title}</h3>
+                          <p className="text-muted-foreground mb-4">{featuredGame.description}</p>
+                          
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={featuredGame.maker.avatar} />
+                              <AvatarFallback>{featuredGame.maker.name[0]}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm text-muted-foreground">by {featuredGame.maker.name}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-col items-center gap-2 ml-6">
+                          <Button className="rounded-xl">
+                            <ArrowUpIcon className="h-4 w-4 mr-1" />
+                            Upvote
+                          </Button>
+                          <span className="text-sm font-medium">{featuredGame.votes} votes</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-4 mt-4 pt-4 border-t">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <MessageCircleIcon className="h-4 w-4" />
+                          {featuredGame.comments} comments
+                        </div>
+                        <Button variant="outline" size="sm" className="rounded-2xl">
+                          <ExternalLinkIcon className="h-4 w-4 mr-1" />
+                          Visit Game
+                        </Button>
+                        <Button variant="outline" size="sm" asChild className="rounded-2xl">
+                          <Link href={`/product/${featuredGame.id}`}>View Details</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+
+            {/* Daily Top Games */}
+            <section>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">🔥 Today's Top Games</h2>
+                <Button variant="outline" asChild className="rounded-2xl">
+                  <Link href="/products">View All</Link>
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                {dailyProducts.map((product, index) => (
+                  <ProductCard key={product.id} product={product} rank={index + 1} />
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Trending Section */}
+            <Card className="rounded-2xl shadow-soft">
+              <CardHeader className="p-4">
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUpIcon className="h-5 w-5" />
+                  Trending This Week
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <div className="space-y-3">
+                  {trendingGames.map((game, index) => (
+                    <div key={game.name} className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-sm">{game.name}</div>
+                        <div className="text-xs text-muted-foreground">{game.category}</div>
+                      </div>
+                      <div className="text-xs font-medium text-muted-foreground">
+                        {game.votes} votes
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card className="rounded-2xl shadow-soft">
+              <CardHeader className="p-4">
+                <CardTitle>Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0 space-y-3">
+                <Button asChild className="w-full rounded-2xl">
+                  <Link href="/submit">Submit New Game</Link>
+                </Button>
+                <Button variant="outline" asChild className="w-full rounded-2xl">
+                  <Link href="/products">Browse All Games</Link>
+                </Button>
+                <Button variant="outline" asChild className="w-full rounded-2xl">
+                  <Link href="/categories">View Categories</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Newsletter Signup */}
+            <Card className="rounded-2xl shadow-soft">
+              <CardHeader className="p-4">
+                <CardTitle>Stay Updated</CardTitle>
+                <CardDescription>
+                  Get weekly updates on the best mobile games
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <Button variant="outline" className="w-full rounded-2xl">
+                  Subscribe to Newsletter
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
