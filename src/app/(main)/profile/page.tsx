@@ -188,7 +188,7 @@ export default function ProfilePage() {
             
             <Card className="rounded-2xl shadow-soft">
               <CardContent className="p-4 text-center">
-                <ArrowUpIcon className="h-8 w-8 mx-auto mb-2 text-green-600" />
+                <ArrowUpIcon className="h-8 w-8 mx-auto mb-2 text-green-600 dark:text-green-400" />
                 <div className="text-2xl font-bold">{userStats.totalVotes}</div>
                 <div className="text-sm text-muted-foreground">Votes Received</div>
               </CardContent>
@@ -196,7 +196,7 @@ export default function ProfilePage() {
             
             <Card className="rounded-2xl shadow-soft">
               <CardContent className="p-4 text-center">
-                <MessageCircleIcon className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+                <MessageCircleIcon className="h-8 w-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
                 <div className="text-2xl font-bold">{userStats.commentsReceived}</div>
                 <div className="text-sm text-muted-foreground">Comments</div>
               </CardContent>
@@ -204,7 +204,7 @@ export default function ProfilePage() {
             
             <Card className="rounded-2xl shadow-soft">
               <CardContent className="p-4 text-center">
-                <TrophyIcon className="h-8 w-8 mx-auto mb-2 text-yellow-600" />
+                <TrophyIcon className="h-8 w-8 mx-auto mb-2 text-yellow-600 dark:text-yellow-400" />
                 <div className="text-2xl font-bold">#{Math.floor(Math.random() * 100) + 1}</div>
                 <div className="text-sm text-muted-foreground">Ranking</div>
               </CardContent>
@@ -321,7 +321,7 @@ export default function ProfilePage() {
                                 </span>
                               </div>
                             </div>
-                            <ArrowUpIcon className="h-5 w-5 text-green-600" />
+                            <ArrowUpIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
                           </div>
                         </div>
                       </div>

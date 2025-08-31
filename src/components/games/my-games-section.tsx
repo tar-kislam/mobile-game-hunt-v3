@@ -99,14 +99,14 @@ export function MyGamesSection() {
       <CardContent className="pt-0">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-            <span className="ml-2 text-gray-500">Loading your games...</span>
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400 dark:text-gray-500" />
+            <span className="ml-2 text-gray-500 dark:text-gray-400">Loading your games...</span>
           </div>
         ) : myGames.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🎮</div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No games submitted yet</h3>
-            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No games submitted yet</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md mx-auto">
               Share your amazing mobile games with the community! Submit your first game to get started.
             </p>
             <SubmitGameModal onGameSubmitted={handleGameSubmitted}>
@@ -118,7 +118,7 @@ export function MyGamesSection() {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="text-sm text-gray-600 mb-4">
+            <div className="text-sm text-gray-600 dark:text-gray-300 mb-4">
               You have submitted {myGames.length} game{myGames.length !== 1 ? 's' : ''}
             </div>
             <div className="grid gap-6 md:grid-cols-2">

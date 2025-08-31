@@ -251,7 +251,7 @@ export default function HomePage() {
                 <Card className="rounded-2xl shadow-soft p-8 text-center">
                   <div className="text-6xl mb-4">🎮</div>
                   <h3 className="text-xl font-semibold mb-2">No games yet</h3>
-                  <p className="text-gray-600 mb-4">Be the first to submit a game to the community!</p>
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">Be the first to submit a game to the community!</p>
                   <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
                     <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl">
                       Submit First Game

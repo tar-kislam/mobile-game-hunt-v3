@@ -159,9 +159,9 @@ function HeroGameCard({ game, onClick }: HeroGameCardProps) {
 
           {/* TapTap Rating Badge */}
           <div className="absolute top-4 right-4">
-            <div className="bg-white rounded-xl px-3 py-2 flex flex-col items-center shadow-lg">
-              <span className="text-xs text-gray-600 font-medium">TapTap</span>
-              <span className="text-2xl font-bold text-gray-900">{rating}</span>
+            <div className="bg-white dark:bg-gray-800 rounded-xl px-3 py-2 flex flex-col items-center shadow-lg">
+              <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">TapTap</span>
+              <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{rating}</span>
             </div>
           </div>
 
@@ -171,7 +171,7 @@ function HeroGameCard({ game, onClick }: HeroGameCardProps) {
               {game.title}
             </h3>
             {game.tagline && (
-              <p className="text-gray-200 text-base leading-relaxed line-clamp-2">
+              <p className="text-gray-200 dark:text-gray-300 text-base leading-relaxed line-clamp-2">
                 {game.tagline}
               </p>
             )}
@@ -187,7 +187,7 @@ function HeroGameCard({ game, onClick }: HeroGameCardProps) {
               >
                 Play Now
               </Button>
-              <div className="flex items-center gap-2 text-sm text-gray-300">
+              <div className="flex items-center gap-2 text-sm text-gray-300 dark:text-gray-400">
                 <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                 <span>{game._count.votes} votes</span>
               </div>
@@ -247,17 +247,17 @@ function SideGameCard({ game, onClick, onHover, isSelected }: SideGameCardProps)
               "font-semibold text-sm line-clamp-1 transition-colors",
               isSelected 
                 ? "text-blue-700" 
-                : "text-gray-900 group-hover:text-blue-600"
+                : "text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400"
             )}>
               {game.title}
             </h4>
             <div className="flex items-center gap-2 mt-1">
               <div className="flex items-center gap-1">
                 <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                <span className="text-xs font-medium text-gray-900">{rating}</span>
+                <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{rating}</span>
               </div>
-              <span className="text-xs text-gray-500">•</span>
-              <span className="text-xs text-gray-500 truncate">{game.category.name}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">•</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{game.category.name}</span>
             </div>
           </div>
         </div>

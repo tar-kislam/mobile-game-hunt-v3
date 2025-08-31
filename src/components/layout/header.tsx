@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 
 export function Header() {
   const { data: session, status } = useSession()
@@ -53,6 +54,7 @@ export function Header() {
 
           {/* User Actions */}
           <div className="flex items-center space-x-3">
+            <ThemeToggle />
             {status === "loading" ? (
               <div className="h-8 w-20 bg-muted animate-pulse rounded-2xl" />
             ) : session ? (
@@ -98,7 +100,7 @@ export function Header() {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
-                      className="text-red-600 focus:text-red-600"
+                      className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
                       onClick={() => signOut()}
                     >
                       Sign out

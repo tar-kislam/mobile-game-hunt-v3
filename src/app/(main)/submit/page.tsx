@@ -96,7 +96,7 @@ export default function SubmitPage() {
                 
                 <div>
                   <h2 className="text-2xl font-bold mb-2">Ready to Submit Your Game?</h2>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-gray-600 dark:text-gray-300 mb-6">
                     Click the button below to open our submission form and share your game with the community.
                   </p>
                 </div>
@@ -109,7 +109,7 @@ export default function SubmitPage() {
                 </EnhancedSubmitGameModal>
 
                 <div className="pt-6 border-t">
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     By submitting your game, you agree to our community guidelines and terms of service.
                   </p>
                 </div>

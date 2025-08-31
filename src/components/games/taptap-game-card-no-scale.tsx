@@ -81,7 +81,7 @@ export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTa
           <div className="absolute top-2 left-2">
             <Badge 
               variant="secondary" 
-              className="bg-white/90 text-gray-700 text-xs font-medium px-2 py-1 rounded-full shadow-sm"
+              className="bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-200 text-xs font-medium px-2 py-1 rounded-full shadow-sm"
             >
               {game.category.name}
             </Badge>
@@ -101,19 +101,19 @@ export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTa
         {/* Game Info */}
         <CardContent className="p-3">
           {/* Title */}
-          <h3 className="font-semibold text-sm text-gray-900 line-clamp-1 mb-1 group-hover:text-blue-600 transition-colors">
+          <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100 line-clamp-1 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
             {game.title}
           </h3>
 
           {/* Tagline */}
           {game.tagline && (
-            <p className="text-xs text-gray-600 line-clamp-1 mb-2">
+            <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-1 mb-2">
               {game.tagline}
             </p>
           )}
 
           {/* Stats */}
-          <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-2">
             <div className="flex items-center gap-3">
               <button
                 onClick={(e) => {
@@ -121,7 +121,7 @@ export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTa
                   e.stopPropagation()
                   handleVote()
                 }}
-                className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                className="flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
               >
                 <ArrowUpIcon className="w-3 h-3" />
                 <span className="font-medium">{game._count.votes}</span>
@@ -135,7 +135,7 @@ export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTa
 
             <button
               onClick={handleExternalLink}
-              className="flex items-center gap-1 hover:text-blue-600 transition-colors p-1"
+              className="flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-1"
             >
               <ExternalLinkIcon className="w-3 h-3" />
             </button>
@@ -150,7 +150,7 @@ export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTa
                   {game.user.name?.[0]?.toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-xs text-gray-500 truncate">
+              <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
                 by {game.user.name || 'Anonymous'}
               </span>
             </div>

@@ -79,7 +79,7 @@ export function GameCard({ game, onVote, showAuthor = true }: GameCardProps) {
         <div className="absolute top-3 left-3">
           <Badge 
             variant="secondary" 
-            className="bg-white/90 backdrop-blur text-gray-700 rounded-full px-3 py-1 text-xs font-medium"
+            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur text-gray-700 dark:text-gray-200 rounded-full px-3 py-1 text-xs font-medium"
           >
             {game.category.name}
           </Badge>
@@ -99,18 +99,18 @@ export function GameCard({ game, onVote, showAuthor = true }: GameCardProps) {
       <CardContent className="flex-1 p-4 space-y-3">
         {/* Title and Tagline */}
         <div>
-          <h3 className="font-semibold text-lg text-gray-900 line-clamp-1 group-hover:text-orange-600 transition-colors">
+          <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100 line-clamp-1 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
             {game.title}
           </h3>
           {game.tagline && (
-            <p className="text-sm text-gray-600 line-clamp-1 mt-1">
+            <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-1 mt-1">
               {game.tagline}
             </p>
           )}
         </div>
 
         {/* Description */}
-        <p className="text-sm text-gray-700 line-clamp-2 leading-relaxed">
+        <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 leading-relaxed">
           {game.description}
         </p>
 
@@ -120,7 +120,7 @@ export function GameCard({ game, onVote, showAuthor = true }: GameCardProps) {
             <div className="w-6 h-6 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
               {game.user.name?.[0]?.toUpperCase() || 'U'}
             </div>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               by {game.user.name || 'Anonymous'}
             </span>
           </div>
@@ -133,20 +133,20 @@ export function GameCard({ game, onVote, showAuthor = true }: GameCardProps) {
           variant="ghost"
           size="sm"
           onClick={handleVote}
-          className="flex items-center space-x-1 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-full px-3 py-1"
+          className="flex items-center space-x-1 text-gray-600 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded-full px-3 py-1"
         >
           <Heart className="w-4 h-4" />
           <span className="text-sm font-medium">{game._count.votes}</span>
         </Button>
 
         {/* Comments Count */}
-        <div className="flex items-center space-x-1 text-gray-500">
+        <div className="flex items-center space-x-1 text-gray-500 dark:text-gray-400">
           <MessageCircle className="w-4 h-4" />
           <span className="text-sm">{game._count.comments}</span>
         </div>
 
         {/* Date */}
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-gray-400 dark:text-gray-500">
           {new Date(game.createdAt).toLocaleDateString()}
         </span>
       </CardFooter>
