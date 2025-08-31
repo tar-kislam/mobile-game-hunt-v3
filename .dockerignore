@@ -1,0 +1,54 @@
+# Dependencies
+node_modules
+npm-debug.log*
+
+# Next.js
+.next
+out
+
+# Production
+build
+
+# Environment files
+.env.local
+.env.production
+.env.hetzner
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+DEPLOYMENT.md
+FRONTEND_PAGES.md
+SETUP_GUIDE.md
+DATABASE_SETUP.md
+
+# Development
+docker-compose.dev.yml
+.prettierrc
+.eslintrc.json
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+coverage
+
+# Testing
+.coverage
+.nyc_output
+coverage.lcov
