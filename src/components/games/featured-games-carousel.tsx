@@ -45,10 +45,10 @@ interface FeaturedGamesCarouselProps {
 }
 
 export function FeaturedGamesCarousel({ games, onGameClick }: FeaturedGamesCarouselProps) {
-  // Get top-rated games for featured section (top 8 games)
+  // Get top-rated games for featured section (top 6 games for TapTap-style layout)
   const featuredGames = games
     .sort((a, b) => b._count.votes - a._count.votes)
-    .slice(0, 8)
+    .slice(0, 6)
 
   if (featuredGames.length === 0) {
     return null
@@ -58,13 +58,17 @@ export function FeaturedGamesCarousel({ games, onGameClick }: FeaturedGamesCarou
     onGameClick?.(gameId)
   }
 
+  // Split games: first game as hero, rest as side cards
+  const heroGame = featuredGames[0]
+  const sideGames = featuredGames.slice(1, 5) // Show 4 side games
+
   return (
     <section className="w-full">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold flex items-center gap-2">
-          ⭐ Featured Games
+          🎮 Featured Games
         </h2>
-        <Badge variant="secondary" className="text-sm px-3 py-1 rounded-full">
+        <Badge variant="secondary" className="text-sm px-3 py-1 rounded-full bg-orange-100 text-orange-800">
           Editor's Choice
         </Badge>
       </div>
@@ -77,17 +81,14 @@ export function FeaturedGamesCarousel({ games, onGameClick }: FeaturedGamesCarou
         className="w-full"
       >
         <CarouselContent className="-ml-2 md:-ml-4">
-          {featuredGames.map((game) => (
-            <CarouselItem 
-              key={game.id} 
-              className="pl-2 md:pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
-            >
-              <FeaturedGameCard 
-                game={game} 
-                onClick={() => handleGameClick(game.id)}
-              />
-            </CarouselItem>
-          ))}
+          <CarouselItem className="pl-2 md:pl-4 basis-full">
+            <TapTapFeaturedLayout 
+              heroGame={heroGame}
+              sideGames={sideGames}
+              onGameClick={handleGameClick}
+            />
+          </CarouselItem>
+          {/* Additional carousel items can be added here for more featured sets */}
         </CarouselContent>
         <CarouselPrevious className="hidden md:flex -left-12" />
         <CarouselNext className="hidden md:flex -right-12" />
@@ -96,102 +97,172 @@ export function FeaturedGamesCarousel({ games, onGameClick }: FeaturedGamesCarou
   )
 }
 
-interface FeaturedGameCardProps {
+// TapTap-style layout with hero card + side cards
+interface TapTapFeaturedLayoutProps {
+  heroGame: FeaturedGame
+  sideGames: FeaturedGame[]
+  onGameClick: (gameId: string) => void
+}
+
+function TapTapFeaturedLayout({ heroGame, sideGames, onGameClick }: TapTapFeaturedLayoutProps) {
+  return (
+    <div className="flex flex-col lg:flex-row gap-4 h-80">
+      {/* Hero Game - Left Side */}
+      <div className="flex-[2] min-h-0">
+        <HeroGameCard game={heroGame} onClick={() => onGameClick(heroGame.id)} />
+      </div>
+      
+      {/* Side Games - Right Side */}
+      <div className="flex-1 flex flex-col gap-3 min-h-0">
+        {sideGames.map((game) => (
+          <SideGameCard 
+            key={game.id} 
+            game={game} 
+            onClick={() => onGameClick(game.id)}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Hero Game Card (Large Left Card)
+interface HeroGameCardProps {
   game: FeaturedGame
   onClick?: () => void
 }
 
-function FeaturedGameCard({ game, onClick }: FeaturedGameCardProps) {
+function HeroGameCard({ game, onClick }: HeroGameCardProps) {
   const rating = (game._count.votes / 10).toFixed(1)
 
   return (
-    <Link href={`/product/${game.id}`} className="block group">
-      <Card className="overflow-hidden bg-white hover:shadow-xl transition-all duration-300 border-0 shadow-md rounded-2xl group-hover:scale-[1.02] h-full">
-        {/* Game Image */}
-        <div className="relative aspect-[4/3] bg-gradient-to-br from-purple-100 to-blue-100 overflow-hidden">
+    <Link href={`/product/${game.id}`} className="block group h-full">
+      <Card className="overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 hover:shadow-2xl transition-all duration-300 border-0 shadow-lg rounded-2xl group-hover:scale-[1.02] h-full relative">
+        {/* Background Image */}
+        <div className="absolute inset-0">
           {game.image ? (
             <Image
               src={game.image}
               alt={game.title}
               fill
-              className="object-cover transition-transform duration-300 group-hover:scale-110"
-              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, 60vw"
               unoptimized={true}
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                if (e.currentTarget.parentElement) {
-                  const fallback = e.currentTarget.parentElement.querySelector('.fallback-icon');
-                  if (fallback) {
-                    (fallback as HTMLElement).style.display = 'flex';
-                  }
-                }
-              }}
             />
-          ) : null}
-          
-          {/* Fallback icon */}
-          <div className={cn(
-            "fallback-icon w-full h-full flex items-center justify-center",
-            game.image ? 'hidden' : ''
-          )}>
-            <div className="text-4xl">🎮</div>
-          </div>
-
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-          {/* Play button overlay */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="bg-white/90 backdrop-blur-sm rounded-full p-3 shadow-lg">
-              <Play className="w-6 h-6 text-black fill-black ml-1" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+              <div className="text-8xl">🎮</div>
             </div>
-          </div>
+          )}
+          {/* Dark overlay */}
+          <div className="absolute inset-0 bg-black/40" />
+        </div>
 
-          {/* Rating Badge */}
-          <div className="absolute top-3 right-3">
-            <div className="bg-black/80 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1">
-              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-              <span className="text-xs font-semibold text-white">
-                {rating}
-              </span>
-            </div>
-          </div>
-
+        {/* Content */}
+        <CardContent className="relative z-10 p-6 h-full flex flex-col justify-end text-white">
           {/* Category Badge */}
-          <div className="absolute top-3 left-3">
-            <Badge 
-              variant="secondary" 
-              className="bg-white/90 text-black text-xs px-2 py-1 rounded-md font-medium border-0 backdrop-blur-sm"
-            >
+          <div className="absolute top-4 left-4">
+            <Badge className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-medium border-0 backdrop-blur-sm">
               {game.category.name}
             </Badge>
           </div>
-        </div>
 
-        <CardContent className="p-4">
-          {/* Title */}
-          <h3 className="font-bold text-base text-gray-900 line-clamp-1 mb-1 group-hover:text-blue-600 transition-colors">
-            {game.title}
-          </h3>
-
-          {/* Tagline */}
-          {game.tagline && (
-            <p className="text-sm text-gray-600 line-clamp-2 mb-3 leading-relaxed">
-              {game.tagline}
-            </p>
-          )}
-
-          {/* Stats */}
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <div className="flex items-center gap-1">
-              <Star className="w-3 h-3 fill-current" />
-              <span className="font-medium">{game._count.votes}</span>
+          {/* TapTap Rating Badge */}
+          <div className="absolute top-4 right-4">
+            <div className="bg-white rounded-xl px-3 py-2 flex flex-col items-center shadow-lg">
+              <span className="text-xs text-gray-600 font-medium">TapTap</span>
+              <span className="text-2xl font-bold text-gray-900">{rating}</span>
             </div>
-            <span className="text-gray-400">
-              {game.user.name || 'Anonymous'}
-            </span>
+          </div>
+
+          {/* Game Info */}
+          <div className="space-y-2">
+            <h3 className="text-2xl md:text-3xl font-bold leading-tight">
+              {game.title}
+            </h3>
+            {game.tagline && (
+              <p className="text-gray-200 text-base leading-relaxed line-clamp-2">
+                {game.tagline}
+              </p>
+            )}
+            
+            {/* Action Button */}
+            <div className="flex items-center gap-4 mt-4">
+              <Button 
+                className="bg-white text-black hover:bg-gray-100 rounded-xl px-6 py-2 font-semibold"
+                onClick={(e) => {
+                  e.preventDefault()
+                  window.open(game.url, '_blank', 'noopener,noreferrer')
+                }}
+              >
+                Play Now
+              </Button>
+              <div className="flex items-center gap-2 text-sm text-gray-300">
+                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                <span>{game._count.votes} votes</span>
+              </div>
+            </div>
           </div>
         </CardContent>
+      </Card>
+    </Link>
+  )
+}
+
+// Side Game Card (Small Right Cards)
+interface SideGameCardProps {
+  game: FeaturedGame
+  onClick?: () => void
+}
+
+function SideGameCard({ game, onClick }: SideGameCardProps) {
+  const rating = (game._count.votes / 10).toFixed(1)
+
+  return (
+    <Link href={`/product/${game.id}`} className="block group flex-1 min-h-0">
+      <Card className="overflow-hidden bg-white hover:shadow-lg transition-all duration-300 border border-gray-200 rounded-xl group-hover:scale-[1.02] h-full">
+        <div className="flex gap-3 p-3 h-full">
+          {/* Game Image */}
+          <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100 flex-shrink-0">
+            {game.image ? (
+              <Image
+                src={game.image}
+                alt={game.title}
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-110"
+                sizes="64px"
+                unoptimized={true}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-2xl">
+                🎮
+              </div>
+            )}
+          </div>
+
+          {/* Game Info */}
+          <div className="flex-1 min-w-0 flex flex-col justify-between">
+            <div>
+              <h4 className="font-semibold text-sm text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                {game.title}
+              </h4>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-1">
+                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                  <span className="text-xs font-medium text-gray-900">{rating}</span>
+                </div>
+                <span className="text-xs text-gray-500">•</span>
+                <span className="text-xs text-gray-500">{game.category.name}</span>
+              </div>
+            </div>
+            
+            {game.tagline && (
+              <p className="text-xs text-gray-600 line-clamp-1 mt-1">
+                {game.tagline}
+              </p>
+            )}
+          </div>
+        </div>
       </Card>
     </Link>
   )
