@@ -47,7 +47,7 @@ export function TapTapGameCard({ game, onVote, showAuthor = true }: TapTapGameCa
 
   return (
     <Link href={`/product/${game.id}`} className="block group">
-      <Card className="overflow-hidden bg-white hover:shadow-lg transition-all duration-300 border-0 shadow-sm rounded-xl group-hover:scale-[1.02]">
+      <Card className="overflow-hidden bg-card hover:shadow-lg transition-all duration-300 border border-white/10 shadow-lg rounded-xl group-hover:scale-[1.02] hover:shadow-black/20">
         {/* Game Image */}
         <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
           {game.image ? (

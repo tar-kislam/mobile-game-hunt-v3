@@ -14,43 +14,40 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
+import PillNav from "@/components/ui/pill-nav"
 
 export function Header() {
   const { data: session, status } = useSession()
+
+  const navItems = [
+    { label: "Home", href: "/" },
+    { label: "All Games", href: "/products" },
+    { label: "Submit", href: "/submit" }
+  ]
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
+          {/* Logo - Hidden on desktop when using PillNav */}
+          <Link href="/" className="flex md:hidden items-center space-x-2">
             <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-sm">MG</span>
             </div>
             <span className="font-bold text-xl">Mobile Game Hunt</span>
           </Link>
 
-          {/* Navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link 
-              href="/" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Home
-            </Link>
-            <Link 
-              href="/products" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              All Games
-            </Link>
-            <Link 
-              href="/submit" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Submit
-            </Link>
-          </nav>
+          {/* Pill Navigation */}
+          <div className="flex-1 md:flex-none md:mx-auto">
+            <PillNav 
+              items={navItems}
+              className="md:justify-center"
+              baseColor="hsl(var(--background))"
+              pillColor="hsl(var(--card))"
+              hoveredPillTextColor="hsl(var(--card-foreground))"
+              pillTextColor="hsl(var(--muted-foreground))"
+            />
+          </div>
 
           {/* User Actions */}
           <div className="flex items-center space-x-3">

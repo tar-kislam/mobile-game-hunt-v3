@@ -19,12 +19,13 @@ const createCommentSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const comments = await prisma.comment.findMany({
       where: {
-        productId: params.id,
+        productId: id,
       },
       include: {
         user: {
@@ -60,9 +61,10 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.id) {
@@ -77,7 +79,7 @@ export async function POST(
 
     // Check if product exists
     const product = await prisma.product.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     if (!product) {
@@ -91,7 +93,7 @@ export async function POST(
       data: {
         content: validatedData.content,
         userId: session.user.id,
-        productId: params.id,
+        productId: id,
       },
       include: {
         user: {

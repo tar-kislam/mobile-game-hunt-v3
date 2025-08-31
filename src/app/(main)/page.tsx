@@ -71,7 +71,7 @@ const trendingGames = [
 
 function ProductCard({ product, rank }: { product: typeof dailyProducts[0], rank?: number }) {
   return (
-    <Card className="rounded-2xl shadow-soft hover:shadow-medium transition-shadow">
+    <Card className="rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border-white/10 hover:scale-[1.02] hover:shadow-black/20">
       <CardContent className="p-0">
         <div className="flex gap-4 p-4">
           {rank && (
@@ -236,7 +236,7 @@ export default function HomePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div key={i} className="animate-pulse">
-                      <Card className="rounded-xl shadow-sm">
+                      <Card className="rounded-xl shadow-lg border-white/10">
                         <div className="aspect-square bg-gray-200 rounded-t-xl"></div>
                         <CardContent className="p-3 space-y-2">
                           <div className="h-4 bg-gray-200 rounded w-3/4"></div>
@@ -248,7 +248,7 @@ export default function HomePage() {
                   ))}
                 </div>
               ) : games.length === 0 ? (
-                <Card className="rounded-2xl shadow-soft p-8 text-center">
+                <Card className="rounded-2xl shadow-lg p-8 text-center border-white/10">
                   <div className="text-6xl mb-4">🎮</div>
                   <h3 className="text-xl font-semibold mb-2">No games yet</h3>
                   <p className="text-gray-600 dark:text-gray-300 mb-4">Be the first to submit a game to the community!</p>
@@ -278,7 +278,7 @@ export default function HomePage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Trending Section */}
-            <Card className="rounded-2xl shadow-soft">
+            <Card className="rounded-2xl shadow-lg border-white/10">
               <CardHeader className="p-4">
                 <CardTitle className="flex items-center gap-2">
                   <TrendingUpIcon className="h-5 w-5" />
@@ -303,7 +303,7 @@ export default function HomePage() {
             </Card>
 
             {/* Quick Actions */}
-            <Card className="rounded-2xl shadow-soft">
+            <Card className="rounded-2xl shadow-lg border-white/10">
               <CardHeader className="p-4">
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
@@ -323,7 +323,7 @@ export default function HomePage() {
             </Card>
 
             {/* Newsletter Signup */}
-            <Card className="rounded-2xl shadow-soft">
+            <Card className="rounded-2xl shadow-lg border-white/10">
               <CardHeader className="p-4">
                 <CardTitle>Stay Updated</CardTitle>
                 <CardDescription>

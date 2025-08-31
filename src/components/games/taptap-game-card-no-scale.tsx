@@ -49,7 +49,7 @@ export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTa
   return (
     <Link href={`/product/${game.id}`} className="block group">
       {/* Removed group-hover:scale-[1.02] from card to prevent double scaling with tilt effect */}
-      <Card className="overflow-hidden bg-white hover:shadow-lg transition-all duration-300 border-0 shadow-sm rounded-xl">
+      <Card className="overflow-hidden bg-card hover:shadow-lg transition-all duration-300 border border-white/10 shadow-lg rounded-xl hover:shadow-black/20">
         {/* Game Image - Removed image scaling on hover */}
         <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
           {game.image ? (

@@ -18,6 +18,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['TASA Explorer', 'system-ui', 'sans-serif'],
+        mono: ['DM Mono', 'var(--font-dm-mono)', 'monospace'],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

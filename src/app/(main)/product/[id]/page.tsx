@@ -270,7 +270,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
               </div>
 
               {/* Description */}
-              <Card className="rounded-2xl shadow-soft mb-6">
+              <Card className="rounded-2xl shadow-lg border-white/10 mb-6">
                 <CardContent className="p-6">
                   <h2 className="text-xl font-semibold mb-4">About {product.title}</h2>
                   <p className="text-muted-foreground leading-relaxed">{product.description}</p>
@@ -279,7 +279,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
             </div>
 
             {/* Comments Section */}
-            <Card className="rounded-2xl shadow-soft">
+            <Card className="rounded-2xl shadow-lg border-white/10">
               <CardContent className="p-6">
                 <h2 className="text-xl font-semibold mb-4">
                   Comments ({product._count.comments})
@@ -363,7 +363,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
               />
               
               {/* Related Products */}
-              <Card className="rounded-2xl shadow-soft mt-6">
+              <Card className="rounded-2xl shadow-lg border-white/10 mt-6">
                 <CardContent className="p-6">
                   <h3 className="font-semibold mb-4">Related games</h3>
                   <div className="space-y-3">

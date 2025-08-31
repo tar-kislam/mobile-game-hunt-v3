@@ -217,10 +217,10 @@ function SideGameCard({ game, onClick, onHover, isSelected }: SideGameCardProps)
       onMouseEnter={onHover}
     >
       <Card className={cn(
-        "overflow-hidden transition-all duration-300 border rounded-xl group-hover:scale-[1.02] h-full",
+        "overflow-hidden transition-all duration-300 border border-white/10 rounded-xl group-hover:scale-[1.02] h-full hover:shadow-black/20",
         isSelected 
-          ? "bg-blue-50 border-blue-200 shadow-lg" 
-          : "bg-white hover:shadow-lg border-gray-200"
+          ? "bg-card/80 border-blue-400/30 shadow-lg shadow-blue-500/20" 
+          : "bg-card hover:shadow-lg"
       )}>
         <div className="flex gap-3 p-3 h-full">
           {/* Game Image */}

@@ -113,7 +113,7 @@ export default function ProfilePage() {
   if (status === "unauthenticated") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="w-full max-w-md rounded-2xl shadow-soft">
+        <Card className="w-full max-w-md rounded-2xl shadow-lg border-white/10">
           <CardHeader className="p-4 text-center">
             <CardTitle>Authentication Required</CardTitle>
             <CardDescription>
@@ -139,7 +139,7 @@ export default function ProfilePage() {
         <div className="max-w-6xl mx-auto">
           {/* Profile Header */}
           <div className="mb-8">
-            <Card className="rounded-2xl shadow-soft">
+            <Card className="rounded-2xl shadow-lg border-white/10">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-6">
@@ -178,7 +178,7 @@ export default function ProfilePage() {
 
           {/* Stats Overview */}
           <div className="grid md:grid-cols-4 gap-4 mb-8">
-            <Card className="rounded-2xl shadow-soft">
+            <Card className="rounded-2xl shadow-lg border-white/10">
               <CardContent className="p-4 text-center">
                 <GamepadIcon className="h-8 w-8 mx-auto mb-2 text-primary" />
                 <div className="text-2xl font-bold">{userStats.gamesSubmitted}</div>
@@ -186,7 +186,7 @@ export default function ProfilePage() {
               </CardContent>
             </Card>
             
-            <Card className="rounded-2xl shadow-soft">
+            <Card className="rounded-2xl shadow-lg border-white/10">
               <CardContent className="p-4 text-center">
                 <ArrowUpIcon className="h-8 w-8 mx-auto mb-2 text-green-600 dark:text-green-400" />
                 <div className="text-2xl font-bold">{userStats.totalVotes}</div>
@@ -194,7 +194,7 @@ export default function ProfilePage() {
               </CardContent>
             </Card>
             
-            <Card className="rounded-2xl shadow-soft">
+            <Card className="rounded-2xl shadow-lg border-white/10">
               <CardContent className="p-4 text-center">
                 <MessageCircleIcon className="h-8 w-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
                 <div className="text-2xl font-bold">{userStats.commentsReceived}</div>
@@ -202,7 +202,7 @@ export default function ProfilePage() {
               </CardContent>
             </Card>
             
-            <Card className="rounded-2xl shadow-soft">
+            <Card className="rounded-2xl shadow-lg border-white/10">
               <CardContent className="p-4 text-center">
                 <TrophyIcon className="h-8 w-8 mx-auto mb-2 text-yellow-600 dark:text-yellow-400" />
                 <div className="text-2xl font-bold">#{Math.floor(Math.random() * 100) + 1}</div>

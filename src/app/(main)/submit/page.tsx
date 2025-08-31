@@ -33,7 +33,7 @@ export default function SubmitPage() {
   if (status === "unauthenticated") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="w-full max-w-md rounded-2xl shadow-soft">
+        <Card className="w-full max-w-md rounded-2xl shadow-lg border-white/10">
           <CardHeader className="p-4 text-center">
             <CardTitle>Authentication Required</CardTitle>
             <p className="text-muted-foreground">
@@ -86,7 +86,7 @@ export default function SubmitPage() {
         <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {/* Main Content */}
           <div className="lg:col-span-2">
-            <Card className="rounded-2xl shadow-soft p-8">
+            <Card className="rounded-2xl shadow-lg border-white/10 p-8">
               <div className="text-center space-y-6">
                 <div className="flex justify-center">
                   <div className="h-20 w-20 bg-orange-100 rounded-2xl flex items-center justify-center">
@@ -120,7 +120,7 @@ export default function SubmitPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* User Info */}
-            <Card className="rounded-2xl shadow-soft">
+            <Card className="rounded-2xl shadow-lg border-white/10">
               <CardHeader className="p-4">
                 <CardTitle className="flex items-center gap-2">
                   <div className="h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -148,7 +148,7 @@ export default function SubmitPage() {
             </Card>
 
             {/* Guidelines */}
-            <Card className="rounded-2xl shadow-soft">
+            <Card className="rounded-2xl shadow-lg border-white/10">
               <CardHeader className="p-4">
                 <CardTitle className="flex items-center gap-2">
                   <div className="h-8 w-8 bg-green-100 rounded-lg flex items-center justify-center">
@@ -178,7 +178,7 @@ export default function SubmitPage() {
             </Card>
 
             {/* Community Stats */}
-            <Card className="rounded-2xl shadow-soft">
+            <Card className="rounded-2xl shadow-lg border-white/10">
               <CardHeader className="p-4">
                 <CardTitle className="flex items-center gap-2">
                   <div className="h-8 w-8 bg-purple-100 rounded-lg flex items-center justify-center">

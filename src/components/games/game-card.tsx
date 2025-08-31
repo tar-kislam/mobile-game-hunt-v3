@@ -47,7 +47,7 @@ export function GameCard({ game, onVote, showAuthor = true }: GameCardProps) {
   }
 
   return (
-    <Card className="group h-full flex flex-col bg-white hover:shadow-medium transition-all duration-300 border-0 shadow-soft rounded-2xl overflow-hidden">
+    <Card className="group h-full flex flex-col bg-card hover:shadow-medium transition-all duration-300 border border-white/10 shadow-lg rounded-2xl overflow-hidden hover:scale-[1.02] hover:shadow-black/20">
       {/* Game Image */}
       <div className="relative aspect-video bg-gradient-to-br from-purple-100 to-blue-100 overflow-hidden">
         {game.image ? (
