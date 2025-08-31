@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -59,9 +60,8 @@ export function FeaturedGamesCarousel({ games, onGameClick }: FeaturedGamesCarou
   }
 
   // Split games: first game as hero, rest as side cards
-  const heroGame = featuredGames[0]
-  const sideGames = featuredGames.slice(1, 5) // Show 4 side games
-
+  const sideGames = featuredGames.slice(0, 5) // Show 5 side games
+  
   return (
     <section className="w-full">
       <div className="flex items-center justify-between mb-6">
@@ -73,54 +73,59 @@ export function FeaturedGamesCarousel({ games, onGameClick }: FeaturedGamesCarou
         </Badge>
       </div>
 
-      <Carousel
-        opts={{
-          align: "start",
-          loop: true,
-        }}
-        className="w-full"
-      >
-        <CarouselContent className="-ml-2 md:-ml-4">
-          <CarouselItem className="pl-2 md:pl-4 basis-full">
-            <TapTapFeaturedLayout 
-              heroGame={heroGame}
-              sideGames={sideGames}
-              onGameClick={handleGameClick}
-            />
-          </CarouselItem>
-          {/* Additional carousel items can be added here for more featured sets */}
-        </CarouselContent>
-        <CarouselPrevious className="hidden md:flex -left-12" />
-        <CarouselNext className="hidden md:flex -right-12" />
-      </Carousel>
+      <TapTapInteractiveLayout 
+        sideGames={sideGames}
+        onGameClick={handleGameClick}
+      />
     </section>
   )
 }
 
-// TapTap-style layout with hero card + side cards
-interface TapTapFeaturedLayoutProps {
-  heroGame: FeaturedGame
+// Interactive TapTap-style layout with hover effect
+interface TapTapInteractiveLayoutProps {
   sideGames: FeaturedGame[]
   onGameClick: (gameId: string) => void
 }
 
-function TapTapFeaturedLayout({ heroGame, sideGames, onGameClick }: TapTapFeaturedLayoutProps) {
+function TapTapInteractiveLayout({ sideGames, onGameClick }: TapTapInteractiveLayoutProps) {
+  const [selectedGame, setSelectedGame] = useState<FeaturedGame>(sideGames[0])
+
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-80">
-      {/* Hero Game - Left Side */}
+      {/* Hero Game - Left Side (Dynamic based on hover) */}
       <div className="flex-[2] min-h-0">
-        <HeroGameCard game={heroGame} onClick={() => onGameClick(heroGame.id)} />
+        <HeroGameCard 
+          game={selectedGame} 
+          onClick={() => onGameClick(selectedGame.id)} 
+        />
       </div>
       
-      {/* Side Games - Right Side */}
-      <div className="flex-1 flex flex-col gap-3 min-h-0">
-        {sideGames.map((game) => (
-          <SideGameCard 
-            key={game.id} 
-            game={game} 
-            onClick={() => onGameClick(game.id)}
-          />
-        ))}
+      {/* Side Games - Right Side (Vertical Carousel) */}
+      <div className="flex-1 min-h-0">
+        <Carousel
+          opts={{
+            align: "start",
+          }}
+          orientation="vertical"
+          className="w-full h-full"
+        >
+          <CarouselContent className="-mt-1 h-[320px]">
+            {sideGames.map((game, index) => (
+              <CarouselItem key={game.id} className="pt-1 basis-1/4">
+                <div className="p-1">
+                  <SideGameCard 
+                    game={game} 
+                    onClick={() => onGameClick(game.id)}
+                    onHover={() => setSelectedGame(game)}
+                    isSelected={selectedGame.id === game.id}
+                  />
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="hidden md:flex" />
+          <CarouselNext className="hidden md:flex" />
+        </Carousel>
       </div>
     </div>
   )
@@ -209,58 +214,66 @@ function HeroGameCard({ game, onClick }: HeroGameCardProps) {
   )
 }
 
-// Side Game Card (Small Right Cards)
+// Side Game Card (Small Right Cards with hover effect)
 interface SideGameCardProps {
   game: FeaturedGame
   onClick?: () => void
+  onHover?: () => void
+  isSelected?: boolean
 }
 
-function SideGameCard({ game, onClick }: SideGameCardProps) {
+function SideGameCard({ game, onClick, onHover, isSelected }: SideGameCardProps) {
   const rating = (game._count.votes / 10).toFixed(1)
 
   return (
-    <Link href={`/product/${game.id}`} className="block group flex-1 min-h-0">
-      <Card className="overflow-hidden bg-white hover:shadow-lg transition-all duration-300 border border-gray-200 rounded-xl group-hover:scale-[1.02] h-full">
+    <Link 
+      href={`/product/${game.id}`} 
+      className="block group flex-1 min-h-0"
+      onMouseEnter={onHover}
+    >
+      <Card className={cn(
+        "overflow-hidden transition-all duration-300 border rounded-xl group-hover:scale-[1.02] h-full",
+        isSelected 
+          ? "bg-blue-50 border-blue-200 shadow-lg" 
+          : "bg-white hover:shadow-lg border-gray-200"
+      )}>
         <div className="flex gap-3 p-3 h-full">
           {/* Game Image */}
-          <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100 flex-shrink-0">
+          <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100 flex-shrink-0">
             {game.image ? (
               <Image
                 src={game.image}
                 alt={game.title}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-110"
-                sizes="64px"
+                sizes="48px"
                 unoptimized={true}
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-2xl">
+              <div className="w-full h-full flex items-center justify-center text-lg">
                 🎮
               </div>
             )}
           </div>
 
           {/* Game Info */}
-          <div className="flex-1 min-w-0 flex flex-col justify-between">
-            <div>
-              <h4 className="font-semibold text-sm text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
-                {game.title}
-              </h4>
-              <div className="flex items-center gap-2 mt-1">
-                <div className="flex items-center gap-1">
-                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                  <span className="text-xs font-medium text-gray-900">{rating}</span>
-                </div>
-                <span className="text-xs text-gray-500">•</span>
-                <span className="text-xs text-gray-500">{game.category.name}</span>
+          <div className="flex-1 min-w-0 flex flex-col justify-center">
+            <h4 className={cn(
+              "font-semibold text-sm line-clamp-1 transition-colors",
+              isSelected 
+                ? "text-blue-700" 
+                : "text-gray-900 group-hover:text-blue-600"
+            )}>
+              {game.title}
+            </h4>
+            <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-1">
+                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                <span className="text-xs font-medium text-gray-900">{rating}</span>
               </div>
+              <span className="text-xs text-gray-500">•</span>
+              <span className="text-xs text-gray-500 truncate">{game.category.name}</span>
             </div>
-            
-            {game.tagline && (
-              <p className="text-xs text-gray-600 line-clamp-1 mt-1">
-                {game.tagline}
-              </p>
-            )}
           </div>
         </div>
       </Card>
