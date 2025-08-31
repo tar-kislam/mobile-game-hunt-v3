@@ -77,6 +77,18 @@ export async function POST(
     const body = await request.json()
     const validatedData = createCommentSchema.parse(body)
 
+    // Find user by email to get the correct user ID
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email! },
+    })
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      )
+    }
+
     // Check if product exists
     const product = await prisma.product.findUnique({
       where: { id: id },
@@ -92,7 +104,7 @@ export async function POST(
     const comment = await prisma.comment.create({
       data: {
         content: validatedData.content,
-        userId: session.user.id,
+        userId: user.id,
         productId: id,
       },
       include: {

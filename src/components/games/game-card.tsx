@@ -59,6 +59,8 @@ export function GameCard({ game, onVote, showAuthor = true }: GameCardProps) {
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             unoptimized={true}
             onError={(e) => {
+              // Prevent infinite retries
+              e.currentTarget.onerror = null;
               // Hide broken image and show fallback
               e.currentTarget.style.display = 'none';
               if (e.currentTarget.parentElement) {

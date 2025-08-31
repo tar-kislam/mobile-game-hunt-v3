@@ -29,12 +29,7 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-      {
-        protocol: 'https',
-        hostname: 'i1.rgstatic.net',
-        port: '',
-        pathname: '/**',
-      },
+
       {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
@@ -44,12 +39,6 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'avatars.githubusercontent.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
         port: '',
         pathname: '/**',
       },

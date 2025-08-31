@@ -67,7 +67,7 @@ interface Comment {
   }
 }
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
+export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { data: session } = useSession()
   const [product, setProduct] = useState<Product | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
@@ -75,16 +75,26 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
   const [newComment, setNewComment] = useState("")
   const [loading, setLoading] = useState(true)
   const [hasVoted, setHasVoted] = useState(false)
+  const [resolvedParams, setResolvedParams] = useState<{ id: string } | null>(null)
+
+  // Resolve params asynchronously
+  useEffect(() => {
+    params.then(setResolvedParams)
+  }, [params])
 
   useEffect(() => {
-    fetchProduct()
-    fetchComments()
-    fetchRelatedProducts()
-  }, [params.id])
+    if (resolvedParams?.id) {
+      fetchProduct()
+      fetchComments()
+      fetchRelatedProducts()
+    }
+  }, [resolvedParams?.id])
 
   const fetchProduct = async () => {
+    if (!resolvedParams?.id) return
+    
     try {
-      const response = await fetch(`/api/products/${params.id}`)
+      const response = await fetch(`/api/products/${resolvedParams.id}`)
       if (response.ok) {
         const data = await response.json()
         setProduct(data)
@@ -100,8 +110,10 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
   }
 
   const fetchComments = async () => {
+    if (!resolvedParams?.id) return
+    
     try {
-      const response = await fetch(`/api/products/${params.id}/comments`)
+      const response = await fetch(`/api/products/${resolvedParams.id}/comments`)
       if (response.ok) {
         const data = await response.json()
         setComments(data)
@@ -117,7 +129,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
       if (response.ok) {
         const data = await response.json()
         // Filter out current product
-        setRelatedProducts(data.filter((p: Product) => p.id !== params.id).slice(0, 3))
+        setRelatedProducts(data.filter((p: Product) => p.id !== resolvedParams?.id).slice(0, 3))
       }
     } catch (error) {
       console.error('Error fetching related products:', error)
@@ -130,8 +142,10 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
       return
     }
 
+    if (!resolvedParams?.id) return
+
     try {
-      const response = await fetch(`/api/products/${params.id}/vote`, {
+      const response = await fetch(`/api/products/${resolvedParams.id}/vote`, {
         method: 'POST',
       })
       
@@ -160,8 +174,10 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
       return
     }
 
+    if (!resolvedParams?.id) return
+
     try {
-      const response = await fetch(`/api/products/${params.id}/comments`, {
+      const response = await fetch(`/api/products/${resolvedParams.id}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -236,7 +252,10 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
           {/* Media Carousel - Left Side */}
           <div className="lg:col-span-2">
             <MediaCarousel 
-              images={product.images || (product.image ? [product.image] : [])}
+              images={[
+                ...(product.images && product.images.length > 0 ? product.images : []),
+                ...(product.image && !product.images?.includes(product.image) ? [product.image] : [])
+              ].filter(Boolean)}
               video={product.video}
               title={product.title}
             />
@@ -379,6 +398,11 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                                 className="object-cover"
                                 sizes="48px"
                                 unoptimized={true}
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement
+                                  target.onerror = null
+                                  target.style.display = 'none'
+                                }}
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-lg">

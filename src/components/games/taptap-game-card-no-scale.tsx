@@ -61,6 +61,7 @@ export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTa
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               unoptimized={true}
               onError={(e) => {
+                e.currentTarget.onerror = null;
                 e.currentTarget.style.display = 'none';
                 if (e.currentTarget.parentElement) {
                   const fallback = e.currentTarget.parentElement.querySelector('.fallback-icon');
