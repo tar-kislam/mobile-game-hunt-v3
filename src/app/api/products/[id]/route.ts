@@ -28,13 +28,7 @@ export async function GET(
             image: true,
           },
         },
-        category: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-          },
-        },
+
         _count: {
           select: {
             votes: true,

@@ -40,12 +40,7 @@ export const optimizedQueries = {
         image: true,
         url: true,
         createdAt: true,
-        category: {
-          select: {
-            name: true,
-            slug: true,
-          }
-        },
+
         user: {
           select: {
             name: true,
@@ -70,7 +65,7 @@ export const optimizedQueries = {
     return prisma.product.findUnique({
       where: { id },
       include: {
-        category: true,
+
         user: {
           select: {
             id: true,
@@ -164,11 +159,7 @@ export const optimizedQueries = {
         id: true,
         title: true,
         image: true,
-        category: {
-          select: {
-            name: true,
-          }
-        },
+
         _count: {
           select: {
             votes: true,
