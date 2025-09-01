@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=TASA+Explorer:wght@400..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=TASA+Explorer:wght@400..800&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -154,6 +154,17 @@
   background: #d1d5db;
   border-radius: 3px;
   transition: background-color 0.2s ease;
+}
+
+/* ShinyText theme-adaptive styles */
+.shiny-text-light {
+  color: rgba(60, 41, 100, 1);
+  background-image: linear-gradient(120deg, rgba(60, 41, 100, 0.8) 40%, rgba(80, 61, 120, 1) 50%, rgba(60, 41, 100, 0.8) 60%);
+}
+
+.shiny-text-dark {
+  color: rgba(60, 41, 100, 1);
+  background-image: linear-gradient(120deg, rgba(60, 41, 100, 0.9) 40%, rgba(80, 61, 120, 1) 50%, rgba(60, 41, 100, 0.9) 60%);
 }
 
 .dark .featured-games-scroll::-webkit-scrollbar-thumb {

@@ -11,6 +11,7 @@ import { GameCard } from "@/components/games/game-card"
 import { TapTapGameCardNoScale } from "@/components/games/taptap-game-card-no-scale"
 import { FeaturedGamesCarousel } from "@/components/games/featured-games-carousel"
 import { TiltedGameCard } from "@/components/games/tilted-game-card"
+import { CTASection } from "@/components/sections/cta-section"
 import { toast } from "sonner"
 
 // Mock data - In a real app, this would come from your database
@@ -194,22 +195,10 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        {/* Hero Section */}
-        <div className="text-center space-y-4 mb-12">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-            Mobile Game Hunt
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Discover the best mobile games, curated by the gaming community.
-          </p>
-          <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
-            <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-soft">
-              Submit Your Game
-            </Button>
-          </EnhancedSubmitGameModal>
-        </div>
+        {/* CTA Section - Main Hero */}
+        <CTASection />
 
-        <div className="grid lg:grid-cols-4 gap-8">
+        <div className="grid lg:grid-cols-4 gap-8 mt-16">
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-8">
             {/* Featured Games Carousel */}
@@ -227,9 +216,16 @@ export default function HomePage() {
             <section>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold">🎮 Discover Games</h2>
-                <Button variant="outline" asChild className="rounded-2xl">
-                  <Link href="/products">View All</Link>
-                </Button>
+                <div className="flex gap-3">
+                  <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
+                    <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl">
+                      Submit Game
+                    </Button>
+                  </EnhancedSubmitGameModal>
+                  <Button variant="outline" asChild className="rounded-2xl">
+                    <Link href="/products">View All</Link>
+                  </Button>
+                </div>
               </div>
               
               {isLoading ? (
@@ -251,7 +247,7 @@ export default function HomePage() {
                 <Card className="rounded-2xl shadow-lg p-8 text-center border-white/10">
                   <div className="text-6xl mb-4">🎮</div>
                   <h3 className="text-xl font-semibold mb-2">No games yet</h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-4">Be the first to submit a game to the community!</p>
+                  <p className="text-muted-foreground mb-4">Be the first to submit a game to the community!</p>
                   <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
                     <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl">
                       Submit First Game
