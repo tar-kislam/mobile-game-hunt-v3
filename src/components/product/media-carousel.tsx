@@ -17,10 +17,11 @@ import { ChevronLeftIcon, ChevronRightIcon, PlayIcon } from "lucide-react"
 interface MediaCarouselProps {
   images: string[]
   video?: string | null
+  mainImage?: string | null
   title: string
 }
 
-export function MediaCarousel({ images, video, title }: MediaCarouselProps) {
+export function MediaCarousel({ images, video, mainImage, title }: MediaCarouselProps) {
   const [api, setApi] = useState<CarouselApi>()
   const [current, setCurrent] = useState(0)
   const [count, setCount] = useState(0)
@@ -41,19 +42,45 @@ export function MediaCarousel({ images, video, title }: MediaCarouselProps) {
         'images.unsplash.com',
         'lh3.googleusercontent.com', 
         'avatars.githubusercontent.com',
-        'localhost'
+        'localhost',
+        '127.0.0.1',
+        'firebasestorage.googleapis.com',
+        'storage.googleapis.com',
+        'cloudinary.com',
+        'res.cloudinary.com',
+        'imgur.com',
+        'i.imgur.com',
+        'amazonaws.com',
+        'digitaloceanspaces.com',
+        'blob.core.windows.net',
+        'azureedge.net',
+        'shutterstock.com',
+        'www.shutterstock.com',
+        'static.shutterstock.com',
+        'image.shutterstock.com'
       ]
-      return allowedHosts.some(host => urlObj.hostname === host || urlObj.hostname.endsWith(`.${host}`))
+      return allowedHosts.some(host => 
+        urlObj.hostname === host || 
+        urlObj.hostname.endsWith(`.${host}`) ||
+        urlObj.hostname.includes(host)
+      )
     } catch {
-      return false
+      // If URL parsing fails, it might be a relative URL or data URL
+      return url.startsWith('/') || url.startsWith('data:') || url.startsWith('blob:')
     }
   }
 
+  // Add main image first if it exists and is not already in images array
+  if (mainImage && mainImage.trim() !== '' && isValidImageUrl(mainImage)) {
+    mediaItems.push({ type: 'image', src: mainImage })
+  }
+  
   // Add images - filter out empty/invalid URLs and non-allowed domains
   const validImages = images.filter(image => 
     image && 
     image.trim() !== '' && 
-    isValidImageUrl(image)
+    isValidImageUrl(image) &&
+    image !== mainImage // Avoid duplicates
   )
   validImages.forEach(image => {
     mediaItems.push({ type: 'image', src: image })

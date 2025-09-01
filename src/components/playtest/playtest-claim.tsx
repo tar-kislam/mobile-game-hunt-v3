@@ -5,7 +5,9 @@ import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Key, Users, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Key, Users, Clock, CheckCircle, XCircle, Save, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Playtest {
@@ -42,20 +44,136 @@ interface PlaytestClaimProps {
   gameTitle: string;
 }
 
+// Countdown Timer Component
+interface CountdownTimerProps {
+  expiryDate: string;
+  className?: string;
+}
+
+function CountdownTimer({ expiryDate, className }: CountdownTimerProps) {
+  const [timeLeft, setTimeLeft] = useState<{
+    hours: number;
+    minutes: number;
+    seconds: number;
+  }>({ hours: 0, minutes: 0, seconds: 0 });
+  const [isExpired, setIsExpired] = useState(false);
+  const [prevTime, setPrevTime] = useState<{
+    hours: number;
+    minutes: number;
+    seconds: number;
+  }>({ hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date().getTime();
+      const expiry = new Date(expiryDate).getTime();
+      const difference = expiry - now;
+
+      if (difference <= 0) {
+        setIsExpired(true);
+        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+
+      const hours = Math.floor(difference / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+      setPrevTime(timeLeft);
+      setTimeLeft({ hours, minutes, seconds });
+    };
+
+    // Calculate immediately
+    calculateTimeLeft();
+
+    // Update every second
+    const timer = setInterval(calculateTimeLeft, 1000);
+
+    return () => clearInterval(timer);
+  }, [expiryDate]);
+
+  if (isExpired) {
+    return (
+      <div className={`text-2xl font-bold text-red-600 ${className}`}>
+        Expired
+      </div>
+    );
+  }
+
+  // Show hours when more than 1 hour remaining, otherwise show MM:SS
+  const showHours = timeLeft.hours > 0;
+
+  if (showHours) {
+    return (
+      <div className={`text-2xl font-bold text-orange-600 ${className}`}>
+        <span 
+          className="inline-block min-w-[1.5ch] text-center transition-all duration-300 ease-out"
+          style={{
+            transform: timeLeft.hours !== prevTime.hours ? 'scale(1.1)' : 'scale(1)',
+          }}
+        >
+          {timeLeft.hours}
+        </span>
+        <span className="mx-1">h</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`text-2xl font-bold text-orange-600 ${className}`}>
+      <span 
+        className="inline-block min-w-[1.5ch] text-center transition-all duration-300 ease-out"
+        style={{
+          transform: timeLeft.minutes !== prevTime.minutes ? 'scale(1.1)' : 'scale(1)',
+        }}
+      >
+        {String(timeLeft.minutes).padStart(2, '0')}
+      </span>
+      <span className="mx-1">:</span>
+      <span 
+        className="inline-block min-w-[1.5ch] text-center transition-all duration-300 ease-out"
+        style={{
+          transform: timeLeft.seconds !== prevTime.seconds ? 'scale(1.1)' : 'scale(1)',
+        }}
+      >
+        {String(timeLeft.seconds).padStart(2, '0')}
+      </span>
+    </div>
+  );
+}
+
 export function PlaytestClaim({ gameId, gameTitle }: PlaytestClaimProps) {
   const { data: session } = useSession();
   const [playtest, setPlaytest] = useState<Playtest | null>(null);
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);
+  const [apiKey, setApiKey] = useState('');
+  const [savingApiKey, setSavingApiKey] = useState(false);
 
   useEffect(() => {
     fetchPlaytest();
+    // Load API key from localStorage
+    const savedApiKey = localStorage.getItem(`playtest-api-key-${gameId}`);
+    if (savedApiKey) {
+      setApiKey(savedApiKey);
+    }
   }, [gameId]);
 
   const fetchPlaytest = async () => {
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add API key to headers if available
+      const savedApiKey = localStorage.getItem(`playtest-api-key-${gameId}`);
+      if (savedApiKey) {
+        headers['X-Playtest-API-Key'] = savedApiKey;
+      }
+
       const response = await fetch(`/api/playtest?gameId=${gameId}`, {
         credentials: 'include',
+        headers,
       });
       if (response.ok) {
         const data = await response.json();
@@ -71,16 +189,53 @@ export function PlaytestClaim({ gameId, gameTitle }: PlaytestClaimProps) {
     }
   };
 
+  const handleSaveApiKey = async () => {
+    if (!apiKey.trim()) {
+      toast.error('Please enter an API key');
+      return;
+    }
+
+    setSavingApiKey(true);
+    try {
+      // Store API key in localStorage
+      localStorage.setItem(`playtest-api-key-${gameId}`, apiKey.trim());
+      toast.success('API key saved successfully');
+      
+      // Refresh playtest data with new API key
+      await fetchPlaytest();
+    } catch (error) {
+      console.error('Error saving API key:', error);
+      toast.error('Failed to save API key');
+    } finally {
+      setSavingApiKey(false);
+    }
+  };
+
+  const handleCopyApiKey = () => {
+    if (apiKey) {
+      navigator.clipboard.writeText(apiKey);
+      toast.success('API key copied to clipboard');
+    }
+  };
+
   const handleClaim = async () => {
     if (!playtest) return;
 
     setClaiming(true);
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add API key to headers if available
+      const savedApiKey = localStorage.getItem(`playtest-api-key-${gameId}`);
+      if (savedApiKey) {
+        headers['X-Playtest-API-Key'] = savedApiKey;
+      }
+
       const response = await fetch('/api/playtest/claim', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         credentials: 'include',
         body: JSON.stringify({
           playtestId: playtest.id,
@@ -88,16 +243,48 @@ export function PlaytestClaim({ gameId, gameTitle }: PlaytestClaimProps) {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to claim playtest');
+        // Always try to parse JSON response first
+        try {
+          const errorData = await response.json();
+          const errorMessage = errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+          
+          // Handle specific error statuses with user-friendly messages
+          if (response.status === 400) {
+            toast.error(`Validation error: ${errorMessage}`);
+          } else if (response.status === 401 || response.status === 403) {
+            toast.error('Please log in to claim a playtest key');
+          } else if (response.status === 404) {
+            toast.error('Playtest not found');
+          } else if (response.status === 409) {
+            if (errorMessage.includes('Already claimed')) {
+              toast.error('You have already claimed this playtest');
+            } else if (errorMessage.includes('No quota left')) {
+              toast.error('No playtest keys available');
+            } else {
+              toast.error(errorMessage);
+            }
+          } else if (response.status === 410) {
+            toast.error('This playtest has expired');
+          } else if (response.status === 500) {
+            toast.error('Something went wrong, please try again later');
+            console.error('Server error:', errorData);
+          } else {
+            toast.error(errorMessage);
+          }
+          return;
+        } catch (parseError) {
+          // If JSON parsing fails, show generic error
+          toast.error(`HTTP ${response.status}: ${response.statusText}`);
+          return;
+        }
       }
 
       const data = await response.json();
-      toast.success(data.message);
+      toast.success(data.message || 'Playtest claimed successfully');
       fetchPlaytest(); // Refresh data
     } catch (error) {
       console.error('Error claiming playtest:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to claim playtest');
+      toast.error('Failed to claim playtest. Please try again.');
     } finally {
       setClaiming(false);
     }
@@ -155,6 +342,82 @@ export function PlaytestClaim({ gameId, gameTitle }: PlaytestClaimProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* API Key Section */}
+        <div className="space-y-3">
+          <Label htmlFor="api-key" className="text-sm font-medium">
+            API Key
+          </Label>
+          {playtest.hasClaimed ? (
+            /* Show API key as read-only when claimed */
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  id="api-key"
+                  type="text"
+                  value={apiKey || 'API key will be shown here after claiming'}
+                  readOnly
+                  className="flex-1 bg-muted"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleCopyApiKey}
+                  disabled={!apiKey}
+                  title="Copy API key"
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Your API key is now visible and ready to use
+              </p>
+            </div>
+          ) : (
+            /* Show editable API key input when not claimed */
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  id="api-key"
+                  type="password"
+                  placeholder="Enter your API key from dashboard"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  className="flex-1"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleCopyApiKey}
+                  disabled={!apiKey}
+                  title="Copy API key"
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+                <Button
+                  onClick={handleSaveApiKey}
+                  disabled={savingApiKey || !apiKey.trim()}
+                  size="sm"
+                >
+                  {savingApiKey ? (
+                    <>
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-3 h-3 mr-2" />
+                      Save
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Copy your API key from your developer dashboard to authenticate your playtest session
+              </p>
+            </div>
+          )}
+        </div>
+
         {/* Status Info */}
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
@@ -167,7 +430,7 @@ export function PlaytestClaim({ gameId, gameTitle }: PlaytestClaimProps) {
           </div>
           <div>
             <div className="text-2xl font-bold text-orange-600">
-              {playtest.expiresAt ? getTimeUntilExpiry(playtest.expiresAt) : 'No Expiry'}
+              {playtest.expiresAt ? <CountdownTimer expiryDate={playtest.expiresAt} /> : 'No Expiry'}
             </div>
             <div className="text-sm text-muted-foreground">Time Left</div>
           </div>

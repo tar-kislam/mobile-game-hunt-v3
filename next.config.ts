@@ -29,7 +29,6 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-
       {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
@@ -39,6 +38,30 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'avatars.githubusercontent.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.shutterstock.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'shutterstock.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'static.shutterstock.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'image.shutterstock.com',
         port: '',
         pathname: '/**',
       },

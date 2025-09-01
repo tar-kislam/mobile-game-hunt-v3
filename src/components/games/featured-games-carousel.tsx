@@ -267,17 +267,17 @@ function SideGameCard({ game, onClick, onHover, isSelected }: SideGameCardProps)
               </div>
               <span className="text-xs text-gray-500 dark:text-gray-400">•</span>
               <div className="flex items-center gap-1">
-                {platforms.slice(0, 2).map((platform) => {
+                {platforms.slice(0, 2).map((platform, index) => {
                   if (platform === 'ios') {
-                    return <div key={platform} className="w-3 h-3 bg-black rounded-sm flex items-center justify-center">
+                    return <div key={`${platform}-${index}`} className="w-3 h-3 bg-black rounded-sm flex items-center justify-center">
                       <Smartphone className="w-2 h-2 text-white" />
                     </div>
                   } else if (platform === 'android') {
-                    return <div key={platform} className="w-3 h-3 bg-green-600 rounded-sm flex items-center justify-center">
+                    return <div key={`${platform}-${index}`} className="w-3 h-3 bg-green-600 rounded-sm flex items-center justify-center">
                       <Smartphone className="w-2 h-2 text-white" />
                     </div>
                   } else if (platform === 'web') {
-                    return <div key={platform} className="w-3 h-3 bg-blue-600 rounded-sm flex items-center justify-center">
+                    return <div key={`${platform}-${index}`} className="w-3 h-3 bg-blue-600 rounded-sm flex items-center justify-center">
                       <Monitor className="w-2 h-2 text-white" />
                     </div>
                   }

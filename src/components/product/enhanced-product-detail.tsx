@@ -17,11 +17,17 @@ import {
   User,
   MessageCircle,
   Eye,
-  Download
+  Download,
+  Send,
+  ArrowUpIcon
 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlatformIcons } from '@/components/ui/platform-icons';
 import { MediaCarousel } from './media-carousel';
 import { PlaytestClaim } from '@/components/playtest/playtest-claim';
+import { UpvoteButton } from '@/components/ui/upvote-button';
+import { Comment } from '@/components/ui/comment';
 import { toast } from 'sonner';
 
 interface Product {
@@ -54,17 +60,20 @@ interface Product {
 
 interface EnhancedProductDetailProps {
   product: Product;
-  onVote: () => void;
   hasVoted: boolean;
 }
 
-export function EnhancedProductDetail({ product, onVote, hasVoted }: EnhancedProductDetailProps) {
+export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDetailProps) {
   const { data: session } = useSession();
   const [isFollowing, setIsFollowing] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
   const [followCount, setFollowCount] = useState(product.follows);
   const [clickCount, setClickCount] = useState(product.clicks);
   const [hasPressKit, setHasPressKit] = useState(false);
+  const [newComment, setNewComment] = useState('');
+  const [comments, setComments] = useState<any[]>([]);
+  const [productVotes, setProductVotes] = useState(product._count.votes);
+  const [isProductUpvoted, setIsProductUpvoted] = useState(hasVoted);
 
   // Check follow status and press kit on mount
   useEffect(() => {
@@ -72,6 +81,7 @@ export function EnhancedProductDetail({ product, onVote, hasVoted }: EnhancedPro
       checkFollowStatus();
     }
     checkPressKitStatus();
+    fetchComments();
   }, [session, product.id]);
 
   const checkPressKitStatus = async () => {
@@ -216,6 +226,111 @@ export function EnhancedProductDetail({ product, onVote, hasVoted }: EnhancedPro
     return `${hours}h until release`;
   };
 
+  const fetchComments = async () => {
+    try {
+      const response = await fetch(`/api/products/${product.id}/comments`);
+      if (response.ok) {
+        const data = await response.json();
+        setComments(data);
+      } else {
+        toast.error('Failed to fetch comments');
+      }
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      toast.error('Failed to load comments');
+    }
+  };
+
+  const handleCommentSubmit = async () => {
+    if (!session) {
+      toast.error('Please sign in to comment');
+      return;
+    }
+
+    if (!newComment.trim()) {
+      toast.error('Comment cannot be empty');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/products/${product.id}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: newComment })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setComments(prev => [data, ...prev]);
+        setNewComment('');
+        toast.success('Comment posted!');
+      } else {
+        toast.error('Failed to post comment');
+      }
+    } catch (error) {
+      console.error('Error posting comment:', error);
+      toast.error('Failed to post comment');
+    }
+  };
+
+  const handleProductVote = async (newVoteCount: number, isUpvoted: boolean) => {
+    if (!session) {
+      toast.error('Please sign in to vote');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/products/${product.id}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ upvoted: isUpvoted })
+      });
+
+      if (response.ok) {
+        setProductVotes(newVoteCount);
+        setIsProductUpvoted(isUpvoted);
+        toast.success(isUpvoted ? 'Upvoted!' : 'Removed upvote');
+      } else {
+        toast.error('Failed to update vote');
+      }
+    } catch (error) {
+      console.error('Error updating vote:', error);
+      toast.error('Failed to update vote');
+    }
+  };
+
+  const handleCommentVote = (commentId: string, newVoteCount: number, isUpvoted: boolean) => {
+    // Update comment votes in local state
+    setComments(prev => prev.map(comment => 
+      comment.id === commentId 
+        ? { ...comment, _count: { ...comment._count, votes: newVoteCount } }
+        : comment
+    ));
+  };
+
+  const handleCommentReply = (commentId: string) => {
+    // Focus on comment input and add @username
+    const comment = comments.find(c => c.id === commentId);
+    if (comment) {
+      setNewComment(`@${comment.user.name || 'Anonymous'} `);
+      // Focus on textarea
+      const textarea = document.querySelector('textarea');
+      if (textarea) {
+        textarea.focus();
+      }
+    }
+  };
+
+  const handleCommentReport = (commentId: string) => {
+    toast.info('Report functionality coming soon!');
+  };
+
+  const handleCommentShare = (commentId: string) => {
+    const commentUrl = `${window.location.href}#comment-${commentId}`;
+    navigator.clipboard.writeText(commentUrl);
+    toast.success('Comment link copied to clipboard!');
+  };
+
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       {/* Hero Section */}
@@ -228,11 +343,76 @@ export function EnhancedProductDetail({ product, onVote, hasVoted }: EnhancedPro
             mainImage={product.image}
             title={product.title}
           />
+          
+          {/* About This Game Section */}
+          <Card className="rounded-2xl shadow-soft mt-6">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">About This Game</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                {product.description}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Comments Section - Right below About This Game */}
+          <Card className="rounded-2xl shadow-soft mt-6">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">
+                Comments ({product._count.comments})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Add Comment */}
+              {session ? (
+                <div className="space-y-3">
+                  <Textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="What do you think? Share your thoughts..."
+                    className="rounded-xl border-border focus:ring-2 focus:ring-ring min-h-[100px]"
+                  />
+                  <div className="flex justify-end">
+                    <Button onClick={handleCommentSubmit} className="rounded-xl">
+                      <Send className="w-4 h-4 mr-2" />
+                      Post Comment
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 border border-dashed border-muted-foreground/30 rounded-xl text-center">
+                  <p className="text-muted-foreground mb-2">Join the conversation</p>
+                  <Button className="rounded-xl">Sign in to comment</Button>
+                </div>
+              )}
+
+              {/* Comments List */}
+              <div className="space-y-4">
+                {comments.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    No comments yet. Be the first to share your thoughts!
+                  </p>
+                ) : (
+                  comments.map((comment) => (
+                    <Comment
+                      key={comment.id}
+                      comment={comment}
+                      onVoteChange={handleCommentVote}
+                      onReply={handleCommentReply}
+                      onReport={handleCommentReport}
+                      onShare={handleCommentShare}
+                    />
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Right Column - Info & Actions */}
         <div className="space-y-6">
-          {/* Game Info Card */}
+                    {/* Game Info Card */}
           <Card className="rounded-2xl shadow-soft">
             <CardHeader className="pb-4">
               <div className="flex items-start justify-between">
@@ -247,12 +427,16 @@ export function EnhancedProductDetail({ product, onVote, hasVoted }: EnhancedPro
                   )}
                 </div>
                 
-                {/* Votes Badge */}
-                <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 rounded-full">
-                  <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
-                  <span className="font-semibold text-amber-700 dark:text-amber-300">
-                    {product._count.votes}
-                  </span>
+                {/* Upvote Button */}
+                <div className="flex items-center gap-2">
+                  <UpvoteButton
+                    initialVotes={productVotes}
+                    isUpvoted={isProductUpvoted}
+                    onVoteChange={handleProductVote}
+                    size="lg"
+                    variant="outline"
+                    className="mr-2"
+                  />
                 </div>
               </div>
             </CardHeader>
@@ -346,7 +530,7 @@ export function EnhancedProductDetail({ product, onVote, hasVoted }: EnhancedPro
                 <div className="flex items-center gap-2">
                   <Star className="w-4 h-4 text-amber-400" />
                   <span className="text-gray-600 dark:text-gray-400">Votes</span>
-                  <span className="font-semibold">{product._count.votes}</span>
+                  <span className="font-semibold">{productVotes}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Heart className="w-4 h-4 text-red-400" />
@@ -366,6 +550,35 @@ export function EnhancedProductDetail({ product, onVote, hasVoted }: EnhancedPro
               </div>
             </CardContent>
           </Card>
+
+          {/* Download Card - Right below Game Stats */}
+          {(product.appStoreUrl || product.playStoreUrl) && (
+            <Card className="rounded-2xl shadow-soft">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold">Download</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-3">
+                  {product.appStoreUrl && (
+                    <Button asChild variant="outline" className="flex-1">
+                      <a href={product.appStoreUrl} target="_blank" rel="noopener noreferrer">
+                        <Download className="w-4 h-4 mr-2" />
+                        App Store
+                      </a>
+                    </Button>
+                  )}
+                  {product.playStoreUrl && (
+                    <Button asChild variant="outline" className="flex-1">
+                      <a href={product.playStoreUrl} target="_blank" rel="noopener noreferrer">
+                        <Download className="w-4 h-4 mr-2" />
+                        Google Play
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Developer Info */}
           <Card className="rounded-2xl shadow-soft">
@@ -393,47 +606,6 @@ export function EnhancedProductDetail({ product, onVote, hasVoted }: EnhancedPro
           <PlaytestClaim gameId={product.id} gameTitle={product.title} />
         </div>
       </div>
-
-      {/* Description Section */}
-      <Card className="rounded-2xl shadow-soft">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold">About This Game</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-            {product.description}
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Store Links */}
-      {(product.appStoreUrl || product.playStoreUrl) && (
-        <Card className="rounded-2xl shadow-soft">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Download</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-3">
-              {product.appStoreUrl && (
-                <Button asChild variant="outline" className="flex-1">
-                  <a href={product.appStoreUrl} target="_blank" rel="noopener noreferrer">
-                    <Download className="w-4 h-4 mr-2" />
-                    App Store
-                  </a>
-                </Button>
-              )}
-              {product.playStoreUrl && (
-                <Button asChild variant="outline" className="flex-1">
-                  <a href={product.playStoreUrl} target="_blank" rel="noopener noreferrer">
-                    <Download className="w-4 h-4 mr-2" />
-                    Google Play
-                  </a>
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Users, Clock, Key } from 'lucide-react';
+import { Plus, Users, Clock, Key, Save, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Playtest {
@@ -54,6 +54,8 @@ export function PlaytestManager({ gameId, gameTitle }: PlaytestManagerProps) {
     quota: 10,
     expiresAt: '',
   });
+  const [apiKey, setApiKey] = useState('');
+  const [savingApiKey, setSavingApiKey] = useState(false);
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -61,12 +63,29 @@ export function PlaytestManager({ gameId, gameTitle }: PlaytestManagerProps) {
     } else if (status === 'unauthenticated') {
       setLoading(false);
     }
+    
+    // Load API key from localStorage
+    const savedApiKey = localStorage.getItem(`playtest-api-key-${gameId}`);
+    if (savedApiKey) {
+      setApiKey(savedApiKey);
+    }
   }, [gameId, status, session]);
 
   const fetchPlaytest = async () => {
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add API key to headers if available
+      const savedApiKey = localStorage.getItem(`playtest-api-key-${gameId}`);
+      if (savedApiKey) {
+        headers['X-Playtest-API-Key'] = savedApiKey;
+      }
+
       const response = await fetch(`/api/playtest?gameId=${gameId}`, {
         credentials: 'include',
+        headers,
       });
       if (response.ok) {
         const data = await response.json();
@@ -79,6 +98,35 @@ export function PlaytestManager({ gameId, gameTitle }: PlaytestManagerProps) {
       console.error('Error fetching playtest:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveApiKey = async () => {
+    if (!apiKey.trim()) {
+      toast.error('Please enter an API key');
+      return;
+    }
+
+    setSavingApiKey(true);
+    try {
+      // Store API key in localStorage
+      localStorage.setItem(`playtest-api-key-${gameId}`, apiKey.trim());
+      toast.success('API key saved successfully');
+      
+      // Refresh playtest data with new API key
+      await fetchPlaytest();
+    } catch (error) {
+      console.error('Error saving API key:', error);
+      toast.error('Failed to save API key');
+    } finally {
+      setSavingApiKey(false);
+    }
+  };
+
+  const handleCopyApiKey = () => {
+    if (apiKey) {
+      navigator.clipboard.writeText(apiKey);
+      toast.success('API key copied to clipboard');
     }
   };
 
@@ -99,11 +147,19 @@ export function PlaytestManager({ gameId, gameTitle }: PlaytestManagerProps) {
         expiresAt: formData.expiresAt || undefined,
       };
 
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add API key to headers if available
+      const savedApiKey = localStorage.getItem(`playtest-api-key-${gameId}`);
+      if (savedApiKey) {
+        headers['X-Playtest-API-Key'] = savedApiKey;
+      }
+
       const response = await fetch('/api/playtest', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         credentials: 'include',
         body: JSON.stringify(requestBody),
       });
@@ -173,6 +229,52 @@ export function PlaytestManager({ gameId, gameTitle }: PlaytestManagerProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {/* API Key Section */}
+        <div className="space-y-3 mb-6">
+          <Label htmlFor="api-key-manager" className="text-sm font-medium">
+            API Key
+          </Label>
+          <div className="flex gap-2">
+            <Input
+              id="api-key-manager"
+              type="password"
+              placeholder="Enter your API key from dashboard"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              className="flex-1"
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleCopyApiKey}
+              disabled={!apiKey}
+              title="Copy API key"
+            >
+              <Copy className="w-4 h-4" />
+            </Button>
+            <Button
+              onClick={handleSaveApiKey}
+              disabled={savingApiKey || !apiKey.trim()}
+              size="sm"
+            >
+              {savingApiKey ? (
+                <>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-3 h-3 mr-2" />
+                  Save
+                </>
+              )}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Copy your API key from your developer dashboard to authenticate your playtest management
+          </p>
+        </div>
+
         {playtest ? (
           <div className="space-y-4">
             {/* Playtest Stats */}

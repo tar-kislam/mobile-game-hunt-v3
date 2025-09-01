@@ -158,12 +158,12 @@ export function PlatformIconsCompact({
 
   return (
     <div className={`flex items-center gap-1 ${className}`}>
-      {platforms.slice(0, 3).map((platformValue) => {
+      {platforms.slice(0, 3).map((platformValue, index) => {
         const platform = PLATFORMS.find(p => p.value === platformValue.toLowerCase());
         
         if (!platform) {
           return (
-            <div key={platformValue} className="w-4 h-4 bg-gray-300 rounded-full flex items-center justify-center">
+            <div key={`${platformValue}-${index}`} className="w-4 h-4 bg-gray-300 rounded-full flex items-center justify-center">
               <Monitor className="w-2 h-2 text-gray-600" />
             </div>
           );
@@ -173,7 +173,7 @@ export function PlatformIconsCompact({
         
         return (
           <div 
-            key={platform.value}
+            key={`${platform.value}-${index}`}
             className={`w-4 h-4 ${platform.bgColor} rounded-full flex items-center justify-center`}
             title={platform.label}
           >

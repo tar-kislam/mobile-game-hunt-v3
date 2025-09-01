@@ -42,25 +42,25 @@ model VerificationToken {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  name          String?
-  email         String         @unique
-  password      String?
-  emailVerified DateTime?
-  image         String?
-  role          UserRole       @default(USER)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  accounts      Account[]
-  comments      Comment[]
-  commentVotes  CommentVote[]
-  follows       Follow[]
-  metrics       Metric[]
-  notifications Notification[]
-  products      Product[]
-  sessions      Session[]
-  votes         Vote[]
+  id             String          @id @default(cuid())
+  name           String?
+  email          String          @unique
+  password       String?
+  emailVerified  DateTime?
+  image          String?
+  role           UserRole        @default(USER)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  accounts       Account[]
+  comments       Comment[]
+  commentVotes   CommentVote[]
+  follows        Follow[]
+  metrics        Metric[]
+  notifications  Notification[]
   playtestClaims PlaytestClaim[]
+  products       Product[]
+  sessions       Session[]
+  votes          Vote[]
 }
 
 model Product {
@@ -87,10 +87,10 @@ model Product {
   comments     Comment[]
   followUsers  Follow[]
   metrics      Metric[]
+  playtests    Playtest[]
+  pressKit     PressKit?
   user         User          @relation(fields: [userId], references: [id])
   votes        Vote[]
-  pressKit     PressKit?
-  playtests    Playtest[]
 }
 
 model Vote {
@@ -164,18 +164,6 @@ model Notification {
   user      User             @relation(fields: [userId], references: [id])
 }
 
-enum UserRole {
-  USER
-  ADMIN
-}
-
-enum NotificationType {
-  COMMENT
-  MENTION
-  PRODUCT_APPROVED
-  UPVOTE
-}
-
 model PressKit {
   id        String   @id @default(cuid())
   gameId    String   @unique
@@ -189,18 +177,18 @@ model PressKit {
 }
 
 model Playtest {
-  id        String   @id @default(cuid())
+  id        String          @id @default(uuid())
   gameId    String
   quota     Int
   expiresAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  product   Product  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  product   Product         @relation(fields: [gameId], references: [id], onDelete: Cascade)
   claims    PlaytestClaim[]
 }
 
 model PlaytestClaim {
-  id         String   @id @default(cuid())
+  id         String   @id @default(uuid())
   playtestId String
   userId     String
   claimedAt  DateTime @default(now())
@@ -208,6 +196,18 @@ model PlaytestClaim {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([playtestId, userId])
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum NotificationType {
+  COMMENT
+  MENTION
+  PRODUCT_APPROVED
+  UPVOTE
 }
 
 enum ProductStatus {

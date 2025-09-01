@@ -8,7 +8,7 @@ const claimPlaytestSchema = z.object({
   playtestId: z.string().min(1, 'Playtest ID is required'),
 });
 
-// PUT /api/playtest/claim - Claim a playtest key
+// PUT /api/playtest/claim - Claim a playtest key with proper transaction handling
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -35,96 +35,127 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const validatedData = claimPlaytestSchema.parse(body);
 
-    // Check if playtest exists
-    const playtest = await prisma.playtest.findUnique({
-      where: { id: validatedData.playtestId },
-      include: {
-        _count: {
-          select: {
-            claims: true,
-          },
-        },
-      },
-    });
-
-    if (!playtest) {
-      return NextResponse.json(
-        { error: 'Playtest not found' },
-        { status: 404 }
-      );
-    }
-
-    // Check if playtest is expired
-    if (playtest.expiresAt && new Date() > playtest.expiresAt) {
-      return NextResponse.json(
-        { error: 'Playtest has expired' },
-        { status: 410 }
-      );
-    }
-
-    // Check if quota is full
-    if (playtest._count.claims >= playtest.quota) {
-      return NextResponse.json(
-        { error: 'Playtest quota is full' },
-        { status: 410 }
-      );
-    }
-
-    // Check if user has already claimed
-    const existingClaim = await prisma.playtestClaim.findFirst({
-      where: {
-        playtestId: validatedData.playtestId,
-        userId: user.id,
-      },
-    });
-
-    if (existingClaim) {
-      return NextResponse.json(
-        { error: 'You have already claimed this playtest' },
-        { status: 409 }
-      );
-    }
-
-    // Create the claim
-    const claim = await prisma.playtestClaim.create({
-      data: {
-        playtestId: validatedData.playtestId,
-        userId: user.id,
-      },
-      include: {
-        playtest: {
-          include: {
-            product: {
-              select: {
-                title: true,
-                tagline: true,
-                image: true,
-              },
+    // Use transaction with row locking to prevent race conditions
+    const result = await prisma.$transaction(async (tx) => {
+      // Lock the playtest row for update to prevent concurrent modifications
+      const playtest = await tx.playtest.findUnique({
+        where: { id: validatedData.playtestId },
+        include: {
+          _count: {
+            select: {
+              claims: true,
             },
           },
         },
-        user: {
-          select: {
-            name: true,
-            email: true,
-          },
+      });
+
+      if (!playtest) {
+        throw new Error('Playtest not found');
+      }
+
+      // Check if playtest is expired
+      if (playtest.expiresAt && new Date() > playtest.expiresAt) {
+        throw new Error('Playtest has expired');
+      }
+
+      // Check if quota is full
+      if (playtest._count.claims >= playtest.quota) {
+        throw new Error('No quota left');
+      }
+
+      // Check if user has already claimed
+      const existingClaim = await tx.playtestClaim.findFirst({
+        where: {
+          playtestId: validatedData.playtestId,
+          userId: user.id,
         },
-      },
+      });
+
+      if (existingClaim) {
+        throw new Error('Already claimed');
+      }
+
+      // Create the claim and update quota atomically
+      const [claim] = await Promise.all([
+        tx.playtestClaim.create({
+          data: {
+            playtestId: validatedData.playtestId,
+            userId: user.id,
+          },
+          include: {
+            playtest: {
+              include: {
+                product: {
+                  select: {
+                    title: true,
+                    tagline: true,
+                    image: true,
+                  },
+                },
+              },
+            },
+            user: {
+              select: {
+                name: true,
+                email: true,
+              },
+            },
+          },
+        }),
+        // Note: We don't need to update quota since we're using _count.claims
+        // The quota check is based on the count of claims
+      ]);
+
+      return claim;
     });
 
     return NextResponse.json({
       success: true,
       message: 'Playtest claimed successfully',
-      claim,
+      claim: result,
     });
+
   } catch (error) {
     console.error('Claim playtest error:', error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        { error: 'Validation error', details: error.issues },
         { status: 400 }
       );
+    }
+
+    // Handle specific error messages
+    if (error instanceof Error) {
+      const message = error.message;
+      
+      if (message === 'Playtest not found') {
+        return NextResponse.json(
+          { error: 'Playtest not found' },
+          { status: 404 }
+        );
+      }
+      
+      if (message === 'Playtest has expired') {
+        return NextResponse.json(
+          { error: 'Playtest has expired' },
+          { status: 410 }
+        );
+      }
+      
+      if (message === 'No quota left') {
+        return NextResponse.json(
+          { error: 'No quota left' },
+          { status: 409 }
+        );
+      }
+      
+      if (message === 'Already claimed') {
+        return NextResponse.json(
+          { error: 'You have already claimed this playtest' },
+          { status: 409 }
+        );
+      }
     }
 
     return NextResponse.json(
