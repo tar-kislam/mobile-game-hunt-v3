@@ -83,7 +83,7 @@ export function MyGamesSection() {
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
         <CardTitle className="text-xl font-bold">🎮 My Games</CardTitle>
         <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
-          <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl">
+          <Button size="sm" className="bg-[rgb(60,41,100)] hover:bg-[rgb(50,31,90)] text-white rounded-2xl">
             <Plus className="w-4 h-4 mr-2" />
             Add Game
           </Button>
@@ -104,7 +104,7 @@ export function MyGamesSection() {
               Share your amazing mobile games with the community! Submit your first game to get started.
             </p>
             <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
-              <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl">
+              <Button className="bg-[rgb(60,41,100)] hover:bg-[rgb(50,31,90)] text-white rounded-2xl">
                 <Plus className="w-4 h-4 mr-2" />
                 Submit Your First Game
               </Button>

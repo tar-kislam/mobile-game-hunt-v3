@@ -146,7 +146,7 @@ export function SubmitGameModal({ children, onGameSubmitted }: SubmitGameModalPr
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {children || (
-          <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white shadow-soft">
+          <Button size="lg" className="bg-[rgb(60,41,100)] hover:bg-[rgb(50,31,90)] text-white shadow-soft">
             <Plus className="w-5 h-5 mr-2" />
             Submit Game
           </Button>
@@ -296,7 +296,7 @@ export function SubmitGameModal({ children, onGameSubmitted }: SubmitGameModalPr
               <Button 
                 type="submit" 
                 disabled={isSubmitting}
-                className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl min-w-[120px]"
+                className="bg-[rgb(60,41,100)] hover:bg-[rgb(50,31,90)] text-white rounded-2xl min-w-[120px]"
               >
                 {isSubmitting ? (
                   <>

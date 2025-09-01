@@ -214,7 +214,7 @@ export default function HomePage() {
                 <h2 className="text-2xl font-bold">🎮 Discover Games</h2>
                 <div className="flex gap-3">
                   <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
-                    <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl">
+                    <Button className="bg-[rgb(60,41,100)] hover:bg-[rgb(50,31,90)] text-white rounded-2xl">
                       Submit Game
                     </Button>
                   </EnhancedSubmitGameModal>
@@ -245,7 +245,7 @@ export default function HomePage() {
                   <h3 className="text-xl font-semibold mb-2">No games yet</h3>
                   <p className="text-muted-foreground mb-4">Be the first to submit a game to the community!</p>
                   <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
-                    <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl">
+                    <Button className="bg-[rgb(60,41,100)] hover:bg-[rgb(50,31,90)] text-white rounded-2xl">
                       Submit First Game
                     </Button>
                   </EnhancedSubmitGameModal>
@@ -303,7 +303,7 @@ export default function HomePage() {
               </CardHeader>
               <CardContent className="p-4 pt-0 space-y-3">
                 <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
-                  <Button className="w-full rounded-2xl bg-orange-500 hover:bg-orange-600 text-white">
+                  <Button className="w-full rounded-2xl bg-[rgb(60,41,100)] hover:bg-[rgb(50,31,90)] text-white">
                     Submit New Game
                   </Button>
                 </EnhancedSubmitGameModal>

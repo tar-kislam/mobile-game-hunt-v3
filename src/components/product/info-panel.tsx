@@ -106,7 +106,7 @@ export function InfoPanel({ product, onVote, hasVoted }: InfoPanelProps) {
       <Card className="rounded-2xl shadow-soft">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-3">
-            <Badge className="bg-orange-500 hover:bg-orange-600 text-white rounded-full">
+            <Badge className="bg-[rgb(60,41,100)] hover:bg-[rgb(50,31,90)] text-white rounded-full">
               Launching today
             </Badge>
             <Badge variant="outline" className="rounded-full">
@@ -119,7 +119,7 @@ export function InfoPanel({ product, onVote, hasVoted }: InfoPanelProps) {
             onClick={onVote}
             disabled={hasVoted}
             className={`w-full rounded-xl py-6 flex items-center justify-center gap-2 text-lg font-semibold ${
-              hasVoted ? 'bg-orange-500 hover:bg-orange-600' : ''
+              hasVoted ? 'bg-[rgb(60,41,100)] hover:bg-[rgb(50,31,90)]' : ''
             }`}
           >
             <ArrowUpIcon className="w-5 h-5" />

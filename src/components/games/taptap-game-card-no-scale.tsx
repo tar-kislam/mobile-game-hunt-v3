@@ -89,7 +89,7 @@ export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTa
           <div className="absolute top-2 right-2">
             <Badge 
               variant="secondary" 
-              className="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm"
+              className="bg-[rgb(60,41,100)] text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm"
             >
               ⭐ {(Math.random() * 2 + 3).toFixed(1)}
             </Badge>
