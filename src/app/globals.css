@@ -158,13 +158,13 @@
 
 /* ShinyText theme-adaptive styles */
 .shiny-text-light {
-  color: rgba(60, 41, 100, 1);
-  background-image: linear-gradient(120deg, rgba(60, 41, 100, 0.8) 40%, rgba(80, 61, 120, 1) 50%, rgba(60, 41, 100, 0.8) 60%);
+  color: white;
+  background-image: linear-gradient(120deg, rgba(255, 255, 255, 0.8) 40%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0.8) 60%);
 }
 
 .shiny-text-dark {
-  color: rgba(60, 41, 100, 1);
-  background-image: linear-gradient(120deg, rgba(60, 41, 100, 0.9) 40%, rgba(80, 61, 120, 1) 50%, rgba(60, 41, 100, 0.9) 60%);
+  color: white;
+  background-image: linear-gradient(120deg, rgba(255, 255, 255, 0.8) 40%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0.8) 60%);
 }
 
 .dark .featured-games-scroll::-webkit-scrollbar-thumb {

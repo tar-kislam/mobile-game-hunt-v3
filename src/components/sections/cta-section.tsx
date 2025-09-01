@@ -8,6 +8,7 @@ import FuzzyText from '@/components/effects/fuzzy-text'
 import ShinyText from '@/components/ui/shiny-text'
 import { toast } from 'sonner'
 
+
 export function CTASection() {
   const [email, setEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -95,36 +96,64 @@ export function CTASection() {
 
           {/* CTA Message */}
           <div className="space-y-6">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-foreground leading-tight" style={{ fontFamily: "'Roboto Mono', monospace" }}>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-foreground leading-tight mb-8" style={{ fontFamily: "'Roboto Mono', monospace" }}>
               Be part of the beginning.{' '}
               <span className="text-primary">Join our early community</span>{' '}
-              and help shape the future.
+              and help shape the future of Mobile Game Hunt.
             </h2>
             
-            {/* Email Form */}
-            <form onSubmit={handleSubmit} className="w-full max-w-lg mx-auto">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Input
+            {/* Futuristic Email Form */}
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 items-center w-full max-w-lg mx-auto">
+              <div 
+                className="w-full flex-1 p-1 rounded-md relative animate-pulse"
+                style={{
+                  background: 'linear-gradient(45deg, rgba(177, 158, 239, 0.3), rgba(177, 158, 239, 0.1))',
+                  borderRadius: '8px',
+                  boxShadow: '0 0 20px rgba(177, 158, 239, 0.3), inset 0 0 20px rgba(177, 158, 239, 0.1)',
+                  border: '1px solid rgba(177, 158, 239, 0.4)',
+                  animation: 'pulse 2s infinite',
+                }}
+              >
+                {/* Corner decorations */}
+                <div className="absolute top-0 left-0 w-3 h-3 border-l-2 border-t-2 border-purple-400 animate-pulse"></div>
+                <div className="absolute top-0 right-0 w-3 h-3 border-r-2 border-t-2 border-purple-400 animate-pulse"></div>
+                <div className="absolute bottom-0 left-0 w-3 h-3 border-l-2 border-b-2 border-purple-400 animate-pulse"></div>
+                <div className="absolute bottom-0 right-0 w-3 h-3 border-r-2 border-b-2 border-purple-400 animate-pulse"></div>
+                
+                <input
                   type="email"
-                  placeholder="Enter your email address"
+                  placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 bg-background/90 border-2 border-muted-foreground/20 text-foreground placeholder:text-muted-foreground focus:border-primary focus:bg-background transition-all duration-200 backdrop-blur-sm text-base py-3"
                   disabled={isSubmitting}
+                  className="w-full p-3 bg-transparent outline-none text-white placeholder:text-gray-300 rounded-md focus:shadow-[0_0_25px_rgba(177,158,239,0.8)] hover:shadow-[0_0_15px_rgba(177,158,239,0.4)] transition-all duration-500"
+                  style={{
+                    background: 'rgba(0, 0, 0, 0.5)',
+                    border: 'none',
+                    backdropFilter: 'blur(15px)',
+                  }}
+                  required
                 />
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-8 py-3 bg-primary hover:bg-primary/90 font-semibold transition-all duration-200 shadow-lg hover:shadow-xl text-base"
-                >
-                  <ShinyText 
-                    text={isSubmitting ? 'Joining...' : 'Join Now'} 
-                    disabled={isSubmitting} 
-                    speed={3} 
-                    className="cta-button" 
-                  />
-                </Button>
               </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-8 py-3 font-bold rounded-md transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(177,158,239,0.8)] focus:outline-none focus:ring-2 focus:ring-purple-400 active:scale-95 text-white"
+                style={{
+                  background: 'rgba(60, 41, 100, 1)',
+                  border: '1px solid rgba(177, 158, 239, 0.5)',
+                  boxShadow: '0 0 15px rgba(177, 158, 239, 0.4)',
+                  backdropFilter: 'blur(10px)',
+                }}
+              >
+                <ShinyText 
+                  text={isSubmitting ? 'Joining...' : 'Join Now'} 
+                  disabled={isSubmitting} 
+                  speed={3} 
+                  className="cta-button" 
+                />
+              </button>
             </form>
             
             {/* Additional text */}
