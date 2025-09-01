@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { PrismaClient } from '@prisma/client'
+
 import { z } from "zod"
 
-// Use development database connection
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: "postgresql://postgres:password@localhost:5432/mobile_game_hunt_dev",
-    },
-  },
-})
+// Use the global Prisma instance
+import { prisma } from '@/lib/prisma'
 
 // Validation schema for product submission
 const createProductSchema = z.object({

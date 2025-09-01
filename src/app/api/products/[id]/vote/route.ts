@@ -1,16 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { PrismaClient } from '@prisma/client'
-
-// Use development database connection
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: "postgresql://postgres:password@localhost:5432/mobile_game_hunt_dev",
-    },
-  },
-})
+import { prisma } from '@/lib/prisma'
 
 export async function POST(
   request: NextRequest,

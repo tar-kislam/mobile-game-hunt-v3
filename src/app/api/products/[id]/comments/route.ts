@@ -1,17 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
-
-// Use development database connection
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: "postgresql://postgres:password@localhost:5432/mobile_game_hunt_dev",
-    },
-  },
-})
+import { prisma } from '@/lib/prisma'
 
 const createCommentSchema = z.object({
   content: z.string().min(1, 'Comment cannot be empty').max(1000, 'Comment too long'),
