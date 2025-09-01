@@ -23,6 +23,7 @@ import {
 import { toast } from "sonner"
 import { MediaCarousel } from "@/components/product/media-carousel"
 import { InfoPanel } from "@/components/product/info-panel"
+import { EnhancedProductDetail } from "@/components/product/enhanced-product-detail"
 
 interface Product {
   id: string
@@ -38,6 +39,9 @@ interface Product {
   playStoreUrl?: string | null
   socialLinks?: any
   createdAt: string
+  releaseAt?: string | null
+  clicks: number
+  follows: number
   user: {
     id: string
     name: string | null
@@ -125,7 +129,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       if (response.ok) {
         const data = await response.json()
         // Filter out current product
-        setRelatedProducts(data.filter((p: Product) => p.id !== resolvedParams?.id).slice(0, 3))
+        const filtered = data.filter((p: Product) => p.id !== resolvedParams?.id)
+        setRelatedProducts(filtered.slice(0, 3))
       }
     } catch (error) {
       console.error('Error fetching related products:', error)
@@ -138,20 +143,30 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       return
     }
 
-    if (!resolvedParams?.id) return
+    if (!product) return
 
     try {
-      const response = await fetch(`/api/products/${resolvedParams.id}/vote`, {
+      const response = await fetch(`/api/products/${product.id}/vote`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
       })
-      
+
       if (response.ok) {
-        toast.success('Vote recorded!')
-        fetchProduct() // Refresh to get updated vote count
-        setHasVoted(true)
-      } else {
         const data = await response.json()
-        toast.error(data.error || 'Failed to vote')
+        setHasVoted(data.voted)
+        
+        // Update product vote count
+        setProduct(prev => prev ? {
+          ...prev,
+          _count: {
+            ...prev._count,
+            votes: data.voted ? prev._count.votes + 1 : prev._count.votes - 1
+          }
+        } : null)
+        
+        toast.success(data.message)
+      } else {
+        toast.error('Failed to vote')
       }
     } catch (error) {
       console.error('Error voting:', error)
@@ -160,35 +175,32 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   }
 
   const handleCommentSubmit = async () => {
-    if (!session) {
-      toast.error('Please sign in to comment')
-      return
-    }
-
-    if (!newComment.trim()) {
-      toast.error('Please enter a comment')
-      return
-    }
-
-    if (!resolvedParams?.id) return
+    if (!session || !product || !newComment.trim()) return
 
     try {
-      const response = await fetch(`/api/products/${resolvedParams.id}/comments`, {
+      const response = await fetch(`/api/products/${product.id}/comments`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: newComment.trim() }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: newComment })
       })
 
       if (response.ok) {
-        toast.success('Comment posted!')
-        setNewComment('')
-        fetchComments()
-        fetchProduct() // Refresh to get updated comment count
-      } else {
         const data = await response.json()
-        toast.error(data.error || 'Failed to post comment')
+        setComments(prev => [data, ...prev])
+        setNewComment("")
+        
+        // Update comment count
+        setProduct(prev => prev ? {
+          ...prev,
+          _count: {
+            ...prev._count,
+            comments: prev._count.comments + 1
+          }
+        } : null)
+        
+        toast.success('Comment posted successfully!')
+      } else {
+        toast.error('Failed to post comment')
       }
     } catch (error) {
       console.error('Error posting comment:', error)
@@ -244,185 +256,86 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           </Link>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Media Carousel - Left Side */}
-          <div className="lg:col-span-2">
-            <MediaCarousel 
-              images={[
-                ...(product.images && product.images.length > 0 ? product.images : []),
-                ...(product.image && !product.images?.includes(product.image) ? [product.image] : [])
-              ].filter(Boolean)}
-              video={product.video}
-              title={product.title}
-            />
-            
-            {/* Product Info Below Carousel */}
-            <div className="mt-8">
-              {/* Title and Basic Info */}
-              <div className="mb-6">
-                <h1 className="text-2xl lg:text-3xl font-bold mb-2">{product.title}</h1>
-                {product.tagline && (
-                  <p className="text-lg text-muted-foreground mb-4">{product.tagline}</p>
-                )}
-                
-                {/* Maker Info */}
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="w-6 h-6">
-                      <AvatarImage src={product.user.image || undefined} />
-                      <AvatarFallback className="text-xs">
-                        {product.user.name?.[0]?.toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>by {product.user.name || 'Anonymous'}</span>
-                  </div>
-                  <span>•</span>
-                  <div className="flex items-center gap-1">
-                    <CalendarIcon className="w-3 h-3" />
-                    <span>{new Date(product.createdAt).toLocaleDateString()}</span>
+        <EnhancedProductDetail 
+          product={product}
+          onVote={handleVote}
+          hasVoted={hasVoted}
+        />
+
+        {/* Comments Section */}
+        <div className="mt-8">
+          <Card className="rounded-2xl shadow-lg border-white/10">
+            <CardContent className="p-6">
+              <h2 className="text-xl font-semibold mb-4">
+                Comments ({product._count.comments})
+              </h2>
+
+              {/* Add Comment */}
+              {session ? (
+                <div className="mb-6 space-y-3">
+                  <Textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="What do you think? Share your thoughts..."
+                    className="rounded-xl border-border focus:ring-2 focus:ring-ring min-h-[100px]"
+                  />
+                  <div className="flex justify-end">
+                    <Button onClick={handleCommentSubmit} className="rounded-xl">
+                      Post Comment
+                    </Button>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="mb-6 p-4 border border-dashed border-muted-foreground/30 rounded-xl text-center">
+                  <p className="text-muted-foreground mb-2">Join the conversation</p>
+                  <Link href="/auth/signin">
+                    <Button className="rounded-xl">Sign in to comment</Button>
+                  </Link>
+                </div>
+              )}
 
-              {/* Description */}
-              <Card className="rounded-2xl shadow-lg border-white/10 mb-6">
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-semibold mb-4">About {product.title}</h2>
-                  <p className="text-muted-foreground leading-relaxed">{product.description}</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Comments Section */}
-            <Card className="rounded-2xl shadow-lg border-white/10">
-              <CardContent className="p-6">
-                <h2 className="text-xl font-semibold mb-4">
-                  Comments ({product._count.comments})
-                </h2>
-
-                {/* Add Comment */}
-                {session ? (
-                  <div className="mb-6 space-y-3">
-                    <Textarea
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="What do you think? Share your thoughts..."
-                      className="rounded-xl border-border focus:ring-2 focus:ring-ring min-h-[100px]"
-                    />
-                    <div className="flex justify-end">
-                      <Button onClick={handleCommentSubmit} className="rounded-xl">
-                        Post Comment
-                      </Button>
-                    </div>
-                  </div>
+              {/* Comments List */}
+              <div className="space-y-4">
+                {comments.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    No comments yet. Be the first to share your thoughts!
+                  </p>
                 ) : (
-                  <div className="mb-6 p-4 border border-dashed border-muted-foreground/30 rounded-xl text-center">
-                    <p className="text-muted-foreground mb-2">Join the conversation</p>
-                    <Link href="/auth/signin">
-                      <Button className="rounded-xl">Sign in to comment</Button>
-                    </Link>
-                  </div>
-                )}
-
-                {/* Comments List */}
-                <div className="space-y-4">
-                  {comments.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-8">
-                      No comments yet. Be the first to share your thoughts!
-                    </p>
-                  ) : (
-                    comments.map((comment) => (
-                      <div key={comment.id} className="flex gap-3 p-4 rounded-xl bg-muted/30">
-                        <Avatar className="w-10 h-10 flex-shrink-0">
-                          <AvatarImage src={comment.user.image || undefined} />
-                          <AvatarFallback>
-                            {comment.user.name?.[0]?.toUpperCase() || 'U'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm">
-                                {comment.user.name || 'Anonymous'}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(comment.createdAt).toLocaleDateString()}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                <ArrowUpIcon className="w-3 h-3" />
-                              </Button>
-                              <span className="text-xs">{comment._count.votes}</span>
-                            </div>
+                  comments.map((comment) => (
+                    <div key={comment.id} className="flex gap-3 p-4 rounded-xl bg-muted/30">
+                      <Avatar className="w-10 h-10 flex-shrink-0">
+                        <AvatarImage src={comment.user.image || undefined} />
+                        <AvatarFallback>
+                          {comment.user.name?.[0]?.toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">
+                              {comment.user.name || 'Anonymous'}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(comment.createdAt).toLocaleDateString()}
+                            </span>
                           </div>
-                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                            {comment.content}
-                          </p>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                              <ArrowUpIcon className="w-3 h-3" />
+                            </Button>
+                            <span className="text-xs">{comment._count.votes}</span>
+                          </div>
                         </div>
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                          {comment.content}
+                        </p>
                       </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Info Panel - Right Side */}
-          <div className="lg:col-span-1">
-            <div className="lg:sticky lg:top-6">
-              <InfoPanel 
-                product={product}
-                onVote={handleVote}
-                hasVoted={hasVoted}
-              />
-              
-              {/* Related Products */}
-              <Card className="rounded-2xl shadow-lg border-white/10 mt-6">
-                <CardContent className="p-6">
-                  <h3 className="font-semibold mb-4">Related games</h3>
-                  <div className="space-y-3">
-                    {relatedProducts.map((game) => (
-                      <Link key={game.id} href={`/product/${game.id}`} className="block">
-                        <div className="flex gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors">
-                          <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100 flex-shrink-0">
-                            {game.image ? (
-                              <Image
-                                src={game.image}
-                                alt={game.title}
-                                fill
-                                className="object-cover"
-                                sizes="48px"
-                                unoptimized={true}
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement
-                                  target.onerror = null
-                                  target.style.display = 'none'
-                                }}
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-lg">
-                                🎮
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm truncate">{game.title}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {game.platforms?.map(platform => platform.toUpperCase()).join(', ') || 'No platforms listed'}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {game._count.votes} votes
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

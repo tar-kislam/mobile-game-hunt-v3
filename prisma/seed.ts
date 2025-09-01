@@ -50,6 +50,9 @@ async function main() {
       url: 'https://clashofclans.com',
       image: 'https://images.unsplash.com/photo-1556438064-2d7646166914?w=400',
       platforms: ['ios', 'android'],
+      countries: ['US', 'UK', 'CA'],
+      status: 'PUBLISHED',
+      releaseAt: new Date('2025-09-15T10:00:00Z'),
       userId: user1.id,
     },
   })
@@ -59,8 +62,11 @@ async function main() {
       title: 'Pokemon GO',
       description: 'Augmented reality mobile game that lets you catch Pokemon in the real world.',
       url: 'https://pokemongo.com',
-      image: 'https://images.unsplash.com/photo-1606503153255-59d8b8b91448?w=400',
+      image: 'https://images.unsplash.com/photo-1606503153255-598b8b91448?w=400',
       platforms: ['ios', 'android'],
+      countries: ['US', 'JP', 'AU'],
+      status: 'PUBLISHED',
+      releaseAt: new Date('2025-09-20T14:00:00Z'),
       userId: user2.id,
     },
   })
@@ -72,6 +78,9 @@ async function main() {
       url: 'https://todoist.com',
       image: 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400',
       platforms: ['ios', 'android', 'web'],
+      countries: ['US', 'UK', 'DE', 'FR'],
+      status: 'PUBLISHED',
+      releaseAt: new Date('2025-09-25T09:00:00Z'),
       userId: adminUser.id,
     },
   })

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowUpRight, Heart, MessageCircle, ExternalLink } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { PlatformIcons } from "@/components/ui/platform-icons"
 // import { formatDistanceToNow } from "date-fns" // Temporarily commented
 
 interface Game {
@@ -74,17 +75,13 @@ export function GameCard({ game, onVote, showAuthor = true }: GameCardProps) {
           <div className="text-6xl">🎮</div>
         </div>
         
-        {/* Category Badge */}
+        {/* Platform Icons */}
         <div className="absolute top-2 left-2">
-          <Badge 
-            variant="secondary" 
-            className="bg-white/20 text-white text-xs px-2 py-1 rounded-md font-medium border-0 backdrop-blur-sm"
-          >
-            {game.platforms && game.platforms.length > 0 
-              ? game.platforms.map(platform => platform.toUpperCase()).join(', ')
-              : 'No platforms listed'
-            }
-          </Badge>
+          <PlatformIcons 
+            platforms={game.platforms || []} 
+            size="sm" 
+            className="backdrop-blur-sm"
+          />
         </div>
 
         {/* External Link Button */}

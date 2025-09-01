@@ -27,7 +27,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { PlusIcon, XIcon, ImageIcon, VideoIcon, Smartphone, Monitor } from "lucide-react"
+import { PlusIcon, XIcon, ImageIcon, VideoIcon } from "lucide-react"
+import { PlatformPicker } from "@/components/ui/platform-picker"
 
 const gameSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
@@ -41,16 +42,12 @@ const gameSchema = z.object({
   playStoreUrl: z.string().url("Please enter a valid Play Store URL").optional().or(z.literal("")),
   twitterUrl: z.string().url("Please enter a valid Twitter URL").optional().or(z.literal("")),
   platforms: z.array(z.string()).min(1, "At least one platform is required"),
+  releaseAt: z.string().optional(),
 })
 
 type GameFormData = z.infer<typeof gameSchema>
 
-// Platform options with icons
-const platformOptions = [
-  { value: 'ios', label: 'iOS', icon: Smartphone, color: 'bg-black' },
-  { value: 'android', label: 'Android', icon: Smartphone, color: 'bg-green-600' },
-  { value: 'web', label: 'Web', icon: Monitor, color: 'bg-blue-600' },
-]
+
 
 interface EnhancedSubmitGameModalProps {
   children: React.ReactNode
@@ -79,6 +76,7 @@ export function EnhancedSubmitGameModal({ children, onGameSubmitted }: EnhancedS
       playStoreUrl: "",
       twitterUrl: "",
       platforms: [],
+      releaseAt: "",
     },
   })
 
@@ -235,34 +233,11 @@ export function EnhancedSubmitGameModal({ children, onGameSubmitted }: EnhancedS
               />
 
               {/* Platform Selection */}
-              <div className="space-y-3">
-                <FormLabel>Platforms *</FormLabel>
-                <div className="flex flex-wrap gap-3">
-                  {platformOptions.map((platform) => {
-                    const IconComponent = platform.icon
-                    const isSelected = selectedPlatforms.includes(platform.value)
-                    return (
-                      <button
-                        key={platform.value}
-                        type="button"
-                        onClick={() => togglePlatform(platform.value)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all duration-200 ${
-                          isSelected
-                            ? `${platform.color} text-white border-transparent`
-                            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-                        }`}
-                      >
-                        <IconComponent className="w-4 h-4" />
-                        <span className="font-medium">{platform.label}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-                {selectedPlatforms.length === 0 && (
-                  <p className="text-sm text-red-500">Please select at least one platform</p>
-                )}
-                <FormMessage />
-              </div>
+              <PlatformPicker
+                selectedPlatforms={selectedPlatforms}
+                onPlatformsChange={setSelectedPlatforms}
+                maxSelection={5}
+              />
             </div>
 
             {/* Media */}
@@ -392,6 +367,24 @@ export function EnhancedSubmitGameModal({ children, onGameSubmitted }: EnhancedS
                   )}
                 />
               </div>
+
+              <FormField
+                control={form.control}
+                name="releaseAt"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Release Date (optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="datetime-local" 
+                        placeholder="Select release date and time"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}

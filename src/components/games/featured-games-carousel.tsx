@@ -8,6 +8,7 @@ import { Star, Play, Smartphone, Monitor } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { PlatformIcons } from "@/components/ui/platform-icons"
 
 interface FeaturedGame {
   id: string
@@ -187,23 +188,11 @@ function HeroGameCard({ game, onClick }: HeroGameCardProps) {
               </Button>
               
               {/* Platform Icons */}
-              <div className="flex items-center gap-2">
-                {platforms.includes('ios') && (
-                  <div className="w-6 h-6 bg-black rounded-md flex items-center justify-center">
-                    <Smartphone className="w-4 h-4 text-white" />
-                  </div>
-                )}
-                {platforms.includes('android') && (
-                  <div className="w-6 h-6 bg-green-600 rounded-md flex items-center justify-center">
-                    <Smartphone className="w-4 h-4 text-white" />
-                  </div>
-                )}
-                {platforms.includes('web') && (
-                  <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
-                    <Monitor className="w-4 h-4 text-white" />
-                  </div>
-                )}
-              </div>
+              <PlatformIcons 
+                platforms={platforms} 
+                size="sm" 
+                className="flex-shrink-0"
+              />
               
               {/* Votes Display */}
               <div className="flex items-center gap-2 text-sm text-gray-300 dark:text-gray-400">

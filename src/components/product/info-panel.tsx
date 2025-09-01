@@ -22,6 +22,7 @@ import {
   Globe
 } from "lucide-react"
 import { toast } from "sonner"
+import { PlatformIcons } from "@/components/ui/platform-icons"
 
 interface Product {
   id: string
@@ -233,13 +234,11 @@ export function InfoPanel({ product, onVote, hasVoted }: InfoPanelProps) {
             
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">Platforms:</span>
-              <div className="flex gap-1">
-                {(product.platforms || []).map((platform) => (
-                  <Badge key={platform} variant="secondary" className="text-xs">
-                    {platform.toUpperCase()}
-                  </Badge>
-                ))}
-              </div>
+              <PlatformIcons 
+                platforms={product.platforms || []} 
+                size="sm" 
+                showLabels={true}
+              />
             </div>
             
             <Separator />

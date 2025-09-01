@@ -21,7 +21,13 @@ const createProductSchema = z.object({
   socialLinks: z.object({
     twitter: z.string().url("Please enter a valid Twitter URL").optional()
   }).optional(),
-  platforms: z.array(z.string()).min(1, "At least one platform is required"),
+  platforms: z.array(z.string()).min(1, "At least one platform is required").refine(
+    (platforms) => platforms.every(platform => 
+      ['ios', 'android', 'web', 'windows', 'mac', 'switch', 'ps5', 'xbox', 'tablet'].includes(platform.toLowerCase())
+    ),
+    "Invalid platform selected"
+  ),
+  releaseAt: z.string().optional(),
 })
 
 // GET /api/products - Fetch all products or user-specific products
@@ -42,6 +48,13 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             image: true,
+          }
+        },
+        pressKit: {
+          select: {
+            id: true,
+            headline: true,
+            updatedAt: true,
           }
         },
         _count: {

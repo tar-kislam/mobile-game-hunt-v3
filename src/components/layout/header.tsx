@@ -19,11 +19,18 @@ import PillNav from "@/components/ui/pill-nav"
 export function Header() {
   const { data: session, status } = useSession()
 
-  const navItems = [
+  const baseNavItems = [
     { label: "Home", href: "/" },
     { label: "All Games", href: "/products" },
+    { label: "Leaderboard", href: "/leaderboard" },
+    { label: "Calendar", href: "/calendar" },
     { label: "Submit", href: "/submit" }
   ]
+
+  const navItems = session ? [
+    ...baseNavItems,
+    { label: "Dashboard", href: "/dashboard" }
+  ] : baseNavItems
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
