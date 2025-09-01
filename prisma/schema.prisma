@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,22 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// NextAuth.js required tables
 model Account {
   id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -49,55 +41,44 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// App-specific models
-enum UserRole {
-  USER
-  ADMIN
-}
-
 model User {
-  id            String    @id @default(cuid())
+  id            String         @id @default(cuid())
   name          String?
-  email         String    @unique
-  password      String?   // nullable for OAuth users
+  email         String         @unique
+  password      String?
   emailVerified DateTime?
   image         String?
-  role          UserRole  @default(USER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // NextAuth.js relations
-  accounts Account[]
-  sessions Session[]
-
-  // App relations
-  products      Product[]
-  votes         Vote[]
+  role          UserRole       @default(USER)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  accounts      Account[]
   comments      Comment[]
   commentVotes  CommentVote[]
   notifications Notification[]
+  products      Product[]
+  sessions      Session[]
+  votes         Vote[]
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  title       String
-  tagline     String?  // Added tagline field for Submit Game feature
-  description String   @db.Text
-  url         String   // Changed from 'link' to 'url' as requested
-  image       String?  // Main image for backward compatibility
-  images      String[] // Array of image URLs for carousel
-  video       String?  // Optional video URL
-  platforms   String[] // Array of platform names (e.g., ["ios", "android", "web"])
-  userId      String
-  appStoreUrl String?  // App Store link
-  playStoreUrl String? // Play Store link
-  socialLinks Json?    // Social media links (Twitter, etc.)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user     User     @relation(fields: [userId], references: [id])
-  votes    Vote[]
-  comments Comment[]
+  id           String    @id @default(cuid())
+  title        String
+  description  String
+  url          String
+  image        String?
+  userId       String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  tagline      String?
+  appStoreUrl  String?
+  images       String[]
+  platforms    String[]
+  playStoreUrl String?
+  socialLinks  Json?
+  video        String?
+  comments     Comment[]
+  user         User      @relation(fields: [userId], references: [id])
+  votes        Vote[]
 }
 
 model Vote {
@@ -105,27 +86,25 @@ model Vote {
   userId    String
   productId String
   createdAt DateTime @default(now())
-
-  user    User    @relation(fields: [userId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, productId])
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  content   String   @db.Text // Changed from 'body' to 'content' as requested
-  parentId  String?  // for nested comments
+  id        String        @id @default(cuid())
+  content   String
+  parentId  String?
   productId String
   userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  parent   Comment?      @relation("CommentReplies", fields: [parentId], references: [id])
-  replies  Comment[]     @relation("CommentReplies")
-  product  Product       @relation(fields: [productId], references: [id])
-  user     User          @relation(fields: [userId], references: [id])
-  votes    CommentVote[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  parent    Comment?      @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[]     @relation("CommentReplies")
+  product   Product       @relation(fields: [productId], references: [id])
+  user      User          @relation(fields: [userId], references: [id])
+  votes     CommentVote[]
 }
 
 model CommentVote {
@@ -133,11 +112,25 @@ model CommentVote {
   userId    String
   commentId String
   createdAt DateTime @default(now())
-
-  user    User    @relation(fields: [userId], references: [id])
-  comment Comment @relation(fields: [commentId], references: [id])
+  comment   Comment  @relation(fields: [commentId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, commentId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  userId    String
+  entityId  String
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id])
+}
+
+enum UserRole {
+  USER
+  ADMIN
 }
 
 enum NotificationType {
@@ -145,15 +138,4 @@ enum NotificationType {
   MENTION
   PRODUCT_APPROVED
   UPVOTE
-}
-
-model Notification {
-  id       String           @id @default(cuid())
-  type     NotificationType
-  userId   String
-  entityId String // reference to the related entity (comment, product, etc.)
-  read     Boolean          @default(false)
-  createdAt DateTime        @default(now())
-
-  user User @relation(fields: [userId], references: [id])
 }
