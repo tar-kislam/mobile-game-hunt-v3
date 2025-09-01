@@ -7,11 +7,14 @@ import PixelBlast from '@/components/effects/pixel-blast'
 import FuzzyText from '@/components/effects/fuzzy-text'
 import ShinyText from '@/components/ui/shiny-text'
 import { toast } from 'sonner'
+import { useTheme } from 'next-themes'
 
 
 export function CTASection() {
+  const { resolvedTheme } = useTheme()
   const [email, setEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const brandColor = resolvedTheme === 'dark' ? '#ffffff' : '#000000'
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -81,7 +84,7 @@ export function CTASection() {
               <FuzzyText
                 fontSize="clamp(2rem, 8vw, 6rem)"
                 fontWeight={900}
-                color="#ffffff"
+                color={brandColor}
                 enableHover={true}
                 baseIntensity={0.2}
                 hoverIntensity={0.5}
