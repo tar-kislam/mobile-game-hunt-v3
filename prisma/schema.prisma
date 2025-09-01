@@ -78,13 +78,6 @@ model User {
   notifications Notification[]
 }
 
-model Category {
-  id       String    @id @default(cuid())
-  name     String    @unique
-  slug     String    @unique
-  products Product[]
-}
-
 model Product {
   id          String   @id @default(cuid())
   title       String
@@ -94,7 +87,7 @@ model Product {
   image       String?  // Main image for backward compatibility
   images      String[] // Array of image URLs for carousel
   video       String?  // Optional video URL
-  categoryId  String
+  platforms   String[] // Array of platform names (e.g., ["ios", "android", "web"])
   userId      String
   appStoreUrl String?  // App Store link
   playStoreUrl String? // Play Store link
@@ -102,7 +95,6 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  category Category @relation(fields: [categoryId], references: [id])
   user     User     @relation(fields: [userId], references: [id])
   votes    Vote[]
   comments Comment[]

@@ -30,25 +30,37 @@ const userStats = {
 const userGames = [
   {
     id: "1",
-    title: "My Awesome Game",
-    description: "A fantastic puzzle game with unique mechanics",
-    image: "https://images.unsplash.com/photo-1556438064-2d7646166914?w=200&h=150&fit=crop",
-    votes: 45,
-    comments: 12,
-    category: "Puzzle",
-    status: "Live",
-    createdAt: "2024-01-20"
+    title: "Clash of Clans",
+    description: "A popular strategy mobile game where you build and defend your village.",
+    image: "https://images.unsplash.com/photo-1556438064-2d7646166914?w=400&h=300&fit=crop",
+    votes: 152,
+    comments: 23,
+    url: "https://clashofclans.com",
+    platforms: ["ios", "android"],
+    maker: {
+      name: "Supercell",
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
+    }
   },
   {
-    id: "2", 
-    title: "Adventure Quest",
-    description: "Epic adventure game with stunning visuals",
-    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=150&fit=crop",
-    votes: 23,
-    comments: 8,
-    category: "Adventure", 
-    status: "Live",
-    createdAt: "2024-01-15"
+    id: "2",
+    title: "Pokemon GO",
+    description: "Augmented reality mobile game that lets you catch Pokemon in the real world.",
+    image: "https://images.unsplash.com/photo-1606503153255-59d8b8b91448?w=300&h=200&fit=crop",
+    votes: 89,
+    comments: 15,
+    platforms: ["ios", "android"],
+    maker: { name: "Niantic", avatar: "" }
+  },
+  {
+    id: "3",
+    title: "Genshin Impact",
+    description: "Open-world action RPG with gacha mechanics and stunning visuals.",
+    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=300&h=200&fit=crop",
+    votes: 134,
+    comments: 28,
+    platforms: ["ios", "android", "web"],
+    maker: { name: "miHoYo", avatar: "" }
   }
 ]
 
@@ -57,19 +69,28 @@ const userVotes = [
     id: "1",
     game: {
       title: "Clash of Clans",
-      image: "https://images.unsplash.com/photo-1556438064-2d7646166914?w=200&h=150&fit=crop",
-      category: "Strategy"
+      platforms: ["ios", "android"],
+      votes: 152,
+      comments: 23,
+      url: "https://clashofclans.com",
+      maker: {
+        name: "Supercell",
+        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
+      }
     },
-    votedAt: "2024-01-22"
+    votedAt: "2024-01-15T10:30:00Z"
   },
   {
     id: "2",
     game: {
-      title: "Pokemon GO", 
-      image: "https://images.unsplash.com/photo-1606503153255-59d8b8b91448?w=200&h=150&fit=crop",
-      category: "AR"
+      title: "Pokemon GO",
+      platforms: ["ios", "android"],
+      votes: 89,
+      comments: 15,
+      url: "https://pokemongo.com",
+      maker: { name: "Niantic", avatar: "" }
     },
-    votedAt: "2024-01-21"
+    votedAt: "2024-01-14T15:45:00Z"
   }
 ]
 
@@ -158,9 +179,6 @@ export default function ProfilePage() {
                           <CalendarIcon className="h-4 w-4" />
                           Joined {userStats.joinDate}
                         </div>
-                        {session?.user?.role === "ADMIN" && (
-                          <Badge className="rounded-2xl">Admin</Badge>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -244,27 +262,21 @@ export default function ProfilePage() {
                           <div className="flex items-start justify-between mb-2">
                             <div>
                               <Link href={`/product/${game.id}`} className="hover:underline">
-                                <h3 className="font-semibold">{game.title}</h3>
+                                <h3 className="font-semibold text-sm leading-tight">
+                                  {game.title}
+                                </h3>
                               </Link>
                               <p className="text-sm text-muted-foreground line-clamp-2">
                                 {game.description}
                               </p>
                             </div>
-                            <Badge 
-                              variant={game.status === "Live" ? "default" : "secondary"} 
-                              className="rounded-2xl"
-                            >
-                              {game.status}
-                            </Badge>
                           </div>
                           
-                          <div className="flex items-center gap-2 mb-3">
+                          <div className="flex items-center gap-2 mt-2">
                             <Badge variant="secondary" className="rounded-2xl text-xs">
-                              {game.category}
+                              {game.platforms?.map(p => p.toUpperCase()).join(', ') || 'No platforms listed'}
                             </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(game.createdAt).toLocaleDateString()}
-                            </span>
+                            <span className="text-xs text-muted-foreground">by {game.maker.name}</span>
                           </div>
                           
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -302,7 +314,7 @@ export default function ProfilePage() {
                       <div className="flex items-center gap-4">
                         <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-muted">
                           <img 
-                            src={vote.game.image} 
+                            src={vote.game.maker.avatar || ""} 
                             alt={vote.game.title}
                             className="w-full h-full object-cover"
                           />
@@ -311,14 +323,9 @@ export default function ProfilePage() {
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
                             <div>
-                              <h3 className="font-medium">{vote.game.title}</h3>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="secondary" className="rounded-2xl text-xs">
-                                  {vote.game.category}
-                                </Badge>
-                                <span className="text-xs text-muted-foreground">
-                                  Voted on {new Date(vote.votedAt).toLocaleDateString()}
-                                </span>
+                              <div className="font-medium text-sm">{vote.game.title}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {vote.game.platforms?.map(p => p.toUpperCase()).join(', ') || 'No platforms listed'}
                               </div>
                             </div>
                             <ArrowUpIcon className="h-5 w-5 text-green-600 dark:text-green-400" />

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Star, Play } from "lucide-react"
+import { Star, Play, Smartphone, Monitor } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -22,15 +22,13 @@ interface FeaturedGame {
     name: string | null
     image?: string | null
   }
-  category: {
-    id: string
-    name: string
-    slug: string
-  }
+  platforms?: string[]
   _count: {
     votes: number
     comments: number
   }
+  appStoreUrl?: string | null
+  playStoreUrl?: string | null
 }
 
 interface FeaturedGamesCarouselProps {
@@ -123,7 +121,11 @@ interface HeroGameCardProps {
 }
 
 function HeroGameCard({ game, onClick }: HeroGameCardProps) {
-  const rating = (game._count.votes / 10).toFixed(1)
+  // Determine available platforms with safety check
+  const platforms = game.platforms || []
+  if (game.appStoreUrl) platforms.push('ios')
+  if (game.playStoreUrl) platforms.push('android')
+  if (game.url && !game.appStoreUrl && !game.playStoreUrl) platforms.push('web')
 
   return (
     <Link href={`/product/${game.id}`} className="block group h-full">
@@ -150,18 +152,14 @@ function HeroGameCard({ game, onClick }: HeroGameCardProps) {
 
         {/* Content */}
         <CardContent className="relative z-10 p-6 h-full flex flex-col justify-end text-white">
-          {/* Category Badge */}
-          <div className="absolute top-4 left-4">
-            <Badge className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-medium border-0 backdrop-blur-sm">
-              {game.category.name}
-            </Badge>
-          </div>
-
-          {/* TapTap Rating Badge */}
+          {/* Votes Badge - Replaced TapTap field */}
           <div className="absolute top-4 right-4">
             <div className="bg-white dark:bg-gray-800 rounded-xl px-3 py-2 flex flex-col items-center shadow-lg">
-              <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">TapTap</span>
-              <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{rating}</span>
+              <div className="flex items-center gap-1">
+                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">Votes</span>
+              </div>
+              <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{game._count.votes}</span>
             </div>
           </div>
 
@@ -176,7 +174,7 @@ function HeroGameCard({ game, onClick }: HeroGameCardProps) {
               </p>
             )}
             
-            {/* Action Button */}
+            {/* Action Button and Platform Icons */}
             <div className="flex items-center gap-4 mt-4">
               <Button 
                 className="bg-white text-black hover:bg-gray-100 rounded-xl px-6 py-2 font-semibold"
@@ -187,6 +185,27 @@ function HeroGameCard({ game, onClick }: HeroGameCardProps) {
               >
                 Play Now
               </Button>
+              
+              {/* Platform Icons */}
+              <div className="flex items-center gap-2">
+                {platforms.includes('ios') && (
+                  <div className="w-6 h-6 bg-black rounded-md flex items-center justify-center">
+                    <Smartphone className="w-4 h-4 text-white" />
+                  </div>
+                )}
+                {platforms.includes('android') && (
+                  <div className="w-6 h-6 bg-green-600 rounded-md flex items-center justify-center">
+                    <Smartphone className="w-4 h-4 text-white" />
+                  </div>
+                )}
+                {platforms.includes('web') && (
+                  <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
+                    <Monitor className="w-4 h-4 text-white" />
+                  </div>
+                )}
+              </div>
+              
+              {/* Votes Display */}
               <div className="flex items-center gap-2 text-sm text-gray-300 dark:text-gray-400">
                 <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                 <span>{game._count.votes} votes</span>
@@ -209,6 +228,7 @@ interface SideGameCardProps {
 
 function SideGameCard({ game, onClick, onHover, isSelected }: SideGameCardProps) {
   const rating = (game._count.votes / 10).toFixed(1)
+  const platforms = game.platforms || []
 
   return (
     <Link 
@@ -257,7 +277,27 @@ function SideGameCard({ game, onClick, onHover, isSelected }: SideGameCardProps)
                 <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{rating}</span>
               </div>
               <span className="text-xs text-gray-500 dark:text-gray-400">•</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{game.category.name}</span>
+              <div className="flex items-center gap-1">
+                {platforms.slice(0, 2).map((platform) => {
+                  if (platform === 'ios') {
+                    return <div key={platform} className="w-3 h-3 bg-black rounded-sm flex items-center justify-center">
+                      <Smartphone className="w-2 h-2 text-white" />
+                    </div>
+                  } else if (platform === 'android') {
+                    return <div key={platform} className="w-3 h-3 bg-green-600 rounded-sm flex items-center justify-center">
+                      <Smartphone className="w-2 h-2 text-white" />
+                    </div>
+                  } else if (platform === 'web') {
+                    return <div key={platform} className="w-3 h-3 bg-blue-600 rounded-sm flex items-center justify-center">
+                      <Monitor className="w-2 h-2 text-white" />
+                    </div>
+                  }
+                  return null
+                })}
+                {platforms.length > 2 && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400">+{platforms.length - 2}</span>
+                )}
+              </div>
             </div>
           </div>
         </div>

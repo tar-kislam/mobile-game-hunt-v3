@@ -172,7 +172,7 @@ export default function SubmitPage() {
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="h-2 w-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <p>Choose the most appropriate category for better discoverability</p>
+                  <p>Choose the platforms where your game will be available for better discoverability</p>
                 </div>
               </CardContent>
             </Card>

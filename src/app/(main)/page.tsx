@@ -15,7 +15,7 @@ import { CTASection } from "@/components/sections/cta-section"
 import { toast } from "sonner"
 
 // Mock data - In a real app, this would come from your database
-const featuredGame = {
+const featuredProduct = {
   id: "1",
   title: "Clash of Clans",
   description: "A popular strategy mobile game where you build and defend your village.",
@@ -23,7 +23,7 @@ const featuredGame = {
   votes: 152,
   comments: 23,
   url: "https://clashofclans.com",
-  category: "Strategy",
+  platforms: ["ios", "android"],
   maker: {
     name: "Supercell",
     avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
@@ -38,7 +38,7 @@ const dailyProducts = [
     image: "https://images.unsplash.com/photo-1606503153255-59d8b8b91448?w=300&h=200&fit=crop",
     votes: 89,
     comments: 15,
-    category: "AR",
+    platforms: ["ios", "android"],
     maker: { name: "Niantic", avatar: "" }
   },
   {
@@ -48,7 +48,7 @@ const dailyProducts = [
     image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=300&h=200&fit=crop",
     votes: 134,
     comments: 28,
-    category: "RPG",
+    platforms: ["ios", "android", "web"],
     maker: { name: "miHoYo", avatar: "" }
   },
   {
@@ -58,16 +58,16 @@ const dailyProducts = [
     image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=300&h=200&fit=crop",
     votes: 76,
     comments: 19,
-    category: "Social",
+    platforms: ["ios", "android", "web"],
     maker: { name: "InnerSloth", avatar: "" }
   }
 ]
 
 const trendingGames = [
-  { name: "Subway Surfers", category: "Endless Runner", votes: 245 },
-  { name: "Candy Crush Saga", category: "Puzzle", votes: 198 },
-  { name: "PUBG Mobile", category: "Battle Royale", votes: 187 },
-  { name: "Minecraft", category: "Sandbox", votes: 156 },
+  { name: "Subway Surfers", platforms: ["ios", "android"], votes: 245 },
+  { name: "Candy Crush Saga", platforms: ["ios", "android", "web"], votes: 198 },
+  { name: "PUBG Mobile", platforms: ["ios", "android"], votes: 187 },
+  { name: "Minecraft", platforms: ["ios", "android", "web"], votes: 156 },
 ]
 
 function ProductCard({ product, rank }: { product: typeof dailyProducts[0], rank?: number }) {
@@ -100,7 +100,7 @@ function ProductCard({ product, rank }: { product: typeof dailyProducts[0], rank
                 </p>
                 <div className="flex items-center gap-2 mt-2">
                   <Badge variant="secondary" className="rounded-2xl text-xs">
-                    {product.category}
+                    {product.platforms?.map(p => p.toUpperCase()).join(', ') || 'No platforms listed'}
                   </Badge>
                   <span className="text-xs text-muted-foreground">by {product.maker.name}</span>
                 </div>
@@ -144,11 +144,7 @@ interface Game {
     name: string | null
     image?: string | null
   }
-  category: {
-    id: string
-    name: string
-    slug: string
-  }
+  platforms?: string[]
   _count: {
     votes: number
     comments: number
@@ -287,7 +283,9 @@ export default function HomePage() {
                     <div key={game.name} className="flex items-center justify-between">
                       <div>
                         <div className="font-medium text-sm">{game.name}</div>
-                        <div className="text-xs text-muted-foreground">{game.category}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {game.platforms?.map(p => p.toUpperCase()).join(', ') || 'No platforms listed'}
+                        </div>
                       </div>
                       <div className="text-xs font-medium text-muted-foreground">
                         {game.votes} votes
@@ -313,7 +311,7 @@ export default function HomePage() {
                   <Link href="/products">Browse All Games</Link>
                 </Button>
                 <Button variant="outline" asChild className="w-full rounded-2xl">
-                  <Link href="/categories">View Categories</Link>
+                  <Link href="/platforms">View Platforms</Link>
                 </Button>
               </CardContent>
             </Card>

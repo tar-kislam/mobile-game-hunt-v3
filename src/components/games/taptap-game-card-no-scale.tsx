@@ -12,22 +12,17 @@ interface Game {
   title: string
   tagline?: string | null
   description: string
-  url: string
   image?: string | null
+  url: string
+  platforms?: string[]
   createdAt: string
-  user: {
-    id: string
-    name: string | null
-    image?: string | null
-  }
-  category: {
-    id: string
-    name: string
-    slug: string
-  }
   _count: {
     votes: number
     comments: number
+  }
+  user: {
+    name: string | null
+    image?: string | null
   }
 }
 
@@ -79,12 +74,14 @@ export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTa
           </div>
 
           {/* Category Badge */}
-          <div className="absolute top-2 left-2">
+          <div className="absolute top-3 left-3">
             <Badge 
-              variant="secondary" 
-              className="bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-200 text-xs font-medium px-2 py-1 rounded-full shadow-sm"
+              className="bg-black/70 text-white text-xs px-2 py-1 rounded-md font-medium border-0"
             >
-              {game.category.name}
+              {game.platforms && game.platforms.length > 0 
+                ? game.platforms.map(platform => platform.toUpperCase()).join(', ')
+                : 'No platforms listed'
+              }
             </Badge>
           </div>
 

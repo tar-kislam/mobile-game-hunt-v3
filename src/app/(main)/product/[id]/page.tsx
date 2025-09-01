@@ -33,6 +33,7 @@ interface Product {
   image?: string | null
   images: string[]
   video?: string | null
+  platforms?: string[]
   appStoreUrl?: string | null
   playStoreUrl?: string | null
   socialLinks?: any
@@ -41,11 +42,6 @@ interface Product {
     id: string
     name: string | null
     image?: string | null
-  }
-  category: {
-    id: string
-    name: string
-    slug: string
   }
   _count: {
     votes: number
@@ -412,7 +408,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="font-medium text-sm truncate">{game.title}</div>
-                            <div className="text-xs text-muted-foreground">{game.category.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {game.platforms?.map(platform => platform.toUpperCase()).join(', ') || 'No platforms listed'}
+                            </div>
                             <div className="text-xs text-muted-foreground">
                               {game._count.votes} votes
                             </div>

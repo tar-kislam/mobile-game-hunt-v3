@@ -29,6 +29,10 @@ interface Product {
   tagline?: string | null
   description: string
   url: string
+  image?: string | null
+  images: string[]
+  video?: string | null
+  platforms?: string[]
   appStoreUrl?: string | null
   playStoreUrl?: string | null
   socialLinks?: any
@@ -37,11 +41,6 @@ interface Product {
     id: string
     name: string | null
     image?: string | null
-  }
-  category: {
-    id: string
-    name: string
-    slug: string
   }
   _count: {
     votes: number
@@ -232,11 +231,15 @@ export function InfoPanel({ product, onVote, hasVoted }: InfoPanelProps) {
             
             <Separator />
             
-            <div>
-              <span className="text-muted-foreground">Category:</span>
-              <Badge variant="secondary" className="ml-2 rounded-full">
-                {product.category.name}
-              </Badge>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Platforms:</span>
+              <div className="flex gap-1">
+                {(product.platforms || []).map((platform) => (
+                  <Badge key={platform} variant="secondary" className="text-xs">
+                    {platform.toUpperCase()}
+                  </Badge>
+                ))}
+              </div>
             </div>
             
             <Separator />

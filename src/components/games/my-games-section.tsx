@@ -5,31 +5,25 @@ import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { GameCard } from "./game-card"
-import { SubmitGameModal } from "./submit-game-modal"
+import { EnhancedSubmitGameModal } from "./enhanced-submit-game-modal"
 import { toast } from "sonner"
 import { Loader2, Plus } from "lucide-react"
 
 interface Game {
   id: string
   title: string
-  tagline?: string | null
   description: string
-  url: string
   image?: string | null
+  url: string
+  platforms?: string[]
   createdAt: string
-  user: {
-    id: string
-    name: string | null
-    image?: string | null
-  }
-  category: {
-    id: string
-    name: string
-    slug: string
-  }
   _count: {
     votes: number
     comments: number
+  }
+  user: {
+    name: string | null
+    image?: string | null
   }
 }
 
@@ -88,12 +82,12 @@ export function MyGamesSection() {
     <Card className="rounded-2xl shadow-soft">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
         <CardTitle className="text-xl font-bold">🎮 My Games</CardTitle>
-        <SubmitGameModal onGameSubmitted={handleGameSubmitted}>
+        <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
           <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl">
             <Plus className="w-4 h-4 mr-2" />
             Add Game
           </Button>
-        </SubmitGameModal>
+        </EnhancedSubmitGameModal>
       </CardHeader>
       
       <CardContent className="pt-0">
@@ -109,12 +103,12 @@ export function MyGamesSection() {
             <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md mx-auto">
               Share your amazing mobile games with the community! Submit your first game to get started.
             </p>
-            <SubmitGameModal onGameSubmitted={handleGameSubmitted}>
+            <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
               <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl">
                 <Plus className="w-4 h-4 mr-2" />
                 Submit Your First Game
               </Button>
-            </SubmitGameModal>
+            </EnhancedSubmitGameModal>
           </div>
         ) : (
           <div className="space-y-6">

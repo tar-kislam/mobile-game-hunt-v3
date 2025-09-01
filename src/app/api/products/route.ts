@@ -27,7 +27,7 @@ const createProductSchema = z.object({
   socialLinks: z.object({
     twitter: z.string().url("Please enter a valid Twitter URL").optional()
   }).optional(),
-  categoryId: z.string().min(1, "Category is required"),
+  platforms: z.array(z.string()).min(1, "At least one platform is required"),
 })
 
 // GET /api/products - Fetch all products or user-specific products
@@ -48,13 +48,6 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             image: true,
-          }
-        },
-        category: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
           }
         },
         _count: {
@@ -109,18 +102,6 @@ export async function POST(request: NextRequest) {
     // Validate input
     const validatedData = createProductSchema.parse(body)
 
-    // Verify category exists
-    const category = await prisma.category.findUnique({
-      where: { id: validatedData.categoryId }
-    })
-
-    if (!category) {
-      return NextResponse.json(
-        { error: 'Invalid category' },
-        { status: 400 }
-      )
-    }
-
     // Create the product
     const product = await prisma.product.create({
       data: {
@@ -131,10 +112,10 @@ export async function POST(request: NextRequest) {
         image: validatedData.image,
         images: validatedData.images || [],
         video: validatedData.video,
+        platforms: validatedData.platforms,
         appStoreUrl: validatedData.appStoreUrl,
         playStoreUrl: validatedData.playStoreUrl,
         socialLinks: validatedData.socialLinks,
-        categoryId: validatedData.categoryId,
         userId: user.id,
       },
       include: {
@@ -143,13 +124,6 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             image: true,
-          }
-        },
-        category: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
           }
         },
         _count: {

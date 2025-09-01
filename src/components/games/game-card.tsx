@@ -8,30 +8,27 @@ import Image from "next/image"
 import Link from "next/link"
 // import { formatDistanceToNow } from "date-fns" // Temporarily commented
 
-interface GameCardProps {
-  game: {
-    id: string
-    title: string
-    tagline?: string | null
-    description: string
-    url: string
-    image?: string | null
-    createdAt: string
-    user: {
-      id: string
-      name: string | null
-      image?: string | null
-    }
-    category: {
-      id: string
-      name: string
-      slug: string
-    }
-    _count: {
-      votes: number
-      comments: number
-    }
+interface Game {
+  id: string
+  title: string
+  tagline?: string | null
+  description: string
+  image?: string | null
+  url: string
+  platforms?: string[]
+  createdAt: string
+  _count: {
+    votes: number
+    comments: number
   }
+  user: {
+    name: string | null
+    image?: string | null
+  }
+}
+
+interface GameCardProps {
+  game: Game
   onVote?: (gameId: string) => void
   showAuthor?: boolean
 }
@@ -78,12 +75,15 @@ export function GameCard({ game, onVote, showAuthor = true }: GameCardProps) {
         </div>
         
         {/* Category Badge */}
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-2 left-2">
           <Badge 
             variant="secondary" 
-            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur text-gray-700 dark:text-gray-200 rounded-full px-3 py-1 text-xs font-medium"
+            className="bg-white/20 text-white text-xs px-2 py-1 rounded-md font-medium border-0 backdrop-blur-sm"
           >
-            {game.category.name}
+            {game.platforms && game.platforms.length > 0 
+              ? game.platforms.map(platform => platform.toUpperCase()).join(', ')
+              : 'No platforms listed'
+            }
           </Badge>
         </div>
 

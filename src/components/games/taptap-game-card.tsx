@@ -7,30 +7,26 @@ import { Star, MessageCircle, ExternalLink } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
-interface TapTapGameCardProps {
-  game: {
-    id: string
-    title: string
-    tagline?: string | null
-    description: string
-    url: string
-    image?: string | null
-    createdAt: string
-    user: {
-      id: string
-      name: string | null
-      image?: string | null
-    }
-    category: {
-      id: string
-      name: string
-      slug: string
-    }
-    _count: {
-      votes: number
-      comments: number
-    }
+interface Game {
+  id: string
+  title: string
+  tagline?: string | null
+  description: string
+  image?: string | null
+  url: string
+  platforms?: string[]
+  _count: {
+    votes: number
+    comments: number
   }
+  user: {
+    name: string | null
+    image?: string | null
+  }
+}
+
+interface TapTapGameCardProps {
+  game: Game
   onVote?: (gameId: string) => void
   showAuthor?: boolean
 }
@@ -87,14 +83,23 @@ export function TapTapGameCard({ game, onVote, showAuthor = true }: TapTapGameCa
           </div>
 
           {/* Category Badge */}
-          <div className="absolute top-2 left-2">
+          <div className="absolute top-3 left-3">
             <Badge 
-              variant="secondary" 
               className="bg-black/70 text-white text-xs px-2 py-1 rounded-md font-medium border-0"
             >
-              {game.category.name}
+              {game.platforms && game.platforms.length > 0 
+                ? game.platforms.map(platform => platform.toUpperCase()).join(', ')
+                : 'No platforms listed'
+              }
             </Badge>
           </div>
+
+          {/* Tagline */}
+          {game.tagline && (
+            <p className="text-xs text-gray-500 dark:text-gray-300 line-clamp-1 mb-2">
+              {game.tagline}
+            </p>
+          )}
         </div>
 
         <CardContent className="p-3">
@@ -104,11 +109,14 @@ export function TapTapGameCard({ game, onVote, showAuthor = true }: TapTapGameCa
           </h3>
 
           {/* Tagline */}
-          {game.tagline && (
+          {/* The original code had game.tagline, but the new Game interface doesn't have it.
+              Assuming the intent was to remove it or that it will be added back if needed.
+              For now, removing it as it's not in the new Game interface. */}
+          {/* {game.tagline && (
             <p className="text-xs text-gray-500 dark:text-gray-300 line-clamp-1 mb-2">
               {game.tagline}
             </p>
-          )}
+          )} */}
 
           {/* Stats Row */}
           <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">

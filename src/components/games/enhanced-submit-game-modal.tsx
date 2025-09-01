@@ -22,19 +22,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { PlusIcon, XIcon, ImageIcon, VideoIcon } from "lucide-react"
+import { PlusIcon, XIcon, ImageIcon, VideoIcon, Smartphone, Monitor } from "lucide-react"
 
 const gameSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
@@ -42,21 +35,22 @@ const gameSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters").max(1000, "Description must be less than 1000 characters"),
   url: z.string().url("Please enter a valid URL"),
   image: z.string().url("Please enter a valid main image URL"),
-  images: z.array(z.string().url("Please enter valid image URLs")).default([]),
+  images: z.array(z.string().url("Please enter valid image URLs")).optional(),
   video: z.string().url("Please enter a valid video URL").optional().or(z.literal("")),
   appStoreUrl: z.string().url("Please enter a valid App Store URL").optional().or(z.literal("")),
   playStoreUrl: z.string().url("Please enter a valid Play Store URL").optional().or(z.literal("")),
   twitterUrl: z.string().url("Please enter a valid Twitter URL").optional().or(z.literal("")),
-  categoryId: z.string().min(1, "Category is required"),
+  platforms: z.array(z.string()).min(1, "At least one platform is required"),
 })
 
 type GameFormData = z.infer<typeof gameSchema>
 
-interface Category {
-  id: string
-  name: string
-  slug: string
-}
+// Platform options with icons
+const platformOptions = [
+  { value: 'ios', label: 'iOS', icon: Smartphone, color: 'bg-black' },
+  { value: 'android', label: 'Android', icon: Smartphone, color: 'bg-green-600' },
+  { value: 'web', label: 'Web', icon: Monitor, color: 'bg-blue-600' },
+]
 
 interface EnhancedSubmitGameModalProps {
   children: React.ReactNode
@@ -68,7 +62,7 @@ export function EnhancedSubmitGameModal({ children, onGameSubmitted }: EnhancedS
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [categories, setCategories] = useState<Category[]>([])
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([])
   const [additionalImages, setAdditionalImages] = useState<string[]>([])
 
   const form = useForm<GameFormData>({
@@ -84,24 +78,21 @@ export function EnhancedSubmitGameModal({ children, onGameSubmitted }: EnhancedS
       appStoreUrl: "",
       playStoreUrl: "",
       twitterUrl: "",
-      categoryId: "",
+      platforms: [],
     },
   })
 
+  // Update form when platforms change
   useEffect(() => {
-    fetchCategories()
-  }, [])
+    form.setValue("platforms", selectedPlatforms)
+  }, [selectedPlatforms, form])
 
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch('/api/categories')
-      if (response.ok) {
-        const data = await response.json()
-        setCategories(data)
-      }
-    } catch (error) {
-      console.error('Error fetching categories:', error)
-    }
+  const togglePlatform = (platform: string) => {
+    setSelectedPlatforms(prev => 
+      prev.includes(platform) 
+        ? prev.filter(p => p !== platform)
+        : [...prev, platform]
+    )
   }
 
   const addImageField = () => {
@@ -113,7 +104,7 @@ export function EnhancedSubmitGameModal({ children, onGameSubmitted }: EnhancedS
     setAdditionalImages(newImages)
     
     // Update form values
-    const currentImages = form.getValues("images")
+    const currentImages = form.getValues("images") || []
     const updatedImages = currentImages.filter((_, i) => i !== index)
     form.setValue("images", updatedImages)
   }
@@ -124,7 +115,7 @@ export function EnhancedSubmitGameModal({ children, onGameSubmitted }: EnhancedS
     setAdditionalImages(newImages)
     
     // Update form values
-    const currentImages = form.getValues("images")
+    const currentImages = form.getValues("images") || []
     const updatedImages = [...currentImages]
     updatedImages[index] = value
     form.setValue("images", updatedImages)
@@ -140,7 +131,7 @@ export function EnhancedSubmitGameModal({ children, onGameSubmitted }: EnhancedS
 
     try {
       // Filter out empty image URLs
-      const validImages = data.images.filter(img => img.trim() !== "")
+      const validImages = (data.images || []).filter(img => img.trim() !== "")
       
       // Prepare social links
       const socialLinks = data.twitterUrl ? { twitter: data.twitterUrl } : undefined
@@ -165,6 +156,7 @@ export function EnhancedSubmitGameModal({ children, onGameSubmitted }: EnhancedS
       if (response.ok) {
         toast.success("Game submitted successfully!")
         form.reset()
+        setSelectedPlatforms([])
         setAdditionalImages([])
         setIsOpen(false)
         onGameSubmitted?.()
@@ -242,30 +234,35 @@ export function EnhancedSubmitGameModal({ children, onGameSubmitted }: EnhancedS
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="categoryId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
+              {/* Platform Selection */}
+              <div className="space-y-3">
+                <FormLabel>Platforms *</FormLabel>
+                <div className="flex flex-wrap gap-3">
+                  {platformOptions.map((platform) => {
+                    const IconComponent = platform.icon
+                    const isSelected = selectedPlatforms.includes(platform.value)
+                    return (
+                      <button
+                        key={platform.value}
+                        type="button"
+                        onClick={() => togglePlatform(platform.value)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all duration-200 ${
+                          isSelected
+                            ? `${platform.color} text-white border-transparent`
+                            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                        }`}
+                      >
+                        <IconComponent className="w-4 h-4" />
+                        <span className="font-medium">{platform.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+                {selectedPlatforms.length === 0 && (
+                  <p className="text-sm text-red-500">Please select at least one platform</p>
                 )}
-              />
+                <FormMessage />
+              </div>
             </div>
 
             {/* Media */}
