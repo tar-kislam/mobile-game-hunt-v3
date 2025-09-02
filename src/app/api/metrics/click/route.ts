@@ -2,28 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { z } from 'zod'
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || 'ip:unknown'
+    const rl = await rateLimit(`metrics:post:${ip}`, 120, 60)
+    if (!rl.allowed) return NextResponse.json({ error: 'Rate limit' }, { status: 429 })
     const session = await getServerSession(authOptions);
-    const { gameId, type, referrer } = await request.json();
+    const schema = z.object({
+      gameId: z.string().min(1),
+      type: z.enum(['view','click','play','download','share']),
+      referrer: z.string().url().optional()
+    })
+    const parsed = schema.safeParse(await request.json())
+    if (!parsed.success) return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
+    const { gameId, type, referrer } = parsed.data
 
-    // Validate required fields
-    if (!gameId || !type) {
-      return NextResponse.json(
-        { error: 'Missing required fields: gameId and type' },
-        { status: 400 }
-      );
-    }
-
-    // Validate type
-    const validTypes = ['view', 'click', 'play', 'download', 'share'];
-    if (!validTypes.includes(type)) {
-      return NextResponse.json(
-        { error: 'Invalid type. Must be one of: view, click, play, download, share' },
-        { status: 400 }
-      );
-    }
+    // Zod already validated fields
 
     // Check if game exists
     const game = await prisma.product.findUnique({

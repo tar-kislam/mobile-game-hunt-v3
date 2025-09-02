@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import redis from '@/lib/redis'
+import { z } from 'zod'
+import { rateLimit } from '@/lib/rate-limit'
 
 type TrendItem = {
   id: string
@@ -23,11 +25,17 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    const { title, url, tags } = body || {}
-    if (!title) {
-      return NextResponse.json({ error: 'Title required' }, { status: 400 })
-    }
+    const ip = req.headers.get('x-forwarded-for') || 'ip:unknown'
+    const rl = await rateLimit(`trends:post:${ip}`, 10, 60)
+    if (!rl.allowed) return NextResponse.json({ error: 'Rate limit' }, { status: 429 })
+    const schema = z.object({
+      title: z.string().min(2),
+      url: z.string().url().optional(),
+      tags: z.array(z.string()).max(8).optional()
+    })
+    const parsed = schema.safeParse(await req.json())
+    if (!parsed.success) return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
+    const { title, url, tags } = parsed.data
     const item: TrendItem = {
       id: `${Date.now()}:${Math.random().toString(36).slice(2, 8)}`,
       title,

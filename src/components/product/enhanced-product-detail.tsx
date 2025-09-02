@@ -679,6 +679,28 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
             </Card>
           )}
 
+          {/* Share Card */}
+          <Card className="rounded-2xl shadow-soft">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">Share</CardTitle>
+            </CardHeader>
+            <CardContent className="flex gap-2">
+              <Button variant="outline" asChild>
+                <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}&text=${encodeURIComponent(product.title)}`} target="_blank" rel="noopener noreferrer">
+                  <Share2 className="w-4 h-4 mr-2" /> Twitter
+                </a>
+              </Button>
+              <Button variant="outline" asChild>
+                <a href={`https://www.reddit.com/submit?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}&title=${encodeURIComponent(product.title)}`} target="_blank" rel="noopener noreferrer">
+                  <Share2 className="w-4 h-4 mr-2" /> Reddit
+                </a>
+              </Button>
+              <Button variant="outline" onClick={handleShare}>
+                <Share2 className="w-4 h-4 mr-2" /> Copy
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Developer Info */}
           <Card className="rounded-2xl shadow-soft">
             <CardHeader>

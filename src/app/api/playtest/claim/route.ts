@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { sendMail } from '@/lib/mail';
 
 const claimPlaytestSchema = z.object({
   playtestId: z.string().min(1, 'Playtest ID is required'),
@@ -108,6 +109,18 @@ export async function PUT(request: NextRequest) {
 
       return claim;
     });
+
+    // Best-effort notification email
+    try {
+      const to = process.env.NOTIFY_EMAIL || result.user.email || ''
+      if (to) {
+        void sendMail({
+          to,
+          subject: 'Playtest claimed',
+          html: `<p>${result.user.name || 'User'} claimed playtest for ${result.playtest.product.title}</p>`
+        })
+      }
+    } catch {}
 
     return NextResponse.json({
       success: true,

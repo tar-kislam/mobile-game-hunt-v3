@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
@@ -81,4 +82,25 @@ export default async function ProductPage({ params }: ProductPageProps) {
       </div>
     </div>
   )
+}
+
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+  const { id } = await params
+  const product = await prisma.product.findUnique({ where: { id } })
+  if (!product) return { title: 'Game not found' }
+  const title = `${product.title} – Mobile Game Hunt`
+  const description = product.tagline || product.description?.slice(0, 140) || 'Discover new mobile games'
+  const url = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  const ogImage = product.image || `${url}/api/og?title=${encodeURIComponent(product.title)}`
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${url}/product/${id}`,
+      images: [{ url: ogImage }]
+    },
+    alternates: { canonical: `${url}/product/${id}` }
+  }
 }

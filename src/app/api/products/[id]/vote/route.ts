@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { rateLimit } from '@/lib/rate-limit'
+import { z } from 'zod'
 
 export async function POST(
   request: NextRequest,
@@ -9,6 +11,19 @@ export async function POST(
 ) {
   try {
     const { id } = await params
+    const ip = request.headers.get('x-forwarded-for') || 'ip:unknown'
+    const rl = await rateLimit(`vote:post:${ip}`, 20, 60)
+    if (!rl.allowed) return NextResponse.json({ error: 'Rate limit' }, { status: 429 })
+    // accept optional body for explicit upvoted toggle
+    let upvoted: boolean | undefined
+    try {
+      const body = await request.json().catch(() => null)
+      if (body) {
+        const schema = z.object({ upvoted: z.boolean().optional() })
+        const parsed = schema.safeParse(body)
+        if (parsed.success) upvoted = parsed.data.upvoted
+      }
+    } catch {}
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.id) {
@@ -43,7 +58,7 @@ export async function POST(
       },
     })
 
-    if (existingVote) {
+    if (existingVote && (upvoted === undefined || upvoted === false)) {
       // Remove vote (toggle)
       await prisma.vote.delete({
         where: {
@@ -58,7 +73,7 @@ export async function POST(
         message: 'Vote removed',
         voted: false 
       })
-    } else {
+    } else if (!existingVote && (upvoted === undefined || upvoted === true)) {
       // Add vote
       await prisma.vote.create({
         data: {
@@ -72,6 +87,7 @@ export async function POST(
         voted: true 
       })
     }
+    return NextResponse.json({ message: 'No change' })
   } catch (error) {
     console.error('Error handling vote:', error)
     return NextResponse.json(
