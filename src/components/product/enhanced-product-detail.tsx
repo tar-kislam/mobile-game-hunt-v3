@@ -29,6 +29,8 @@ import { PlaytestClaim } from '@/components/playtest/playtest-claim';
 import { UpvoteButton } from '@/components/ui/upvote-button';
 import { Comment } from '@/components/ui/comment';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input'
+import Link from 'next/link'
 
 interface Product {
   id: string;
@@ -74,6 +76,11 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
   const [comments, setComments] = useState<any[]>([]);
   const [productVotes, setProductVotes] = useState(product._count.votes);
   const [isProductUpvoted, setIsProductUpvoted] = useState(hasVoted);
+  const [pledgeAmount, setPledgeAmount] = useState('')
+  const [pledgeNote, setPledgeNote] = useState('')
+  const [pledgeTotal, setPledgeTotal] = useState<number | null>(null)
+  const [isPledging, setIsPledging] = useState(false)
+  const [recommended, setRecommended] = useState<any[]>([])
 
   // Check follow status and press kit on mount
   useEffect(() => {
@@ -83,6 +90,32 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
     checkPressKitStatus();
     fetchComments();
   }, [session, product.id]);
+
+  useEffect(() => {
+    // Load pledge total on mount
+    const loadPledges = async () => {
+      try {
+        const res = await fetch(`/api/pledge?gameId=${product.id}`)
+        if (!res.ok) return
+        const data = await res.json()
+        setPledgeTotal(Number(data.total) || 0)
+      } catch {}
+    }
+    loadPledges()
+  }, [product.id])
+
+  useEffect(() => {
+    const likes = [product.title, product.tagline || '', ...(product.platforms || [])].join(',')
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/recommend?likes=${encodeURIComponent(likes)}&take=5`)
+        if (!res.ok) return
+        const data = await res.json()
+        setRecommended(data.products || [])
+      } catch {}
+    }
+    load()
+  }, [product.id])
 
   const checkPressKitStatus = async () => {
     try {
@@ -331,6 +364,26 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
     toast.success('Comment link copied to clipboard!');
   };
 
+  const handlePledge = async () => {
+    if (!pledgeAmount || isNaN(Number(pledgeAmount))) return
+    try {
+      setIsPledging(true)
+      const res = await fetch('/api/pledge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gameId: product.id, amount: Number(pledgeAmount), note: pledgeNote })
+      })
+      if (res.ok) {
+        const list = await fetch(`/api/pledge?gameId=${product.id}`).then(r => r.json())
+        setPledgeTotal(Number(list.total) || 0)
+        setPledgeAmount('')
+        setPledgeNote('')
+      }
+    } finally {
+      setIsPledging(false)
+    }
+  }
+
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       {/* Hero Section */}
@@ -576,6 +629,52 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
                     </Button>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Pledge Card - Right below Download/Playtest cards */}
+          <Card className="rounded-2xl shadow-soft">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">Pledge Support</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="text-sm text-muted-foreground">Total pledged: {pledgeTotal === null ? '—' : `$${pledgeTotal.toFixed(0)}`}</div>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  min="1"
+                  placeholder="Amount"
+                  value={pledgeAmount}
+                  onChange={(e) => setPledgeAmount(e.target.value)}
+                />
+                <Button onClick={handlePledge} disabled={isPledging || !pledgeAmount}>
+                  {isPledging ? 'Sending…' : 'Pledge'}
+                </Button>
+              </div>
+              <Input
+                placeholder="Add a note (optional)"
+                value={pledgeNote}
+                onChange={(e) => setPledgeNote(e.target.value)}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Recommended Card - Right below Pledge Card */}
+          {recommended.length > 0 && (
+            <Card className="rounded-2xl shadow-soft">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold">Recommended for you</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {recommended.map((r) => (
+                  <div key={r.id} className="flex items-center justify-between text-sm">
+                    <Link href={`/product/${r.id}`} className="truncate hover:underline">
+                      {r.title}
+                    </Link>
+                    <span className="text-muted-foreground">{Math.round((r._score || 0) * 100)}%</span>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           )}

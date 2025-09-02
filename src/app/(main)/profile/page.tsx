@@ -18,6 +18,8 @@ import {
   UserIcon,
   SettingsIcon
 } from "lucide-react"
+import { Badge as UIBadge } from '@/components/ui/badge'
+import { useEffect, useState } from "react"
 
 // Mock data - In a real app, this would come from your database
 const userStats = {
@@ -119,6 +121,22 @@ const userComments = [
 
 export default function ProfilePage() {
   const { data: session, status } = useSession()
+  const [userBadges, setUserBadges] = useState<string[]>([])
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch('/api/badges')
+        if (!res.ok) return
+        const data = await res.json()
+        // naive: find by session user id if available on window (kept minimal to not refactor auth)
+        const uid = (window as any).MGH_USER_ID
+        const found = (data.users || []).find((u: any) => u.userId === uid)
+        setUserBadges(found?.badges || [])
+      } catch {}
+    }
+    load()
+  }, [])
 
   if (status === "loading") {
     return (

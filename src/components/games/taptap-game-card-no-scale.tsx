@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -33,6 +34,22 @@ interface TapTapGameCardNoScaleProps {
 }
 
 export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTapGameCardNoScaleProps) {
+  const [isSponsored, setIsSponsored] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+    const checkSponsor = async () => {
+      try {
+        const res = await fetch(`/api/sponsor?gameId=${game.id}`)
+        if (!res.ok) return
+        const data = await res.json()
+        if (mounted) setIsSponsored(Boolean(data?.sponsored))
+      } catch {}
+    }
+    checkSponsor()
+    return () => { mounted = false }
+  }, [game.id])
+
   const handleVote = () => {
     onVote?.(game.id)
   }
@@ -94,6 +111,15 @@ export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTa
               ⭐ {(Math.random() * 2 + 3).toFixed(1)}
             </Badge>
           </div>
+
+          {/* Sponsored Tag */}
+          {isSponsored && (
+            <div className="absolute bottom-2 left-2">
+              <Badge className="bg-yellow-500/80 text-white text-[10px] px-2 py-0.5 rounded-md border-0">
+                Sponsored
+              </Badge>
+            </div>
+          )}
         </div>
 
         {/* Game Info */}
