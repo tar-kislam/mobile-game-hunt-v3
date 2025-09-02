@@ -154,9 +154,18 @@ interface Game {
 export default function HomePage() {
   const [games, setGames] = useState<Game[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [leaderboardPreview, setLeaderboardPreview] = useState<{
+    id: string
+    title: string
+    score: number
+    votes: number
+    rank: number
+  }[]>([])
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false)
 
   useEffect(() => {
     fetchGames()
+    fetchLeaderboardPreview()
   }, [])
 
   const fetchGames = async () => {
@@ -183,6 +192,27 @@ export default function HomePage() {
   const handleVote = async (gameId: string) => {
     // TODO: Implement voting functionality
     toast.info('Voting feature coming soon!')
+  }
+
+  const fetchLeaderboardPreview = async () => {
+    try {
+      setIsLoadingPreview(true)
+      const res = await fetch('/api/leaderboard?window=daily&take=5')
+      if (!res.ok) return
+      const data = await res.json()
+      const items = (data?.products || []).map((p: any) => ({
+        id: p.id as string,
+        title: p.title as string,
+        score: Number(p.score) || 0,
+        votes: Number(p.votes) || 0,
+        rank: Number(p.rank) || 0,
+      }))
+      setLeaderboardPreview(items)
+    } catch (e) {
+      // fail silently for preview
+    } finally {
+      setIsLoadingPreview(false)
+    }
   }
 
   const featuredGame = games[0]
@@ -269,6 +299,53 @@ export default function HomePage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Leaderboard Preview */}
+            <Card className="rounded-2xl shadow-lg border-white/10">
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="flex items-center justify-between">
+                  <span>Top Rated Games</span>
+                  <Button variant="ghost" size="sm" asChild className="h-auto py-0 px-2 text-xs">
+                    <Link href="/leaderboard">View all</Link>
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                {isLoadingPreview ? (
+                  <div className="space-y-3">
+                    {[1,2,3,4,5].map(i => (
+                      <div key={i} className="flex items-center justify-between animate-pulse">
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 rounded bg-muted" />
+                          <div className="h-3 w-40 bg-muted rounded" />
+                        </div>
+                        <div className="h-3 w-10 bg-muted rounded" />
+                      </div>
+                    ))}
+                  </div>
+                ) : leaderboardPreview.length === 0 ? (
+                  <div className="text-sm text-muted-foreground">No data yet</div>
+                ) : (
+                  <div className="space-y-3">
+                    {leaderboardPreview.map(item => (
+                      <div key={item.id} className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-6 h-6 rounded-lg bg-muted text-muted-foreground flex items-center justify-center text-xs font-semibold">
+                            {item.rank}
+                          </div>
+                          <Link href={`/product/${item.id}`} className="truncate hover:underline text-sm font-medium">
+                            {item.title}
+                          </Link>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <ArrowUpIcon className="h-3 w-3" />
+                          {item.votes}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
             {/* Trending Section */}
             <Card className="rounded-2xl shadow-lg border-white/10">
               <CardHeader className="p-4">
