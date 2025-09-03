@@ -29,9 +29,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -41,8 +38,45 @@ export async function GET(
     const product = await prisma.product.findUnique({
       where: {
         id: id,
+        status: 'PUBLISHED', // Only return published products
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        tagline: true,
+        description: true,
+        url: true,
+        image: true,
+        thumbnail: true,
+        gallery: true,
+        videoUrl: true,
+        gameplayGifUrl: true,
+        demoUrl: true,
+        images: true,
+        video: true,
+        platforms: true,
+        appStoreUrl: true,
+        playStoreUrl: true,
+        socialLinks: true,
+        createdAt: true,
+        releaseAt: true,
+        status: true,
+        launchType: true,
+        launchDate: true,
+        monetization: true,
+        engine: true,
+        clicks: true,
+        follows: true,
+        pricing: true,
+        promoOffer: true,
+        promoCode: true,
+        promoExpiry: true,
+        playtestQuota: true,
+        playtestExpiry: true,
+        sponsorRequest: true,
+        sponsorNote: true,
+        crowdfundingPledge: true,
+        gamificationTags: true,
         user: {
           select: {
             id: true,
@@ -50,7 +84,41 @@ export async function GET(
             image: true,
           },
         },
-
+        tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        categories: {
+          select: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        makers: {
+          select: {
+            id: true,
+            role: true,
+            isCreator: true,
+            email: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+          },
+        },
         _count: {
           select: {
             votes: true,

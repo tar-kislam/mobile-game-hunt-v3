@@ -19,7 +19,16 @@ import {
   Eye,
   Download,
   Send,
-  ArrowUpIcon
+  ArrowUpIcon,
+  Globe,
+  Twitter,
+  Youtube,
+  MessageSquare,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  Gift,
+  Music
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -39,6 +48,11 @@ interface Product {
   description: string;
   url: string;
   image?: string | null;
+  thumbnail?: string | null;
+  gallery?: any;
+  videoUrl?: string | null;
+  gameplayGifUrl?: string | null;
+  demoUrl?: string | null;
   images: string[];
   video?: string | null;
   platforms?: string[];
@@ -47,8 +61,19 @@ interface Product {
   socialLinks?: any;
   createdAt: string;
   releaseAt?: string | null;
+  status?: string | null;
+  launchType?: string | null;
+  launchDate?: string | null;
+  monetization?: string | null;
+  engine?: string | null;
   clicks: number;
   follows: number;
+  tags?: Array<{
+    tag: {
+      id: string;
+      name: string;
+    };
+  }>;
   user: {
     id: string;
     name: string | null;
@@ -60,10 +85,34 @@ interface Product {
       name: string;
     };
   }>;
+  makers?: Array<{
+    id: string;
+    role: string;
+    isCreator: boolean;
+    user?: {
+      id: string;
+      name: string | null;
+      image?: string | null;
+    } | null;
+    email?: string | null;
+  }>;
   _count: {
     votes: number;
     comments: number;
   };
+  // Extras fields
+  pricing?: string | null;
+  promoOffer?: string | null;
+  promoCode?: string | null;
+  promoExpiry?: string | null;
+  // Playtest & Sponsor fields
+  playtestQuota?: number | null;
+  playtestExpiry?: string | null;
+  sponsorRequest?: boolean | null;
+  sponsorNote?: string | null;
+  // Additional fields
+  crowdfundingPledge?: boolean | null;
+  gamificationTags?: string[] | null;
 }
 
 interface EnhancedProductDetailProps {
@@ -87,6 +136,8 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
   const [pledgeTotal, setPledgeTotal] = useState<number | null>(null)
   const [isPledging, setIsPledging] = useState(false)
   const [recommended, setRecommended] = useState<any[]>([])
+  const [currentUrl, setCurrentUrl] = useState('')
+  const [isPromoExpanded, setIsPromoExpanded] = useState(false)
 
   // Check follow status and press kit on mount
   useEffect(() => {
@@ -95,6 +146,8 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
     }
     checkPressKitStatus();
     fetchComments();
+    // Set current URL on client side
+    setCurrentUrl(window.location.href);
   }, [session, product.id]);
 
   useEffect(() => {
@@ -265,6 +318,79 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
     return `${hours}h until release`;
   };
 
+  const formatLaunchDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+
+    if (date < now) {
+      return null; // Don't show past dates
+    }
+
+    const options: Intl.DateTimeFormatOptions = {
+      month: 'short',
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    };
+
+    return `Launching ${date.toLocaleDateString('en-US', options)}`;
+  };
+
+  const getPricingBadgeVariant = (pricing: string) => {
+    switch (pricing?.toUpperCase()) {
+      case 'FREE':
+        return 'default';
+      case 'PAID':
+        return 'secondary';
+      case 'FREEMIUM':
+        return 'outline';
+      default:
+        return 'secondary';
+    }
+  };
+
+  const getPricingDisplayText = (pricing: string) => {
+    switch (pricing?.toUpperCase()) {
+      case 'FREE':
+        return 'Free';
+      case 'PAID':
+        return 'Paid';
+      case 'FREEMIUM':
+        return 'Freemium';
+      default:
+        return pricing || 'Unknown';
+    }
+  };
+
+  const formatPromoExpiry = (expiryDate: string) => {
+    const expiry = new Date(expiryDate);
+    const now = new Date();
+    
+    if (expiry <= now) return 'Expired';
+    
+    const diff = expiry.getTime() - now.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (days === 0) return 'Expires today';
+    if (days === 1) return 'Expires tomorrow';
+    if (days < 7) return `Expires in ${days} days`;
+    return `Expires ${expiry.toLocaleDateString()}`;
+  };
+
+  const handleCopyPromoCode = async () => {
+    if (product.promoCode) {
+      try {
+        await navigator.clipboard.writeText(product.promoCode);
+        toast.success('Promo code copied to clipboard!');
+      } catch (error) {
+        toast.error('Failed to copy promo code');
+      }
+    }
+  };
+
+  const handleRedeemPromo = () => {
+    toast.info('Redeem functionality coming soon!');
+  };
+
   const fetchComments = async () => {
     try {
       const response = await fetch(`/api/products/${product.id}/comments`);
@@ -406,16 +532,18 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
           />
           
           {/* About This Game Section */}
-          <Card className="rounded-2xl shadow-soft mt-6">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold">About This Game</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
-                {product.description}
-              </p>
-            </CardContent>
-          </Card>
+          {product.description && (
+            <Card className="rounded-2xl shadow-soft mt-6">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold">About This Game</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
+                  {product.description}
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Comments Section - Right below About This Game */}
           <Card className="rounded-2xl shadow-soft mt-6">
@@ -478,31 +606,56 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
             <CardHeader className="pb-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                    {product.title}
-                  </CardTitle>
+                  <div className="flex items-center gap-3 mb-2">
+                    <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {product.title}
+                    </CardTitle>
+                    {product.sponsorRequest && (
+                      <Badge variant="secondary" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-1">
+                        Sponsored
+                      </Badge>
+                    )}
+                  </div>
                   {product.tagline && (
                     <p className="text-gray-600 dark:text-gray-300 text-lg">
                       {product.tagline}
                     </p>
                   )}
-                </div>
-                
-                {/* Upvote Button */}
-                <div className="flex items-center gap-2">
-                  <UpvoteButton
-                    initialVotes={productVotes}
-                    isUpvoted={isProductUpvoted}
-                    onVoteChange={handleProductVote}
-                    size="lg"
-                    variant="outline"
-                    className="mr-2"
-                  />
+
+                  {/* Launch Date */}
+                  {product.releaseAt && formatLaunchDate(product.releaseAt) && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mt-1">
+                      {formatLaunchDate(product.releaseAt)}
+                    </p>
+                  )}
+
+                  {/* Tags */}
+                  {product.tags && product.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {product.tags.map((tagItem) => (
+                        <Badge key={tagItem.tag.id} variant="secondary" className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                          {tagItem.tag.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </CardHeader>
 
             <CardContent className="space-y-4">
+              {/* Upvote Button - Above Platforms */}
+              <div className="flex justify-center">
+                <UpvoteButton
+                  initialVotes={productVotes}
+                  isUpvoted={isProductUpvoted}
+                  onVoteChange={handleProductVote}
+                  size="lg"
+                  variant="outline"
+                  showText={true}
+                />
+              </div>
+
               {/* Platform Icons */}
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -510,10 +663,90 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
                 </span>
                 <PlatformIcons 
                   platforms={product.platforms || []} 
-                  size="sm" 
-                  showLabels={true}
+                  size="lg" 
+                  showLabels={false}
                 />
               </div>
+
+              {/* Pricing Model */}
+              {product.pricing && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Pricing:
+                  </span>
+                  <Badge 
+                    variant={getPricingBadgeVariant(product.pricing)}
+                    className="text-xs"
+                  >
+                    {getPricingDisplayText(product.pricing)}
+                  </Badge>
+                </div>
+              )}
+
+              {/* Promo Code Section */}
+              {product.promoCode && (
+                <div className="space-y-2">
+                  <div 
+                    className="flex items-center justify-between cursor-pointer p-2 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    onClick={() => setIsPromoExpanded(!isPromoExpanded)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Gift className="w-4 h-4 text-green-500" />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Promo Code Available
+                      </span>
+                    </div>
+                    {isPromoExpanded ? (
+                      <ChevronUp className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    )}
+                  </div>
+                  
+                  {isPromoExpanded && (
+                    <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Code:
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <code className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm font-mono">
+                            {product.promoCode}
+                          </code>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCopyPromoCode}
+                            className="h-6 w-6 p-0"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {product.promoOffer && (
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="font-medium">Offer:</span> {product.promoOffer}
+                        </div>
+                      )}
+                      
+                      {product.promoExpiry && (
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="font-medium">Expiry:</span> {formatPromoExpiry(product.promoExpiry)}
+                        </div>
+                      )}
+                      
+                      <Button
+                        onClick={handleRedeemPromo}
+                        size="sm"
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        Redeem
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Release Date */}
               {product.releaseAt && (
@@ -536,6 +769,52 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
                   Play Now
                 </Button>
 
+                {/* Additional Social Links */}
+                {product.socialLinks && (
+                  <div className="flex flex-wrap gap-2">
+                    {product.socialLinks.website && (
+                      <Button asChild variant="outline" size="sm" className="flex-1">
+                        <a href={product.socialLinks.website} target="_blank" rel="noopener noreferrer">
+                          <Globe className="w-4 h-4 mr-1" />
+                          Website
+                        </a>
+                      </Button>
+                    )}
+                    {product.socialLinks.discord && (
+                      <Button asChild variant="outline" size="sm" className="flex-1">
+                        <a href={product.socialLinks.discord} target="_blank" rel="noopener noreferrer">
+                          <MessageSquare className="w-4 h-4 mr-1" />
+                          Discord
+                        </a>
+                      </Button>
+                    )}
+                    {product.socialLinks.twitter && (
+                      <Button asChild variant="outline" size="sm" className="flex-1">
+                        <a href={product.socialLinks.twitter} target="_blank" rel="noopener noreferrer">
+                          <Twitter className="w-4 h-4 mr-1" />
+                          X/Twitter
+                        </a>
+                      </Button>
+                    )}
+                    {product.socialLinks.youtube && (
+                      <Button asChild variant="outline" size="sm" className="flex-1">
+                        <a href={product.socialLinks.youtube} target="_blank" rel="noopener noreferrer">
+                          <Youtube className="w-4 h-4 mr-1" />
+                          YouTube
+                        </a>
+                      </Button>
+                    )}
+                    {product.socialLinks.tiktok && (
+                      <Button asChild variant="outline" size="sm" className="flex-1">
+                        <a href={product.socialLinks.tiktok} target="_blank" rel="noopener noreferrer">
+                          <Music className="w-4 h-4 mr-1" />
+                          TikTok
+                        </a>
+                      </Button>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex gap-2">
                   <Button
                     onClick={handleFollow}
@@ -556,27 +835,14 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
                   </Button>
                 </div>
 
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleShare}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Share
-                  </Button>
-
-                  {hasPressKit && (
-                    <Button
-                      onClick={handleDownloadPressKit}
-                      variant="outline"
-                      className="flex-1"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Press Kit
-                    </Button>
-                  )}
-                </div>
+                <Button
+                  onClick={handleShare}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -609,6 +875,44 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
                   <span className="font-semibold">{clickCount}</span>
                 </div>
               </div>
+              
+              {/* Launch Details */}
+              {(product.launchType || product.monetization || product.engine) && (
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Launch Details</h4>
+                  <div className="space-y-2">
+                    {product.launchType && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-3 h-3 text-blue-400" />
+                        <span className="text-xs text-gray-600 dark:text-gray-400">Type:</span>
+                        <Badge variant="outline" className="text-xs">
+                          {product.launchType === 'SOFT_LAUNCH' ? 'Soft Launch' : 'Global Launch'}
+                        </Badge>
+                      </div>
+                    )}
+                    {product.monetization && (
+                      <div className="flex items-center gap-2">
+                        <Star className="w-3 h-3 text-yellow-400" />
+                        <span className="text-xs text-gray-600 dark:text-gray-400">Model:</span>
+                        <Badge variant="outline" className="text-xs">
+                          {product.monetization.replace('_', ' ')}
+                        </Badge>
+                      </div>
+                    )}
+                    {product.engine && (
+                      <div className="flex items-center gap-2">
+                        <Play className="w-3 h-3 text-purple-400" />
+                        <span className="text-xs text-gray-600 dark:text-gray-400">Engine:</span>
+                        <Badge variant="outline" className="text-xs">
+                          {product.engine === 'UNREAL' ? 'Unreal Engine' : 
+                           product.engine === 'UNITY' ? 'Unity' : 
+                           product.engine === 'GODOT' ? 'Godot' : 'Custom'}
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -668,7 +972,103 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
             </CardContent>
           </Card>
 
-          {/* Recommended Card - Right below Pledge Card */}
+          {/* Press Kit Card - Right below Pledge Card */}
+          {hasPressKit && (
+            <Card className="rounded-2xl shadow-soft">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold">Press Kit</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Download official press materials, screenshots, and game information.
+                </p>
+                <Button
+                  onClick={handleDownloadPressKit}
+                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Press Kit
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Playtest Keys Card - Right below Press Kit */}
+          {product.playtestQuota && product.playtestQuota > 0 && (
+            <Card className="rounded-2xl shadow-soft">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold">Playtest Access</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Help test this game and provide feedback to the developers.
+                </div>
+                {product.playtestQuota && (
+                  <div className="text-sm text-muted-foreground">
+                    {product.playtestQuota} keys available
+                  </div>
+                )}
+                <Button
+                  onClick={() => {
+                    // This would trigger the playtest claim flow
+                    toast.info('Playtest claim functionality coming soon!');
+                  }}
+                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Request Playtest Key
+                </Button>
+                {product.playtestExpiry && (
+                  <div className="text-xs text-muted-foreground">
+                    Available until {formatDate(product.playtestExpiry)}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Crowdfunding Pledge Card */}
+          {product.crowdfundingPledge && (
+            <Card className="rounded-2xl shadow-soft">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold">Crowdfunding</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Support this project through crowdfunding pledges.
+                </div>
+                <Button
+                  onClick={() => {
+                    toast.info('Crowdfunding functionality coming soon!');
+                  }}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                >
+                  <Heart className="w-4 h-4 mr-2" />
+                  Support Project
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Gamification Tags Card */}
+          {product.gamificationTags && product.gamificationTags.length > 0 && (
+            <Card className="rounded-2xl shadow-soft">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold">Game Features</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {product.gamificationTags.map((tag, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Recommended Card - Right below Playtest Keys */}
           {recommended.length > 0 && (
             <Card className="rounded-2xl shadow-soft">
               <CardHeader>
@@ -694,12 +1094,12 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
             </CardHeader>
             <CardContent className="flex gap-2">
               <Button variant="outline" asChild>
-                <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}&text=${encodeURIComponent(product.title)}`} target="_blank" rel="noopener noreferrer">
+                <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(product.title)}`} target="_blank" rel="noopener noreferrer">
                   <Share2 className="w-4 h-4 mr-2" /> Twitter
                 </a>
               </Button>
               <Button variant="outline" asChild>
-                <a href={`https://www.reddit.com/submit?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}&title=${encodeURIComponent(product.title)}`} target="_blank" rel="noopener noreferrer">
+                <a href={`https://www.reddit.com/submit?url=${encodeURIComponent(currentUrl)}&title=${encodeURIComponent(product.title)}`} target="_blank" rel="noopener noreferrer">
                   <Share2 className="w-4 h-4 mr-2" /> Reddit
                 </a>
               </Button>
@@ -709,25 +1109,65 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
             </CardContent>
           </Card>
 
-          {/* Developer Info */}
+          {/* Team/Makers Info */}
           <Card className="rounded-2xl shadow-soft">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">Developer</CardTitle>
+              <CardTitle className="text-lg font-semibold">
+                {product.makers && product.makers.length > 0 ? 'Team' : 'Developer'}
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-white" />
+              {product.makers && product.makers.length > 0 ? (
+                <div className="space-y-4">
+                  {product.makers.map((maker) => (
+                    <div key={maker.id} className="flex items-start gap-3">
+                      <Avatar className="w-10 h-10">
+                        <AvatarImage 
+                          src={maker.user?.image || undefined} 
+                          alt={maker.user?.name || maker.email || 'Team member'}
+                        />
+                        <AvatarFallback className="bg-gradient-to-br from-purple-400 to-blue-500 text-white">
+                          {maker.user?.name ? maker.user.name.charAt(0).toUpperCase() : 
+                           maker.email ? maker.email.charAt(0).toUpperCase() : 'T'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-medium text-gray-900 dark:text-white truncate">
+                            {maker.user?.name || maker.email || 'Team Member'}
+                          </p>
+                          {maker.isCreator && (
+                            <Badge variant="secondary" className="text-xs bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200">
+                              Creator
+                            </Badge>
+                          )}
+                        </div>
+                        <Badge variant="outline" className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                          {maker.role === 'MAKER' ? 'Maker' :
+                           maker.role === 'DESIGNER' ? 'Designer' :
+                           maker.role === 'DEVELOPER' ? 'Developer' :
+                           maker.role === 'PUBLISHER' ? 'Publisher' :
+                           maker.role === 'HUNTER' ? 'Hunter' : maker.role}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {product.user.name || 'Anonymous'}
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {formatDate(product.createdAt)}
-                  </p>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {product.user.name || 'Anonymous'}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {formatDate(product.createdAt)}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 

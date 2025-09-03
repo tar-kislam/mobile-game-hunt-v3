@@ -1,4 +1,6 @@
-import { Smartphone, Monitor, Gamepad2, Tablet, Laptop, Apple, Smartphone as Android } from 'lucide-react';
+import { Smartphone, Monitor, Gamepad2, Tablet, Laptop } from 'lucide-react';
+import { FaApple } from 'react-icons/fa';
+import { FcAndroidOs } from 'react-icons/fc';
 import { Badge } from './badge';
 
 export interface Platform {
@@ -13,14 +15,14 @@ export const PLATFORMS: Platform[] = [
   { 
     value: 'ios', 
     label: 'iOS', 
-    icon: Apple, 
+    icon: FaApple, 
     color: 'text-white',
     bgColor: 'bg-black'
   },
   { 
     value: 'android', 
     label: 'Android', 
-    icon: Android, 
+    icon: FcAndroidOs, 
     color: 'text-white',
     bgColor: 'bg-green-600'
   },
@@ -111,6 +113,26 @@ export function PlatformIcons({
     lg: 'w-5 h-5'
   };
 
+  // Icon-only mode: render bare icons without pill backgrounds
+  if (!showLabels) {
+    return (
+      <div className={`flex items-center gap-2 flex-wrap ${className}`}>
+        {platforms.map((platformValue, index) => {
+          const platform = PLATFORMS.find(p => p.value === platformValue.toLowerCase());
+          const key = `${platformValue}-${index}`;
+          if (!platform) {
+            return <Monitor key={key} className={iconSizeClasses[size]} />;
+          }
+          const Icon = platform.icon;
+          const extraColor = platform.value === 'ios' ? 'text-white' : '';
+          const androidSize = platform.value === 'android' ? 'w-6 h-6' : iconSizeClasses[size];
+          return <Icon key={key} className={`${androidSize} ${extraColor}`} />;
+        })}
+      </div>
+    );
+  }
+
+  // Labeled mode: keep badge pills with labels
   return (
     <div className={`flex items-center gap-1 flex-wrap ${className}`}>
       {platforms.map((platformValue, index) => {
@@ -133,7 +155,7 @@ export function PlatformIcons({
             className={`${sizeClasses[size]} ${platform.bgColor} ${platform.color} border-0`}
           >
             <Icon className={`${iconSizeClasses[size]} mr-1`} />
-            {showLabels ? platform.label : platform.value.toUpperCase()}
+            {platform.label}
           </Badge>
         );
       })}

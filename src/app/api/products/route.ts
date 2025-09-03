@@ -40,7 +40,12 @@ export async function GET(request: NextRequest) {
     const limit = limitParam ? parseInt(limitParam, 10) : undefined
 
     const where: any = userId ? { userId } : {}
-    
+
+    // Only return published products (unless filtering by userId for dashboard)
+    if (!userId) {
+      where.status = 'PUBLISHED'
+    }
+
     // Add category filter if provided
     if (categoryId) {
       where.categories = {
@@ -52,7 +57,28 @@ export async function GET(request: NextRequest) {
 
     const products = await prisma.product.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        title: true,
+        tagline: true,
+        description: true,
+        url: true,
+        image: true,
+        thumbnail: true,
+        platforms: true,
+        createdAt: true,
+        releaseAt: true,
+        status: true,
+        clicks: true,
+        follows: true,
+        pricing: true,
+        promoOffer: true,
+        promoCode: true,
+        promoExpiry: true,
+        playtestQuota: true,
+        playtestExpiry: true,
+        sponsorRequest: true,
+        sponsorNote: true,
         user: {
           select: {
             id: true,
@@ -61,7 +87,7 @@ export async function GET(request: NextRequest) {
           }
         },
         categories: {
-          include: {
+          select: {
             category: {
               select: {
                 id: true,
