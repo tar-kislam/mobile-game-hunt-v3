@@ -43,6 +43,12 @@ interface Product {
     name: string | null
     image?: string | null
   }
+  categories?: Array<{
+    category: {
+      id: string;
+      name: string;
+    };
+  }>;
   _count: {
     votes: number
     comments: number
@@ -240,6 +246,24 @@ export function InfoPanel({ product, onVote, hasVoted }: InfoPanelProps) {
                 showLabels={true}
               />
             </div>
+            
+            <Separator />
+            
+            {product.categories && product.categories.length > 0 && (
+              <>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">Categories:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {product.categories.map((cat) => (
+                      <Badge key={cat.category.id} variant="secondary" className="text-xs">
+                        {cat.category.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
             
             <Separator />
             

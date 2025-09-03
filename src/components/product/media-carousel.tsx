@@ -26,87 +26,72 @@ export function MediaCarousel({ images, video, mainImage, title }: MediaCarousel
   const [current, setCurrent] = useState(0)
   const [count, setCount] = useState(0)
   
-  // Combine video and images into a single media array
-  const mediaItems = []
-  
-  // Add video first if it exists
-  if (video) {
-    mediaItems.push({ type: 'video', src: video })
-  }
-  
-  // Helper function to check if image URL is valid for Next.js Image component
+  // Helpers
   const isValidImageUrl = (url: string): boolean => {
     try {
-      const urlObj = new URL(url)
-      const allowedHosts = [
-        'images.unsplash.com',
-        'lh3.googleusercontent.com', 
-        'avatars.githubusercontent.com',
-        'localhost',
-        '127.0.0.1',
-        'firebasestorage.googleapis.com',
-        'storage.googleapis.com',
-        'cloudinary.com',
-        'res.cloudinary.com',
-        'imgur.com',
-        'i.imgur.com',
-        'amazonaws.com',
-        'digitaloceanspaces.com',
-        'blob.core.windows.net',
-        'azureedge.net',
-        'shutterstock.com',
-        'www.shutterstock.com',
-        'static.shutterstock.com',
-        'image.shutterstock.com'
-      ]
-      return allowedHosts.some(host => 
-        urlObj.hostname === host || 
-        urlObj.hostname.endsWith(`.${host}`) ||
-        urlObj.hostname.includes(host)
-      )
+      const u = new URL(url)
+      return u.protocol === 'http:' || u.protocol === 'https:'
     } catch {
-      // If URL parsing fails, it might be a relative URL or data URL
       return url.startsWith('/') || url.startsWith('data:') || url.startsWith('blob:')
     }
   }
 
-  // Add main image first if it exists and is not already in images array
+  const isYouTubeUrl = (url: string | null | undefined) => {
+    if (!url) return false
+    try {
+      const u = new URL(url)
+      return (/youtube\.com$/i.test(u.hostname) || /youtu\.be$/i.test(u.hostname))
+    } catch { return false }
+  }
+
+  const toYouTubeEmbed = (url: string): string => {
+    try {
+      const u = new URL(url)
+      let id = ''
+      if (u.hostname.includes('youtu.be')) {
+        id = u.pathname.replace('/', '')
+      } else {
+        id = u.searchParams.get('v') || ''
+      }
+      return id ? `https://www.youtube.com/embed/${id}` : url
+    } catch { return url }
+  }
+  
+  // Build media list in order: main image, video (if any), then gallery
+  const mediaItems: Array<{ type: 'image' | 'youtube' | 'video' | 'placeholder'; src: string }> = []
+
   if (mainImage && mainImage.trim() !== '' && isValidImageUrl(mainImage)) {
     mediaItems.push({ type: 'image', src: mainImage })
   }
+
+  if (video) {
+    if (isYouTubeUrl(video)) {
+      mediaItems.push({ type: 'youtube', src: toYouTubeEmbed(video) })
+    } else {
+      mediaItems.push({ type: 'video', src: video })
+    }
+  }
   
-  // Add images - filter out empty/invalid URLs and non-allowed domains
-  const validImages = images.filter(image => 
-    image && 
-    image.trim() !== '' && 
-    isValidImageUrl(image) &&
-    image !== mainImage // Avoid duplicates
-  )
-  validImages.forEach(image => {
-    mediaItems.push({ type: 'image', src: image })
-  })
+  const validImages = (images || []).filter(img => img && img.trim() !== '' && isValidImageUrl(img) && img !== mainImage)
+  validImages.forEach(img => mediaItems.push({ type: 'image', src: img }))
   
-  // If no media items, show placeholder
   if (mediaItems.length === 0) {
     mediaItems.push({ type: 'placeholder', src: '' })
   }
 
   useEffect(() => {
-    if (!api) {
-      return
+    if (!api) return
+    const update = () => {
+      const newCount = api.scrollSnapList().length
+      setCount(newCount)
+      const sel = api.selectedScrollSnap() + 1
+      setCurrent(sel > newCount ? newCount : sel)
     }
-    
-    setCount(api.scrollSnapList().length)
-    setCurrent(api.selectedScrollSnap() + 1)
-    
-    api.on("select", () => {
-      setCurrent(api.selectedScrollSnap() + 1)
-    })
+    update()
+    api.on("select", update)
   }, [api])
 
-  const goToSlide = (index: number) => {
-    api?.scrollTo(index)
-  }
+  const goToSlide = (index: number) => api?.scrollTo(index)
 
   return (
     <div className="w-full space-y-4">
@@ -116,7 +101,18 @@ export function MediaCarousel({ images, video, mainImage, title }: MediaCarousel
           {mediaItems.map((media, index) => (
             <CarouselItem key={index}>
               <Card className="relative aspect-video overflow-hidden rounded-2xl bg-gradient-to-br from-purple-100 to-blue-100 dark:from-gray-800 dark:to-gray-900">
-                {media.type === 'video' ? (
+                {media.type === 'youtube' ? (
+                  <div className="relative w-full h-full">
+                    <iframe
+                      src={media.src}
+                      title={`${title} - Video`}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+                    <div className="absolute top-4 left-4"><span className="bg-black/70 text-white px-2 py-1 rounded-lg text-xs font-medium">YouTube</span></div>
+                  </div>
+                ) : media.type === 'video' ? (
                   <div className="relative w-full h-full">
                     <video
                       src={media.src}
@@ -124,35 +120,34 @@ export function MediaCarousel({ images, video, mainImage, title }: MediaCarousel
                       className="w-full h-full object-cover"
                       poster=""
                       preload="metadata"
-                    >
-                      Your browser does not support the video tag.
-                    </video>
-                    <div className="absolute top-4 left-4">
-                      <span className="bg-black/70 text-white px-2 py-1 rounded-lg text-xs font-medium">
-                        Video
-                      </span>
-                    </div>
+                    />
+                    <div className="absolute top-4 left-4"><span className="bg-black/70 text-white px-2 py-1 rounded-lg text-xs font-medium">Video</span></div>
                   </div>
                 ) : media.type === 'image' ? (
                   <div className="relative w-full h-full group">
-                    <Image
-                      src={media.src}
-                      alt={`${title} - Image ${index + 1}`}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
-                      priority={index === 0}
-                      quality={90}
-                      onError={(e) => {
-                        console.error('Image failed to load:', media.src)
-                        const target = e.target as HTMLImageElement
-                        // Prevent infinite retries by removing the onError handler
-                        target.onerror = null
-                        // Replace with fallback instead of hiding
-                        target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='24'%3E🎮 Game Image%3C/text%3E%3C/svg%3E"
-                      }}
-                    />
-                    {/* Image overlay for better UX */}
+                    {media.src.startsWith('/') ? (
+                      <img
+                        src={media.src}
+                        alt={`${title} - Image ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e)=>{(e.currentTarget as HTMLImageElement).src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='24'%3E%F0%9F%8E%AE%20Game%20Image%3C/text%3E%3C/svg%3E"}}
+                      />
+                    ) : (
+                      <Image
+                        src={media.src}
+                        alt={`${title} - Image ${index + 1}`}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
+                        priority={index === 0}
+                        quality={90}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          ;(target as any).onerror = null
+                          target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='24'%3E%F0%9F%8E%AE%20Game%20Image%3C/text%3E%3C/svg%3E"
+                        }}
+                      />
+                    )}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                   </div>
                 ) : (
@@ -165,25 +160,18 @@ export function MediaCarousel({ images, video, mainImage, title }: MediaCarousel
             </CarouselItem>
           ))}
         </CarouselContent>
-        
-        {/* Navigation buttons - only show if more than 1 item */}
-        {mediaItems.length > 1 && (
-          <>
-            <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white border-0 w-10 h-10" />
-            <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white border-0 w-10 h-10" />
-          </>
-        )}
-
-        {/* Media Counter */}
-        {mediaItems.length > 1 && (
+        {count > 1 && (<>
+          <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white border-0 w-10 h-10" />
+          <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white border-0 w-10 h-10" />
+        </>)}
+        {count > 1 && (
           <div className="absolute bottom-4 right-4 bg-black/70 text-white px-3 py-1 rounded-lg text-sm font-medium">
-            {current} / {count}
+            {(current > count ? count : current)} / {count}
           </div>
         )}
       </Carousel>
 
-      {/* Thumbnail Navigation */}
-      {mediaItems.length > 1 && (
+      {count > 1 && (
         <div className="w-full">
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
             {mediaItems.map((media, index) => (
@@ -191,40 +179,28 @@ export function MediaCarousel({ images, video, mainImage, title }: MediaCarousel
                 key={index}
                 onClick={() => goToSlide(index)}
                 className={`relative flex-shrink-0 w-20 h-16 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                  current === index + 1
-                    ? 'border-primary shadow-lg scale-105'
-                    : 'border-transparent hover:border-muted-foreground hover:scale-102'
+                  current === index + 1 ? 'border-primary shadow-lg scale-105' : 'border-transparent hover:border-muted-foreground hover:scale-102'
                 }`}
               >
-                {media.type === 'video' ? (
+                {media.type === 'youtube' ? (
+                  <div className="w-full h-full bg-black/90 flex items-center justify-center">
+                    <PlayIcon className="w-6 h-6 text-white" />
+                  </div>
+                ) : media.type === 'video' ? (
                   <div className="w-full h-full bg-black/90 flex items-center justify-center">
                     <PlayIcon className="w-6 h-6 text-white" />
                   </div>
                 ) : media.type === 'image' ? (
-                  <Image
-                    src={media.src}
-                    alt={`Thumbnail ${index + 1}`}
-                    fill
-                    className="object-cover"
-                    sizes="80px"
-                    quality={60}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      // Prevent infinite retries by removing the onError handler
-                      target.onerror = null
-                      target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 64'%3E%3Crect width='80' height='64' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='12'%3E🎮%3C/text%3E%3C/svg%3E"
-                    }}
-                  />
+                  media.src.startsWith('/') ? (
+                    <img src={media.src} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                  ) : (
+                    <Image src={media.src} alt={`Thumbnail ${index + 1}`} fill className="object-cover" sizes="80px" quality={60}
+                      onError={(e)=>{const t=e.target as HTMLImageElement;t.onerror=null;t.src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 64'%3E%3Crect width='80' height='64' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='12'%3E%F0%9F%8E%AE%3C/text%3E%3C/svg%3E"}}/>
+                  )
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-purple-100 to-blue-100 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center text-2xl">
-                    🎮
-                  </div>
+                  <div className="w-full h-full bg-gradient-to-br from-purple-100 to-blue-100 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center text-2xl">🎮</div>
                 )}
-                
-                {/* Active indicator */}
-                {current === index + 1 && (
-                  <div className="absolute inset-0 border-2 border-primary rounded-lg" />
-                )}
+                {current === index + 1 && (<div className="absolute inset-0 border-2 border-primary rounded-lg" />)}
               </button>
             ))}
           </div>

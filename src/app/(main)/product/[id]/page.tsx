@@ -26,6 +26,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
           image: true,
         },
       },
+      categories: {
+        include: {
+          category: {
+            select: {
+              id: true,
+              name: true,
+            }
+          }
+        }
+      },
       _count: {
         select: {
           votes: true,

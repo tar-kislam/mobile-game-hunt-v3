@@ -36,9 +36,19 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
     const limitParam = searchParams.get('limit')
+    const categoryId = searchParams.get('categoryId')
     const limit = limitParam ? parseInt(limitParam, 10) : undefined
 
-    const where = userId ? { userId } : {}
+    const where: any = userId ? { userId } : {}
+    
+    // Add category filter if provided
+    if (categoryId) {
+      where.categories = {
+        some: {
+          categoryId: categoryId
+        }
+      }
+    }
 
     const products = await prisma.product.findMany({
       where,
@@ -48,6 +58,16 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             image: true,
+          }
+        },
+        categories: {
+          include: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+              }
+            }
           }
         },
         pressKit: {

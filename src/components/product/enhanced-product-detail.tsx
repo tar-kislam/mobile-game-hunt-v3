@@ -54,6 +54,12 @@ interface Product {
     name: string | null;
     image?: string | null;
   };
+  categories?: Array<{
+    category: {
+      id: string;
+      name: string;
+    };
+  }>;
   _count: {
     votes: number;
     comments: number;
@@ -391,9 +397,11 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
         {/* Left Column - Media */}
         <div className="lg:col-span-2">
           <MediaCarousel 
-            images={product.images} 
-            video={product.video} 
-            mainImage={product.image}
+            images={(product.images && product.images.length > 0
+              ? product.images
+              : ((product as any).gallery || []))}
+            video={product.video ?? (product as any).videoUrl ?? undefined}
+            mainImage={product.image ?? (product as any).thumbnail ?? undefined}
             title={product.title}
           />
           
@@ -403,7 +411,7 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
               <CardTitle className="text-xl font-semibold">About This Game</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
                 {product.description}
               </p>
             </CardContent>

@@ -61,6 +61,8 @@ model User {
   products       Product[]
   sessions       Session[]
   votes          Vote[]
+  productMakers  ProductMaker[]
+  studios        Studio[]
 }
 
 model Product {
@@ -69,6 +71,12 @@ model Product {
   description  String
   url          String
   image        String?
+  thumbnail    String?
+  gallery      Json?
+  videoUrl     String?
+  gameplayGifUrl String?
+  demoUrl      String?
+  studioName   String?  // Studio/Publisher name
   userId       String
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
@@ -82,6 +90,21 @@ model Product {
   countries    String[]
   status       ProductStatus @default(DRAFT)
   releaseAt    DateTime?
+  launchType   String?       // Soft launch / Global launch
+  launchDate   DateTime?      // Launch date
+  monetization String?        // Free, Paid, Freemium, Ads supported, Subscription
+  engine       String?        // Unity, Unreal, Godot, Custom
+  // Community & Extras fields
+  pricing      String?        // FREE, PAID, FREEMIUM
+  promoOffer   String?        // Promotional offer description
+  promoCode    String?        // Promo code
+  promoExpiry  DateTime?      // Promo expiry date
+  playtestQuota Int?          // Number of playtest keys
+  playtestExpiry DateTime?    // Playtest keys expiry date
+  sponsorRequest Boolean      @default(false)
+  sponsorNote   String?        // Additional notes for sponsor request
+  crowdfundingPledge Boolean  @default(false)
+  gamificationTags String[]   // Array of gamification tag IDs
   clicks       Int           @default(0)
   follows      Int           @default(0)
   comments     Comment[]
@@ -91,6 +114,12 @@ model Product {
   pressKit     PressKit?
   user         User          @relation(fields: [userId], references: [id])
   votes        Vote[]
+  tags         ProductTag[]
+  categories   ProductCategory[]
+  makers       ProductMaker[]
+
+  @@index([createdAt], map: "idx_product_createdAt")
+  @@index([status, createdAt], map: "idx_product_status_createdAt")
 }
 
 model Vote {
@@ -171,6 +200,7 @@ model PressKit {
   about     String
   features  String[]
   media     String[]
+  zipUrl    String?  // URL to downloadable zip file
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   product   Product  @relation(fields: [gameId], references: [id], onDelete: Cascade)
@@ -212,7 +242,87 @@ enum NotificationType {
 
 enum ProductStatus {
   DRAFT
+  PENDING
   PUBLISHED
+  REJECTED
   ARCHIVED
-  PENDING_REVIEW
+}
+
+// New tagging system
+model Tag {
+  id        String        @id @default(cuid())
+  slug      String        @unique
+  name      String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  products  ProductTag[]
+}
+
+model ProductTag {
+  id        String   @id @default(cuid())
+  productId String
+  tagId     String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, tagId])
+  @@index([tagId])
+}
+
+// Game categories
+model Category {
+  id        String            @id @default(cuid())
+  name      String            @unique
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  products  ProductCategory[]
+}
+
+model ProductCategory {
+  id         String   @id @default(cuid())
+  productId  String
+  categoryId String
+  createdAt  DateTime @default(now())
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, categoryId])
+  @@index([categoryId])
+}
+
+// Makers attached to a product (e.g., Hunter, Maker)
+model ProductMaker {
+  id        String      @id @default(cuid())
+  productId String
+  userId    String?
+  email     String?     // for invited collaborators
+  role      MakerRole   @default(MAKER)
+  isCreator Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  product   Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
+  @@index([userId])
+}
+
+model Studio {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([name])
+}
+
+enum MakerRole {
+  MAKER
+  DESIGNER
+  DEVELOPER
+  PUBLISHER
+  HUNTER
 }

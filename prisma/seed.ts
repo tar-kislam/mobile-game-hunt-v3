@@ -6,6 +6,24 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('🌱 Starting seed...')
 
+  // Create predefined categories
+  const categories = [
+    'Action', 'Adventure', 'RPG', 'Strategy', 'Puzzle', 'Shooter', 'Simulation', 
+    'Sports', 'Racing', 'Casual', 'Arcade', 'Fighting', 'Card', 'MOBA', 'Idle', 
+    'Music', 'Educational', 'Platformer', 'Roguelike', 'Sandbox'
+  ]
+
+  console.log('📂 Creating categories...')
+  const createdCategories = []
+  for (const categoryName of categories) {
+    const category = await prisma.category.upsert({
+      where: { name: categoryName },
+      update: {},
+      create: { name: categoryName },
+    })
+    createdCategories.push(category)
+  }
+
   // Create dummy users
   const hashedPassword = await bcrypt.hash('password123', 12)
 
@@ -42,7 +60,7 @@ async function main() {
     },
   })
 
-  // Create dummy products with platforms
+  // Create dummy products with platforms and categories
   const product1 = await prisma.product.create({
     data: {
       title: 'Clash of Clans',
@@ -54,6 +72,12 @@ async function main() {
       status: 'PUBLISHED',
       releaseAt: new Date('2025-09-15T10:00:00Z'),
       userId: user1.id,
+      categories: {
+        create: [
+          { categoryId: createdCategories.find(c => c.name === 'Strategy')!.id },
+          { categoryId: createdCategories.find(c => c.name === 'Simulation')!.id }
+        ]
+      }
     },
   })
 
@@ -68,6 +92,12 @@ async function main() {
       status: 'PUBLISHED',
       releaseAt: new Date('2025-09-20T14:00:00Z'),
       userId: user2.id,
+      categories: {
+        create: [
+          { categoryId: createdCategories.find(c => c.name === 'Adventure')!.id },
+          { categoryId: createdCategories.find(c => c.name === 'Casual')!.id }
+        ]
+      }
     },
   })
 
@@ -82,6 +112,11 @@ async function main() {
       status: 'PUBLISHED',
       releaseAt: new Date('2025-09-25T09:00:00Z'),
       userId: adminUser.id,
+      categories: {
+        create: [
+          { categoryId: createdCategories.find(c => c.name === 'Casual')!.id }
+        ]
+      }
     },
   })
 
