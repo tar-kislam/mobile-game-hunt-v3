@@ -1,0 +1,46 @@
+export interface Language {
+  id: string;
+  name: string;
+  flag: string;
+}
+
+export const LANGUAGES: Language[] = [
+  { id: 'english', name: 'English', flag: '🇺🇸' },
+  { id: 'turkish', name: 'Turkish', flag: '🇹🇷' },
+  { id: 'german', name: 'German', flag: '🇩🇪' },
+  { id: 'french', name: 'French', flag: '🇫🇷' },
+  { id: 'spanish', name: 'Spanish', flag: '🇪🇸' },
+  { id: 'italian', name: 'Italian', flag: '🇮🇹' },
+  { id: 'portuguese', name: 'Portuguese', flag: '🇵🇹' },
+  { id: 'russian', name: 'Russian', flag: '🇷🇺' },
+  { id: 'japanese', name: 'Japanese', flag: '🇯🇵' },
+  { id: 'korean', name: 'Korean', flag: '🇰🇷' },
+  { id: 'chinese', name: 'Chinese (Simplified)', flag: '🇨🇳' },
+  { id: 'arabic', name: 'Arabic', flag: '🇸🇦' },
+  { id: 'hindi', name: 'Hindi', flag: '🇮🇳' },
+  { id: 'polish', name: 'Polish', flag: '🇵🇱' },
+  { id: 'dutch', name: 'Dutch', flag: '🇳🇱' },
+  { id: 'swedish', name: 'Swedish', flag: '🇸🇪' },
+  { id: 'norwegian', name: 'Norwegian', flag: '🇳🇴' },
+  { id: 'danish', name: 'Danish', flag: '🇩🇰' },
+  { id: 'finnish', name: 'Finnish', flag: '🇫🇮' },
+  { id: 'czech', name: 'Czech', flag: '🇨🇿' },
+  { id: 'hungarian', name: 'Hungarian', flag: '🇭🇺' },
+  { id: 'romanian', name: 'Romanian', flag: '🇷🇴' },
+  { id: 'bulgarian', name: 'Bulgarian', flag: '🇧🇬' },
+  { id: 'greek', name: 'Greek', flag: '🇬🇷' },
+  { id: 'hebrew', name: 'Hebrew', flag: '🇮🇱' },
+  { id: 'thai', name: 'Thai', flag: '🇹🇭' },
+  { id: 'vietnamese', name: 'Vietnamese', flag: '🇻🇳' },
+  { id: 'indonesian', name: 'Indonesian', flag: '🇮🇩' },
+  { id: 'malay', name: 'Malay', flag: '🇲🇾' },
+  { id: 'filipino', name: 'Filipino', flag: '🇵🇭' },
+  { id: 'ukrainian', name: 'Ukrainian', flag: '🇺🇦' },
+  { id: 'slovak', name: 'Slovak', flag: '🇸🇰' },
+  { id: 'croatian', name: 'Croatian', flag: '🇭🇷' },
+  { id: 'serbian', name: 'Serbian', flag: '🇷🇸' },
+  { id: 'slovenian', name: 'Slovenian', flag: '🇸🇮' },
+  { id: 'estonian', name: 'Estonian', flag: '🇪🇪' },
+  { id: 'latvian', name: 'Latvian', flag: '🇱🇻' },
+  { id: 'lithuanian', name: 'Lithuanian', flag: '🇱🇹' },
+];

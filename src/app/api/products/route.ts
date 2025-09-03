@@ -36,8 +36,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
     const limitParam = searchParams.get('limit')
+    const pageParam = searchParams.get('page')
     const categoryId = searchParams.get('categoryId')
     const limit = limitParam ? parseInt(limitParam, 10) : undefined
+    const page = pageParam ? parseInt(pageParam, 10) : 1
+    const skip = (page - 1) * (limit || 50)
 
     const where: any = userId ? { userId } : {}
 
@@ -114,6 +117,7 @@ export async function GET(request: NextRequest) {
         createdAt: 'desc'
       },
       take: limit,
+      skip: skip,
     })
 
     return NextResponse.json(products)

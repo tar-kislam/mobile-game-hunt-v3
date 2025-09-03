@@ -22,6 +22,7 @@ import { UserSearch } from '@/components/ui/user-search'
 import { PressKitModal } from '@/components/ui/press-kit-modal'
 import { GamePreviewCard } from '@/components/ui/game-preview-card'
 import { ScheduleLaunchModal } from '@/components/ui/schedule-launch-modal'
+import { LanguageSelector } from '@/components/ui/language-selector'
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6
 
@@ -37,9 +38,9 @@ export default function NewSubmitPage() {
     resolver: zodResolver(productFullSchema),
     defaultValues: {
       title: '', tagline: '', description: '', url: '',
-      website: '', discordUrl: '', twitterUrl: '', tiktokUrl: '', youtubeUrl: '',
-      isOpenSource: false, platforms: [], targetCountries: [],
-      thumbnail: '', gallery: [], videoUrl: '', gameplayGifUrl: '', demoUrl: '',
+      website: '', discordUrl: '', twitterUrl: '', tiktokUrl: '',
+      isOpenSource: false, platforms: [], targetCountries: [], languages: [],
+      thumbnail: '', gallery: [], youtubeUrl: '', gameplayGifUrl: '', demoUrl: '',
       image: '', images: [], video: '',
       appStoreUrl: '', playStoreUrl: '', releaseAt: '',
       tags: [], categories: [], termsAccepted: false, confirmImagesOwned: false,
@@ -365,18 +366,7 @@ export default function NewSubmitPage() {
                             </div>
                           </div>
 
-                          <div>
-                            <Label htmlFor="youtubeUrl" className="text-sm font-medium">YouTube Trailer</Label>
-                            <div className="relative">
-                              <Input 
-                                id="youtubeUrl"
-                                placeholder="https://youtube.com/watch?v=..." 
-                                {...form.register('youtubeUrl')} 
-                                className="h-12 pl-10" 
-                              />
-                              <Youtube className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            </div>
-                          </div>
+
                         </div>
                       </div>
 
@@ -432,6 +422,18 @@ export default function NewSubmitPage() {
                           placeholder="Select target countries..."
                         />
                         <p className="text-xs text-muted-foreground mt-1">Select countries for soft launch targeting</p>
+                      </div>
+
+                      {/* Languages */}
+                      <div>
+                        <Label className="block text-sm font-medium mb-2">Supported Languages</Label>
+                        <LanguageSelector
+                          selectedLanguages={form.watch('languages') || []}
+                          onSelectionChange={(languages) => form.setValue('languages', languages)}
+                          maxSelections={10}
+                          placeholder="Select supported languages..."
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Select languages your game supports with their features</p>
                       </div>
 
                       {/* Launch Tags */}
@@ -738,10 +740,10 @@ export default function NewSubmitPage() {
                         <p className="text-sm text-muted-foreground mb-4">Add a YouTube video link to showcase your game</p>
                         <Input 
                           placeholder="https://youtube.com/watch?v=..." 
-                          {...form.register('videoUrl')} 
+                          {...form.register('youtubeUrl')} 
                         />
-                        {form.formState.errors.videoUrl && (
-                          <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.videoUrl.message)}</p>
+                        {form.formState.errors.youtubeUrl && (
+                          <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.youtubeUrl.message)}</p>
                         )}
                       </div>
 

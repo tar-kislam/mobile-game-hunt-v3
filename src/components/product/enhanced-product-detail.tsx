@@ -40,6 +40,7 @@ import { Comment } from '@/components/ui/comment';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input'
 import Link from 'next/link'
+import { LANGUAGES } from '@/lib/constants/languages'
 
 interface Product {
   id: string;
@@ -53,6 +54,7 @@ interface Product {
   videoUrl?: string | null;
   gameplayGifUrl?: string | null;
   demoUrl?: string | null;
+  youtubeUrl?: string | null;
   images: string[];
   video?: string | null;
   platforms?: string[];
@@ -113,6 +115,14 @@ interface Product {
   // Additional fields
   crowdfundingPledge?: boolean | null;
   gamificationTags?: string[] | null;
+  languages?: Array<{
+    name: string;
+    interface: boolean;
+    audio: boolean;
+    subtitles: boolean;
+  }> | null;
+  studioName?: string | null;
+  countries?: string[] | null;
 }
 
 interface EnhancedProductDetailProps {
@@ -526,10 +536,114 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
             images={(product.images && product.images.length > 0
               ? product.images
               : ((product as any).gallery || []))}
-            video={product.video ?? (product as any).videoUrl ?? undefined}
+            video={product.youtubeUrl ?? product.video ?? (product as any).videoUrl ?? undefined}
             mainImage={product.image ?? (product as any).thumbnail ?? undefined}
             title={product.title}
           />
+          
+          {/* Game Overview Block - Steam Style */}
+          <Card className="rounded-2xl shadow-soft mt-6 border border-gray-200 dark:border-gray-700">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-semibold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+                Game Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Release Date */}
+              {product.launchDate && (
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-blue-400" />
+                  <div>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Release Date:</span>
+                    <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                      {new Date(product.launchDate).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Developer & Publisher */}
+              {product.makers && product.makers.length > 0 && (
+                <div className="flex items-start gap-3">
+                  <User className="w-5 h-5 text-green-400 mt-0.5" />
+                  <div className="flex-1">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Developer:</span>
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {product.makers.filter(maker => maker.role === 'MAKER' || maker.role === 'DEVELOPER').map((maker, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <Avatar className="w-6 h-6">
+                            <AvatarImage src={maker.user?.image || ''} />
+                            <AvatarFallback className="text-xs">
+                              {maker.user?.name?.charAt(0) || maker.email?.charAt(0) || 'D'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {maker.user?.name || maker.email}
+                          </span>
+                          {maker.isCreator && (
+                            <Badge variant="secondary" className="text-xs">Creator</Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Publisher */}
+              {product.studioName && (
+                <div className="flex items-center gap-3">
+                  <Globe className="w-5 h-5 text-purple-400" />
+                  <div>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Publisher:</span>
+                    <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">{product.studioName}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Categories */}
+              {product.categories && product.categories.length > 0 && (
+                <div className="flex items-start gap-3">
+                  <Star className="w-5 h-5 text-yellow-400 mt-0.5" />
+                  <div className="flex-1">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Categories:</span>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {product.categories.map((cat, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {cat.category.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
+
+              {/* Regions */}
+              {product.countries && product.countries.length > 0 && (
+                <div className="flex items-start gap-3">
+                  <Globe className="w-5 h-5 text-indigo-400 mt-0.5" />
+                  <div className="flex-1">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Regions:</span>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {product.countries.map((country, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {country}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
+            </CardContent>
+          </Card>
           
           {/* About This Game Section */}
           {product.description && (
@@ -916,7 +1030,78 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
             </CardContent>
           </Card>
 
-          {/* Download Card - Right below Game Stats */}
+          {/* Details Card - Right below Game Stats */}
+          <Card className="rounded-2xl shadow-soft">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold bg-gradient-to-r from-green-500 to-blue-600 bg-clip-text text-transparent">
+                Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Release Date */}
+              {product.launchDate && (
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-blue-400" />
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Release Date:</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {new Date(product.launchDate).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })}
+                  </span>
+                </div>
+              )}
+
+              {/* Pricing Model */}
+              {product.pricing && (
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4 text-yellow-400" />
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Pricing:</span>
+                  <Badge 
+                    variant={getPricingBadgeVariant(product.pricing)}
+                    className="text-xs"
+                  >
+                    {getPricingDisplayText(product.pricing)}
+                  </Badge>
+                </div>
+              )}
+
+              {/* Tags */}
+              {product.tags && product.tags.length > 0 && (
+                <div className="flex items-start gap-2">
+                  <Star className="w-4 h-4 text-purple-400 mt-0.5" />
+                  <div className="flex-1">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Tags:</span>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {product.tags.slice(0, 5).map((tagItem) => (
+                        <Badge key={tagItem.tag.id} variant="secondary" className="text-xs">
+                          {tagItem.tag.name}
+                        </Badge>
+                      ))}
+                      {product.tags.length > 5 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{product.tags.length - 5} more
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Sponsor Badge */}
+              {product.sponsorRequest && (
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4 text-purple-400" />
+                  <Badge variant="secondary" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs">
+                    Sponsored
+                  </Badge>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Download Card - Right below Details */}
           {(product.appStoreUrl || product.playStoreUrl) && (
             <Card className="rounded-2xl shadow-soft">
               <CardHeader>
@@ -940,6 +1125,64 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
                       </a>
                     </Button>
                   )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Supported Languages Card - Above Pledge Support */}
+          {product.languages && product.languages.length > 0 && (
+            <Card className="rounded-2xl shadow-soft">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold">Supported Languages</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-gray-700">
+                        <th className="text-left py-2 font-medium text-gray-700 dark:text-gray-300">Language</th>
+                        <th className="text-center py-2 font-medium text-gray-700 dark:text-gray-300">Interface</th>
+                        <th className="text-center py-2 font-medium text-gray-700 dark:text-gray-300">Audio</th>
+                        <th className="text-center py-2 font-medium text-gray-700 dark:text-gray-300">Subtitles</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {product.languages.map((lang, index) => (
+                        <tr key={index} className="border-b border-gray-100 dark:border-gray-800">
+                          <td className="py-2 text-gray-600 dark:text-gray-400">
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">
+                                {LANGUAGES.find(l => l.name === lang.name)?.flag || '🌐'}
+                              </span>
+                              <span>{lang.name}</span>
+                            </div>
+                          </td>
+                          <td className="text-center py-2">
+                            {lang.interface ? (
+                              <span className="text-green-500 text-lg">✔</span>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
+                          </td>
+                          <td className="text-center py-2">
+                            {lang.audio ? (
+                              <span className="text-green-500 text-lg">✔</span>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
+                          </td>
+                          <td className="text-center py-2">
+                            {lang.subtitles ? (
+                              <span className="text-green-500 text-lg">✔</span>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </CardContent>
             </Card>
@@ -1067,6 +1310,8 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
               </CardContent>
             </Card>
           )}
+
+
 
           {/* Recommended Card - Right below Playtest Keys */}
           {recommended.length > 0 && (

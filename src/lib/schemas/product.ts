@@ -16,11 +16,16 @@ export const productMainInfoSchema = z.object({
   discordUrl: z.string().url().optional().or(z.literal('')),
   twitterUrl: z.string().url().optional().or(z.literal('')),
   tiktokUrl: z.string().url().optional().or(z.literal('')),
-  youtubeUrl: z.string().url().optional().or(z.literal('')),
   isOpenSource: z.boolean().default(false),
   categories: z.array(z.string()).min(1, 'At least one category is required').max(3, 'Maximum 3 categories allowed'),
   platforms: z.array(z.string()).min(1, 'At least one platform is required').max(5, 'Maximum 5 platforms allowed'),
   targetCountries: z.array(z.string()).optional().default([]),
+  languages: z.array(z.object({
+    name: z.string(),
+    interface: z.boolean().default(false),
+    audio: z.boolean().default(false),
+    subtitles: z.boolean().default(false)
+  })).optional().default([]),
 })
 
 export const productMediaSchema = z.object({
@@ -29,7 +34,7 @@ export const productMediaSchema = z.object({
   video: z.string().url().optional().or(z.literal('')),
   thumbnail: z.string().url('Please enter a valid thumbnail URL').optional().or(z.literal('')),
   gallery: z.array(z.string().url('Please enter valid gallery image URLs')).min(1, 'At least one gallery image is required').max(10, 'Maximum 10 gallery images allowed').optional().default([]),
-  videoUrl: z.string().url('Please enter a valid YouTube URL').optional().or(z.literal('')).refine(
+  youtubeUrl: z.string().url('Please enter a valid YouTube URL').optional().or(z.literal('')).refine(
     (url) => {
       if (!url) return true
       const youtubePattern = /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/.+/i

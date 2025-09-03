@@ -76,6 +76,7 @@ model Product {
   videoUrl     String?
   gameplayGifUrl String?
   demoUrl      String?
+  youtubeUrl   String?
   studioName   String?  // Studio/Publisher name
   userId       String
   createdAt    DateTime      @default(now())
@@ -88,6 +89,7 @@ model Product {
   socialLinks  Json?
   video        String?
   countries    String[]
+  languages    Json?           // Array of language objects with support types
   status       ProductStatus @default(DRAFT)
   releaseAt    DateTime?
   launchType   String?       // Soft launch / Global launch
