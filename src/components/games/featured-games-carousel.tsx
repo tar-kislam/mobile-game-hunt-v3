@@ -16,6 +16,7 @@ interface FeaturedGame {
   tagline?: string | null
   description: string
   url: string
+  thumbnail?: string | null
   image?: string | null
   createdAt: string
   user: {
@@ -133,9 +134,9 @@ function HeroGameCard({ game, onClick }: HeroGameCardProps) {
       <Card className="overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 hover:shadow-2xl transition-all duration-300 border-0 shadow-lg rounded-2xl group-hover:scale-[1.02] h-full relative">
         {/* Background Image */}
         <div className="absolute inset-0">
-          {game.image ? (
+          {game.thumbnail || game.image ? (
             <Image
-              src={game.image}
+              src={game.thumbnail || (game.image as string)}
               alt={game.title}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -234,9 +235,9 @@ function SideGameCard({ game, onClick, onHover, isSelected }: SideGameCardProps)
         <div className="flex gap-3 p-3 h-full">
           {/* Game Image */}
           <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100 flex-shrink-0">
-            {game.image ? (
+            {game.thumbnail || game.image ? (
               <Image
-                src={game.image}
+                src={game.thumbnail || (game.image as string)}
                 alt={game.title}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-110"
