@@ -70,38 +70,86 @@ export async function POST(
       },
     })
 
-    if (existingVote && (upvoted === undefined || upvoted === false)) {
-      // Remove vote (toggle)
-      await prisma.vote.delete({
-        where: {
-          userId_productId: {
-            userId,
-            productId,
+    if (existingVote) {
+      // User has already voted
+      if (upvoted === false) {
+        // Remove vote (explicit downvote)
+        await prisma.vote.delete({
+          where: {
+            userId_productId: {
+              userId,
+              productId,
+            },
           },
-        },
-      })
+        })
 
-      return NextResponse.json({ 
-        message: 'Vote removed',
-        voted: false 
-      })
-    } else if (!existingVote && (upvoted === undefined || upvoted === true)) {
-      // Add vote
-      await prisma.vote.create({
-        data: {
-          userId,
-          productId,
-        },
-      })
+        return NextResponse.json({ 
+          message: 'Vote removed',
+          voted: false 
+        })
+      } else {
+        // User already voted, no change needed
+        return NextResponse.json({ 
+          message: 'Already voted',
+          voted: true 
+        })
+      }
+    } else {
+      // User hasn't voted yet
+      if (upvoted === undefined || upvoted === true) {
+        // Add vote
+        try {
+          await prisma.vote.create({
+            data: {
+              userId,
+              productId,
+            },
+          })
 
-      return NextResponse.json({ 
-        message: 'Vote added',
-        voted: true 
-      })
+          return NextResponse.json({ 
+            message: 'Vote added',
+            voted: true 
+          })
+        } catch (createError) {
+          // Handle unique constraint error (race condition)
+          if (createError instanceof Error && createError.message.includes('Unique constraint')) {
+            // Vote was created by another request, check current state
+            const currentVote = await prisma.vote.findUnique({
+              where: {
+                userId_productId: {
+                  userId,
+                  productId,
+                },
+              },
+            })
+            
+            if (currentVote) {
+              return NextResponse.json({ 
+                message: 'Vote added (race condition handled)',
+                voted: true 
+              })
+            }
+          }
+          throw createError
+        }
+      } else {
+        // User explicitly doesn't want to vote
+        return NextResponse.json({ 
+          message: 'No vote',
+          voted: false 
+        })
+      }
     }
-    return NextResponse.json({ message: 'No change' })
   } catch (error) {
     console.error('Error handling vote:', error)
+    
+    // Check if it's a unique constraint error
+    if (error instanceof Error && error.message.includes('Unique constraint')) {
+      return NextResponse.json(
+        { error: 'Vote already exists for this user and product' },
+        { status: 409 }
+      )
+    }
     
     // Check if it's a foreign key constraint error
     if (error instanceof Error && error.message.includes('Foreign key constraint')) {

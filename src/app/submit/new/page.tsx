@@ -25,6 +25,7 @@ import { PressKitModal } from '@/components/ui/press-kit-modal'
 import { GamePreviewCard } from '@/components/ui/game-preview-card'
 import { ScheduleLaunchModal } from '@/components/ui/schedule-launch-modal'
 import { LanguageSelector } from '@/components/ui/language-selector'
+import { CustomStepper, MobileStepper, DesktopStepper, TopHorizontalStepper } from '@/components/ui/custom-stepper'
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6
 
@@ -37,6 +38,7 @@ export default function NewSubmitPage() {
   const [xPrefix] = useState('x.com/')
   const [savedStudios, setSavedStudios] = useState<Array<{ id: string; name: string }>>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [completedSteps, setCompletedSteps] = useState<number[]>([])
 
   const form = useForm<any>({
     resolver: zodResolver(productFullSchema),
@@ -88,8 +90,47 @@ export default function NewSubmitPage() {
     } catch {}
   }, [form])
 
-  const next = () => setStep((s) => Math.min(6, (s + 1)) as Step)
-  const prev = () => setStep((s) => Math.max(1, (s - 1)) as Step)
+
+  const next = () => {
+    const nextStep = Math.min(6, (step + 1)) as Step
+    setStep(nextStep)
+    // Mark current step as completed if validation passes
+    if (validateStep(step)) {
+      setCompletedSteps(prev => [...prev.filter(s => s !== step), step])
+    }
+  }
+  
+  const prev = () => {
+    const prevStep = Math.max(1, (step - 1)) as Step
+    setStep(prevStep)
+  }
+
+  const handleStepClick = (stepIndex: number) => {
+    const targetStep = (stepIndex + 1) as Step
+    // Allow navigation to completed steps or next step if current step is valid
+    if (completedSteps.includes(step) || validateStep(step) || stepIndex < step) {
+      setStep(targetStep)
+    }
+  }
+
+  const validateStep = (stepToValidate: Step): boolean => {
+    switch (stepToValidate) {
+      case 1:
+        return canNextFromStep1
+      case 2:
+        return canNextFromStep2
+      case 3:
+        return canNextFromStep3
+      case 4:
+        return !!form.watch('launchType') && !!form.watch('launchDate') && !!form.watch('monetization') && !!form.watch('engine')
+      case 5:
+        return true // Step 5 is optional extras
+      case 6:
+        return completionPercentage === 100
+      default:
+        return false
+    }
+  }
 
   const onSubmit = async (values: any) => {
     console.log('Form submitted with values:', {
@@ -215,6 +256,23 @@ export default function NewSubmitPage() {
   const totalRequiredFields = Object.keys(checklistValidation).length
   const completionPercentage = Math.round((requiredFieldsCount / totalRequiredFields) * 100)
 
+  // Update completed steps when form values change
+  useEffect(() => {
+    const newCompletedSteps: number[] = []
+    
+    // Check each step
+    if (canNextFromStep1) newCompletedSteps.push(1)
+    if (canNextFromStep2) newCompletedSteps.push(2)
+    if (canNextFromStep3) newCompletedSteps.push(3)
+    if (!!form.watch('launchType') && !!form.watch('launchDate') && !!form.watch('monetization') && !!form.watch('engine')) {
+      newCompletedSteps.push(4)
+    }
+    // Step 5 is optional, so we don't mark it as completed automatically
+    if (completionPercentage === 100) newCompletedSteps.push(6)
+    
+    setCompletedSteps(newCompletedSteps)
+  }, [canNextFromStep1, canNextFromStep2, canNextFromStep3, form.watch('launchType'), form.watch('launchDate'), form.watch('monetization'), form.watch('engine'), completionPercentage])
+
   // Platform options for multi-select
   const platformOptions = PLATFORMS.map(p => ({
     id: p.value,
@@ -263,38 +321,45 @@ export default function NewSubmitPage() {
   return (
     <TooltipProvider>
       <div className="container mx-auto px-4 py-8">
-        <div className="h-2 bg-muted rounded-full overflow-hidden mb-6">
-          <div className="h-full bg-orange-500 transition-all" style={{ width: `${progress}%` }} />
+        {/* Top Horizontal Stepper */}
+        <div className="mb-8">
+          <TopHorizontalStepper
+            activeStep={step - 1}
+            onStepClick={handleStepClick}
+            completedSteps={completedSteps}
+          />
         </div>
-        <div className="grid lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-1">
-            <Card className="rounded-2xl shadow-soft lg:sticky lg:top-24">
-              <CardHeader className="bg-muted rounded-t-2xl">
-                <CardTitle className="text-sm">Post in progress<div className="text-xs font-normal text-muted-foreground">In progress</div></CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                {[{id:1,label:'Main info',icon:'⚡'},{id:2,label:'Images and media',icon:'🖼️'},{id:3,label:'Makers',icon:'👥'},{id:4,label:'Launch Details',icon:'🚀'},{id:5,label:'Community & Extras',icon:'🌟'},{id:6,label:'Launch checklist',icon:'✅'}].map(i=> (
-                  <button key={i.id} type="button" onClick={()=>setStep(i.id as Step)} className={`w-full text-left px-4 py-3 border-b last:border-b-0 transition-colors ${step===i.id ? 'bg-yellow-50 dark:bg-yellow-950/20 font-medium' : 'text-muted-foreground hover:bg-muted/50'}`}><span className="mr-2">{i.icon}</span>{i.label}</button>
-                ))}
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-xs text-muted-foreground">Auto-save</span>
-                  <input aria-label="Auto-save drafts" type="checkbox" checked={autosave} onChange={(e) => setAutosave(e.target.checked)} />
-                </div>
-              </CardContent>
-            </Card>
+
+        {/* Auto-save toggle */}
+        <div className="flex items-center justify-end mb-6">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Auto-save</span>
+            <input 
+              aria-label="Auto-save drafts" 
+              type="checkbox" 
+              checked={autosave} 
+              onChange={(e) => setAutosave(e.target.checked)}
+              className="rounded"
+            />
           </div>
-          <div className="lg:col-span-3 space-y-6">
-            <Card className="rounded-2xl shadow-soft">
-              <CardHeader>
+        </div>
+
+        {/* Main Form Content */}
+        <div className="max-w-4xl mx-auto">
+          <Card className="rounded-2xl shadow-soft">
+            <CardHeader>
+              <div className="transition-all duration-300 ease-in-out">
                 {step===1 && (<div><h1 className="text-2xl font-semibold">Tell us more about this launch</h1><p className="text-sm text-muted-foreground">We'll need its name, tagline, links, launch tags, and description.</p></div>)}
                 {step===2 && (<div><h1 className="text-2xl font-semibold">Images and media</h1><p className="text-sm text-muted-foreground">Upload your thumbnail, gallery, and optional video or demo link.</p></div>)}
                 {step===3 && (<div><h1 className="text-2xl font-semibold">Makers</h1><p className="text-sm text-muted-foreground">Did you work on this launch and who else helped?</p></div>)}
                 {step===4 && (<div><h1 className="text-2xl font-semibold">Launch Details</h1><p className="text-sm text-muted-foreground">Configure launch type, date, countries, monetization, and engine.</p></div>)}
                 {step===5 && (<div><h1 className="text-2xl font-semibold">Community & Extras</h1><p className="text-sm text-muted-foreground">Configure community features, playtests, sponsorships, and gamification.</p></div>)}
                 {step===6 && (<div><h1 className="text-2xl font-semibold">Launch checklist</h1><p className="text-sm text-muted-foreground">Review required and recommended items before launch.</p></div>)}
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="transition-all duration-300 ease-in-out">
                   {step===1 && (
                     <div className="space-y-8">
                       {/* Game Title */}
@@ -602,14 +667,18 @@ export default function NewSubmitPage() {
                       </div>
 
                       {/* Validation Summary */}
-                      <div className="bg-[#FEF3C7] text-[#D97706] text-sm rounded-lg p-3 space-y-1">
-                        {(form.watch('title')||'').length===0 && <div>• Game title is required</div>}
-                        {(form.watch('tagline')||'').length===0 && <div>• Tagline is required</div>}
-                        {(form.watch('description')||'').length < 260 && <div>• Description must be at least 260 characters</div>}
-                        {((form.watch('tags')||[]).length)===0 && <div>• Launch tag is required</div>}
-                        {((form.watch('categories')||[]).length)===0 && <div>• Category is required</div>}
-                        {((form.watch('platforms')||[]).length)===0 && <div>• Platform is required</div>}
-                        {!form.watch('iosUrl') && !form.watch('androidUrl') && <div>• At least one app store URL is required</div>}
+                      <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm rounded-xl p-4 space-y-2 shadow-lg shadow-amber-500/10">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                          <span className="font-medium">Required Fields</span>
+                        </div>
+                        {(form.watch('title')||'').length===0 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Game title is required</div>}
+                        {(form.watch('tagline')||'').length===0 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Tagline is required</div>}
+                        {(form.watch('description')||'').length < 260 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Description must be at least 260 characters</div>}
+                        {((form.watch('tags')||[]).length)===0 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Launch tag is required</div>}
+                        {((form.watch('categories')||[]).length)===0 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Category is required</div>}
+                        {((form.watch('platforms')||[]).length)===0 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Platform is required</div>}
+                        {!form.watch('iosUrl') && !form.watch('androidUrl') && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> At least one app store URL is required</div>}
                       </div>
                     </div>
                   )}
@@ -811,7 +880,7 @@ export default function NewSubmitPage() {
                             
                             {/* 8x2 Grid Layout */}
                             <div className="grid grid-cols-8 gap-2">
-                              {(form.watch('gallery') || []).map((url, index) => (
+                              {(form.watch('gallery') || []).map((url: string, index: number) => (
                                 <div 
                                   key={index} 
                                   className="relative group aspect-video rounded-lg overflow-hidden border border-border cursor-move hover:border-primary/50 transition-colors"
@@ -854,7 +923,7 @@ export default function NewSubmitPage() {
                                       type="button"
                                       onClick={() => {
                                         const currentGallery = form.watch('gallery') || []
-                                        const newGallery = currentGallery.filter((_, i) => i !== index)
+                                        const newGallery = currentGallery.filter((_: any, i: number) => i !== index)
                                         form.setValue('gallery', newGallery)
                                         toast.success('Image removed')
                                       }}
@@ -870,7 +939,7 @@ export default function NewSubmitPage() {
                               ))}
                               
                               {/* Empty placeholders */}
-                              {Array.from({ length: Math.max(0, 16 - (form.watch('gallery') || []).length) }).map((_, index) => (
+                              {Array.from({ length: Math.max(0, 16 - (form.watch('gallery') || []).length) }).map((_: any, index: number) => (
                                 <div 
                                   key={`empty-${index}`}
                                   className="aspect-video rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/20"
@@ -975,9 +1044,13 @@ export default function NewSubmitPage() {
                       </div>
 
                       {/* Validation Summary */}
-                      <div className="bg-[#FEF3C7] text-[#D97706] text-sm rounded-lg p-3 space-y-1">
-                        {!form.watch('thumbnail') && <div>• Thumbnail is required</div>}
-                        {(form.watch('gallery') || []).length < 1 && <div>• At least one gallery image is required</div>}
+                      <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm rounded-xl p-4 space-y-2 shadow-lg shadow-amber-500/10">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                          <span className="font-medium">Required Fields</span>
+                        </div>
+                        {!form.watch('thumbnail') && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Thumbnail is required</div>}
+                        {(form.watch('gallery') || []).length < 1 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> At least one gallery image is required</div>}
                       </div>
                     </div>
                   )}
@@ -1007,14 +1080,14 @@ export default function NewSubmitPage() {
                             selectedUsers={form.watch('makers') || []}
                             onUserRemove={(userId) => {
                               const currentMakers = form.watch('makers') || []
-                              const updatedMakers = currentMakers.filter(maker => 
+                              const updatedMakers = currentMakers.filter((maker: any) => 
                                 (maker.userId || maker.email) !== userId
                               )
                               form.setValue('makers', updatedMakers)
                             }}
                             onRoleChange={(userId, role) => {
                               const currentMakers = form.watch('makers') || []
-                              const updatedMakers = currentMakers.map(maker => 
+                              const updatedMakers = currentMakers.map((maker: any) => 
                                 (maker.userId || maker.email) === userId ? { ...maker, role } : maker
                               )
                               form.setValue('makers', updatedMakers)
@@ -1205,10 +1278,14 @@ export default function NewSubmitPage() {
                       </div>
 
                       {/* Validation Summary */}
-                      <div className="bg-[#FEF3C7] text-[#D97706] text-sm rounded-lg p-3 space-y-1">
-                        {(form.watch('makers') || []).length === 0 && <div>• At least one maker is required</div>}
-                        {(form.watch('makers') || []).length > 5 && <div>• Maximum 5 makers allowed</div>}
-                        {form.formState.errors.makers && <div>• {String(form.formState.errors.makers.message)}</div>}
+                      <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm rounded-xl p-4 space-y-2 shadow-lg shadow-amber-500/10">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                          <span className="font-medium">Required Fields</span>
+                        </div>
+                        {(form.watch('makers') || []).length === 0 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> At least one maker is required</div>}
+                        {(form.watch('makers') || []).length > 5 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Maximum 5 makers allowed</div>}
+                        {form.formState.errors.makers && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> {String(form.formState.errors.makers.message)}</div>}
                       </div>
                     </div>
                   )}
@@ -1391,12 +1468,16 @@ export default function NewSubmitPage() {
                       </div>
 
                       {/* Validation Summary */}
-                      <div className="bg-[#FEF3C7] text-[#D97706] text-sm rounded-lg p-3 space-y-1">
-                        {!form.watch('launchType') && <div>• Launch type is required</div>}
-                        {!form.watch('launchDate') && <div>• Launch date is required</div>}
-                        {form.watch('launchType') === 'SOFT_LAUNCH' && (!form.watch('softLaunchCountries') || form.watch('softLaunchCountries').length === 0) && <div>• Soft launch countries are required</div>}
-                        {!form.watch('monetization') && <div>• Monetization model is required</div>}
-                        {!form.watch('engine') && <div>• Engine used is required</div>}
+                      <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm rounded-xl p-4 space-y-2 shadow-lg shadow-amber-500/10">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                          <span className="font-medium">Required Fields</span>
+                        </div>
+                        {!form.watch('launchType') && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Launch type is required</div>}
+                        {!form.watch('launchDate') && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Launch date is required</div>}
+                        {form.watch('launchType') === 'SOFT_LAUNCH' && (!form.watch('softLaunchCountries') || form.watch('softLaunchCountries').length === 0) && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Soft launch countries are required</div>}
+                        {!form.watch('monetization') && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Monetization model is required</div>}
+                        {!form.watch('engine') && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Engine used is required</div>}
                       </div>
                     </div>
                   )}
@@ -1596,7 +1677,7 @@ export default function NewSubmitPage() {
                                       e.target.checked = false
                                     }
                                   } else {
-                                    form.setValue('gamificationTags', currentTags.filter(t => t !== tag.id))
+                                    form.setValue('gamificationTags', currentTags.filter((t: string) => t !== tag.id))
                                   }
                                 }}
                                 checked={(form.watch('gamificationTags') || []).includes(tag.id)}
@@ -1612,10 +1693,14 @@ export default function NewSubmitPage() {
                       </div>
 
                       {/* Validation Summary */}
-                      <div className="bg-[#FEF3C7] text-[#D97706] text-sm rounded-lg p-3 space-y-1">
-                        {form.watch('playtestQuota') && form.watch('playtestQuota') > 1000 && <div>• Playtest quota cannot exceed 1000</div>}
-                        {form.watch('sponsorNote') && (form.watch('sponsorNote') || '').length > 500 && <div>• Sponsor note must be 500 characters or less</div>}
-                        {form.watch('gamificationTags') && (form.watch('gamificationTags') || []).length > 5 && <div>• Maximum 5 gamification tags allowed</div>}
+                      <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm rounded-xl p-4 space-y-2 shadow-lg shadow-amber-500/10">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                          <span className="font-medium">Validation Warnings</span>
+                        </div>
+                        {form.watch('playtestQuota') && form.watch('playtestQuota') > 1000 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Playtest quota cannot exceed 1000</div>}
+                        {form.watch('sponsorNote') && (form.watch('sponsorNote') || '').length > 500 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Sponsor note must be 500 characters or less</div>}
+                        {form.watch('gamificationTags') && (form.watch('gamificationTags') || []).length > 5 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Maximum 5 gamification tags allowed</div>}
                       </div>
                     </div>
                   )}
@@ -1775,11 +1860,11 @@ export default function NewSubmitPage() {
                     ) : (
                       <Button type="submit">Final Submit</Button>
                     )}
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
+                </div>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </TooltipProvider>
