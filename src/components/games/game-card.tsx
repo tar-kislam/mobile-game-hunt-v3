@@ -14,7 +14,7 @@ interface Game {
   title: string
   tagline?: string | null
   description: string
-  image?: string | null
+  thumbnail?: string | null
   url: string
   platforms?: string[]
   createdAt: string
@@ -48,9 +48,9 @@ export function GameCard({ game, onVote, showAuthor = true }: GameCardProps) {
     <Card className="group h-full flex flex-col bg-card hover:shadow-medium transition-all duration-300 border border-white/10 shadow-lg rounded-2xl overflow-hidden hover:scale-[1.02] hover:shadow-black/20">
       {/* Game Image */}
       <div className="relative aspect-video bg-gradient-to-br from-purple-100 to-blue-100 overflow-hidden">
-        {game.image ? (
+        {game.thumbnail ? (
           <Image
-            src={game.image}
+            src={game.thumbnail}
             alt={game.title}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -71,7 +71,7 @@ export function GameCard({ game, onVote, showAuthor = true }: GameCardProps) {
           />
         ) : null}
         {/* Fallback icon - always present but hidden when image loads */}
-        <div className={`fallback-icon w-full h-full flex items-center justify-center ${game.image ? 'hidden' : ''}`}>
+        <div className={`fallback-icon w-full h-full flex items-center justify-center ${game.thumbnail ? 'hidden' : ''}`}>
           <div className="text-6xl">🎮</div>
         </div>
         

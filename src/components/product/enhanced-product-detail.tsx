@@ -28,7 +28,8 @@ import {
   ChevronUp,
   Copy,
   Gift,
-  Music
+  Music,
+  Smartphone
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -58,8 +59,8 @@ interface Product {
   images: string[];
   video?: string | null;
   platforms?: string[];
-  appStoreUrl?: string | null;
-  playStoreUrl?: string | null;
+  iosUrl?: string | null;
+  androidUrl?: string | null;
   socialLinks?: any;
   createdAt: string;
   releaseAt?: string | null;
@@ -929,6 +930,74 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
                   </div>
                 )}
 
+                {/* App Store Links */}
+                {(product.iosUrl || product.androidUrl) && (
+                  <div className="flex flex-wrap gap-2">
+                    {product.iosUrl && (
+                      <Button asChild variant="outline" size="sm" className="flex-1">
+                        <a 
+                          href={product.iosUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          onClick={async () => {
+                            try {
+                              await fetch('/api/metrics/click', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ 
+                                  gameId: product.id, 
+                                  type: 'IOS',
+                                  referrer: window.location.href
+                                })
+                              });
+                            } catch (error) {
+                              console.error('Error tracking iOS click:', error);
+                            }
+                          }}
+                        >
+                          <div className="w-4 h-4 mr-1 flex items-center justify-center">
+                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                            </svg>
+                          </div>
+                          App Store
+                        </a>
+                      </Button>
+                    )}
+                    {product.androidUrl && (
+                      <Button asChild variant="outline" size="sm" className="flex-1">
+                        <a 
+                          href={product.androidUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          onClick={async () => {
+                            try {
+                              await fetch('/api/metrics/click', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ 
+                                  gameId: product.id, 
+                                  type: 'ANDROID',
+                                  referrer: window.location.href
+                                })
+                              });
+                            } catch (error) {
+                              console.error('Error tracking Android click:', error);
+                            }
+                          }}
+                        >
+                          <div className="w-4 h-4 mr-1 flex items-center justify-center">
+                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                              <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993.0001.5511-.4482.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5976.416.416 0 00-.5976.1521l-2.0223 3.504C15.5902 9.2437 13.8533 9.0681 12 9.0681s-3.5902.1756-5.2057.3037L4.772 5.8676a.416.416 0 00-.5976-.1521.416.416 0 00-.1521.5976L5.8188 9.3214C2.6104 10.5037 0 13.5466 0 17.0851v.8308c0 .2876.2339.5215.5215.5215h22.957c.2876 0 .5215-.2339.5215-.5215v-.8308c0-3.5385-2.6104-6.5814-5.8188-7.7637"/>
+                            </svg>
+                          </div>
+                          Google Play
+                        </a>
+                      </Button>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex gap-2">
                   <Button
                     onClick={handleFollow}
@@ -1102,24 +1171,24 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
           </Card>
 
           {/* Download Card - Right below Details */}
-          {(product.appStoreUrl || product.playStoreUrl) && (
+          {(product.iosUrl || product.androidUrl) && (
             <Card className="rounded-2xl shadow-soft">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold">Download</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex gap-3">
-                  {product.appStoreUrl && (
+                  {product.iosUrl && (
                     <Button asChild variant="outline" className="flex-1">
-                      <a href={product.appStoreUrl} target="_blank" rel="noopener noreferrer">
+                      <a href={product.iosUrl} target="_blank" rel="noopener noreferrer">
                         <Download className="w-4 h-4 mr-2" />
                         App Store
                       </a>
                     </Button>
                   )}
-                  {product.playStoreUrl && (
+                  {product.androidUrl && (
                     <Button asChild variant="outline" className="flex-1">
-                      <a href={product.playStoreUrl} target="_blank" rel="noopener noreferrer">
+                      <a href={product.androidUrl} target="_blank" rel="noopener noreferrer">
                         <Download className="w-4 h-4 mr-2" />
                         Google Play
                       </a>

@@ -10,7 +10,7 @@ interface LeaderboardProduct {
   id: string;
   title: string;
   description: string;
-  image: string | null;
+  thumbnail: string | null;
   url: string;
   platforms: string[];
   countries: string[];
@@ -178,9 +178,9 @@ export default function LeaderboardPage() {
 
                     {/* Product Image */}
                     <div className="flex-shrink-0">
-                      {product.image ? (
+                      {product.thumbnail ? (
                         <img
-                          src={product.image}
+                          src={product.thumbnail}
                           alt={product.title}
                           className="w-20 h-20 rounded-lg object-cover"
                         />

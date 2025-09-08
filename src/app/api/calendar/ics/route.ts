@@ -84,6 +84,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const platform = searchParams.get('platform');
     const country = searchParams.get('country');
+    const categoryId = searchParams.get('categoryId');
     const year = searchParams.get('year');
 
     // Build where clause
@@ -98,6 +99,14 @@ export async function GET(request: NextRequest) {
 
     if (country && country !== 'all') {
       whereClause.countries = { has: country.toUpperCase() };
+    }
+
+    if (categoryId && categoryId !== 'all') {
+      whereClause.categories = {
+        some: {
+          categoryId: categoryId
+        }
+      };
     }
 
     if (year) {

@@ -20,8 +20,8 @@ interface PressKit {
     platforms: string[];
     description: string;
     url: string;
-    appStoreUrl?: string;
-    playStoreUrl?: string;
+      iosUrl?: string;
+  androidUrl?: string;
     socialLinks?: any;
     releaseAt?: string;
     user: {
@@ -152,30 +152,30 @@ export function PressKitDisplay({ pressKit, onDownload }: PressKitDisplayProps) 
             </a>
           </div>
 
-          {pressKit.product.appStoreUrl && (
+          {pressKit.product.iosUrl && (
             <div>
               <p className="font-medium mb-2">App Store</p>
               <a
-                href={pressKit.product.appStoreUrl}
+                href={pressKit.product.iosUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"
               >
-                {pressKit.product.appStoreUrl}
+                {pressKit.product.iosUrl}
               </a>
             </div>
           )}
 
-          {pressKit.product.playStoreUrl && (
+          {pressKit.product.androidUrl && (
             <div>
               <p className="font-medium mb-2">Google Play</p>
               <a
-                href={pressKit.product.playStoreUrl}
+                href={pressKit.product.androidUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"
               >
-                {pressKit.product.playStoreUrl}
+                {pressKit.product.androidUrl}
               </a>
             </div>
           )}

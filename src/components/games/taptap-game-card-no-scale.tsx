@@ -13,7 +13,7 @@ interface Game {
   title: string
   tagline?: string | null
   description: string
-  image?: string | null
+  thumbnail?: string | null
   url: string
   platforms?: string[]
   createdAt: string
@@ -64,9 +64,9 @@ export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTa
       <Card className="overflow-hidden bg-card hover:shadow-lg transition-all duration-300 border border-white/10 shadow-lg rounded-xl hover:shadow-black/20">
         {/* Game Image - Removed image scaling on hover */}
         <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
-          {game.image ? (
+          {game.thumbnail ? (
             <Image
-              src={game.image}
+              src={game.thumbnail}
               alt={game.title}
               fill
               className="object-cover transition-transform duration-300"

@@ -4,14 +4,22 @@ export const productMainInfoSchema = z.object({
   title: z.string().min(1, 'Game title is required').max(40, 'Game title must be 40 characters or less'),
   tagline: z.string().min(1, 'Tagline is required').max(60, 'Tagline must be 60 characters or less'),
   description: z.string().min(260, 'Description must be at least 260 characters').max(500, 'Description must be 500 characters or less'),
-  url: z.string().url('Please enter a valid URL').refine(
+  iosUrl: z.string().url('Please enter a valid App Store URL').refine(
     (url) => {
+      if (!url) return true
       const appStorePattern = /^https?:\/\/(apps\.apple\.com|itunes\.apple\.com)\/.*/i
-      const playStorePattern = /^https?:\/\/(play\.google\.com|market\.android\.com)\/.*/i
-      return appStorePattern.test(url) || playStorePattern.test(url) || url.startsWith('http')
+      return appStorePattern.test(url)
     },
-    'Please enter a valid App Store or Google Play URL'
-  ),
+    'Please enter a valid App Store URL'
+  ).optional().or(z.literal('')),
+  androidUrl: z.string().url('Please enter a valid Google Play URL').refine(
+    (url) => {
+      if (!url) return true
+      const playStorePattern = /^https?:\/\/(play\.google\.com|market\.android\.com)\/.*/i
+      return playStorePattern.test(url)
+    },
+    'Please enter a valid Google Play URL'
+  ).optional().or(z.literal('')),
   website: z.string().url().optional().or(z.literal('')),
   discordUrl: z.string().url().optional().or(z.literal('')),
   twitterUrl: z.string().url().optional().or(z.literal('')),
@@ -26,7 +34,16 @@ export const productMainInfoSchema = z.object({
     audio: z.boolean().default(false),
     subtitles: z.boolean().default(false)
   })).optional().default([]),
-})
+}).refine(
+  (data) => {
+    // At least one of iosUrl or androidUrl must be provided
+    return (data.iosUrl && data.iosUrl.trim() !== '') || (data.androidUrl && data.androidUrl.trim() !== '')
+  },
+  {
+    message: 'At least one app store URL (iOS or Android) is required',
+    path: ['iosUrl'] // This will show the error on the iosUrl field
+  }
+)
 
 export const productMediaSchema = z.object({
   image: z.string().url().optional().or(z.literal('')),
@@ -59,8 +76,8 @@ export const productMakersSchema = z.object({
 })
 
 export const productExtrasSchema = z.object({
-  appStoreUrl: z.string().url().optional().or(z.literal('')),
-  playStoreUrl: z.string().url().optional().or(z.literal('')),
+  iosUrl: z.string().url().optional().or(z.literal('')),
+  androidUrl: z.string().url().optional().or(z.literal('')),
   twitterUrl: z.string().url().optional().or(z.literal('')),
   platforms: z.array(z.string()).min(1),
   releaseAt: z.string().optional().or(z.literal('')),

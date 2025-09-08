@@ -36,6 +36,18 @@ export async function POST(
     const productId = id
     const userId = session.user.id
 
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    })
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      )
+    }
+
     // Check if product exists
     const product = await prisma.product.findUnique({
       where: { id: productId },
@@ -90,6 +102,15 @@ export async function POST(
     return NextResponse.json({ message: 'No change' })
   } catch (error) {
     console.error('Error handling vote:', error)
+    
+    // Check if it's a foreign key constraint error
+    if (error instanceof Error && error.message.includes('Foreign key constraint')) {
+      return NextResponse.json(
+        { error: 'Invalid user or product reference' },
+        { status: 400 }
+      )
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

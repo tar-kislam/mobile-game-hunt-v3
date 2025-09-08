@@ -21,6 +21,7 @@ export default {
       fontFamily: {
         sans: ['TASA Explorer', 'system-ui', 'sans-serif'],
         mono: ['DM Mono', 'var(--font-dm-mono)', 'monospace'],
+        orbitron: ['Orbitron', 'monospace'],
       },
       colors: {
         border: 'hsl(var(--border))',

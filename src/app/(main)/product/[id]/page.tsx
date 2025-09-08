@@ -18,7 +18,45 @@ export default async function ProductPage({ params }: ProductPageProps) {
   // Fetch product data
   const productData = await prisma.product.findUnique({
     where: { id: resolvedParams.id },
-    include: {
+    select: {
+      id: true,
+      title: true,
+      tagline: true,
+      description: true,
+      url: true,
+      iosUrl: true,
+      androidUrl: true,
+      thumbnail: true,
+      gallery: true,
+      images: true,
+      youtubeUrl: true,
+      gameplayGifUrl: true,
+      demoUrl: true,
+      socialLinks: true,
+      platforms: true,
+      countries: true,
+      languages: true,
+      releaseAt: true,
+      studioName: true,
+      launchType: true,
+      launchDate: true,
+      monetization: true,
+      engine: true,
+      status: true,
+      pricing: true,
+      promoOffer: true,
+      promoCode: true,
+      promoExpiry: true,
+      playtestQuota: true,
+      playtestExpiry: true,
+      sponsorRequest: true,
+      sponsorNote: true,
+      crowdfundingPledge: true,
+      gamificationTags: true,
+      createdAt: true,
+      updatedAt: true,
+      clicks: true,
+      follows: true,
       user: {
         select: {
           id: true,
@@ -52,9 +90,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
   // Convert Date objects to strings for the component
   const product = {
     ...productData,
+    url: productData.url || '',
     createdAt: productData.createdAt.toISOString(),
     updatedAt: productData.updatedAt.toISOString(),
     releaseAt: productData.releaseAt?.toISOString() || null,
+    launchDate: productData.launchDate?.toISOString() || null,
+    promoExpiry: productData.promoExpiry?.toISOString() || null,
+    playtestExpiry: productData.playtestExpiry?.toISOString() || null,
+    languages: productData.languages ? (typeof productData.languages === 'string' ? JSON.parse(productData.languages) : productData.languages) : null,
   }
 
   // Get session for vote status
@@ -96,12 +139,20 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { id } = await params
-  const product = await prisma.product.findUnique({ where: { id } })
+  const product = await prisma.product.findUnique({ 
+    where: { id },
+    select: {
+      title: true,
+      tagline: true,
+      description: true,
+      thumbnail: true,
+    }
+  })
   if (!product) return { title: 'Game not found' }
   const title = `${product.title} – Mobile Game Hunt`
   const description = product.tagline || product.description?.slice(0, 140) || 'Discover new mobile games'
   const url = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-  const ogImage = product.image || `${url}/api/og?title=${encodeURIComponent(product.title)}`
+  const ogImage = product.thumbnail || `${url}/api/og?title=${encodeURIComponent(product.title)}`
   return {
     title,
     description,

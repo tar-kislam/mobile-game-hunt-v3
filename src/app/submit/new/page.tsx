@@ -37,12 +37,12 @@ export default function NewSubmitPage() {
   const form = useForm<any>({
     resolver: zodResolver(productFullSchema),
     defaultValues: {
-      title: '', tagline: '', description: '', url: '',
+      title: '', tagline: '', description: '', iosUrl: '', androidUrl: '',
       website: '', discordUrl: '', twitterUrl: '', tiktokUrl: '',
       isOpenSource: false, platforms: [], targetCountries: [], languages: [],
       thumbnail: '', gallery: [], youtubeUrl: '', gameplayGifUrl: '', demoUrl: '',
       image: '', images: [], video: '',
-      appStoreUrl: '', playStoreUrl: '', releaseAt: '',
+      releaseAt: '',
       tags: [], categories: [], termsAccepted: false, confirmImagesOwned: false,
       makers: [], studioName: '', inviteEmail: '', inviteRole: 'MAKER',
       launchType: '', launchDate: '', softLaunchCountries: [], monetization: '', engine: '',
@@ -292,20 +292,40 @@ export default function NewSubmitPage() {
                         <p className="text-xs text-muted-foreground mt-1">Minimum 260 characters required</p>
                       </div>
 
-                      {/* Primary Launch URL */}
-                      <div>
-                        <Label htmlFor="url" className="block text-sm font-medium mb-2">Primary Launch URL *</Label>
-                        <Input 
-                          id="url"
-                          aria-label="Primary URL" 
-                          placeholder="https://apps.apple.com/app/your-game or https://play.google.com/store/apps/details?id=your.game" 
-                          {...form.register('url')} 
-                          className="h-12" 
-                        />
-                        {form.formState.errors.url && (
-                          <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.url.message)}</p>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-1">App Store or Google Play URL required</p>
+                      {/* App Store URLs */}
+                      <div className="space-y-4">
+                        <h3 className="font-medium text-lg">App Store Links</h3>
+                        <p className="text-sm text-muted-foreground">Provide at least one app store link</p>
+                        
+                        <div>
+                          <Label htmlFor="iosUrl" className="block text-sm font-medium mb-2">iPhone App Store URL</Label>
+                          <Input 
+                            id="iosUrl"
+                            aria-label="iPhone App Store URL" 
+                            placeholder="https://apps.apple.com/app/your-game" 
+                            {...form.register('iosUrl')} 
+                            className="h-12" 
+                          />
+                          {form.formState.errors.iosUrl && (
+                            <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.iosUrl.message)}</p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-1">Optional - iPhone App Store link</p>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="androidUrl" className="block text-sm font-medium mb-2">Google Play URL</Label>
+                          <Input 
+                            id="androidUrl"
+                            aria-label="Google Play URL" 
+                            placeholder="https://play.google.com/store/apps/details?id=your.game" 
+                            {...form.register('androidUrl')} 
+                            className="h-12" 
+                          />
+                          {form.formState.errors.androidUrl && (
+                            <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.androidUrl.message)}</p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-1">Optional - Google Play Store link</p>
+                        </div>
                       </div>
 
                       {/* Additional Links Section */}
@@ -458,7 +478,7 @@ export default function NewSubmitPage() {
                         {((form.watch('tags')||[]).length)===0 && <div>• Launch tag is required</div>}
                         {((form.watch('categories')||[]).length)===0 && <div>• Category is required</div>}
                         {((form.watch('platforms')||[]).length)===0 && <div>• Platform is required</div>}
-                        {!form.watch('url') && <div>• Primary launch URL is required</div>}
+                        {!form.watch('iosUrl') && !form.watch('androidUrl') && <div>• At least one app store URL is required</div>}
                       </div>
                     </div>
                   )}

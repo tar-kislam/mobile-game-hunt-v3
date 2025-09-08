@@ -49,8 +49,8 @@ export async function GET(
             platforms: true,
             description: true,
             url: true,
-            appStoreUrl: true,
-            playStoreUrl: true,
+                  iosUrl: true,
+      androidUrl: true,
             socialLinks: true,
             releaseAt: true,
             user: {

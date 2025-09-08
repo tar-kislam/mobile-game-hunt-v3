@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
     const schema = z.object({
       gameId: z.string().min(1),
-      type: z.enum(['view','click','play','download','share']),
+      type: z.enum(['view','click','play','download','share','IOS','ANDROID','STORE','PRE_REGISTER','DISCORD','WEBSITE','TIKTOK','STEAM','INTERNAL']),
       referrer: z.string().url().optional()
     })
     const parsed = schema.safeParse(await request.json())

@@ -26,7 +26,9 @@ export async function createProductAction(data: ProductFullInput) {
         title: data.title,
         tagline: data.tagline,
         description: data.description,
-        url: data.url,
+        url: data.iosUrl || data.androidUrl || '', // Use one of the URLs as the primary URL
+        iosUrl: data.iosUrl,
+        androidUrl: data.androidUrl,
         thumbnail: data.thumbnail,
         gallery: data.gallery,
         youtubeUrl: data.youtubeUrl,
@@ -116,7 +118,9 @@ export async function saveDraftAction(data: ProductFullInput) {
         title: data.title,
         tagline: data.tagline,
         description: data.description,
-        url: data.url,
+        url: data.iosUrl || data.androidUrl || '', // Use one of the URLs as the primary URL
+        iosUrl: data.iosUrl,
+        androidUrl: data.androidUrl,
         thumbnail: data.thumbnail,
         gallery: data.gallery,
         youtubeUrl: data.youtubeUrl,
@@ -206,7 +210,9 @@ export async function scheduleLaunchAction(data: ProductFullInput, launchDate: s
         title: data.title,
         tagline: data.tagline,
         description: data.description,
-        url: data.url,
+        url: data.iosUrl || data.androidUrl || '', // Use one of the URLs as the primary URL
+        iosUrl: data.iosUrl,
+        androidUrl: data.androidUrl,
         thumbnail: data.thumbnail,
         gallery: data.gallery,
         youtubeUrl: data.youtubeUrl,
@@ -296,7 +302,9 @@ export async function submitApprovalAction(data: ProductFullInput) {
         title: data.title,
         tagline: data.tagline,
         description: data.description,
-        url: data.url,
+        url: data.iosUrl || data.androidUrl || '', // Use one of the URLs as the primary URL
+        iosUrl: data.iosUrl,
+        androidUrl: data.androidUrl,
         thumbnail: data.thumbnail,
         gallery: data.gallery,
         youtubeUrl: data.youtubeUrl,
@@ -319,7 +327,7 @@ export async function submitApprovalAction(data: ProductFullInput) {
         monetization: data.monetization,
         engine: data.engine,
         userId: user.id,
-        status: 'PENDING',
+        status: 'PUBLISHED',
         // Community & Extras fields
         pricing: data.pricing,
         promoOffer: data.promoOffer,
@@ -364,4 +372,327 @@ export async function submitApprovalAction(data: ProductFullInput) {
     console.error('Error submitting for approval:', error)
     return { ok: false, error: 'Failed to submit for approval' }
   }
+}
+
+export async function getDeveloperProductsAction() {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.email) {
+      return { ok: false, error: 'Unauthorized' }
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    if (!user) {
+      return { ok: false, error: 'User not found' }
+    }
+
+    // Get all products for the developer with analytics summary
+    const products = await prisma.product.findMany({
+      where: {
+        userId: user.id
+      },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        releaseAt: true,
+        createdAt: true,
+        clicks: true,
+        follows: true,
+        _count: {
+          select: {
+            votes: true,
+            comments: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+
+    // Calculate analytics summary
+    const analyticsSummary = {
+      totalProducts: products.length,
+      totalViews: products.reduce((sum, product) => sum + (product.clicks || 0), 0),
+      totalVotes: products.reduce((sum, product) => sum + product._count.votes, 0),
+      totalFollows: products.reduce((sum, product) => sum + (product.follows || 0), 0),
+      totalClicks: products.reduce((sum, product) => sum + (product.clicks || 0), 0)
+    }
+
+    return {
+      ok: true,
+      products: products.map(product => ({
+        id: product.id,
+        name: product.title,
+        status: product.status,
+        releaseDate: product.releaseAt,
+        createdAt: product.createdAt,
+        totalViews: product.clicks || 0,
+        totalVotes: product._count.votes,
+        totalFollows: product.follows || 0,
+        totalClicks: product.clicks || 0
+      })),
+      analyticsSummary
+    }
+  } catch (error) {
+    console.error('Error fetching developer products:', error)
+    return { ok: false, error: 'Failed to fetch products' }
+  }
+}
+
+export async function getDashboardAnalyticsAction() {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.email) {
+      return { ok: false, error: 'Unauthorized' }
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    if (!user) {
+      return { ok: false, error: 'User not found' }
+    }
+
+    // Get all product IDs for the developer
+    const userProducts = await prisma.product.findMany({
+      where: { userId: user.id },
+      select: { id: true }
+    })
+
+    const productIds = userProducts.map(p => p.id)
+
+    if (productIds.length === 0) {
+      return {
+        ok: true,
+        data: {
+          clicksByPlatform: [],
+          clicksOverTime: [],
+          votesVsFollows: []
+        }
+      }
+    }
+
+    // 1. Internal Clicks (type = INTERNAL)
+    const internalClicks = await prisma.metric.groupBy({
+      by: ['type'],
+      where: {
+        gameId: { in: productIds },
+        type: 'INTERNAL'
+      },
+      _count: {
+        type: true
+      }
+    })
+
+    // 2. External Clicks (type = STORE, PRE_REGISTER, DISCORD, WEBSITE, TIKTOK, STEAM)
+    const externalClicks = await prisma.metric.groupBy({
+      by: ['type'],
+      where: {
+        gameId: { in: productIds },
+        type: {
+          in: ['STORE', 'PRE_REGISTER', 'DISCORD', 'WEBSITE', 'TIKTOK', 'STEAM']
+        }
+      },
+      _count: {
+        type: true
+      }
+    })
+
+    // 3. Clicks by Platform (IOS, ANDROID, STEAM, WEB, DISCORD, TIKTOK)
+    const clicksByPlatform = await prisma.metric.groupBy({
+      by: ['type'],
+      where: {
+        gameId: { in: productIds },
+        type: {
+          in: ['IOS', 'ANDROID', 'STEAM', 'WEB', 'DISCORD', 'TIKTOK']
+        }
+      },
+      _count: {
+        type: true
+      }
+    })
+
+    // 4. Clicks Over Time by Category (last 30 days)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+    const clicksOverTimeByCategory = await prisma.metric.groupBy({
+      by: ['timestamp', 'type'],
+      where: {
+        gameId: { in: productIds },
+        timestamp: {
+          gte: thirtyDaysAgo
+        },
+        type: {
+          in: ['INTERNAL', 'STORE', 'PRE_REGISTER', 'DISCORD', 'WEBSITE', 'TIKTOK', 'STEAM', 'IOS', 'ANDROID']
+        }
+      },
+      _count: {
+        timestamp: true
+      }
+    })
+
+    // 3. Votes vs Follows by Game
+    const votesByGame = await prisma.vote.groupBy({
+      by: ['productId'],
+      where: {
+        productId: { in: productIds }
+      },
+      _count: {
+        productId: true
+      }
+    })
+
+    const followsByGame = await prisma.follow.groupBy({
+      by: ['gameId'],
+      where: {
+        gameId: { in: productIds }
+      },
+      _count: {
+        gameId: true
+      }
+    })
+
+    // Get product names for votes vs follows
+    const productNames = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, title: true }
+    })
+
+    const productNameMap = new Map(productNames.map(p => [p.id, p.title]))
+
+    // Process internal clicks
+    const processedInternalClicks = internalClicks.map(item => ({
+      name: 'Internal',
+      value: item._count.type,
+      color: '#8B5CF6' // Purple for internal
+    }))
+
+    // Process external clicks
+    const processedExternalClicks = externalClicks.map(item => ({
+      name: item.type,
+      value: item._count.type,
+      color: getExternalClickColor(item.type)
+    }))
+
+    // Process clicks by platform
+    const processedClicksByPlatform = clicksByPlatform.map(item => ({
+      name: item.type,
+      value: item._count.type,
+      color: getPlatformColor(item.type)
+    }))
+
+    // Process clicks over time by category
+    const clicksByDateAndCategory = new Map()
+    
+    // Initialize all dates in the last 30 days with 0 clicks for both categories
+    for (let i = 0; i < 30; i++) {
+      const date = new Date()
+      date.setDate(date.getDate() - i)
+      const dateStr = date.toISOString().split('T')[0]
+      clicksByDateAndCategory.set(dateStr, {
+        date: dateStr,
+        internal: 0,
+        external: 0
+      })
+    }
+
+    // Add actual click data by category
+    clicksOverTimeByCategory.forEach(item => {
+      const dateStr = item.timestamp.toISOString().split('T')[0]
+      const existing = clicksByDateAndCategory.get(dateStr)
+      
+      if (existing) {
+        if (item.type === 'INTERNAL') {
+          existing.internal += item._count.timestamp
+        } else {
+          existing.external += item._count.timestamp
+        }
+      }
+    })
+
+    // Convert to array and sort by date
+    const processedClicksOverTime = Array.from(clicksByDateAndCategory.values())
+      .sort((a, b) => a.date.localeCompare(b.date))
+
+    // Process votes vs follows
+    const votesVsFollowsMap = new Map()
+    
+    // Initialize with all products
+    productIds.forEach(productId => {
+      votesVsFollowsMap.set(productId, {
+        name: productNameMap.get(productId) || 'Unknown',
+        votes: 0,
+        follows: 0
+      })
+    })
+
+    // Add votes data
+    votesByGame.forEach(item => {
+      const existing = votesVsFollowsMap.get(item.productId)
+      if (existing) {
+        existing.votes = item._count.productId
+      }
+    })
+
+    // Add follows data
+    followsByGame.forEach(item => {
+      const existing = votesVsFollowsMap.get(item.gameId)
+      if (existing) {
+        existing.follows = item._count.gameId
+      }
+    })
+
+    const processedVotesVsFollows = Array.from(votesVsFollowsMap.values())
+
+    return {
+      ok: true,
+      data: {
+        internalClicks: processedInternalClicks,
+        externalClicks: processedExternalClicks,
+        clicksByPlatform: processedClicksByPlatform,
+        clicksOverTime: processedClicksOverTime,
+        votesVsFollows: processedVotesVsFollows
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching dashboard analytics:', error)
+    return { ok: false, error: 'Failed to fetch analytics' }
+  }
+}
+
+function getPlatformColor(platform: string): string {
+  const colors: { [key: string]: string } = {
+    'IOS': '#10B981',        // Green for iOS
+    'ANDROID': '#3B82F6',    // Blue for Android
+    'WEB': '#8B5CF6',        // Purple for Web
+    'STEAM': '#F59E0B',      // Orange for Steam
+    'APPLE': '#10B981',      // Green for Apple (legacy)
+    'GOOGLE': '#3B82F6',     // Blue for Google (legacy)
+    'MICROSOFT': '#8B5CF6',  // Purple for Microsoft
+    'NINTENDO': '#EF4444',   // Red for Nintendo
+    'PLAYSTATION': '#6366F1', // Indigo for PlayStation
+    'XBOX': '#10B981'        // Green for Xbox
+  }
+  return colors[platform.toUpperCase()] || '#6B7280'
+}
+
+function getExternalClickColor(type: string): string {
+  const colors: { [key: string]: string } = {
+    'STORE': '#10B981',      // Green for store
+    'PRE_REGISTER': '#3B82F6', // Blue for pre-register
+    'DISCORD': '#8B5CF6',     // Purple for Discord
+    'WEBSITE': '#F59E0B',     // Orange for website
+    'TIKTOK': '#EF4444',      // Red for TikTok
+    'STEAM': '#6366F1',       // Indigo for Steam
+    'IOS': '#10B981',         // Green for iOS
+    'ANDROID': '#3B82F6'      // Blue for Android
+  }
+  return colors[type.toUpperCase()] || '#6B7280'
 }

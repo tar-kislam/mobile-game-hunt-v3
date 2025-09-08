@@ -19,6 +19,7 @@ export default withAuth(
           pathname.startsWith('/api/products') ||
           pathname.startsWith('/api/user') ||
           pathname.startsWith('/product') ||       // Added product detail pages
+          pathname.startsWith('/uploads') ||       // Allow public uploads
           pathname === '/' ||
           pathname.startsWith('/public') ||
           pathname.startsWith('/_next') ||
@@ -44,6 +45,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder
      */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|public).*)',
+    '/((?!api/auth|_next/static|_next/image|favicon.ico|public|uploads).*)',
   ],
 }

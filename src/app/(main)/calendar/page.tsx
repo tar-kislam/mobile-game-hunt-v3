@@ -1,36 +1,55 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar, Download, Filter, Globe, Smartphone, CalendarDays, MapPin } from 'lucide-react';
+import { Calendar, Download, Filter, Globe, Smartphone, CalendarDays, MapPin, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import Link from 'next/link';
 
 interface CalendarProduct {
   id: string;
   title: string;
+  tagline?: string | null;
   description: string;
-  image: string | null;
+  thumbnail: string | null;
   url: string;
   platforms: string[];
   countries: string[];
   status: string;
   releaseAt: string;
+  categories: Array<{
+    category: {
+      id: string;
+      name: string;
+    };
+  }>;
   user: {
     name: string | null;
   };
+}
+
+interface CalendarDay {
+  date: Date;
+  products: CalendarProduct[];
+  isToday: boolean;
+  isCurrentMonth: boolean;
 }
 
 export default function CalendarPage() {
   const [products, setProducts] = useState<CalendarProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [filters, setFilters] = useState({
     platform: 'all',
     country: 'all',
-    year: new Date().getFullYear().toString()
+    category: 'all',
+    year: (new Date().getFullYear() + 1).toString()
   });
 
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() + i);
@@ -49,6 +68,7 @@ export default function CalendarPage() {
       const params = new URLSearchParams();
       if (filters.platform && filters.platform !== 'all') params.append('platform', filters.platform);
       if (filters.country && filters.country !== 'all') params.append('country', filters.country);
+      if (filters.category && filters.category !== 'all') params.append('categoryId', filters.category);
       if (filters.year) params.append('year', filters.year);
       
       const response = await fetch(`/api/products?${params.toString()}`);
@@ -72,6 +92,7 @@ export default function CalendarPage() {
       const params = new URLSearchParams();
       if (filters.platform && filters.platform !== 'all') params.append('platform', filters.platform);
       if (filters.country && filters.country !== 'all') params.append('country', filters.country);
+      if (filters.category && filters.category !== 'all') params.append('categoryId', filters.category);
       if (filters.year) params.append('year', filters.year);
       
       const response = await fetch(`/api/calendar/ics?${params.toString()}`);
@@ -131,6 +152,61 @@ export default function CalendarPage() {
     return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
   };
 
+  // Calendar grid generation
+  const generateCalendarDays = (): CalendarDay[] => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    
+    const days: CalendarDay[] = [];
+    const today = new Date();
+    
+    for (let i = 0; i < 42; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      
+      const dayProducts = products.filter(product => {
+        const releaseDate = new Date(product.releaseAt);
+        return releaseDate.getDate() === date.getDate() &&
+               releaseDate.getMonth() === date.getMonth() &&
+               releaseDate.getFullYear() === date.getFullYear();
+      });
+      
+      days.push({
+        date,
+        products: dayProducts,
+        isToday: date.toDateString() === today.toDateString(),
+        isCurrentMonth: date.getMonth() === month
+      });
+    }
+    
+    return days;
+  };
+
+  const goToToday = () => {
+    setCurrentDate(new Date());
+  };
+
+  const goToUpcoming = () => {
+    const upcoming = new Date();
+    upcoming.setDate(upcoming.getDate() + 7);
+    setCurrentDate(upcoming);
+  };
+
+  const previousMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  };
+
+  const nextMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  };
+
+  const calendarDays = generateCalendarDays();
+  const monthName = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
@@ -166,7 +242,7 @@ export default function CalendarPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Platform
@@ -207,6 +283,21 @@ export default function CalendarPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Category
+                </label>
+                <Select value={filters.category} onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All categories</SelectItem>
+                    {/* We'll populate this dynamically */}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Year
                 </label>
                 <Select value={filters.year} onValueChange={(value) => setFilters(prev => ({ ...prev, year: value }))}>
@@ -226,8 +317,29 @@ export default function CalendarPage() {
           </CardContent>
         </Card>
 
-        {/* Download Button */}
-        <div className="text-center mb-8">
+        {/* Quick Actions */}
+        <div className="flex flex-wrap gap-4 mb-8 justify-center">
+          <Button 
+            onClick={goToToday}
+            variant="outline"
+            className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            Today
+          </Button>
+          <Button 
+            onClick={goToUpcoming}
+            variant="outline"
+            className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            Upcoming (7 days)
+          </Button>
+          <Button 
+            onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
+            variant="outline"
+            className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            {viewMode === 'calendar' ? 'List View' : 'Calendar View'}
+          </Button>
           <Button 
             onClick={downloadICS}
             size="lg"
@@ -236,9 +348,6 @@ export default function CalendarPage() {
             <Download className="w-5 h-5 mr-2" />
             Download Calendar (ICS)
           </Button>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-            Import to Google Calendar, Apple Calendar, Outlook, or any calendar app
-          </p>
         </div>
 
         {/* Error Display */}
@@ -248,99 +357,215 @@ export default function CalendarPage() {
           </div>
         )}
 
-        {/* Calendar Events */}
-        <div className="space-y-4">
-          {products.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-12">
-                <CalendarDays className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  No releases found
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Try adjusting your filters or check back later for new releases.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            products.map((product) => (
-              <Card key={product.id} className="hover:shadow-lg transition-shadow duration-200">
-                <CardContent className="p-6">
-                  <div className="flex items-start space-x-4">
-                    {/* Product Image */}
-                    <div className="flex-shrink-0">
-                      {product.image ? (
-                        <img
-                          src={product.image}
-                          alt={product.title}
-                          className="w-20 h-20 rounded-lg object-cover"
-                        />
-                      ) : (
-                        <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                          <span className="text-gray-500 dark:text-gray-400 text-sm">No Image</span>
+        {/* Calendar View */}
+        {viewMode === 'calendar' && (
+          <Card className="mb-8">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>{monthName}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={previousMonth}>
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={nextMonth}>
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {/* Calendar Grid */}
+              <div className="grid grid-cols-7 gap-1">
+                {/* Day headers */}
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                  <div key={day} className="p-2 text-center text-sm font-medium text-gray-500 dark:text-gray-400">
+                    {day}
+                  </div>
+                ))}
+                
+                {/* Calendar days */}
+                {calendarDays.map((day, index) => (
+                  <div
+                    key={index}
+                    className={`min-h-[120px] p-2 border border-gray-200 dark:border-gray-700 rounded-lg ${
+                      day.isToday 
+                        ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-300 dark:border-purple-600' 
+                        : day.isCurrentMonth 
+                          ? 'bg-white dark:bg-gray-800' 
+                          : 'bg-gray-50 dark:bg-gray-900'
+                    }`}
+                  >
+                    <div className={`text-sm font-medium mb-1 ${
+                      day.isToday 
+                        ? 'text-purple-600 dark:text-purple-400' 
+                        : day.isCurrentMonth 
+                          ? 'text-gray-900 dark:text-white' 
+                          : 'text-gray-400 dark:text-gray-500'
+                    }`}>
+                      {day.date.getDate()}
+                    </div>
+                    
+                    {/* Products for this day */}
+                    <div className="space-y-1">
+                      {day.products.slice(0, 2).map((product) => (
+                        <TooltipProvider key={product.id}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Link href={`/product/${product.id}`}>
+                                <div className="flex items-center gap-1 p-1 rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors">
+                                  {product.thumbnail ? (
+                                    <img
+                                      src={product.thumbnail}
+                                      alt={product.title}
+                                      className="w-4 h-4 rounded object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded flex items-center justify-center">
+                                      <span className="text-xs">🎮</span>
+                                    </div>
+                                  )}
+                                  <span className="text-xs truncate">{product.title}</span>
+                                </div>
+                              </Link>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="max-w-xs">
+                                <div className="font-medium">{product.title}</div>
+                                {product.tagline && <div className="text-sm text-gray-600 dark:text-gray-400">{product.tagline}</div>}
+                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  Platforms: {product.platforms.join(', ')}
+                                </div>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ))}
+                      {day.products.length > 2 && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                          +{day.products.length - 2} more
                         </div>
                       )}
                     </div>
-
-                    {/* Product Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {product.title}
-                        </h3>
-                        <Badge className={getStatusColor(product.releaseAt)}>
-                          {getTimeUntilRelease(product.releaseAt)}
-                        </Badge>
-                      </div>
-                      
-                      <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">
-                        {product.description}
-                      </p>
-
-                      {/* Release Date */}
-                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-3">
-                        <Calendar className="w-4 h-4" />
-                        <span className="font-medium">{formatDate(product.releaseAt)}</span>
-                      </div>
-
-                      {/* Platforms & Countries */}
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {product.platforms?.map((platform) => (
-                          <Badge key={platform} variant="outline" className="text-xs">
-                            <Smartphone className="w-3 h-3 mr-1" />
-                            {platform.toUpperCase()}
-                          </Badge>
-                        ))}
-                        {product.countries?.map((country) => (
-                          <Badge key={country} variant="outline" className="text-xs">
-                            <Globe className="w-3 h-3 mr-1" />
-                            {country}
-                          </Badge>
-                        ))}
-                      </div>
-
-                      {/* User Info */}
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        by <span className="font-medium text-gray-700 dark:text-gray-300">
-                          {product.user.name || 'Anonymous'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Action */}
-                    <div className="flex-shrink-0">
-                      <Button asChild variant="outline" size="sm">
-                        <a href={product.url} target="_blank" rel="noopener noreferrer">
-                          View Details
-                        </a>
-                      </Button>
-                    </div>
                   </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* List View */}
+        {viewMode === 'list' && (
+          <div className="space-y-4">
+            {products.length === 0 ? (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <CalendarDays className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    No releases found
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Try adjusting your filters or check back later for new releases.
+                  </p>
                 </CardContent>
               </Card>
-            ))
-          )}
-        </div>
+            ) : (
+              products.map((product) => (
+                <Card key={product.id} className="hover:shadow-lg transition-shadow duration-200">
+                  <CardContent className="p-6">
+                    <div className="flex items-start space-x-4">
+                      {/* Product Image */}
+                      <div className="flex-shrink-0">
+                        {product.thumbnail ? (
+                          <img
+                            src={product.thumbnail}
+                            alt={product.title}
+                            className="w-20 h-20 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                            <span className="text-gray-500 dark:text-gray-400 text-sm">No Image</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Product Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {product.title}
+                          </h3>
+                          <Badge className={getStatusColor(product.releaseAt)}>
+                            {getTimeUntilRelease(product.releaseAt)}
+                          </Badge>
+                        </div>
+                        
+                        {product.tagline && (
+                          <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
+                            {product.tagline}
+                          </p>
+                        )}
+                        
+                        <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">
+                          {product.description}
+                        </p>
+
+                        {/* Release Date */}
+                        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-3">
+                          <Calendar className="w-4 h-4" />
+                          <span className="font-medium">{formatDate(product.releaseAt)}</span>
+                        </div>
+
+                        {/* Platforms & Countries */}
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {product.platforms?.map((platform) => (
+                            <Badge key={platform} variant="outline" className="text-xs">
+                              <Smartphone className="w-3 h-3 mr-1" />
+                              {platform.toUpperCase()}
+                            </Badge>
+                          ))}
+                          {product.countries?.map((country) => (
+                            <Badge key={country} variant="outline" className="text-xs">
+                              <Globe className="w-3 h-3 mr-1" />
+                              {country}
+                            </Badge>
+                          ))}
+                        </div>
+
+                        {/* Categories */}
+                        {product.categories && product.categories.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {product.categories.map((cat) => (
+                              <Badge key={cat.category.id} variant="outline" className="text-xs">
+                                {cat.category.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* User Info */}
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          by <span className="font-medium text-gray-700 dark:text-gray-300">
+                            {product.user.name || 'Anonymous'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Action */}
+                      <div className="flex-shrink-0">
+                        <Button asChild variant="outline" size="sm">
+                          <Link href={`/product/${product.id}`}>
+                            <Eye className="w-4 h-4 mr-1" />
+                            View Details
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        )}
 
         {/* Stats */}
         {products.length > 0 && (

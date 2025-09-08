@@ -16,8 +16,8 @@ const createProductSchema = z.object({
   image: z.string().url("Please enter a valid image URL").optional(),
   images: z.array(z.string().url("Please enter valid image URLs")).optional(),
   video: z.string().url("Please enter a valid video URL").optional(),
-  appStoreUrl: z.string().url("Please enter a valid App Store URL").optional(),
-  playStoreUrl: z.string().url("Please enter a valid Play Store URL").optional(),
+  iosUrl: z.string().url("Please enter a valid App Store URL").optional(),
+  androidUrl: z.string().url("Please enter a valid Play Store URL").optional(),
   socialLinks: z.object({
     twitter: z.string().url("Please enter a valid Twitter URL").optional()
   }).optional(),
@@ -38,6 +38,8 @@ export async function GET(request: NextRequest) {
     const limitParam = searchParams.get('limit')
     const pageParam = searchParams.get('page')
     const categoryId = searchParams.get('categoryId')
+    const year = searchParams.get('year')
+    const sortBy = searchParams.get('sortBy') || 'newest'
     const limit = limitParam ? parseInt(limitParam, 10) : undefined
     const page = pageParam ? parseInt(pageParam, 10) : 1
     const skip = (page - 1) * (limit || 50)
@@ -58,30 +60,35 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Add year filter if provided
+    if (year) {
+      const yearInt = parseInt(year);
+      if (!isNaN(yearInt)) {
+        where.releaseAt = {
+          gte: new Date(yearInt, 0, 1),
+          lt: new Date(yearInt + 1, 0, 1)
+        };
+      }
+    }
+
+    // Add editor's choice filter
+    if (sortBy === 'editors-choice') {
+      where.editorChoice = true;
+    }
+
     const products = await prisma.product.findMany({
       where,
       select: {
         id: true,
         title: true,
         tagline: true,
-        description: true,
-        url: true,
-        image: true,
         thumbnail: true,
         platforms: true,
         createdAt: true,
-        releaseAt: true,
         status: true,
+        releaseAt: true,
+        editorChoice: true,
         clicks: true,
-        follows: true,
-        pricing: true,
-        promoOffer: true,
-        promoCode: true,
-        promoExpiry: true,
-        playtestQuota: true,
-        playtestExpiry: true,
-        sponsorRequest: true,
-        sponsorNote: true,
         user: {
           select: {
             id: true,
@@ -99,13 +106,6 @@ export async function GET(request: NextRequest) {
             }
           }
         },
-        pressKit: {
-          select: {
-            id: true,
-            headline: true,
-            updatedAt: true,
-          }
-        },
         _count: {
           select: {
             votes: true,
@@ -120,7 +120,25 @@ export async function GET(request: NextRequest) {
       skip: skip,
     })
 
-    return NextResponse.json(products)
+    // Apply sorting in JavaScript
+    let sortedProducts = products;
+    switch (sortBy) {
+      case 'most-upvoted':
+        sortedProducts = products.sort((a, b) => b._count.votes - a._count.votes);
+        break;
+      case 'most-viewed':
+        sortedProducts = products.sort((a, b) => b.clicks - a.clicks);
+        break;
+      case 'editors-choice':
+        sortedProducts = products.filter(p => p.editorChoice).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        break;
+      case 'newest':
+      default:
+        sortedProducts = products.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        break;
+    }
+
+    return NextResponse.json(sortedProducts)
   } catch (error) {
     console.error('Error fetching products:', error)
     return NextResponse.json(
@@ -165,13 +183,13 @@ export async function POST(request: NextRequest) {
         title: validatedData.title,
         tagline: validatedData.tagline,
         description: validatedData.description,
-        url: validatedData.url,
+        url: validatedData.iosUrl || validatedData.androidUrl || '', // Use one of the URLs as the primary URL
         image: validatedData.image,
         images: validatedData.images || [],
         video: validatedData.video,
         platforms: validatedData.platforms,
-        appStoreUrl: validatedData.appStoreUrl,
-        playStoreUrl: validatedData.playStoreUrl,
+              iosUrl: validatedData.iosUrl,
+      androidUrl: validatedData.androidUrl,
         socialLinks: validatedData.socialLinks,
         userId: user.id,
       },

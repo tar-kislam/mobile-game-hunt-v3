@@ -41,6 +41,7 @@ const PillNav = ({
   const pathname = usePathname();
   const resolvedPillTextColor = pillTextColor ?? 'hsl(var(--muted-foreground))';
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const circleRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const tlRefs = useRef<gsap.core.Timeline[]>([]);
   const activeTweenRefs = useRef<gsap.core.Tween[]>([]);
@@ -51,7 +52,14 @@ const PillNav = ({
   const navItemsRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLAnchorElement>(null);
 
+  // Hydration effect
   useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    
     const layout = () => {
       circleRefs.current.forEach(circle => {
         if (!circle?.parentElement) return;
@@ -139,7 +147,7 @@ const PillNav = ({
     }
 
     return () => window.removeEventListener('resize', onResize);
-  }, [items, ease, initialLoadAnimation]);
+  }, [items, ease, initialLoadAnimation, isHydrated]);
 
   const handleEnter = (i: number) => {
     const tl = tlRefs.current[i];
@@ -237,6 +245,99 @@ const PillNav = ({
     ['--pill-pad-x' as any]: '18px',
     ['--pill-gap' as any]: '3px'
   };
+
+  // Prevent hydration mismatch by not rendering animations until hydrated
+  if (!isHydrated) {
+    return (
+      <div className={`relative ${className}`}>
+        <nav
+          className="w-full md:w-max flex items-center justify-between md:justify-start box-border px-4 md:px-0"
+          aria-label="Primary"
+          style={cssVars}
+        >
+          <Link
+            href="/"
+            aria-label="Home"
+            className="rounded-full p-2 inline-flex items-center justify-center overflow-hidden border border-white/10"
+            style={{
+              width: 'var(--nav-h)',
+              height: 'var(--nav-h)',
+              background: 'var(--base)'
+            }}
+          >
+            <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-xs">MG</span>
+            </div>
+          </Link>
+
+          <div
+            className="relative items-center rounded-full hidden md:flex ml-2 border border-white/10"
+            style={{
+              height: 'var(--nav-h)',
+              background: 'var(--base)'
+            }}
+          >
+            <ul
+              role="menubar"
+              className="list-none flex items-stretch m-0 p-[3px] h-full"
+              style={{ gap: 'var(--pill-gap)' }}
+            >
+              {items.map((item, i) => {
+                const isActive = pathname === item.href;
+                const pillStyle = {
+                  background: 'var(--pill-bg)',
+                  color: 'var(--pill-text)',
+                  paddingLeft: 'var(--pill-pad-x)',
+                  paddingRight: 'var(--pill-pad-x)'
+                };
+
+                return (
+                  <li key={item.href} role="none" className="flex h-full">
+                    <Link
+                      role="menuitem"
+                      href={item.href}
+                      className="relative overflow-hidden inline-flex items-center justify-center h-full no-underline rounded-full box-border font-medium text-sm leading-[0] tracking-[0.2px] whitespace-nowrap cursor-pointer px-0 transition-colors"
+                      style={pillStyle}
+                      aria-label={item.ariaLabel || item.label}
+                    >
+                      {item.label}
+                      {isActive && (
+                        <span
+                          className="absolute left-1/2 -bottom-[6px] -translate-x-1/2 w-3 h-3 rounded-full z-[4] border border-white/20"
+                          style={{ background: 'var(--base)' }}
+                          aria-hidden="true"
+                        />
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          <button
+            aria-label="Toggle menu"
+            aria-expanded={false}
+            className="md:hidden rounded-full border border-white/10 flex flex-col items-center justify-center gap-1 cursor-pointer p-0 relative"
+            style={{
+              width: 'var(--nav-h)',
+              height: 'var(--nav-h)',
+              background: 'var(--base)'
+            }}
+          >
+            <span
+              className="w-4 h-0.5 rounded origin-center transition-all duration-[10ms] ease-[cubic-bezier(0.25,0.1,0.25,1)]"
+              style={{ background: 'var(--pill-text)' }}
+            />
+            <span
+              className="w-4 h-0.5 rounded origin-center transition-all duration-[10ms] ease-[cubic-bezier(0.25,0.1,0.25,1)]"
+              style={{ background: 'var(--pill-text)' }}
+            />
+          </button>
+        </nav>
+      </div>
+    );
+  }
 
   return (
     <div className={`relative ${className}`}>

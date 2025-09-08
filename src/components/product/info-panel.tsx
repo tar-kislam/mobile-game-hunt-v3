@@ -34,8 +34,8 @@ interface Product {
   images: string[]
   video?: string | null
   platforms?: string[]
-  appStoreUrl?: string | null
-  playStoreUrl?: string | null
+  iosUrl?: string | null
+  androidUrl?: string | null
   socialLinks?: any
   createdAt: string
   user: {
@@ -203,18 +203,18 @@ export function InfoPanel({ product, onVote, hasVoted }: InfoPanelProps) {
               </a>
             </Button>
             
-            {product.appStoreUrl && (
+            {product.iosUrl && (
               <Button asChild variant="outline" className="w-full rounded-xl justify-start">
-                <a href={product.appStoreUrl} target="_blank" rel="noopener noreferrer">
+                <a href={product.iosUrl} target="_blank" rel="noopener noreferrer">
                   <SmartphoneIcon className="w-4 h-4 mr-2" />
                   App Store
                 </a>
               </Button>
             )}
             
-            {product.playStoreUrl && (
+            {product.androidUrl && (
               <Button asChild variant="outline" className="w-full rounded-xl justify-start">
-                <a href={product.playStoreUrl} target="_blank" rel="noopener noreferrer">
+                <a href={product.androidUrl} target="_blank" rel="noopener noreferrer">
                   <TabletSmartphoneIcon className="w-4 h-4 mr-2" />
                   Google Play
                 </a>

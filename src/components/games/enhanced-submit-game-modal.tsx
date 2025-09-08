@@ -38,8 +38,8 @@ const gameSchema = z.object({
   image: z.string().url("Please enter a valid main image URL"),
   images: z.array(z.string().url("Please enter valid image URLs")).optional(),
   video: z.string().url("Please enter a valid video URL").optional().or(z.literal("")),
-  appStoreUrl: z.string().url("Please enter a valid App Store URL").optional().or(z.literal("")),
-  playStoreUrl: z.string().url("Please enter a valid Play Store URL").optional().or(z.literal("")),
+  iosUrl: z.string().url("Please enter a valid App Store URL").optional().or(z.literal("")),
+  androidUrl: z.string().url("Please enter a valid Play Store URL").optional().or(z.literal("")),
   twitterUrl: z.string().url("Please enter a valid Twitter URL").optional().or(z.literal("")),
   platforms: z.array(z.string()).min(1, "At least one platform is required"),
   releaseAt: z.string().optional(),
@@ -72,8 +72,8 @@ export function EnhancedSubmitGameModal({ children, onGameSubmitted }: EnhancedS
       image: "",
       images: [],
       video: "",
-      appStoreUrl: "",
-      playStoreUrl: "",
+          iosUrl: "",
+    androidUrl: "",
       twitterUrl: "",
       platforms: [],
       releaseAt: "",
@@ -138,8 +138,8 @@ export function EnhancedSubmitGameModal({ children, onGameSubmitted }: EnhancedS
         ...data,
         images: validImages,
         video: data.video || undefined,
-        appStoreUrl: data.appStoreUrl || undefined,
-        playStoreUrl: data.playStoreUrl || undefined,
+              iosUrl: data.iosUrl || undefined,
+      androidUrl: data.androidUrl || undefined,
         socialLinks,
       }
 
@@ -341,7 +341,7 @@ export function EnhancedSubmitGameModal({ children, onGameSubmitted }: EnhancedS
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="appStoreUrl"
+                  name="iosUrl"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>App Store URL</FormLabel>
@@ -355,7 +355,7 @@ export function EnhancedSubmitGameModal({ children, onGameSubmitted }: EnhancedS
 
                 <FormField
                   control={form.control}
-                  name="playStoreUrl"
+                  name="androidUrl"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Google Play URL</FormLabel>

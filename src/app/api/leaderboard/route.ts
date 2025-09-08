@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
         id: product.id,
         title: product.title,
         description: product.description,
-        image: product.image,
+        thumbnail: product.thumbnail,
         url: product.url,
         platforms: product.platforms,
         countries: product.countries,

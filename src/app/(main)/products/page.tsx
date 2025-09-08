@@ -26,7 +26,7 @@ interface Game {
     name: string | null
     image?: string | null
   }
-  categories: {
+  categories?: {
     category: {
       id: string
       name: string
@@ -67,7 +67,8 @@ export default function ProductsPage() {
 
   const fetchGames = async (pageNum: number = 1, append: boolean = false) => {
     try {
-      const response = await fetch(`/api/products?limit=50&page=${pageNum}`)
+      setLoadingMore(true);
+      const response = await fetch(`/api/products?limit=20&page=${pageNum}`)
       if (!response.ok) throw new Error('Failed to fetch games')
       
       const newGames: Game[] = await response.json()
@@ -78,7 +79,7 @@ export default function ProductsPage() {
         setGames(newGames)
       }
       
-      setHasMore(newGames.length === 50)
+      setHasMore(newGames.length === 20)
       setPage(pageNum)
     } catch (error) {
       console.error('Error fetching games:', error)
@@ -109,13 +110,16 @@ export default function ProductsPage() {
     const categoryMap = new Map<string, Game[]>()
     
     games.forEach(game => {
-      game.categories.forEach(cat => {
-        const categoryName = cat.category.name
-        if (!categoryMap.has(categoryName)) {
-          categoryMap.set(categoryName, [])
-        }
-        categoryMap.get(categoryName)!.push(game)
-      })
+      // Safety check: ensure categories exists and is an array
+      if (game.categories && Array.isArray(game.categories)) {
+        game.categories.forEach(cat => {
+          const categoryName = cat.category.name
+          if (!categoryMap.has(categoryName)) {
+            categoryMap.set(categoryName, [])
+          }
+          categoryMap.get(categoryName)!.push(game)
+        })
+      }
     })
     
     return Array.from(categoryMap.entries())
@@ -160,7 +164,7 @@ export default function ProductsPage() {
       return games
     }
     return games.filter(game => 
-      game.categories.some(cat => cat.category.name.toLowerCase() === selectedCategory.toLowerCase())
+      game.categories && game.categories.some(cat => cat.category.name.toLowerCase() === selectedCategory.toLowerCase())
     )
   }
 

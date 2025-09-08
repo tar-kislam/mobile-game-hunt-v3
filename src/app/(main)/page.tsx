@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowUpIcon, MessageCircleIcon, ExternalLinkIcon, TrendingUpIcon } from "lucide-react"
 import { EnhancedSubmitGameModal } from "@/components/games/enhanced-submit-game-modal"
 import { GameCard } from "@/components/games/game-card"
@@ -154,6 +155,8 @@ interface Game {
 export default function HomePage() {
   const [games, setGames] = useState<Game[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [sortBy, setSortBy] = useState<'newest' | 'most-upvoted' | 'most-viewed' | 'editors-choice'>('newest')
+  const [showAll, setShowAll] = useState(false)
   const [leaderboardPreview, setLeaderboardPreview] = useState<{
     id: string
     title: string
@@ -166,11 +169,15 @@ export default function HomePage() {
   useEffect(() => {
     fetchGames()
     fetchLeaderboardPreview()
-  }, [])
+  }, [sortBy])
+
+  useEffect(() => {
+    setShowAll(false) // Reset showAll when filter changes
+  }, [sortBy])
 
   const fetchGames = async () => {
     try {
-      const response = await fetch('/api/products')
+      const response = await fetch(`/api/products?sortBy=${sortBy}`)
       if (response.ok) {
         const data = await response.json()
         setGames(data)
@@ -194,6 +201,30 @@ export default function HomePage() {
     toast.info('Voting feature coming soon!')
   }
 
+  const getButtonText = () => {
+    const filterNames = {
+      'newest': 'Newest',
+      'most-upvoted': 'Most Upvoted',
+      'most-viewed': 'Most Viewed',
+      'editors-choice': 'Editor\'s Choice'
+    }
+    
+    if (showAll) {
+      return 'Show Less'
+    }
+    
+    return `View all ${filterNames[sortBy]} Games`
+  }
+
+  const getDisplayGames = () => {
+    if (showAll) {
+      return games
+    }
+    return games.slice(0, 8)
+  }
+
+  const hasMoreGames = games.length > 8
+
   const fetchLeaderboardPreview = async () => {
     try {
       setIsLoadingPreview(true)
@@ -216,7 +247,6 @@ export default function HomePage() {
   }
 
   const featuredGame = games[0]
-  const allGames = games
 
   return (
     <div className="min-h-screen bg-background">
@@ -240,18 +270,38 @@ export default function HomePage() {
 
             {/* All Games */}
             <section>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">🎮 Discover Games</h2>
-                <div className="flex gap-3">
-                  <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
-                    <Button className="bg-[rgb(60,41,100)] hover:bg-[rgb(50,31,90)] text-white rounded-2xl">
-                      Submit Game
-                    </Button>
-                  </EnhancedSubmitGameModal>
-                  <Button variant="outline" asChild className="rounded-2xl">
-                    <Link href="/products">View All</Link>
-                  </Button>
-                </div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold mb-4">🎮 Discover Games</h2>
+                
+                {/* Filter Tabs */}
+                <Tabs value={sortBy} onValueChange={(value) => setSortBy(value as any)} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-gray-800/50 border-purple-500/20">
+                    <TabsTrigger 
+                      value="newest" 
+                      className="data-[state=active]:bg-purple-500 data-[state=active]:text-white text-gray-300 hover:text-white"
+                    >
+                      Newest
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="most-upvoted" 
+                      className="data-[state=active]:bg-purple-500 data-[state=active]:text-white text-gray-300 hover:text-white"
+                    >
+                      Most Upvoted
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="most-viewed" 
+                      className="data-[state=active]:bg-purple-500 data-[state=active]:text-white text-gray-300 hover:text-white"
+                    >
+                      Most Viewed
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="editors-choice" 
+                      className="data-[state=active]:bg-purple-500 data-[state=active]:text-white text-gray-300 hover:text-white"
+                    >
+                      Editor's Choice
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
               
               {isLoading ? (
@@ -281,18 +331,32 @@ export default function HomePage() {
                   </EnhancedSubmitGameModal>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {allGames.map((game) => (
-                    <TiltedGameCard key={`tilted-${game.id}`} className="h-full">
-                      <TapTapGameCardNoScale 
-                        key={game.id} 
-                        game={game} 
-                        onVote={handleVote}
-                        showAuthor={true}
-                      />
-                    </TiltedGameCard>
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {getDisplayGames().map((game) => (
+                      <TiltedGameCard key={`tilted-${game.id}`} className="h-full">
+                        <TapTapGameCardNoScale 
+                          key={game.id} 
+                          game={game} 
+                          onVote={handleVote}
+                          showAuthor={true}
+                        />
+                      </TiltedGameCard>
+                    ))}
+                  </div>
+                  
+                  {/* Expand/Collapse Button */}
+                  {hasMoreGames && (
+                    <div className="flex justify-center mt-6">
+                      <Button
+                        onClick={() => setShowAll(!showAll)}
+                        className="bg-purple-500 hover:bg-purple-600 text-white rounded-2xl px-8 py-3 transition-all duration-300 hover:scale-105"
+                      >
+                        {getButtonText()}
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </section>
           </div>

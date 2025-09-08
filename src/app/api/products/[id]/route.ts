@@ -2,6 +2,96 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { sendMail } from '@/lib/mail'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await params
+    
+    // Check if the product belongs to the authenticated user
+    const product = await prisma.product.findUnique({
+      where: { id },
+      select: { userId: true }
+    })
+
+    if (!product) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+    }
+
+    if (product.userId !== session.user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    // Delete related records first, then the product
+    await prisma.$transaction(async (tx) => {
+      // Delete votes
+      await tx.vote.deleteMany({
+        where: { productId: id }
+      })
+
+      // Delete follows
+      await tx.follow.deleteMany({
+        where: { gameId: id }
+      })
+
+      // Delete metrics
+      await tx.metric.deleteMany({
+        where: { gameId: id }
+      })
+
+      // Delete comments
+      await tx.comment.deleteMany({
+        where: { productId: id }
+      })
+
+      // Delete product makers
+      await tx.productMaker.deleteMany({
+        where: { productId: id }
+      })
+
+      // Delete product tags
+      await tx.productTag.deleteMany({
+        where: { productId: id }
+      })
+
+      // Delete product categories
+      await tx.productCategory.deleteMany({
+        where: { productId: id }
+      })
+
+      // Finally delete the product
+      await tx.product.delete({
+        where: { id }
+      })
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error deleting product:', error)
+    
+    // Check if it's a foreign key constraint error
+    if (error instanceof Error && error.message.includes('Foreign key constraint')) {
+      return NextResponse.json(
+        { error: 'Cannot delete product with existing related data' },
+        { status: 400 }
+      )
+    }
+    
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -56,8 +146,8 @@ export async function GET(
         images: true,
         video: true,
         platforms: true,
-        appStoreUrl: true,
-        playStoreUrl: true,
+              iosUrl: true,
+      androidUrl: true,
         socialLinks: true,
         createdAt: true,
         releaseAt: true,
