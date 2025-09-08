@@ -442,9 +442,9 @@ export default function HomePage() {
             {/* Newsletter Signup */}
             <Card className="rounded-2xl shadow-lg border-white/10">
               <CardHeader className="p-4">
-                <CardTitle>Stay Updated</CardTitle>
+                <CardTitle>Level Up Your Inbox</CardTitle>
                 <CardDescription>
-                  Get weekly updates on the best mobile games
+                  Join our early community and get insider news, trending releases, and hidden gems—straight to your inbox.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-4 pt-0">

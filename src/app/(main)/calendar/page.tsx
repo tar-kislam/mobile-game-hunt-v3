@@ -49,7 +49,7 @@ export default function CalendarPage() {
     platform: 'all',
     country: 'all',
     category: 'all',
-    year: (new Date().getFullYear() + 1).toString()
+    year: new Date().getFullYear().toString()
   });
 
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() + i);
@@ -71,7 +71,7 @@ export default function CalendarPage() {
       if (filters.category && filters.category !== 'all') params.append('categoryId', filters.category);
       if (filters.year) params.append('year', filters.year);
       
-      const response = await fetch(`/api/products?${params.toString()}`);
+      const response = await fetch(`/api/calendar?${params.toString()}`);
       if (!response.ok) {
         throw new Error('Failed to fetch products');
       }

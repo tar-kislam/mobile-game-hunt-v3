@@ -19,7 +19,8 @@ import {
   SettingsIcon
 } from "lucide-react"
 import { Badge as UIBadge } from '@/components/ui/badge'
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import MagicBento from '@/components/ui/magic-bento'
 
 // Mock data - In a real app, this would come from your database
 const userStats = {
@@ -122,6 +123,7 @@ const userComments = [
 export default function ProfilePage() {
   const { data: session, status } = useSession()
   const [userBadges, setUserBadges] = useState<string[]>([])
+  const cardRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -140,7 +142,7 @@ export default function ProfilePage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading profile...</p>
@@ -151,7 +153,7 @@ export default function ProfilePage() {
 
   if (status === "unauthenticated") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)] flex items-center justify-center">
         <Card className="w-full max-w-md rounded-2xl shadow-lg border-white/10">
           <CardHeader className="p-4 text-center">
             <CardTitle>Authentication Required</CardTitle>
@@ -173,78 +175,100 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          {/* Profile Header */}
+          {/* Magic Bento - exact grid behavior */}
           <div className="mb-8">
-            <Card className="rounded-2xl shadow-lg border-white/10">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-6">
-                    <Avatar className="h-20 w-20">
-                      <AvatarImage src={session?.user?.image || ""} />
-                      <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                        {session?.user?.name?.[0]?.toUpperCase() || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    <div>
-                      <h1 className="text-2xl font-bold">{session?.user?.name}</h1>
-                      <p className="text-muted-foreground">{session?.user?.email}</p>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <CalendarIcon className="h-4 w-4" />
-                          Joined {userStats.joinDate}
+            <MagicBento
+              enableTilt
+              enableSpotlight
+              enableStars
+              enableBorderGlow
+              glowColor="132, 0, 255"
+              items={[
+                {
+                  id: 'profile',
+                  className: 'col-span-1 md:col-span-2 row-span-2',
+                  children: (
+                    <div className="space-y-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-4">
+                          <Avatar className="h-14 w-14 ring-2 ring-purple-500/40">
+                            <AvatarImage src={session?.user?.image || ''} />
+                            <AvatarFallback className="bg-purple-600 text-white">
+                              {session?.user?.name?.[0]?.toUpperCase() || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="text-lg font-semibold">{session?.user?.name}</div>
+                            <div className="text-sm text-muted-foreground">{session?.user?.email}</div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                              <CalendarIcon className="h-3 w-3" /> Joined {userStats.joinDate}
+                            </div>
+                          </div>
+                        </div>
+                        <UserIcon className="h-5 w-5 text-purple-300" />
+                      </div>
+
+                      {/* Embedded Stats 2x2 inside Profile card */}
+                      <div className="grid grid-cols-2 gap-4 mt-4 md:mt-8">
+                        <div className="rounded-xl border border-white/10 bg-gray-900/60 p-4 text-center shadow-inner">
+                          <GamepadIcon className="h-5 w-5 mx-auto mb-1 text-primary" />
+                          <div className="text-xl font-bold">{userStats.gamesSubmitted}</div>
+                          <div className="text-xs text-muted-foreground">Games</div>
+                        </div>
+                        <div className="rounded-xl border border-white/10 bg-gray-900/60 p-4 text-center shadow-inner">
+                          <ArrowUpIcon className="h-5 w-5 mx-auto mb-1 text-green-500" />
+                          <div className="text-xl font-bold">{userStats.totalVotes}</div>
+                          <div className="text-xs text-muted-foreground">Votes</div>
+                        </div>
+                        <div className="rounded-xl border border-white/10 bg-gray-900/60 p-4 text-center shadow-inner">
+                          <MessageCircleIcon className="h-5 w-5 mx-auto mb-1 text-blue-500" />
+                          <div className="text-xl font-bold">{userStats.commentsReceived}</div>
+                          <div className="text-xs text-muted-foreground">Comments</div>
+                        </div>
+                        <div className="rounded-xl border border-white/10 bg-gray-900/60 p-4 text-center shadow-inner">
+                          <TrophyIcon className="h-5 w-5 mx-auto mb-1 text-yellow-400" />
+                          <div className="text-xl font-bold">#{Math.floor(Math.random() * 100) + 1}</div>
+                          <div className="text-xs text-muted-foreground">Ranking</div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  
-                  <Button variant="outline" asChild className="rounded-2xl">
-                    <Link href="/profile/settings">
-                      <SettingsIcon className="h-4 w-4 mr-2" />
-                      Settings
+                  )
+                },
+                {
+                  id: 'settings',
+                  className: 'row-span-1',
+                  children: (
+                    <Link href="/profile/settings" className="block">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-lg font-semibold">Settings</div>
+                          <div className="text-sm text-muted-foreground">Manage your account preferences</div>
+                        </div>
+                        <SettingsIcon className="h-5 w-5 text-emerald-300" />
+                      </div>
                     </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Stats Overview */}
-          <div className="grid md:grid-cols-4 gap-4 mb-8">
-            <Card className="rounded-2xl shadow-lg border-white/10">
-              <CardContent className="p-4 text-center">
-                <GamepadIcon className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <div className="text-2xl font-bold">{userStats.gamesSubmitted}</div>
-                <div className="text-sm text-muted-foreground">Games Submitted</div>
-              </CardContent>
-            </Card>
-            
-            <Card className="rounded-2xl shadow-lg border-white/10">
-              <CardContent className="p-4 text-center">
-                <ArrowUpIcon className="h-8 w-8 mx-auto mb-2 text-green-600 dark:text-green-400" />
-                <div className="text-2xl font-bold">{userStats.totalVotes}</div>
-                <div className="text-sm text-muted-foreground">Votes Received</div>
-              </CardContent>
-            </Card>
-            
-            <Card className="rounded-2xl shadow-lg border-white/10">
-              <CardContent className="p-4 text-center">
-                <MessageCircleIcon className="h-8 w-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
-                <div className="text-2xl font-bold">{userStats.commentsReceived}</div>
-                <div className="text-sm text-muted-foreground">Comments</div>
-              </CardContent>
-            </Card>
-            
-            <Card className="rounded-2xl shadow-lg border-white/10">
-              <CardContent className="p-4 text-center">
-                <TrophyIcon className="h-8 w-8 mx-auto mb-2 text-yellow-600 dark:text-yellow-400" />
-                <div className="text-2xl font-bold">#{Math.floor(Math.random() * 100) + 1}</div>
-                <div className="text-sm text-muted-foreground">Ranking</div>
-              </CardContent>
-            </Card>
+                  )
+                },
+                {
+                  id: 'dashboard',
+                  className: 'row-span-1',
+                  children: (
+                    <Link href="/dashboard" className="block">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-lg font-semibold">Dashboard</div>
+                          <div className="text-sm text-muted-foreground">View analytics and performance</div>
+                        </div>
+                        <TrophyIcon className="h-5 w-5 text-cyan-300" />
+                      </div>
+                    </Link>
+                  )
+                },
+              ]}
+            />
           </div>
 
           {/* Profile Tabs */}
@@ -256,70 +280,56 @@ export default function ProfilePage() {
             </TabsList>
             
             <TabsContent value="games" className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">My Submitted Games</h2>
-                <Button asChild className="rounded-2xl shadow-soft">
-                  <Link href="/submit">Submit New Game</Link>
-                </Button>
-              </div>
-              
-              <div className="grid md:grid-cols-2 gap-4">
-                {userGames.map((game) => (
-                  <Card key={game.id} className="rounded-2xl shadow-soft">
-                    <CardContent className="p-4">
-                      <div className="flex gap-4">
-                        <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-muted">
-                          <img 
-                            src={game.image} 
-                            alt={game.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <Link href={`/product/${game.id}`} className="hover:underline">
-                                <h3 className="font-semibold text-sm leading-tight">
-                                  {game.title}
-                                </h3>
-                              </Link>
-                              <p className="text-sm text-muted-foreground line-clamp-2">
-                                {game.description}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-2 mt-2">
-                            <Badge variant="secondary" className="rounded-2xl text-xs">
-                              {game.platforms?.map(p => p.toUpperCase()).join(', ') || 'No platforms listed'}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">by {game.maker.name}</span>
-                          </div>
-                          
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <ArrowUpIcon className="h-3 w-3" />
-                              {game.votes} votes
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <MessageCircleIcon className="h-3 w-3" />
-                              {game.comments} comments
-                            </div>
-                            <Link 
-                              href={`/product/${game.id}`}
-                              className="flex items-center gap-1 hover:text-foreground"
-                            >
-                              <ExternalLinkIcon className="h-3 w-3" />
-                              View
+              <h2 className="text-xl font-semibold">My Submitted Games</h2>
+
+              <MagicBento
+                className="md:grid-cols-2"
+                enableTilt
+                enableSpotlight
+                enableStars
+                enableBorderGlow
+                glowColor="132, 0, 255"
+                items={userGames.map((game) => ({
+                  id: game.id,
+                  children: (
+                    <div className="flex gap-4">
+                      <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-muted">
+                        <img src={game.image} alt={game.title} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <Link href={`/product/${game.id}`} className="hover:underline">
+                              <h3 className="font-semibold text-sm leading-tight">{game.title}</h3>
                             </Link>
+                            <p className="text-sm text-muted-foreground line-clamp-2">{game.description}</p>
                           </div>
+                        </div>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="secondary" className="rounded-2xl text-xs">
+                            {game.platforms?.map(p => p.toUpperCase()).join(', ') || 'No platforms listed'}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">by {game.maker.name}</span>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <ArrowUpIcon className="h-3 w-3" />
+                            {game.votes} votes
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <MessageCircleIcon className="h-3 w-3" />
+                            {game.comments} comments
+                          </div>
+                          <Link href={`/product/${game.id}`} className="flex items-center gap-1 hover:text-foreground">
+                            <ExternalLinkIcon className="h-3 w-3" />
+                            View
+                          </Link>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                    </div>
+                  )
+                }))}
+              />
             </TabsContent>
             
             <TabsContent value="votes" className="space-y-4">
