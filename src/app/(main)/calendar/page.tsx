@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Calendar, Download, Filter, Globe, Smartphone, CalendarDays, MapPin, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,16 +41,19 @@ interface CalendarDay {
 }
 
 export default function CalendarPage() {
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<CalendarProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>(
+    (searchParams.get('view') as 'calendar' | 'list') || 'calendar'
+  );
   const [filters, setFilters] = useState({
     platform: 'all',
     country: 'all',
     category: 'all',
-    year: new Date().getFullYear().toString()
+    year: searchParams.get('year') || new Date().getFullYear().toString()
   });
 
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() + i);
@@ -491,7 +495,7 @@ export default function CalendarPage() {
                       {/* Product Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate flex-1">
                             {product.title}
                           </h3>
                           <Badge className={getStatusColor(product.releaseAt)}>
@@ -500,13 +504,13 @@ export default function CalendarPage() {
                         </div>
                         
                         {product.tagline && (
-                          <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
+                          <p className="text-gray-600 dark:text-gray-400 text-sm mb-2 truncate">
                             {product.tagline}
                           </p>
                         )}
                         
-                        <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">
-                          {product.description}
+                        <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 break-words">
+                          {product.description.length > 150 ? `${product.description.substring(0, 150)}...` : product.description}
                         </p>
 
                         {/* Release Date */}

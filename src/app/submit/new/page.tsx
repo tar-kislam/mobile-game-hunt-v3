@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label'
 import { productMainInfoSchema, productMediaSchema, productExtrasSchema, productChecklistSchema, productLaunchDetailsSchema, productFullSchema } from '@/lib/schemas/product'
 import { createProductAction, saveDraftAction, scheduleLaunchAction, submitApprovalAction } from '@/lib/actions/products'
 import { toast } from 'sonner'
-import { Info, ExternalLink, Globe, MessageCircle, Twitter, Youtube, X, Plus, Check, X as XIcon } from 'lucide-react'
+import { Info, ExternalLink, Globe, MessageCircle, Twitter, Youtube, X, Plus, Check, X as XIcon, Instagram } from 'lucide-react'
 import { CategoryMultiSelect } from '@/components/ui/category-multi-select'
 import { MultiSelect } from '@/components/ui/multi-select'
 import { PLATFORMS } from '@/components/ui/platform-icons'
@@ -42,7 +42,7 @@ export default function NewSubmitPage() {
     resolver: zodResolver(productFullSchema),
     defaultValues: {
       title: '', tagline: '', description: '', iosUrl: '', androidUrl: '',
-      website: '', discordUrl: '', twitterUrl: '', tiktokUrl: '',
+      website: '', discordUrl: '', twitterUrl: '', tiktokUrl: '', instagramUrl: '', redditUrl: '', facebookUrl: '', linkedinUrl: '',
       isOpenSource: false, platforms: [], targetCountries: [], languages: [],
       thumbnail: '', gallery: [], youtubeUrl: '', gameplayGifUrl: '', demoUrl: '',
       image: '', images: [], video: '',
@@ -459,6 +459,58 @@ export default function NewSubmitPage() {
                                 id="tiktokUrl"
                                 placeholder="https://tiktok.com/@yourgame" 
                                 {...form.register('tiktokUrl')} 
+                                className="h-12 pl-10" 
+                              />
+                              <ExternalLink className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="instagramUrl" className="text-sm font-medium">Instagram</Label>
+                            <div className="relative">
+                              <Input 
+                                id="instagramUrl"
+                                placeholder="https://instagram.com/yourgame" 
+                                {...form.register('instagramUrl')} 
+                                className="h-12 pl-10" 
+                              />
+                              <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="redditUrl" className="text-sm font-medium">Reddit</Label>
+                            <div className="relative">
+                              <Input 
+                                id="redditUrl"
+                                placeholder="https://reddit.com/r/yourgame" 
+                                {...form.register('redditUrl')} 
+                                className="h-12 pl-10" 
+                              />
+                              <ExternalLink className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="facebookUrl" className="text-sm font-medium">Facebook</Label>
+                            <div className="relative">
+                              <Input 
+                                id="facebookUrl"
+                                placeholder="https://facebook.com/yourgame" 
+                                {...form.register('facebookUrl')} 
+                                className="h-12 pl-10" 
+                              />
+                              <ExternalLink className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="linkedinUrl" className="text-sm font-medium">LinkedIn</Label>
+                            <div className="relative">
+                              <Input 
+                                id="linkedinUrl"
+                                placeholder="https://linkedin.com/company/yourgame" 
+                                {...form.register('linkedinUrl')} 
                                 className="h-12 pl-10" 
                               />
                               <ExternalLink className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -1210,6 +1262,22 @@ export default function NewSubmitPage() {
                         {form.formState.errors.launchDate && (
                           <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.launchDate.message)}</p>
                         )}
+                      </div>
+
+                      {/* Release Date */}
+                      <div>
+                        <Label htmlFor="releaseAt" className="text-sm font-medium">Release Date (Calendar)</Label>
+                        <p className="text-sm text-muted-foreground mt-1 mb-2">When will your game be released? This will appear on the release calendar.</p>
+                        <Input
+                          id="releaseAt"
+                          type="date"
+                          {...form.register('releaseAt')}
+                          className="mt-2"
+                        />
+                        {form.formState.errors.releaseAt && (
+                          <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.releaseAt.message)}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-1">Optional - Leave empty if no specific release date</p>
                       </div>
 
                       {/* Soft Launch Countries */}

@@ -68,23 +68,23 @@ export function Comment({
   };
 
   return (
-    <div className={`${isReply ? 'ml-8 border-l-2 border-gray-200 dark:border-gray-700 pl-4' : ''} ${className}`}>
-      <div className={`flex gap-3 p-4 rounded-xl bg-muted/30 ${isReply ? 'mt-2' : ''}`}>
-        <Avatar className="w-10 h-10 flex-shrink-0">
+    <div className={`${isReply ? 'ml-2 sm:ml-8 border-l-2 border-gray-200 dark:border-gray-700 pl-2 sm:pl-4' : ''} ${className}`}>
+      <div className={`flex gap-2 sm:gap-3 p-3 sm:p-4 rounded-xl bg-muted/30 ${isReply ? 'mt-2' : ''}`}>
+        <Avatar className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0">
           <AvatarImage src={comment.user.image || undefined} />
-          <AvatarFallback>
+          <AvatarFallback className="text-xs sm:text-sm">
             {comment.user.name?.[0]?.toUpperCase() || 'U'}
           </AvatarFallback>
         </Avatar>
         
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm font-medium">
+        <div className="flex-1 min-w-0 overflow-hidden">
+          <div className="flex items-center gap-2 mb-1 sm:mb-2">
+            <span className="text-xs sm:text-sm font-medium truncate">
               {comment.user.name || 'Anonymous'}
             </span>
           </div>
           
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap mb-3">
+          <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap mb-2 sm:mb-3 break-words">
             {comment.content}
           </p>
           

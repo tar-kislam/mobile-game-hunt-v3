@@ -17,6 +17,7 @@ export default withAuth(
           pathname.startsWith('/api/health') ||
           pathname.startsWith('/api/categories') ||
           pathname.startsWith('/api/products') ||
+          pathname.startsWith('/api/calendar') ||   // Allow calendar API
           pathname.startsWith('/api/user') ||
           pathname.startsWith('/product') ||       // Added product detail pages
           pathname.startsWith('/uploads') ||       // Allow public uploads

@@ -81,8 +81,8 @@ export function CommentActions({
   };
 
   return (
-    <div className={`flex items-center justify-between ${className}`}>
-      <div className="flex items-center gap-4">
+    <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 ${className}`}>
+      <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
         {/* Upvote */}
         <UpvoteButton
           initialVotes={initialVotes}
@@ -97,10 +97,10 @@ export function CommentActions({
           variant="ghost"
           size="sm"
           onClick={handleReply}
-          className="h-8 px-2 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+          className="h-7 sm:h-8 px-1 sm:px-2 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
         >
           <MessageCircle className="w-3 h-3 mr-1" />
-          Reply
+          <span className="hidden sm:inline">Reply</span>
         </Button>
 
         {/* Share */}
@@ -108,10 +108,10 @@ export function CommentActions({
           variant="ghost"
           size="sm"
           onClick={handleShare}
-          className="h-8 px-2 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+          className="h-7 sm:h-8 px-1 sm:px-2 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
         >
           <Share2 className="w-3 h-3 mr-1" />
-          Share
+          <span className="hidden sm:inline">Share</span>
         </Button>
 
         {/* Timestamp */}
@@ -121,12 +121,12 @@ export function CommentActions({
       </div>
 
       {/* More Actions */}
-      <div className="relative">
+      <div className="relative self-end sm:self-auto">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setShowMore(!showMore)}
-          className="h-8 w-8 p-0 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+          className="h-7 sm:h-8 w-7 sm:w-8 p-0 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
         >
           <MoreHorizontal className="w-3 h-3" />
         </Button>

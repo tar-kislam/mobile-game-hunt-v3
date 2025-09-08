@@ -29,7 +29,10 @@ import {
   Copy,
   Gift,
   Music,
-  Smartphone
+  Smartphone,
+  Instagram,
+  Facebook,
+  Linkedin
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -38,6 +41,7 @@ import { MediaCarousel } from './media-carousel';
 import { PlaytestClaim } from '@/components/playtest/playtest-claim';
 import { UpvoteButton } from '@/components/ui/upvote-button';
 import { Comment } from '@/components/ui/comment';
+import { ShareModal } from './share-modal';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input'
 import Link from 'next/link'
@@ -716,15 +720,15 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
 
         {/* Right Column - Info & Actions */}
         <div className="space-y-6">
-                    {/* Game Info Card */}
+          {/* Game Info Card */}
           <Card className="rounded-2xl shadow-soft">
             <CardHeader className="pb-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {product.title}
-                    </CardTitle>
+                    {product.title}
+                  </CardTitle>
                     {product.sponsorRequest && (
                       <Badge variant="secondary" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-1">
                         Sponsored
@@ -927,6 +931,38 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
                         </a>
                       </Button>
                     )}
+                    {product.socialLinks.instagram && (
+                      <Button asChild variant="outline" size="sm" className="flex-1">
+                        <a href={product.socialLinks.instagram} target="_blank" rel="noopener noreferrer">
+                          <Instagram className="w-4 h-4 mr-1" />
+                          Instagram
+                        </a>
+                      </Button>
+                    )}
+                    {product.socialLinks.reddit && (
+                      <Button asChild variant="outline" size="sm" className="flex-1">
+                        <a href={product.socialLinks.reddit} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="w-4 h-4 mr-1" />
+                          Reddit
+                        </a>
+                      </Button>
+                    )}
+                    {product.socialLinks.facebook && (
+                      <Button asChild variant="outline" size="sm" className="flex-1">
+                        <a href={product.socialLinks.facebook} target="_blank" rel="noopener noreferrer">
+                          <Facebook className="w-4 h-4 mr-1" />
+                          Facebook
+                        </a>
+                      </Button>
+                    )}
+                    {product.socialLinks.linkedin && (
+                      <Button asChild variant="outline" size="sm" className="flex-1">
+                        <a href={product.socialLinks.linkedin} target="_blank" rel="noopener noreferrer">
+                          <Linkedin className="w-4 h-4 mr-1" />
+                          LinkedIn
+                        </a>
+                      </Button>
+                    )}
                   </div>
                 )}
 
@@ -1018,14 +1054,18 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
                   </Button>
                 </div>
 
-                <Button
-                  onClick={handleShare}
-                  variant="outline"
-                  className="w-full"
+                <ShareModal 
+                  product={product} 
+                  currentUrl={currentUrl}
                 >
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share
-                </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share
+                  </Button>
+                </ShareModal>
               </div>
             </CardContent>
           </Card>
@@ -1153,7 +1193,7 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
                           +{product.tags.length - 5} more
                         </Badge>
                       )}
-                    </div>
+              </div>
                   </div>
                 </div>
               )}
@@ -1170,27 +1210,95 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
             </CardContent>
           </Card>
 
-          {/* Download Card - Right below Details */}
-          {(product.iosUrl || product.androidUrl) && (
+          {/* Connect With Us Card */}
+          {product.socialLinks && (
+            product.socialLinks.website || 
+            product.socialLinks.discord || 
+            product.socialLinks.twitter || 
+            product.socialLinks.tiktok || 
+            product.socialLinks.instagram || 
+            product.socialLinks.reddit || 
+            product.socialLinks.facebook || 
+            product.socialLinks.linkedin || 
+            product.socialLinks.youtube
+          ) && (
             <Card className="rounded-2xl shadow-soft">
               <CardHeader>
-                <CardTitle className="text-xl font-semibold">Download</CardTitle>
+                <CardTitle className="text-lg font-semibold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+                  Connect With Us
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex gap-3">
-                  {product.iosUrl && (
-                    <Button asChild variant="outline" className="flex-1">
-                      <a href={product.iosUrl} target="_blank" rel="noopener noreferrer">
-                        <Download className="w-4 h-4 mr-2" />
-                        App Store
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {product.socialLinks.website && (
+                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-blue-500 hover:text-white hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-200 h-10 w-full">
+                      <a href={product.socialLinks.website} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
+                        <Globe className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="whitespace-nowrap">Website</span>
                       </a>
                     </Button>
                   )}
-                  {product.androidUrl && (
-                    <Button asChild variant="outline" className="flex-1">
-                      <a href={product.androidUrl} target="_blank" rel="noopener noreferrer">
-                        <Download className="w-4 h-4 mr-2" />
-                        Google Play
+                  {product.socialLinks.discord && (
+                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-indigo-500 hover:text-white hover:shadow-lg hover:shadow-indigo-500/25 transition-all duration-200 h-10 w-full">
+                      <a href={product.socialLinks.discord} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
+                        <MessageSquare className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="whitespace-nowrap">Discord</span>
+                      </a>
+                    </Button>
+                  )}
+                  {product.socialLinks.twitter && (
+                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-blue-500 hover:text-white hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-200 h-10 w-full">
+                      <a href={product.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
+                        <Twitter className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="whitespace-nowrap">Twitter/X</span>
+                      </a>
+                    </Button>
+                  )}
+                  {product.socialLinks.tiktok && (
+                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-black hover:text-white hover:shadow-lg hover:shadow-black/25 transition-all duration-200 h-10 w-full">
+                      <a href={product.socialLinks.tiktok} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
+                        <Music className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="whitespace-nowrap">TikTok</span>
+                      </a>
+                    </Button>
+                  )}
+                  {product.socialLinks.instagram && (
+                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-pink-500 hover:text-white hover:shadow-lg hover:shadow-pink-500/25 transition-all duration-200 h-10 w-full">
+                      <a href={product.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
+                        <Instagram className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="whitespace-nowrap">Instagram</span>
+                      </a>
+                    </Button>
+                  )}
+                  {product.socialLinks.reddit && (
+                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-orange-500 hover:text-white hover:shadow-lg hover:shadow-orange-500/25 transition-all duration-200 h-10 w-full">
+                      <a href={product.socialLinks.reddit} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
+                        <ExternalLink className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="whitespace-nowrap">Reddit</span>
+                      </a>
+                    </Button>
+                  )}
+                  {product.socialLinks.facebook && (
+                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-blue-600 hover:text-white hover:shadow-lg hover:shadow-blue-600/25 transition-all duration-200 h-10 w-full">
+                      <a href={product.socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
+                        <Facebook className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="whitespace-nowrap">Facebook</span>
+                      </a>
+                    </Button>
+                  )}
+                  {product.socialLinks.linkedin && (
+                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-blue-700 hover:text-white hover:shadow-lg hover:shadow-blue-700/25 transition-all duration-200 h-10 w-full">
+                      <a href={product.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
+                        <Linkedin className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="whitespace-nowrap">LinkedIn</span>
+                      </a>
+                    </Button>
+                  )}
+                  {product.socialLinks.youtube && (
+                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-red-500 hover:text-white hover:shadow-lg hover:shadow-red-500/25 transition-all duration-200 h-10 w-full">
+                      <a href={product.socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
+                        <Youtube className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="whitespace-nowrap">YouTube</span>
                       </a>
                     </Button>
                   )}
@@ -1201,11 +1309,11 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
 
           {/* Supported Languages Card - Above Pledge Support */}
           {product.languages && product.languages.length > 0 && (
-            <Card className="rounded-2xl shadow-soft">
-              <CardHeader>
+      <Card className="rounded-2xl shadow-soft">
+        <CardHeader>
                 <CardTitle className="text-xl font-semibold">Supported Languages</CardTitle>
-              </CardHeader>
-              <CardContent>
+        </CardHeader>
+        <CardContent>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -1253,13 +1361,13 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
                     </tbody>
                   </table>
                 </div>
-              </CardContent>
-            </Card>
+        </CardContent>
+      </Card>
           )}
 
           {/* Pledge Card - Right below Download/Playtest cards */}
-          <Card className="rounded-2xl shadow-soft">
-            <CardHeader>
+        <Card className="rounded-2xl shadow-soft">
+          <CardHeader>
               <CardTitle className="text-xl font-semibold">Pledge Support</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -1289,8 +1397,8 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
             <Card className="rounded-2xl shadow-soft">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold">Press Kit</CardTitle>
-              </CardHeader>
-              <CardContent>
+          </CardHeader>
+          <CardContent>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                   Download official press materials, screenshots, and game information.
                 </p>
@@ -1298,7 +1406,7 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
                   onClick={handleDownloadPressKit}
                   className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
                 >
-                  <Download className="w-4 h-4 mr-2" />
+                    <Download className="w-4 h-4 mr-2" />
                   Download Press Kit
                 </Button>
               </CardContent>
@@ -1348,7 +1456,7 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
               <CardContent className="space-y-3">
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   Support this project through crowdfunding pledges.
-                </div>
+            </div>
                 <Button
                   onClick={() => {
                     toast.info('Crowdfunding functionality coming soon!');
@@ -1358,9 +1466,9 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
                   <Heart className="w-4 h-4 mr-2" />
                   Support Project
                 </Button>
-              </CardContent>
-            </Card>
-          )}
+          </CardContent>
+        </Card>
+      )}
 
           {/* Gamification Tags Card */}
           {product.gamificationTags && product.gamificationTags.length > 0 && (
@@ -1400,28 +1508,6 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
               </CardContent>
             </Card>
           )}
-
-          {/* Share Card */}
-          <Card className="rounded-2xl shadow-soft">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold">Share</CardTitle>
-            </CardHeader>
-            <CardContent className="flex gap-2">
-              <Button variant="outline" asChild>
-                <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(product.title)}`} target="_blank" rel="noopener noreferrer">
-                  <Share2 className="w-4 h-4 mr-2" /> Twitter
-                </a>
-              </Button>
-              <Button variant="outline" asChild>
-                <a href={`https://www.reddit.com/submit?url=${encodeURIComponent(currentUrl)}&title=${encodeURIComponent(product.title)}`} target="_blank" rel="noopener noreferrer">
-                  <Share2 className="w-4 h-4 mr-2" /> Reddit
-                </a>
-              </Button>
-              <Button variant="outline" onClick={handleShare}>
-                <Share2 className="w-4 h-4 mr-2" /> Copy
-              </Button>
-            </CardContent>
-          </Card>
 
           {/* Team/Makers Info */}
           <Card className="rounded-2xl shadow-soft">
