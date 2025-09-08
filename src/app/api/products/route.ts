@@ -79,7 +79,8 @@ export async function GET(request: NextRequest) {
         id: true,
         title: true,
         tagline: true,
-        // thumbnail removed: column does not exist in DB
+        thumbnail: true,
+        image: true,
         platforms: true,
         createdAt: true,
         status: true,
@@ -214,7 +215,7 @@ export async function POST(request: NextRequest) {
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors || [] },
+        { error: 'Validation failed', details: (error as any).issues || [] },
         { status: 400 }
       )
     }

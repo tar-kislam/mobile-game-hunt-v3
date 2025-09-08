@@ -67,6 +67,8 @@ export async function GET(request: NextRequest) {
         title: true,
         description: true,
         url: true,
+        thumbnail: true,
+        image: true,
         platforms: true,
         status: true,
         createdAt: true,
@@ -107,7 +109,7 @@ export async function GET(request: NextRequest) {
         id: product.id,
         title: product.title,
         description: product.description,
-        // thumbnail removed: column not in DB
+        thumbnail: product.thumbnail ?? product.image ?? null,
         url: product.url,
         platforms: product.platforms,
         // countries may not exist on schema; omit to avoid P2022
