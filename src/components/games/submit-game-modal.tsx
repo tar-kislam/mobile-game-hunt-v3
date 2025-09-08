@@ -39,7 +39,6 @@ const submitGameSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
   tagline: z.string().optional(),
   description: z.string().min(10, "Description must be at least 10 characters").max(1000, "Description must be less than 1000 characters"),
-  url: z.string().url("Please enter a valid URL"),
   image: z.string().url("Please enter a valid image URL").optional().or(z.literal("")),
   categoryId: z.string().min(1, "Please select a category"),
 })
@@ -61,6 +60,7 @@ export function SubmitGameModal({ children, onGameSubmitted }: SubmitGameModalPr
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
+  const [loadingCategories, setLoadingCategories] = useState(false)
   const { data: session, status } = useSession()
   const router = useRouter()
 
@@ -70,7 +70,6 @@ export function SubmitGameModal({ children, onGameSubmitted }: SubmitGameModalPr
       title: "",
       tagline: "",
       description: "",
-      url: "",
       image: "",
       categoryId: "",
     },
@@ -85,14 +84,22 @@ export function SubmitGameModal({ children, onGameSubmitted }: SubmitGameModalPr
 
   const fetchCategories = async () => {
     try {
+      setLoadingCategories(true)
       const response = await fetch('/api/categories')
       if (response.ok) {
         const data = await response.json()
-        setCategories(data)
+        setCategories(Array.isArray(data) ? data : [])
+      } else {
+        console.error('Failed to fetch categories:', response.status)
+        setCategories([])
+        toast.error('Failed to load categories. Please try again.')
       }
     } catch (error) {
       console.error('Error fetching categories:', error)
-      toast.error('Failed to load categories')
+      setCategories([])
+      toast.error('Failed to load categories. Please try again.')
+    } finally {
+      setLoadingCategories(false)
     }
   }
 
@@ -228,37 +235,27 @@ export function SubmitGameModal({ children, onGameSubmitted }: SubmitGameModalPr
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger className="rounded-2xl">
-                        <SelectValue placeholder="Select a category" />
+                        <SelectValue placeholder={loadingCategories ? "Loading categories..." : "Select a category"} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
+                      {loadingCategories ? (
+                        <SelectItem value="__loading" disabled>
+                          Loading categories...
                         </SelectItem>
-                      ))}
+                      ) : categories.length === 0 ? (
+                        <SelectItem value="__empty" disabled>
+                          No categories available
+                        </SelectItem>
+                      ) : (
+                        categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* URL Field */}
-            <FormField
-              control={form.control}
-              name="url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Game URL *</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="url"
-                      placeholder="https://your-game-website.com" 
-                      className="rounded-2xl"
-                      {...field} 
-                    />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

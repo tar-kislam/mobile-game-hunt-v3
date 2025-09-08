@@ -8,18 +8,53 @@ import { ProductFullInput } from '@/lib/schemas/product'
 
 export async function createProductAction(data: ProductFullInput) {
   try {
+    console.log('Starting product creation...')
+
     const session = await getServerSession(authOptions)
-    if (!session?.user?.email) {
-      return { ok: false, error: 'Unauthorized' }
+    console.log('Session check:', {
+      hasSession: !!session,
+      hasUser: !!session?.user,
+      hasEmail: !!session?.user?.email,
+      email: session?.user?.email
+    })
+
+    if (!session) {
+      console.error('No session found')
+      return { ok: false, error: 'You must be logged in to submit a game. Please sign in and try again.' }
     }
 
-    const user = await prisma.user.findUnique({
+    if (!session.user?.email) {
+      console.error('No email in session')
+      return { ok: false, error: 'Your session is invalid. Please sign in again.' }
+    }
+
+    console.log('Looking for user with email:', session.user.email)
+
+    let user = await prisma.user.findUnique({
       where: { email: session.user.email }
     })
 
     if (!user) {
-      return { ok: false, error: 'User not found' }
+      console.warn('User not found in DB. Creating user from session:', session.user.email)
+      user = await prisma.user.create({
+        data: {
+          email: session.user.email,
+          name: session.user.name || 'User',
+          image: (session.user as any).image || null,
+          role: 'USER'
+        }
+      })
     }
+
+    console.log('User found:', { id: user.id, email: user.email })
+
+    console.log('Creating product with data:', {
+      title: data.title,
+      userId: user.id,
+      categoriesCount: data.categories?.length || 0,
+      makersCount: data.makers?.length || 0,
+      tagsCount: data.tags?.length || 0
+    })
 
     const product = await prisma.product.create({
       data: {
@@ -34,13 +69,15 @@ export async function createProductAction(data: ProductFullInput) {
         youtubeUrl: data.youtubeUrl,
         gameplayGifUrl: data.gameplayGifUrl,
         demoUrl: data.demoUrl,
-        socialLinks: {
-          website: data.website,
-          discord: data.discordUrl,
-          twitter: data.twitterUrl,
-          tiktok: data.tiktokUrl,
-          youtube: data.youtubeUrl,
-        },
+        socialLinks: data.website || data.discordUrl || data.twitterUrl || data.tiktokUrl || data.youtubeUrl
+          ? {
+              website: data.website || undefined,
+              discord: data.discordUrl || undefined,
+              twitter: data.twitterUrl || undefined,
+              tiktok: data.tiktokUrl || undefined,
+              youtube: data.youtubeUrl || undefined,
+            }
+          : undefined,
         platforms: data.platforms,
         countries: data.targetCountries,
         languages: data.languages,
@@ -81,8 +118,8 @@ export async function createProductAction(data: ProductFullInput) {
         },
         makers: {
           create: data.makers?.map((maker, index) => ({
-            userId: maker.userId,
-            email: maker.email,
+            userId: maker.userId || null,
+            email: maker.email || null,
             role: maker.role,
             isCreator: index === 0 // First maker is the creator
           })) || []
@@ -90,11 +127,35 @@ export async function createProductAction(data: ProductFullInput) {
       }
     })
 
+    console.log('Product created successfully:', product.id)
     revalidatePath('/')
     return { ok: true, productId: product.id }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating product:', error)
-    return { ok: false, error: 'Failed to create product' }
+
+    // Handle specific error types
+    if (error?.code === 'P2002') {
+      return { ok: false, error: 'A product with this title already exists' }
+    }
+
+    if (error?.code === 'P2003') {
+      return { ok: false, error: 'Invalid data provided. Please check your input.' }
+    }
+
+    if (error?.message?.includes('categories')) {
+      return { ok: false, error: 'Invalid category selected. Please try again.' }
+    }
+
+    if (error?.message?.includes('tags')) {
+      return { ok: false, error: 'Invalid tag provided. Please try again.' }
+    }
+
+    if (error?.message?.includes('makers')) {
+      return { ok: false, error: 'Invalid maker information. Please try again.' }
+    }
+
+    // Generic error message
+    return { ok: false, error: 'Failed to create product. Please check your connection and try again.' }
   }
 }
 
@@ -105,12 +166,19 @@ export async function saveDraftAction(data: ProductFullInput) {
       return { ok: false, error: 'Unauthorized' }
     }
 
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { email: session.user.email }
     })
 
     if (!user) {
-      return { ok: false, error: 'User not found' }
+      user = await prisma.user.create({
+        data: {
+          email: session.user.email,
+          name: session.user.name || 'User',
+          image: (session.user as any).image || null,
+          role: 'USER'
+        }
+      })
     }
 
     const product = await prisma.product.create({
@@ -197,12 +265,19 @@ export async function scheduleLaunchAction(data: ProductFullInput, launchDate: s
       return { ok: false, error: 'Unauthorized' }
     }
 
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { email: session.user.email }
     })
 
     if (!user) {
-      return { ok: false, error: 'User not found' }
+      user = await prisma.user.create({
+        data: {
+          email: session.user.email,
+          name: session.user.name || 'User',
+          image: (session.user as any).image || null,
+          role: 'USER'
+        }
+      })
     }
 
     const product = await prisma.product.create({
@@ -289,12 +364,19 @@ export async function submitApprovalAction(data: ProductFullInput) {
       return { ok: false, error: 'Unauthorized' }
     }
 
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { email: session.user.email }
     })
 
     if (!user) {
-      return { ok: false, error: 'User not found' }
+      user = await prisma.user.create({
+        data: {
+          email: session.user.email,
+          name: session.user.name || 'User',
+          image: (session.user as any).image || null,
+          role: 'USER'
+        }
+      })
     }
 
     const product = await prisma.product.create({

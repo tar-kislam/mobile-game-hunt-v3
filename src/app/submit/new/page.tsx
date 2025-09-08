@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useMemo, useState } from 'react'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -27,6 +29,8 @@ import { LanguageSelector } from '@/components/ui/language-selector'
 type Step = 1 | 2 | 3 | 4 | 5 | 6
 
 export default function NewSubmitPage() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
   const [step, setStep] = useState<Step>(1)
   const [autosave, setAutosave] = useState(false)
   const [additionalLinks, setAdditionalLinks] = useState<Array<{ type: string; url: string }>>([])
@@ -50,6 +54,25 @@ export default function NewSubmitPage() {
     }
   })
 
+  // Check authentication status
+  useEffect(() => {
+    if (status === 'loading') return // Still loading
+
+    if (status === 'unauthenticated') {
+      console.log('User not authenticated, redirecting to login')
+      router.push('/auth/signin?callbackUrl=/submit/new')
+      return
+    }
+
+    if (!session?.user?.email) {
+      console.log('No user email found, redirecting to login')
+      router.push('/auth/signin?callbackUrl=/submit/new')
+      return
+    }
+
+    console.log('User authenticated:', session.user.email)
+  }, [status, session, router])
+
   useEffect(() => {
     if (!autosave) return
     const sub = form.watch((values) => {
@@ -69,12 +92,36 @@ export default function NewSubmitPage() {
   const prev = () => setStep((s) => Math.max(1, (s - 1)) as Step)
 
   const onSubmit = async (values: any) => {
-    const res = await createProductAction(values)
-    if (res.ok) {
-      toast.success('Game submitted!')
-      try { localStorage.removeItem('submit-autosave') } catch {}
-    } else {
-      toast.error('Please fix the errors')
+    console.log('Form submitted with values:', {
+      title: values.title,
+      hasIosUrl: !!values.iosUrl,
+      hasAndroidUrl: !!values.androidUrl,
+      categoriesCount: values.categories?.length || 0,
+      makersCount: values.makers?.length || 0,
+      termsAccepted: values.termsAccepted,
+      confirmImagesOwned: values.confirmImagesOwned
+    })
+
+    setIsSubmitting(true)
+    try {
+      const res = await createProductAction(values)
+      if (res.ok) {
+        console.log('Product created successfully:', res.productId)
+        toast.success('Game submitted successfully! 🎉')
+        try { localStorage.removeItem('submit-autosave') } catch {}
+        // Redirect to dashboard after successful submission
+        setTimeout(() => {
+          window.location.href = '/dashboard'
+        }, 1000)
+      } else {
+        console.error('Submit error:', res.error)
+        toast.error(res.error || 'Failed to submit game. Please try again.')
+      }
+    } catch (error) {
+      console.error('Submit error:', error)
+      toast.error('An unexpected error occurred. Please try again.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -141,7 +188,7 @@ export default function NewSubmitPage() {
   const tags = form.watch('tags') || []
   const categories = form.watch('categories') || []
   const platforms = form.watch('platforms') || []
-  const canNextFromStep1 = nameLen > 0 && nameLen <= 40 && taglineLen > 0 && taglineLen <= 60 && descLen >= 260 && descLen <= 500 && tags.length >= 1 && tags.length <= 3 && !!form.watch('url') && categories.length >= 1 && categories.length <= 3 && platforms.length >= 1
+  const canNextFromStep1 = nameLen > 0 && nameLen <= 40 && taglineLen > 0 && taglineLen <= 60 && descLen >= 260 && descLen <= 500 && tags.length >= 1 && tags.length <= 3 && categories.length >= 1 && categories.length <= 3 && platforms.length >= 1
   const canNextFromStep2 = !!form.watch('thumbnail') && (form.watch('gallery') || []).length >= 1
   const canNextFromStep3 = (form.watch('makers') || []).length >= 1
 
@@ -160,7 +207,8 @@ export default function NewSubmitPage() {
     launchDate: !!form.watch('launchDate'),
     monetization: !!form.watch('monetization'),
     engine: !!form.watch('engine'),
-    url: !!form.watch('url')
+    termsAccepted: !!form.watch('termsAccepted'),
+    confirmImagesOwned: !!form.watch('confirmImagesOwned')
   }
 
   const requiredFieldsCount = Object.values(checklistValidation).filter(Boolean).length
@@ -180,6 +228,37 @@ export default function NewSubmitPage() {
     label: c.name,
     flag: c.flag
   }))
+
+  // Show loading while checking authentication
+  if (status === 'loading') {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Checking authentication...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show login prompt if not authenticated
+  if (status === 'unauthenticated' || !session?.user?.email) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
+            <p className="text-muted-foreground mb-6">You need to be logged in to submit a game.</p>
+            <Button onClick={() => router.push('/auth/signin?callbackUrl=/submit/new')}>
+              Sign In
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <TooltipProvider>
@@ -1491,14 +1570,54 @@ export default function NewSubmitPage() {
                                 <XIcon className="w-5 h-5 text-red-500" />
                               )}
                               <span className="text-sm font-medium capitalize">
-                                {field === 'url' ? 'Primary URL' : 
-                                 field === 'launchType' ? 'Launch Type' :
+                                {field === 'launchType' ? 'Launch Type' :
                                  field === 'launchDate' ? 'Launch Date' :
+                                 field === 'termsAccepted' ? 'Terms Accepted' :
+                                 field === 'confirmImagesOwned' ? 'Image Rights Confirmed' :
                                  field}
                               </span>
                             </div>
                           ))}
                         </div>
+                      </div>
+
+                      {/* Terms and Conditions */}
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Terms & Conditions</h3>
+                        <div className="space-y-4">
+                          <label className="flex items-start gap-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              {...form.register('termsAccepted')}
+                              className="mt-1"
+                            />
+                            <div>
+                              <span className="font-medium">I accept the terms and conditions</span>
+                              <div className="text-sm text-muted-foreground">
+                                I agree to the platform's terms of service and submission guidelines
+                              </div>
+                            </div>
+                          </label>
+
+                          <label className="flex items-start gap-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              {...form.register('confirmImagesOwned')}
+                              className="mt-1"
+                            />
+                            <div>
+                              <span className="font-medium">I confirm I own or have rights to use all submitted images</span>
+                              <div className="text-sm text-muted-foreground">
+                                All images, screenshots, and media are original or properly licensed
+                              </div>
+                            </div>
+                          </label>
+                        </div>
+                        {(form.formState.errors.termsAccepted || form.formState.errors.confirmImagesOwned) && (
+                          <p className="text-sm text-red-500 mt-2">
+                            {String(form.formState.errors.termsAccepted?.message || form.formState.errors.confirmImagesOwned?.message)}
+                          </p>
+                        )}
                       </div>
 
                       {/* Game Preview */}

@@ -62,7 +62,14 @@ export async function GET(request: NextRequest) {
     // Fetch products with votes count and user info
     const products = await prisma.product.findMany({
       where: whereClause,
-      include: {
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        url: true,
+        platforms: true,
+        status: true,
+        createdAt: true,
         user: {
           select: {
             id: true,
@@ -100,10 +107,10 @@ export async function GET(request: NextRequest) {
         id: product.id,
         title: product.title,
         description: product.description,
-        thumbnail: product.thumbnail,
+        // thumbnail removed: column not in DB
         url: product.url,
         platforms: product.platforms,
-        countries: product.countries,
+        // countries may not exist on schema; omit to avoid P2022
         status: product.status,
         createdAt: product.createdAt,
         user: product.user,

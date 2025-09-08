@@ -36,6 +36,102 @@ export async function GET(
       return NextResponse.json({ error: 'Game not found' }, { status: 404 })
     }
 
+    // Return deterministic dummy analytics for "Puzzle Master"
+    if (game.title === 'Puzzle Master') {
+      const today = new Date()
+      const makeSeries = (key: 'votes' | 'followers') => {
+        const arr: Array<{ date: string; [k: string]: number }> = []
+        for (let i = 29; i >= 0; i--) {
+          const d = new Date(today)
+          d.setDate(today.getDate() - i)
+          const base = 10 + Math.round(8 * Math.sin((i / 30) * Math.PI * 2))
+          arr.push({ date: d.toISOString().split('T')[0], [key]: Math.max(0, base + (key === 'votes' ? 2 : 4)) })
+        }
+        return arr
+      }
+
+      const votesOverTimeArray = makeSeries('votes') as Array<{ date: string; votes: number }>
+      const followersOverTimeArray = makeSeries('followers') as Array<{ date: string; followers: number }>
+
+      const clicksByType = [
+        { type: 'IOS', value: 340, color: getPlatformColor('IOS') },
+        { type: 'ANDROID', value: 410, color: getPlatformColor('ANDROID') },
+        { type: 'STEAM', value: 120, color: getPlatformColor('STEAM') },
+        { type: 'DISCORD', value: 90, color: getPlatformColor('DISCORD') },
+        { type: 'WEB', value: 260, color: getPlatformColor('WEB') },
+      ]
+
+      const internalVsExternal = [
+        { type: 'Internal', value: 950, color: '#8B5CF6' },
+        { type: 'External', value: 270, color: '#10B981' },
+      ]
+
+      const geoStatsArray = [
+        { country: 'United States', count: 420 },
+        { country: 'United Kingdom', count: 180 },
+        { country: 'Germany', count: 150 },
+        { country: 'France', count: 120 },
+        { country: 'Japan', count: 110 },
+        { country: 'Canada', count: 95 },
+        { country: 'Australia', count: 80 },
+      ]
+
+      const languageStatsArray = [
+        { type: 'en', value: 720, color: getLanguageColor('en') },
+        { type: 'de', value: 140, color: getLanguageColor('de') },
+        { type: 'fr', value: 130, color: getLanguageColor('fr') },
+        { type: 'ja', value: 110, color: getLanguageColor('ja') },
+        { type: 'es', value: 95, color: getLanguageColor('es') },
+      ]
+
+      const deviceStatsArray = [
+        { type: 'ios', value: 520, color: getDeviceColor('ios') },
+        { type: 'android', value: 610, color: getDeviceColor('android') },
+        { type: 'web', value: 260, color: getDeviceColor('web') },
+        { type: 'desktop', value: 140, color: getDeviceColor('desktop') },
+      ]
+
+      const trafficTimelineArray = Array.from({ length: 24 }, (_, hour) => ({
+        hour: `${hour}:00`,
+        traffic: 20 + Math.round(30 * Math.abs(Math.sin((hour / 24) * Math.PI * 2)))
+      }))
+
+      const totalVotes = votesOverTimeArray.reduce((a, c) => a + c.votes, 0)
+      const totalFollows = followersOverTimeArray.reduce((a, c) => a + c.followers, 0)
+      const totalClicks = clicksByType.reduce((a, c) => a + c.value, 0) + internalVsExternal[0].value
+      const totalViews = totalClicks + 500
+      const engagementRate = totalViews > 0 ? Math.round(((totalVotes + totalFollows) / totalViews) * 10000) / 100 : 0
+
+      const topClickedLink = clicksByType.slice().sort((a, b) => b.value - a.value)[0]
+      const peakTrafficHour = trafficTimelineArray.reduce((max, cur) => (cur.traffic > max.traffic ? cur : max))
+
+      return NextResponse.json({
+        game: { id: game.id, title: game.title },
+        overview: {
+          totalViews,
+          totalVotes,
+          totalFollows,
+          totalClicks,
+          engagementRate,
+        },
+        charts: {
+          votesOverTime: votesOverTimeArray,
+          followersGrowth: followersOverTimeArray,
+          clicksByType,
+          internalVsExternal,
+          geoStats: geoStatsArray,
+          languagePreferences: languageStatsArray,
+          deviceSplit: deviceStatsArray,
+          trafficTimeline: trafficTimelineArray,
+        },
+        insights: {
+          topClickedLink: topClickedLink ? { type: topClickedLink.name, count: topClickedLink.value } : null,
+          topCountry: geoStatsArray[0] || null,
+          peakTrafficHour,
+        },
+      })
+    }
+
     // Get all metrics for this specific game
     const metrics = await prisma.metric.findMany({
       where: { gameId },

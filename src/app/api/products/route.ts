@@ -71,10 +71,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Add editor's choice filter
-    if (sortBy === 'editors-choice') {
-      where.editorChoice = true;
-    }
+    // Editor's choice column not present in DB; skip filtering
 
     const products = await prisma.product.findMany({
       where,
@@ -82,12 +79,12 @@ export async function GET(request: NextRequest) {
         id: true,
         title: true,
         tagline: true,
-        thumbnail: true,
+        // thumbnail removed: column does not exist in DB
         platforms: true,
         createdAt: true,
         status: true,
         releaseAt: true,
-        editorChoice: true,
+        // editorChoice removed: column does not exist in DB
         clicks: true,
         user: {
           select: {
@@ -130,7 +127,8 @@ export async function GET(request: NextRequest) {
         sortedProducts = products.sort((a, b) => b.clicks - a.clicks);
         break;
       case 'editors-choice':
-        sortedProducts = products.filter(p => p.editorChoice).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        // No editorChoice column; fall back to newest
+        sortedProducts = products.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         break;
       case 'newest':
       default:
