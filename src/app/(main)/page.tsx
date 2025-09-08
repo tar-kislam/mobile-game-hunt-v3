@@ -437,25 +437,7 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            {/* Quick Actions */}
-            <Card className="rounded-2xl shadow-lg border-white/10">
-              <CardHeader className="p-4">
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0 space-y-3">
-                <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
-                  <Button className="w-full rounded-2xl bg-[rgb(60,41,100)] hover:bg-[rgb(50,31,90)] text-white">
-                    Submit New Game
-                  </Button>
-                </EnhancedSubmitGameModal>
-                <Button variant="outline" asChild className="w-full rounded-2xl">
-                  <Link href="/products">Browse All Games</Link>
-                </Button>
-                <Button variant="outline" asChild className="w-full rounded-2xl">
-                  <Link href="/platforms">View Platforms</Link>
-                </Button>
-              </CardContent>
-            </Card>
+            {/* Connect with Us card moved under Stay Updated */}
 
             {/* Newsletter Signup */}
             <Card className="rounded-2xl shadow-lg border-white/10">
@@ -469,6 +451,61 @@ export default function HomePage() {
                 <Button variant="outline" className="w-full rounded-2xl">
                   Subscribe to Newsletter
                 </Button>
+              </CardContent>
+            </Card>
+
+            {/* Connect with Us */}
+            <Card className="rounded-2xl shadow-lg border-white/10">
+              <CardHeader className="p-4 pb-2">
+                <CardTitle>Connect with Us</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  <a
+                    href="https://twitter.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group inline-flex items-center gap-2 rounded-xl px-3 py-2 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-colors hover:shadow-[0_0_18px_rgba(168,85,247,0.25)]"
+                  >
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-sky-400 group-hover:text-sky-300" fill="currentColor" aria-hidden="true">
+                      <path d="M19.633 7.997c.013.18.013.36.013.54 0 5.51-4.193 11.86-11.86 11.86-2.36 0-4.55-.69-6.392-1.88.33.04.65.053.99.053 1.954 0 3.753-.66 5.183-1.78a4.18 4.18 0 01-3.9-2.9c.26.04.52.066.8.066.38 0 .76-.053 1.12-.146a4.176 4.176 0 01-3.35-4.1v-.053c.56.31 1.21.5 1.9.52a4.17 4.17 0 01-1.86-3.48c0-.77.21-1.47.58-2.08a11.85 11.85 0 008.6 4.37 4.707 4.707 0 01-.1-.96 4.17 4.17 0 017.22-2.85 8.2 8.2 0 002.64-1 4.18 4.18 0 01-1.83 2.3 8.35 8.35 0 002.4-.65 8.94 8.94 0 01-2.09 2.17z"/>
+                    </svg>
+                    <span className="text-sm">Twitter / X</span>
+                  </a>
+                  <a
+                    href="https://discord.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group inline-flex items-center gap-2 rounded-xl px-3 py-2 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-colors hover:shadow-[0_0_18px_rgba(99,102,241,0.25)]"
+                  >
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-indigo-400 group-hover:text-indigo-300" fill="currentColor" aria-hidden="true">
+                      <path d="M20.317 4.369A19.79 19.79 0 0016.558 3c-.2.358-.433.84-.59 1.227a18.27 18.27 0 00-4-.002A8.258 8.258 0 0011.377 3c-1.444.242-2.77.66-3.759 1.37C4.14 7.205 3.26 10.01 3.5 12.77c1.54 1.153 3.03 1.857 4.497 2.322.364-.5.69-1.04.97-1.616-.536-.205-1.05-.462-1.536-.765.13-.097.257-.199.382-.304 2.95 1.38 6.15 1.38 9.09 0 .126.105.253.207.383.304-.486.303-1 .56-1.537.765.28.576.607 1.116.97 1.616 1.47-.465 2.96-1.17 4.5-2.322.296-3.377-.72-6.14-2.422-8.401zM9.75 12.5c-.66 0-1.2-.66-1.2-1.475 0-.814.54-1.475 1.2-1.475s1.2.661 1.2 1.475c0 .815-.54 1.475-1.2 1.475zm4.5 0c-.66 0-1.2-.66-1.2-1.475 0-.814.54-1.475 1.2-1.475s1.2.661 1.2 1.475c0 .815-.54 1.475-1.2 1.475z"/>
+                    </svg>
+                    <span className="text-sm">Discord</span>
+                  </a>
+                  <a
+                    href="https://github.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group inline-flex items-center gap-2 rounded-xl px-3 py-2 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-colors hover:shadow-[0_0_18px_rgba(34,197,94,0.25)]"
+                  >
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-emerald-400 group-hover:text-emerald-300" fill="currentColor" aria-hidden="true">
+                      <path fillRule="evenodd" clipRule="evenodd" d="M12 .5a11.5 11.5 0 00-3.637 22.414c.575.105.785-.25.785-.556 0-.274-.01-1-.016-1.962-3.194.695-3.87-1.54-3.87-1.54-.523-1.33-1.28-1.684-1.28-1.684-1.046-.715.08-.701.08-.701 1.157.082 1.766 1.188 1.766 1.188 1.028 1.763 2.695 1.253 3.35.958.104-.757.402-1.254.731-1.542-2.551-.29-5.236-1.275-5.236-5.672 0-1.253.45-2.277 1.187-3.08-.119-.291-.514-1.462.112-3.046 0 0 .966-.31 3.166 1.176a10.98 10.98 0 012.883-.388c.978.005 1.963.132 2.883.388 2.2-1.486 3.165-1.176 3.165-1.176.627 1.584.233 2.755.114 3.046.74.803 1.186 1.827 1.186 3.08 0 4.41-2.69 5.378-5.253 5.663.412.354.78 1.05.78 2.117 0 1.528-.014 2.76-.014 3.135 0 .31.207.67.79.555A11.5 11.5 0 0012 .5z"/>
+                    </svg>
+                    <span className="text-sm">GitHub</span>
+                  </a>
+                  <a
+                    href="https://instagram.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group inline-flex items-center gap-2 rounded-xl px-3 py-2 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-colors hover:shadow-[0_0_18px_rgba(236,72,153,0.25)]"
+                  >
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-pink-400 group-hover:text-pink-300" fill="currentColor" aria-hidden="true">
+                      <path d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm5 5a5 5 0 100 10 5 5 0 000-10zm6.5.9a1.1 1.1 0 11-2.2 0 1.1 1.1 0 012.2 0z"/>
+                    </svg>
+                    <span className="text-sm">Instagram</span>
+                  </a>
+                </div>
               </CardContent>
             </Card>
           </div>
