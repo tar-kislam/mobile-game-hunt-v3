@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { CacheService } from "@/lib/redis"
+import { RateLimiter, RATE_LIMITS } from "@/lib/rate-limiter"
 
 import { z } from "zod"
 
@@ -32,7 +34,30 @@ const createProductSchema = z.object({
 
 // GET /api/products - Fetch all products or user-specific products
 export async function GET(request: NextRequest) {
+  const startTime = Date.now()
+  const cacheService = CacheService.getInstance()
+  const rateLimiter = RateLimiter.getInstance()
+  
   try {
+    // Apply rate limiting
+    const rateLimitResult = await rateLimiter.checkLimit(request, RATE_LIMITS.PRODUCTS)
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { 
+          error: 'Rate limit exceeded. Please try again later.',
+          retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000)
+        },
+        { 
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': RATE_LIMITS.PRODUCTS.maxRequests.toString(),
+            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+            'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
+            'Retry-After': Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000).toString()
+          }
+        }
+      )
+    }
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
     const limitParam = searchParams.get('limit')
@@ -40,9 +65,48 @@ export async function GET(request: NextRequest) {
     const categoryId = searchParams.get('categoryId')
     const year = searchParams.get('year')
     const sortBy = searchParams.get('sortBy') || 'newest'
+    const timeWindow = searchParams.get('timeWindow') || 'alltime'
     const limit = limitParam ? parseInt(limitParam, 10) : undefined
     const page = pageParam ? parseInt(pageParam, 10) : 1
     const skip = (page - 1) * (limit || 50)
+
+    // Validate timeWindow parameter
+    const validTimeWindows = ['daily', 'weekly', 'monthly', 'yearly', 'alltime']
+    if (!validTimeWindows.includes(timeWindow)) {
+      return NextResponse.json(
+        { error: 'Invalid timeWindow parameter. Use: daily, weekly, monthly, yearly, or alltime' },
+        { status: 400 }
+      )
+    }
+
+    // Generate cache key for this query
+    const cacheKey = cacheService.generateLeaderboardKey(
+      timeWindow,
+      sortBy,
+      categoryId || undefined,
+      page,
+      limit || 20
+    )
+
+    // Try to get from cache first (only for non-user-specific queries)
+    if (!userId) {
+      const cachedResult = await cacheService.get(cacheKey)
+      if (cachedResult) {
+        const duration = Date.now() - startTime
+        console.log(`[CACHE HIT] Products API - ${duration}ms - Key: ${cacheKey}`)
+        return NextResponse.json(cachedResult)
+      }
+    }
+
+    // Calculate window start date
+    const now = new Date()
+    const windowStart = {
+      daily: new Date(now.getTime() - 24 * 60 * 60 * 1000),
+      weekly: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+      monthly: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
+      yearly: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000),
+      alltime: null
+    }[timeWindow]
 
     const where: any = userId ? { userId } : {}
 
@@ -73,6 +137,39 @@ export async function GET(request: NextRequest) {
 
     // Editor's choice column not present in DB; skip filtering
 
+    // Get time-window aggregated counts for all products
+    const whereWindow = windowStart ? { createdAt: { gte: windowStart } } : {}
+    
+    // Aggregate votes in time window
+    const votesInWindow = await prisma.vote.groupBy({
+      by: ['productId'],
+      where: whereWindow,
+      _count: { id: true }
+    })
+    
+    // Aggregate follows in time window
+    const followsInWindow = await prisma.follow.groupBy({
+      by: ['gameId'],
+      where: whereWindow,
+      _count: { id: true }
+    })
+    
+    // Aggregate clicks/views in time window (using Metric table)
+    const clicksInWindow = await prisma.metric.groupBy({
+      by: ['gameId'],
+      where: {
+        timestamp: windowStart ? { gte: windowStart } : undefined,
+        type: { in: ['click', 'view'] }
+      },
+      _count: { id: true }
+    })
+
+    // Create maps for quick lookup
+    const votesMap = new Map(votesInWindow.map(v => [v.productId, v._count.id]))
+    const followsMap = new Map(followsInWindow.map(f => [f.gameId, f._count.id]))
+    const clicksMap = new Map(clicksInWindow.map(c => [c.gameId, c._count.id]))
+
+    // Fetch products with basic info
     const products = await prisma.product.findMany({
       where,
       select: {
@@ -85,8 +182,8 @@ export async function GET(request: NextRequest) {
         createdAt: true,
         status: true,
         releaseAt: true,
-        // editorChoice removed: column does not exist in DB
         clicks: true,
+        editorChoice: true,
         user: {
           select: {
             id: true,
@@ -114,30 +211,74 @@ export async function GET(request: NextRequest) {
       orderBy: {
         createdAt: 'desc'
       },
-      take: limit,
-      skip: skip,
     })
 
-    // Apply sorting in JavaScript
-    let sortedProducts = products;
+    // Calculate scores and add time-window counts
+    const productsWithScores = products.map(product => {
+      const votesInWindowCount = votesMap.get(product.id) || 0
+      const followsInWindowCount = followsMap.get(product.id) || 0
+      const clicksInWindowCount = clicksMap.get(product.id) || 0
+      
+      // Calculate age in hours
+      const ageHours = (now.getTime() - product.createdAt.getTime()) / (1000 * 60 * 60)
+      
+      // Calculate leaderboard score
+      const baseScore = Math.log1p(votesInWindowCount) + 0.6 * Math.log1p(followsInWindowCount) + 0.4 * Math.log1p(clicksInWindowCount)
+      const decay = Math.exp(-ageHours / 36)
+      const score = baseScore * decay
+
+      return {
+        ...product,
+        votesInWindow: votesInWindowCount,
+        followsInWindow: followsInWindowCount,
+        clicksInWindow: clicksInWindowCount,
+        viewsInWindow: clicksInWindowCount, // Using clicks as views for now
+        score: parseFloat(score.toFixed(4))
+      }
+    })
+
+    // Apply sorting based on time-window counts
+    let sortedProducts = productsWithScores
     switch (sortBy) {
       case 'most-upvoted':
-        sortedProducts = products.sort((a, b) => b._count.votes - a._count.votes);
-        break;
+        sortedProducts = productsWithScores.sort((a, b) => b.votesInWindow - a.votesInWindow)
+        break
       case 'most-viewed':
-        sortedProducts = products.sort((a, b) => b.clicks - a.clicks);
-        break;
+        sortedProducts = productsWithScores.sort((a, b) => b.viewsInWindow - a.viewsInWindow)
+        break
+      case 'leaderboard':
+        // Sort by calculated leaderboard score
+        sortedProducts = productsWithScores.sort((a, b) => b.score - a.score)
+        break
       case 'editors-choice':
-        // No editorChoice column; fall back to newest
-        sortedProducts = products.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        break;
+        // Filter by editorChoice flag if available, then sort by score
+        const editorChoiceProducts = productsWithScores.filter(p => p.editorChoice)
+        if (editorChoiceProducts.length > 0) {
+          sortedProducts = editorChoiceProducts.sort((a, b) => b.score - a.score)
+        } else {
+          // Fall back to newest if no editor's choice products
+          sortedProducts = productsWithScores.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        }
+        break
       case 'newest':
       default:
-        sortedProducts = products.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        break;
+        sortedProducts = productsWithScores.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        break
     }
 
-    return NextResponse.json(sortedProducts)
+    // Apply pagination
+    const paginatedProducts = sortedProducts.slice(skip, skip + (limit || 50))
+
+    // Cache the result (only for non-user-specific queries)
+    if (!userId) {
+      const ttl = timeWindow === 'daily' ? 30 : timeWindow === 'weekly' ? 60 : 120 // 30s, 1min, 2min
+      await cacheService.set(cacheKey, paginatedProducts, ttl)
+    }
+
+    const duration = Date.now() - startTime
+    console.log(`[DB QUERY] Products API - ${duration}ms - TimeWindow: ${timeWindow}, Sort: ${sortBy}, Page: ${page}`)
+
+    return NextResponse.json(paginatedProducts)
   } catch (error) {
     console.error('Error fetching products:', error)
     return NextResponse.json(

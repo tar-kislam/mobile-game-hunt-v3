@@ -9,6 +9,7 @@ import { GogGameCard } from "@/components/games/gog-game-card"
 import { GogSearchBar } from "@/components/games/gog-search-bar"
 import { GogSidebar } from "@/components/games/gog-sidebar"
 import { GameSortBar } from "@/components/games/game-sort-bar"
+import { TimeWindowControl } from "@/components/games/time-window-control"
 import Link from "next/link"
 import Image from "next/image"
 import { PLATFORMS } from "@/components/ui/platform-icons"
@@ -25,6 +26,7 @@ interface Game {
   createdAt: string
   releaseAt?: string | null
   clicks: number
+  editorChoice?: boolean
   _count: {
     votes: number
     comments: number
@@ -39,6 +41,12 @@ interface Game {
       name: string
     }
   }[]
+  // New time-window aggregated fields
+  votesInWindow?: number
+  followsInWindow?: number
+  clicksInWindow?: number
+  viewsInWindow?: number
+  score?: number
 }
 
 interface FilterOption {
@@ -54,6 +62,7 @@ export default function ProductsPage() {
   const [hasMore, setHasMore] = useState(true)
   const [page, setPage] = useState(1)
   const [sortBy, setSortBy] = useState<string>("newest")
+  const [timeWindow, setTimeWindow] = useState<string>("alltime")
   
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState("")
@@ -64,7 +73,21 @@ export default function ProductsPage() {
   const fetchGames = async (pageNum: number = 1, append: boolean = false) => {
     try {
       setLoadingMore(true);
-      const response = await fetch(`/api/products?limit=20&page=${pageNum}&sortBy=${sortBy}`)
+      
+      // Build query parameters
+      const params = new URLSearchParams({
+        limit: '20',
+        page: pageNum.toString(),
+        sortBy: sortBy,
+        timeWindow: timeWindow
+      })
+      
+      // Add category filter if selected
+      if (selectedCategories.length > 0) {
+        params.append('categoryId', selectedCategories[0]) // API expects single category
+      }
+      
+      const response = await fetch(`/api/products?${params.toString()}`)
       if (!response.ok) throw new Error('Failed to fetch games')
       
       const newGames: Game[] = await response.json()
@@ -220,20 +243,10 @@ export default function ProductsPage() {
       })
     }
 
-    // Apply sorting
-    switch (sortBy) {
-      case 'most-upvoted':
-        return filtered.sort((a, b) => b._count.votes - a._count.votes)
-      case 'most-viewed':
-        return filtered.sort((a, b) => b.clicks - a.clicks)
-      case 'editors-choice':
-        // For now, fall back to newest since editorChoice field might not be available
-        return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      case 'newest':
-      default:
-        return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    }
-  }, [games, searchQuery, selectedCategories, selectedPlatforms, selectedReleaseStatuses, sortBy])
+    // Note: Sorting is now handled by the backend API based on sortBy parameter
+    // The games are already sorted when fetched from the API
+    return filtered
+  }, [games, searchQuery, selectedCategories, selectedPlatforms, selectedReleaseStatuses])
 
   const clearFilters = () => {
     setSearchQuery("")
@@ -244,7 +257,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchGames()
-  }, [sortBy])
+  }, [sortBy, timeWindow])
 
   if (loading) {
     return (
@@ -289,6 +302,23 @@ export default function ProductsPage() {
           />
         </div>
 
+        {/* Time Window Control */}
+        <div className="mb-6">
+          <div className="bg-card/50 backdrop-blur-sm border border-white/10 rounded-lg p-4">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">Time Window</h3>
+                <p className="text-sm text-gray-400">Filter games by activity period</p>
+              </div>
+              <TimeWindowControl
+                timeWindow={timeWindow}
+                onTimeWindowChange={setTimeWindow}
+                className="lg:ml-auto"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Main Layout - GOG Style */}
         <div className="flex gap-8">
           {/* Left Sidebar - Desktop */}
@@ -317,6 +347,25 @@ export default function ProductsPage() {
               className="mb-6"
             />
 
+            {/* Status Badge */}
+            <div className="mb-4 flex items-center gap-2">
+              <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300">
+                Showing {sortBy === 'newest' ? 'Newest' : 
+                         sortBy === 'most-upvoted' ? 'Most Upvoted' :
+                         sortBy === 'most-viewed' ? 'Most Viewed' :
+                         sortBy === 'editors-choice' ? "Editor's Choice" :
+                         sortBy === 'leaderboard' ? 'Leaderboard' : 'Newest'}
+              </Badge>
+              <span className="text-gray-400">•</span>
+              <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300">
+                {timeWindow === 'daily' ? 'Daily' :
+                 timeWindow === 'weekly' ? 'Weekly' :
+                 timeWindow === 'monthly' ? 'Monthly' :
+                 timeWindow === 'yearly' ? 'Yearly' :
+                 timeWindow === 'alltime' ? 'All Time' : 'All Time'}
+              </Badge>
+            </div>
+
             {/* Games Grid - GOG Style */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
               {filteredAndSortedGames.map((game) => (
@@ -336,6 +385,8 @@ export default function ProductsPage() {
                 <p className="text-gray-400 mb-6">
                   {games.length === 0 
                     ? "Be the first to submit a game!" 
+                    : timeWindow !== 'alltime' && games.length > 0
+                    ? `No results for this time range. Try selecting "All Time" or a different period.`
                     : "Try adjusting your search or filters to see more games."
                   }
                 </p>
@@ -345,6 +396,14 @@ export default function ProductsPage() {
                       Submit Your Game
                     </Button>
                   </Link>
+                )}
+                {timeWindow !== 'alltime' && games.length > 0 && (
+                  <Button
+                    onClick={() => setTimeWindow('alltime')}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                  >
+                    Show All Time
+                  </Button>
                 )}
               </div>
             )}

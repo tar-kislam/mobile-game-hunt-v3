@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import redis from '@/lib/redis'
+import { redisClient } from '@/lib/redis'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -14,7 +14,7 @@ const KEY = 'badges:users'
 
 export async function GET() {
   try {
-    const raw = await redis.get(KEY)
+    const raw = await redisClient.get(KEY)
     const list: UserBadges[] = raw ? JSON.parse(raw) : []
     return NextResponse.json({ users: list })
   } catch {
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
     }
 
-    const raw = await redis.get(KEY)
+    const raw = await redisClient.get(KEY)
     const list: UserBadges[] = raw ? JSON.parse(raw) : []
     const existing = list.find(u => u.userId === userId)
     if (existing) {
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     } else {
       list.push({ userId, badges: [upper as BadgeType] })
     }
-    await redis.set(KEY, JSON.stringify(list))
+    await redisClient.set(KEY, JSON.stringify(list))
     return NextResponse.json({ ok: true })
   } catch (e) {
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })

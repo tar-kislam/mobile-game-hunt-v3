@@ -137,6 +137,7 @@ model Vote {
   user      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, productId])
+  @@index([productId, createdAt], map: "idx_vote_productId_createdAt")
 }
 
 model Follow {
@@ -148,6 +149,7 @@ model Follow {
   user      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, gameId])
+  @@index([gameId, createdAt], map: "idx_follow_gameId_createdAt")
 }
 
 model Metric {
@@ -165,6 +167,7 @@ model Metric {
   @@index([gameId, type])
   @@index([timestamp])
   @@index([type])
+  @@index([gameId, timestamp], map: "idx_metric_gameId_timestamp")
 }
 
 model Comment {

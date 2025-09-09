@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import redis from '@/lib/redis'
+import { redisClient } from '@/lib/redis'
 import { z } from 'zod'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const gameId = searchParams.get('gameId')
     const now = Date.now()
-    const raw = await redis.get(KEY_ALL)
+    const raw = await redisClient.get(KEY_ALL)
     const list: SponsorRecord[] = raw ? JSON.parse(raw) : []
     const active = list.filter(r => now >= r.startsAt && now <= r.endsAt)
     if (gameId) {
@@ -60,10 +60,10 @@ export async function POST(req: NextRequest) {
       endsAt: Number(endsAt),
       createdAt: Date.now(),
     }
-    const raw = await redis.get(KEY_ALL)
+    const raw = await redisClient.get(KEY_ALL)
     const list: SponsorRecord[] = raw ? JSON.parse(raw) : []
     const updated = [record, ...list.filter(r => r.id !== record.id)]
-    await redis.set(KEY_ALL, JSON.stringify(updated))
+    await redisClient.set(KEY_ALL, JSON.stringify(updated))
     try {
       const to = process.env.NOTIFY_EMAIL
       if (to) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import redis from '@/lib/redis'
+import { redisClient } from '@/lib/redis'
 import { z } from 'zod'
 import { rateLimit } from '@/lib/rate-limit'
 import { sendMail } from '@/lib/mail'
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     if (!rl.allowed) return NextResponse.json({ error: 'Rate limit' }, { status: 429 })
     const { searchParams } = new URL(req.url)
     const gameId = searchParams.get('gameId') || undefined
-    const raw = await redis.get(key(gameId))
+    const raw = await redisClient.get(key(gameId))
     const pledges: Pledge[] = raw ? JSON.parse(raw) : []
     const total = pledges.reduce((sum, p) => sum + p.amount, 0)
     return NextResponse.json({ pledges, total })
@@ -54,10 +54,10 @@ export async function POST(req: NextRequest) {
       note,
       createdAt: Date.now(),
     }
-    const raw = await redis.get(key(gameId))
+    const raw = await redisClient.get(key(gameId))
     const pledges: Pledge[] = raw ? JSON.parse(raw) : []
     const updated = [pledge, ...pledges]
-    await redis.set(key(gameId), JSON.stringify(updated))
+    await redisClient.set(key(gameId), JSON.stringify(updated))
     // best-effort email
     const to = process.env.NOTIFY_EMAIL
     if (to) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import redis from '@/lib/redis'
+import { redisClient } from '@/lib/redis'
 import { z } from 'zod'
 import { rateLimit } from '@/lib/rate-limit'
 
@@ -15,7 +15,7 @@ const KEY = 'trends:items'
 
 export async function GET() {
   try {
-    const raw = await redis.get(KEY)
+    const raw = await redisClient.get(KEY)
     const items: TrendItem[] = raw ? JSON.parse(raw) : []
     return NextResponse.json({ items })
   } catch (e) {
@@ -43,9 +43,9 @@ export async function POST(req: NextRequest) {
       tags: Array.isArray(tags) ? tags.slice(0, 8) : undefined,
       createdAt: Date.now(),
     }
-    const raw = await redis.get(KEY)
+    const raw = await redisClient.get(KEY)
     const items: TrendItem[] = raw ? JSON.parse(raw) : []
-    await redis.set(KEY, JSON.stringify([item, ...items]))
+    await redisClient.set(KEY, JSON.stringify([item, ...items]))
     return NextResponse.json({ ok: true, item })
   } catch (e) {
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })

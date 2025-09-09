@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import redis, { LEADERBOARD_KEYS, CACHE_TTL } from '@/lib/redis';
+import { redisClient } from '@/lib/redis';
+
+// Cache keys and TTL constants
+const LEADERBOARD_KEYS = {
+  DAILY: 'leaderboard:daily',
+  WEEKLY: 'leaderboard:weekly',
+  MONTHLY: 'leaderboard:monthly',
+  YEARLY: 'leaderboard:yearly',
+  ALL: 'leaderboard:all'
+};
+
+const CACHE_TTL = {
+  DAILY: 300, // 5 minutes
+  WEEKLY: 900, // 15 minutes
+  MONTHLY: 1800, // 30 minutes
+  YEARLY: 3600, // 1 hour
+  ALL: 3600 // 1 hour
+};
 
 // Score calculation with decay formula
 // score = (log1p(votes) + 0.6 * log1p(follows) + 0.4 * log1p(clicks)) * e^(-ageHours/36)
@@ -30,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     // Try to get from cache first
     const cacheKey = LEADERBOARD_KEYS[window.toUpperCase() as keyof typeof LEADERBOARD_KEYS];
-    const cachedData = await redis.get(cacheKey);
+    const cachedData = await redisClient.get(cacheKey);
     
     if (cachedData) {
       const parsed = JSON.parse(cachedData);
@@ -143,7 +160,7 @@ export async function GET(request: NextRequest) {
 
     // Cache the full result
     const ttl = CACHE_TTL[window.toUpperCase() as keyof typeof CACHE_TTL];
-    await redis.setex(cacheKey, ttl, JSON.stringify(responseData));
+    await redisClient.setEx(cacheKey, ttl, JSON.stringify(responseData));
 
     return NextResponse.json({
       ...responseData,
