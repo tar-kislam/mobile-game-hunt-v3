@@ -56,7 +56,7 @@ export function GameSortBar({
       {/* Results Count */}
       <div className="flex items-center space-x-2">
         <h2 className="text-lg font-semibold text-white">
-          PC Games
+          Mobile Games
         </h2>
         <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300">
           {filteredGames === totalGames ? (

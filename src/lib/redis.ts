@@ -76,10 +76,16 @@ export class CacheService {
     sortBy: string,
     categoryId?: string,
     page: number = 1,
-    limit: number = 20
+    limit: number = 20,
+    monetization?: string[],
+    engine?: string[],
+    pricing?: string[]
   ): string {
     const parts = ['leaderboard', timeWindow, sortBy]
     if (categoryId) parts.push(`cat:${categoryId}`)
+    if (monetization && monetization.length > 0) parts.push(`mon:${monetization.sort().join(',')}`)
+    if (engine && engine.length > 0) parts.push(`eng:${engine.sort().join(',')}`)
+    if (pricing && pricing.length > 0) parts.push(`pri:${pricing.sort().join(',')}`)
     parts.push(`page:${page}`, `limit:${limit}`)
     return parts.join(':')
   }

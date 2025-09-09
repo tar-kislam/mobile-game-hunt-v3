@@ -66,9 +66,12 @@ export async function GET(request: NextRequest) {
     const year = searchParams.get('year')
     const sortBy = searchParams.get('sortBy') || 'newest'
     const timeWindow = searchParams.get('timeWindow') || 'alltime'
-    const limit = limitParam ? parseInt(limitParam, 10) : undefined
+    const monetization = searchParams.get('monetization')?.split(',').filter(Boolean) || []
+    const engine = searchParams.get('engine')?.split(',').filter(Boolean) || []
+    const pricing = searchParams.get('pricing')?.split(',').filter(Boolean) || []
+    const limit = limitParam ? parseInt(limitParam, 10) : 50
     const page = pageParam ? parseInt(pageParam, 10) : 1
-    const skip = (page - 1) * (limit || 50)
+    const skip = (page - 1) * limit
 
     // Validate timeWindow parameter
     const validTimeWindows = ['daily', 'weekly', 'monthly', 'yearly', 'alltime']
@@ -85,7 +88,10 @@ export async function GET(request: NextRequest) {
       sortBy,
       categoryId || undefined,
       page,
-      limit || 20
+      limit,
+      monetization.length > 0 ? monetization : undefined,
+      engine.length > 0 ? engine : undefined,
+      pricing.length > 0 ? pricing : undefined
     )
 
     // Try to get from cache first (only for non-user-specific queries)
@@ -119,7 +125,12 @@ export async function GET(request: NextRequest) {
     if (categoryId) {
       where.categories = {
         some: {
-          categoryId: categoryId
+          category: {
+            name: {
+              equals: categoryId,
+              mode: 'insensitive'
+            }
+          }
         }
       }
     }
@@ -132,6 +143,27 @@ export async function GET(request: NextRequest) {
           gte: new Date(yearInt, 0, 1),
           lt: new Date(yearInt + 1, 0, 1)
         };
+      }
+    }
+
+    // Add monetization filter if provided
+    if (monetization.length > 0) {
+      where.monetization = {
+        in: monetization.map(m => m.toUpperCase())
+      }
+    }
+
+    // Add engine filter if provided
+    if (engine.length > 0) {
+      where.engine = {
+        in: engine.map(e => e.toUpperCase())
+      }
+    }
+
+    // Add pricing filter if provided
+    if (pricing.length > 0) {
+      where.pricing = {
+        in: pricing.map(p => p.toUpperCase())
       }
     }
 
@@ -184,6 +216,9 @@ export async function GET(request: NextRequest) {
         releaseAt: true,
         clicks: true,
         editorChoice: true,
+        monetization: true,
+        engine: true,
+        pricing: true,
         user: {
           select: {
             id: true,
@@ -267,7 +302,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Apply pagination
-    const paginatedProducts = sortedProducts.slice(skip, skip + (limit || 50))
+    const paginatedProducts = sortedProducts.slice(skip, skip + limit)
 
     // Cache the result (only for non-user-specific queries)
     if (!userId) {

@@ -19,12 +19,21 @@ interface GogSidebarProps {
   categories: FilterOption[]
   platforms: FilterOption[]
   releaseStatuses: FilterOption[]
+  monetization: FilterOption[]
+  engines: FilterOption[]
+  pricing: FilterOption[]
   selectedCategories: string[]
   selectedPlatforms: string[]
   selectedReleaseStatuses: string[]
+  selectedMonetization: string[]
+  selectedEngines: string[]
+  selectedPricing: string[]
   onCategoryChange: (categories: string[]) => void
   onPlatformChange: (platforms: string[]) => void
   onReleaseStatusChange: (statuses: string[]) => void
+  onMonetizationChange: (monetization: string[]) => void
+  onEngineChange: (engines: string[]) => void
+  onPricingChange: (pricing: string[]) => void
   onClearFilters: () => void
   className?: string
 }
@@ -33,12 +42,21 @@ export function GogSidebar({
   categories,
   platforms,
   releaseStatuses,
+  monetization,
+  engines,
+  pricing,
   selectedCategories,
   selectedPlatforms,
   selectedReleaseStatuses,
+  selectedMonetization,
+  selectedEngines,
+  selectedPricing,
   onCategoryChange,
   onPlatformChange,
   onReleaseStatusChange,
+  onMonetizationChange,
+  onEngineChange,
+  onPricingChange,
   onClearFilters,
   className = ""
 }: GogSidebarProps) {
@@ -46,8 +64,9 @@ export function GogSidebar({
     categories: true,
     platforms: true,
     releaseStatus: true,
-    features: true,
-    price: true
+    monetization: true,
+    engines: true,
+    pricing: true
   })
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -57,7 +76,7 @@ export function GogSidebar({
     }))
   }
 
-  const hasActiveFilters = selectedCategories.length > 0 || selectedPlatforms.length > 0 || selectedReleaseStatuses.length > 0
+  const hasActiveFilters = selectedCategories.length > 0 || selectedPlatforms.length > 0 || selectedReleaseStatuses.length > 0 || selectedMonetization.length > 0 || selectedEngines.length > 0 || selectedPricing.length > 0
 
   const FilterSection = ({ 
     title, 
@@ -183,60 +202,33 @@ export function GogSidebar({
             sectionKey="releaseStatus"
           />
 
-          {/* Features */}
+          {/* Monetization Model */}
           <FilterSection
-            title="Features"
-            options={features}
-            selected={[]} // Not implemented yet
-            onChange={() => {}} // Not implemented yet
-            sectionKey="features"
+            title="Monetization Model"
+            options={monetization}
+            selected={selectedMonetization}
+            onChange={onMonetizationChange}
+            sectionKey="monetization"
           />
 
-          {/* Price Range - Mock */}
-          <Collapsible 
-            open={expandedSections.price} 
-            onOpenChange={() => toggleSection('price')}
-          >
-            <CollapsibleTrigger asChild>
-              <Button
-                variant="ghost"
-                className="w-full justify-between p-0 h-auto font-semibold text-white hover:text-purple-400 text-sm"
-              >
-                <span>Price range</span>
-                {expandedSections.price ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-3 mt-3">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="free-games"
-                  className="border-gray-600 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
-                />
-                <label
-                  htmlFor="free-games"
-                  className="text-sm text-gray-300 cursor-pointer"
-                >
-                  Show only free games
-                </label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="discounted-games"
-                  className="border-gray-600 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
-                />
-                <label
-                  htmlFor="discounted-games"
-                  className="text-sm text-gray-300 cursor-pointer"
-                >
-                  Show only discounted
-                </label>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
+          {/* Engine */}
+          <FilterSection
+            title="Engine"
+            options={engines}
+            selected={selectedEngines}
+            onChange={onEngineChange}
+            sectionKey="engines"
+          />
+
+          {/* Pricing */}
+          <FilterSection
+            title="Pricing"
+            options={pricing}
+            selected={selectedPricing}
+            onChange={onPricingChange}
+            sectionKey="pricing"
+          />
+
         </CardContent>
       </Card>
     </div>

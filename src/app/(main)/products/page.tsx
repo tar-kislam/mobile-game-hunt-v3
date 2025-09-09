@@ -27,6 +27,11 @@ interface Game {
   releaseAt?: string | null
   clicks: number
   editorChoice?: boolean
+  languages?: any
+  monetization?: string
+  engine?: string
+  countries?: string[]
+  pricing?: string
   _count: {
     votes: number
     comments: number
@@ -69,6 +74,9 @@ export default function ProductsPage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([])
   const [selectedReleaseStatuses, setSelectedReleaseStatuses] = useState<string[]>([])
+  const [selectedMonetization, setSelectedMonetization] = useState<string[]>([])
+  const [selectedEngines, setSelectedEngines] = useState<string[]>([])
+  const [selectedPricing, setSelectedPricing] = useState<string[]>([])
 
   const fetchGames = async (pageNum: number = 1, append: boolean = false) => {
     try {
@@ -82,9 +90,18 @@ export default function ProductsPage() {
         timeWindow: timeWindow
       })
       
-      // Add category filter if selected
+      // Add filter parameters
       if (selectedCategories.length > 0) {
         params.append('categoryId', selectedCategories[0]) // API expects single category
+      }
+      if (selectedMonetization.length > 0) {
+        params.append('monetization', selectedMonetization.join(','))
+      }
+      if (selectedEngines.length > 0) {
+        params.append('engine', selectedEngines.join(','))
+      }
+      if (selectedPricing.length > 0) {
+        params.append('pricing', selectedPricing.join(','))
       }
       
       const response = await fetch(`/api/products?${params.toString()}`)
@@ -139,10 +156,16 @@ export default function ProductsPage() {
       { value: 'released', label: 'Released', count: 0 },
       { value: 'upcoming', label: 'Upcoming', count: 0 }
     ]
+    const monetization: FilterOption[] = []
+    const engines: FilterOption[] = []
+    const pricing: FilterOption[] = []
 
     // Count categories
     const categoryCounts: Record<string, number> = {}
     const platformCounts: Record<string, number> = {}
+    const monetizationCounts: Record<string, number> = {}
+    const engineCounts: Record<string, number> = {}
+    const pricingCounts: Record<string, number> = {}
     let releasedCount = 0
     let upcomingCount = 0
 
@@ -160,6 +183,21 @@ export default function ProductsPage() {
         game.platforms.forEach(platform => {
           platformCounts[platform] = (platformCounts[platform] || 0) + 1
         })
+      }
+
+      // Count monetization
+      if (game.monetization) {
+        monetizationCounts[game.monetization] = (monetizationCounts[game.monetization] || 0) + 1
+      }
+
+      // Count engine
+      if (game.engine) {
+        engineCounts[game.engine] = (engineCounts[game.engine] || 0) + 1
+      }
+
+      // Count pricing
+      if (game.pricing) {
+        pricingCounts[game.pricing] = (pricingCounts[game.pricing] || 0) + 1
       }
 
       // Count release status
@@ -188,13 +226,28 @@ export default function ProductsPage() {
       })
     })
 
+    Object.entries(monetizationCounts).forEach(([name, count]) => {
+      monetization.push({ value: name.toLowerCase(), label: name, count })
+    })
+
+    Object.entries(engineCounts).forEach(([name, count]) => {
+      engines.push({ value: name.toLowerCase(), label: name, count })
+    })
+
+    Object.entries(pricingCounts).forEach(([name, count]) => {
+      pricing.push({ value: name.toLowerCase(), label: name, count })
+    })
+
     releaseStatuses[0].count = releasedCount
     releaseStatuses[1].count = upcomingCount
 
     return {
       categories: categories.sort((a, b) => (b.count || 0) - (a.count || 0)),
       platforms: platforms.sort((a, b) => (b.count || 0) - (a.count || 0)),
-      releaseStatuses: releaseStatuses.filter(status => (status.count || 0) > 0)
+      releaseStatuses: releaseStatuses.filter(status => (status.count || 0) > 0),
+      monetization: monetization.sort((a, b) => (b.count || 0) - (a.count || 0)),
+      engines: engines.sort((a, b) => (b.count || 0) - (a.count || 0)),
+      pricing: pricing.sort((a, b) => (b.count || 0) - (a.count || 0))
     }
   }, [games])
 
@@ -253,11 +306,14 @@ export default function ProductsPage() {
     setSelectedCategories([])
     setSelectedPlatforms([])
     setSelectedReleaseStatuses([])
+    setSelectedMonetization([])
+    setSelectedEngines([])
+    setSelectedPricing([])
   }
 
   useEffect(() => {
     fetchGames()
-  }, [sortBy, timeWindow])
+  }, [sortBy, timeWindow, selectedCategories, selectedMonetization, selectedEngines, selectedPricing])
 
   if (loading) {
     return (
@@ -277,13 +333,6 @@ export default function ProductsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]">
       <div className="container mx-auto px-4 py-8">
-        {/* Page Title - GOG Style */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white mb-2">
-            Mobile Games / All Games ({games.length}) of {games.length} games in total
-          </h1>
-        </div>
-
         {/* Search Bar - GOG Style */}
         <div className="mb-6">
           <GogSearchBar
@@ -326,12 +375,21 @@ export default function ProductsPage() {
             categories={filterOptions.categories}
             platforms={filterOptions.platforms}
             releaseStatuses={filterOptions.releaseStatuses}
+            monetization={filterOptions.monetization}
+            engines={filterOptions.engines}
+            pricing={filterOptions.pricing}
             selectedCategories={selectedCategories}
             selectedPlatforms={selectedPlatforms}
             selectedReleaseStatuses={selectedReleaseStatuses}
+            selectedMonetization={selectedMonetization}
+            selectedEngines={selectedEngines}
+            selectedPricing={selectedPricing}
             onCategoryChange={setSelectedCategories}
             onPlatformChange={setSelectedPlatforms}
             onReleaseStatusChange={setSelectedReleaseStatuses}
+            onMonetizationChange={setSelectedMonetization}
+            onEngineChange={setSelectedEngines}
+            onPricingChange={setSelectedPricing}
             onClearFilters={clearFilters}
             className="hidden lg:block"
           />
