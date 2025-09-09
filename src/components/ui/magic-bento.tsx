@@ -145,6 +145,9 @@ function MagicBentoCard({
     background: enableSpotlight
       ? `radial-gradient(${spotlightRadius}px ${spotlightRadius}px at ${pos.x}px ${pos.y}px, rgba(${glowColor},0.25), transparent 60%)`
       : undefined,
+    // expose mouse position as CSS custom properties for before-pseudo usage
+    ['--x' as any]: `${pos.x}px`,
+    ['--y' as any]: `${pos.y}px`,
   }), [pos.x, pos.y, enableSpotlight, glowColor, spotlightRadius])
 
   return (
@@ -160,11 +163,6 @@ function MagicBentoCard({
         textAutoHide ? "hover:[&_.text-auto-hide]:opacity-0" : "",
         className || "",
       ].join(" ")}
-      onMouseEnter={(e) => {
-        // store custom props for CSS before pseudo
-        (e.currentTarget as any).style.setProperty("--x", `${pos.x}px`)
-        (e.currentTarget as any).style.setProperty("--y", `${pos.y}px`)
-      }}
     >
       {enableStars && !disableAnimations ? (
         <Stars count={particleCount} color={`rgba(${glowColor},0.5)`} />

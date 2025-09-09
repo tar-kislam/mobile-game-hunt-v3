@@ -1,13 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Star, Play, Heart, MessageCircle } from "lucide-react"
-import { GameCard } from "@/components/games/game-card"
+import { Loader2, Heart, MessageCircle, ExternalLink, Calendar } from "lucide-react"
+import { GogGameCard } from "@/components/games/gog-game-card"
+import { GogSearchBar } from "@/components/games/gog-search-bar"
+import { GogSidebar } from "@/components/games/gog-sidebar"
+import { GameSortBar } from "@/components/games/game-sort-bar"
 import Link from "next/link"
 import Image from "next/image"
+import { PLATFORMS } from "@/components/ui/platform-icons"
 
 interface Game {
   id: string
@@ -15,9 +19,12 @@ interface Game {
   tagline?: string | null
   description: string
   image?: string | null
+  thumbnail?: string | null
   url: string
   platforms?: string[]
   createdAt: string
+  releaseAt?: string | null
+  clicks: number
   _count: {
     votes: number
     comments: number
@@ -34,41 +41,30 @@ interface Game {
   }[]
 }
 
-interface CategoryGroup {
-  name: string
-  games: Game[]
-  isExpanded: boolean
+interface FilterOption {
+  value: string
+  label: string
+  count?: number
 }
-
-const CATEGORIES = [
-  { name: "Editor's Choice", slug: "editors-choice", icon: "⭐" },
-  { name: "Action", slug: "action", icon: "⚔️" },
-  { name: "Adventure", slug: "adventure", icon: "🗺️" },
-  { name: "Strategy", slug: "strategy", icon: "🧠" },
-  { name: "Casual", slug: "casual", icon: "🎮" },
-  { name: "RPG", slug: "rpg", icon: "⚔️" },
-  { name: "Sports", slug: "sports", icon: "⚽" },
-  { name: "Racing", slug: "racing", icon: "🏎️" },
-  { name: "Puzzle", slug: "puzzle", icon: "🧩" },
-  { name: "Shooter", slug: "shooter", icon: "🔫" },
-  { name: "Simulation", slug: "simulation", icon: "🏢" },
-  { name: "Arcade", slug: "arcade", icon: "🎯" },
-]
 
 export default function ProductsPage() {
   const [games, setGames] = useState<Game[]>([])
-  const [categoryGroups, setCategoryGroups] = useState<CategoryGroup[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [page, setPage] = useState(1)
-  const [selectedCategory, setSelectedCategory] = useState<string>("all")
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
+  const [sortBy, setSortBy] = useState<string>("newest")
+  
+  // Search and filter states
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([])
+  const [selectedReleaseStatuses, setSelectedReleaseStatuses] = useState<string[]>([])
 
   const fetchGames = async (pageNum: number = 1, append: boolean = false) => {
     try {
       setLoadingMore(true);
-      const response = await fetch(`/api/products?limit=20&page=${pageNum}`)
+      const response = await fetch(`/api/products?limit=20&page=${pageNum}&sortBy=${sortBy}`)
       if (!response.ok) throw new Error('Failed to fetch games')
       
       const newGames: Game[] = await response.json()
@@ -94,52 +90,6 @@ export default function ProductsPage() {
     fetchGames(page + 1, true)
   }
 
-  const toggleCategory = (categoryName: string) => {
-    setExpandedCategories(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(categoryName)) {
-        newSet.delete(categoryName)
-      } else {
-        newSet.add(categoryName)
-      }
-      return newSet
-    })
-  }
-
-  const groupGamesByCategory = (games: Game[]): CategoryGroup[] => {
-    const categoryMap = new Map<string, Game[]>()
-    
-    games.forEach(game => {
-      // Safety check: ensure categories exists and is an array
-      if (game.categories && Array.isArray(game.categories)) {
-        game.categories.forEach(cat => {
-          const categoryName = cat.category.name
-          if (!categoryMap.has(categoryName)) {
-            categoryMap.set(categoryName, [])
-          }
-          categoryMap.get(categoryName)!.push(game)
-        })
-      }
-    })
-    
-    return Array.from(categoryMap.entries())
-      .map(([name, games]) => ({
-        name,
-        games,
-        isExpanded: expandedCategories.has(name)
-      }))
-      .filter(group => group.games.length > 0)
-      .sort((a, b) => b.games.length - a.games.length) // Sort by number of games
-  }
-
-  useEffect(() => {
-    fetchGames()
-  }, [])
-
-  useEffect(() => {
-    setCategoryGroups(groupGamesByCategory(games))
-  }, [games, expandedCategories])
-
   const handleVote = async (gameId: string) => {
     try {
       const response = await fetch(`/api/products/${gameId}/vote`, {
@@ -147,7 +97,6 @@ export default function ProductsPage() {
       })
       
       if (response.ok) {
-        // Update the game's vote count in the local state
         setGames(prev => prev.map(game => 
           game.id === gameId 
             ? { ...game, _count: { ...game._count, votes: game._count.votes + 1 } }
@@ -159,16 +108,143 @@ export default function ProductsPage() {
     }
   }
 
-  const getFilteredGames = () => {
-    if (selectedCategory === "all") {
-      return games
+  // Generate filter options from games data
+  const filterOptions = useMemo(() => {
+    const categories: FilterOption[] = []
+    const platforms: FilterOption[] = []
+    const releaseStatuses: FilterOption[] = [
+      { value: 'released', label: 'Released', count: 0 },
+      { value: 'upcoming', label: 'Upcoming', count: 0 }
+    ]
+
+    // Count categories
+    const categoryCounts: Record<string, number> = {}
+    const platformCounts: Record<string, number> = {}
+    let releasedCount = 0
+    let upcomingCount = 0
+
+    games.forEach(game => {
+      // Count categories
+      if (game.categories) {
+        game.categories.forEach(cat => {
+          const categoryName = cat.category.name
+          categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1
+        })
+      }
+
+      // Count platforms
+      if (game.platforms) {
+        game.platforms.forEach(platform => {
+          platformCounts[platform] = (platformCounts[platform] || 0) + 1
+        })
+      }
+
+      // Count release status
+      if (game.releaseAt) {
+        const releaseDate = new Date(game.releaseAt)
+        const now = new Date()
+        if (releaseDate > now) {
+          upcomingCount++
+        } else {
+          releasedCount++
+        }
+      }
+    })
+
+    // Convert to filter options
+    Object.entries(categoryCounts).forEach(([name, count]) => {
+      categories.push({ value: name.toLowerCase(), label: name, count })
+    })
+
+    Object.entries(platformCounts).forEach(([platform, count]) => {
+      const platformInfo = PLATFORMS.find(p => p.value === platform.toLowerCase())
+      platforms.push({ 
+        value: platform.toLowerCase(), 
+        label: platformInfo?.label || platform, 
+        count 
+      })
+    })
+
+    releaseStatuses[0].count = releasedCount
+    releaseStatuses[1].count = upcomingCount
+
+    return {
+      categories: categories.sort((a, b) => (b.count || 0) - (a.count || 0)),
+      platforms: platforms.sort((a, b) => (b.count || 0) - (a.count || 0)),
+      releaseStatuses: releaseStatuses.filter(status => (status.count || 0) > 0)
     }
-    return games.filter(game => 
-      game.categories && game.categories.some(cat => cat.category.name.toLowerCase() === selectedCategory.toLowerCase())
-    )
+  }, [games])
+
+  // Filter and sort games
+  const filteredAndSortedGames = useMemo(() => {
+    let filtered = games
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(game => 
+        game.title.toLowerCase().includes(query) ||
+        game.tagline?.toLowerCase().includes(query) ||
+        game.description?.toLowerCase().includes(query)
+      )
+    }
+
+    // Apply category filter
+    if (selectedCategories.length > 0) {
+      filtered = filtered.filter(game => 
+        game.categories && game.categories.some(cat => 
+          selectedCategories.includes(cat.category.name.toLowerCase())
+        )
+      )
+    }
+
+    // Apply platform filter
+    if (selectedPlatforms.length > 0) {
+      filtered = filtered.filter(game => 
+        game.platforms && game.platforms.some(platform => 
+          selectedPlatforms.includes(platform.toLowerCase())
+        )
+      )
+    }
+
+    // Apply release status filter
+    if (selectedReleaseStatuses.length > 0) {
+      filtered = filtered.filter(game => {
+        if (!game.releaseAt) return false
+        
+        const releaseDate = new Date(game.releaseAt)
+        const now = new Date()
+        const isUpcoming = releaseDate > now
+        
+        return selectedReleaseStatuses.includes(isUpcoming ? 'upcoming' : 'released')
+      })
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case 'most-upvoted':
+        return filtered.sort((a, b) => b._count.votes - a._count.votes)
+      case 'most-viewed':
+        return filtered.sort((a, b) => b.clicks - a.clicks)
+      case 'editors-choice':
+        // For now, fall back to newest since editorChoice field might not be available
+        return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      case 'newest':
+      default:
+        return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    }
+  }, [games, searchQuery, selectedCategories, selectedPlatforms, selectedReleaseStatuses, sortBy])
+
+  const clearFilters = () => {
+    setSearchQuery("")
+    setSelectedCategories([])
+    setSelectedPlatforms([])
+    setSelectedReleaseStatuses([])
   }
 
-  const filteredGames = getFilteredGames()
+  useEffect(() => {
+    fetchGames()
+  }, [sortBy])
 
   if (loading) {
     return (
@@ -188,177 +264,112 @@ export default function ProductsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]">
       <div className="container mx-auto px-4 py-8">
-        {/* Category Navigation - TapTap Style */}
-        <div className="mb-8">
-          <div className="flex flex-wrap gap-2 mb-6">
-            <Button
-              variant={selectedCategory === "all" ? "default" : "outline"}
-              onClick={() => setSelectedCategory("all")}
-              className={`rounded-xl px-4 py-2 text-sm font-medium transition-all duration-300 ${
-                selectedCategory === "all" 
-                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg" 
-                  : "bg-gray-800/50 text-gray-300 border-gray-600 hover:bg-gray-700/50"
-              }`}
-            >
-              All Games
-            </Button>
-            {CATEGORIES.map((category) => (
-              <Button
-                key={category.slug}
-                variant={selectedCategory === category.slug ? "default" : "outline"}
-                onClick={() => setSelectedCategory(category.slug)}
-                className={`rounded-xl px-4 py-2 text-sm font-medium transition-all duration-300 ${
-                  selectedCategory === category.slug 
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg" 
-                    : "bg-gray-800/50 text-gray-300 border-gray-600 hover:bg-gray-700/50"
-                }`}
-              >
-                <span className="mr-2">{category.icon}</span>
-                {category.name}
-              </Button>
-            ))}
-          </div>
+        {/* Page Title - GOG Style */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-white mb-2">
+            Mobile Games / All Games ({games.length}) of {games.length} games in total
+          </h1>
         </div>
 
-        {/* Main Content */}
-        {selectedCategory === "all" ? (
-          // Category Sections Layout
-          <div className="space-y-8">
-            {categoryGroups.map((category) => (
-              <div key={category.name} className="space-y-4">
-                {/* Category Header */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                      {category.name}
-                    </h2>
-                    <p className="text-gray-400 text-sm mt-1">
-                      Explore amazing {category.name.toLowerCase()} games
-                    </p>
-                  </div>
-                  <Badge variant="secondary" className="bg-purple-500/20 text-purple-300 border-purple-500/30">
-                    {category.games.length} games
-                  </Badge>
-                </div>
+        {/* Search Bar - GOG Style */}
+        <div className="mb-6">
+          <GogSearchBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            selectedCategory={selectedCategories.length === 0 ? "all" : selectedCategories[0]}
+            onCategoryChange={(category) => setSelectedCategories(category === "all" ? [] : [category])}
+            selectedPlatform={selectedPlatforms.length === 0 ? "all" : selectedPlatforms[0]}
+            onPlatformChange={(platform) => setSelectedPlatforms(platform === "all" ? [] : [platform])}
+            selectedReleaseStatus={selectedReleaseStatuses.length === 0 ? "all" : selectedReleaseStatuses[0]}
+            onReleaseStatusChange={(status) => setSelectedReleaseStatuses(status === "all" ? [] : [status])}
+            categories={filterOptions.categories}
+            platforms={filterOptions.platforms}
+            releaseStatuses={filterOptions.releaseStatuses}
+            onClearFilters={clearFilters}
+          />
+        </div>
 
-                {/* Games Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {category.games.slice(0, 8).map((game) => (
-                    <Link key={game.id} href={`/product/${game.id}`}>
-                      <GameCard 
-                        game={game} 
-                        onVote={handleVote}
-                        showAuthor={false}
-                      />
-                    </Link>
-                  ))}
-                </div>
+        {/* Main Layout - GOG Style */}
+        <div className="flex gap-8">
+          {/* Left Sidebar - Desktop */}
+          <GogSidebar
+            categories={filterOptions.categories}
+            platforms={filterOptions.platforms}
+            releaseStatuses={filterOptions.releaseStatuses}
+            selectedCategories={selectedCategories}
+            selectedPlatforms={selectedPlatforms}
+            selectedReleaseStatuses={selectedReleaseStatuses}
+            onCategoryChange={setSelectedCategories}
+            onPlatformChange={setSelectedPlatforms}
+            onReleaseStatusChange={setSelectedReleaseStatuses}
+            onClearFilters={clearFilters}
+            className="hidden lg:block"
+          />
 
-                {/* Show More Button for Category */}
-                {category.games.length > 8 && (
-                  <div className="flex justify-center">
-                    <Button
-                      onClick={() => toggleCategory(category.name)}
-                      variant="outline"
-                      className="rounded-xl px-6 py-2 text-gray-300 border-gray-600 hover:bg-gray-700/50"
-                    >
-                      {expandedCategories.has(category.name) ? 'Show Less' : `Show All ${category.games.length} Games`}
-                    </Button>
-                  </div>
-                )}
+          {/* Main Content */}
+          <div className="flex-1 min-w-0">
+            {/* Sort Bar */}
+            <GameSortBar
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              totalGames={games.length}
+              filteredGames={filteredAndSortedGames.length}
+              className="mb-6"
+            />
 
-                {/* Expanded Games */}
-                {expandedCategories.has(category.name) && category.games.length > 8 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6">
-                    {category.games.slice(8).map((game) => (
-                      <Link key={game.id} href={`/product/${game.id}`}>
-                        <GameCard 
-                          game={game} 
-                          onVote={handleVote}
-                          showAuthor={false}
-                        />
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          // Single Category Layout - TapTap Style
-          <div className="space-y-6">
-            {/* Category Header */}
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-white mb-2 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
-                {CATEGORIES.find(c => c.slug === selectedCategory)?.name || selectedCategory}
-              </h1>
-              <p className="text-gray-300 text-lg max-w-2xl mx-auto">
-                Explore thousands of FREE, top-rated {CATEGORIES.find(c => c.slug === selectedCategory)?.name.toLowerCase()} games for mobile, discover amazing titles and find your next favorite game.
-              </p>
-            </div>
-
-            {/* Games Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredGames.map((game) => (
-                <Link key={game.id} href={`/product/${game.id}`}>
-                  <GameCard 
-                    game={game} 
-                    onVote={handleVote}
-                    showAuthor={false}
-                  />
-                </Link>
+            {/* Games Grid - GOG Style */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+              {filteredAndSortedGames.map((game) => (
+                <GogGameCard 
+                  key={game.id} 
+                  game={game} 
+                  onVote={handleVote}
+                />
               ))}
             </div>
 
             {/* No Games Message */}
-            {filteredGames.length === 0 && (
+            {filteredAndSortedGames.length === 0 && !loading && (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">🎮</div>
-                <h3 className="text-xl font-semibold text-gray-300 mb-2">No games found in this category</h3>
-                <p className="text-gray-400 mb-6">Be the first to submit a {CATEGORIES.find(c => c.slug === selectedCategory)?.name.toLowerCase()} game!</p>
-                <Link href="/submit">
-                  <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-2 rounded-xl">
-                    Submit Your Game
-                  </Button>
-                </Link>
+                <h3 className="text-xl font-semibold text-gray-300 mb-2">No games found</h3>
+                <p className="text-gray-400 mb-6">
+                  {games.length === 0 
+                    ? "Be the first to submit a game!" 
+                    : "Try adjusting your search or filters to see more games."
+                  }
+                </p>
+                {games.length === 0 && (
+                  <Link href="/submit">
+                    <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-2 rounded-xl">
+                      Submit Your Game
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            )}
+
+            {/* Load More Button */}
+            {hasMore && filteredAndSortedGames.length > 0 && (
+              <div className="flex justify-center mt-8">
+                <Button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    'Load More Games'
+                  )}
+                </Button>
               </div>
             )}
           </div>
-        )}
-
-        {/* Load More Button */}
-        {hasMore && selectedCategory === "all" && (
-          <div className="flex justify-center mt-8">
-            <Button
-              onClick={loadMore}
-              disabled={loadingMore}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
-            >
-              {loadingMore ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                'Load More Games'
-              )}
-            </Button>
-          </div>
-        )}
-
-        {/* No Games Message */}
-        {!loading && games.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🎮</div>
-            <h3 className="text-xl font-semibold text-gray-300 mb-2">No games found</h3>
-            <p className="text-gray-400 mb-6">Be the first to submit a game!</p>
-            <Link href="/submit">
-              <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-2 rounded-xl">
-                Submit Your Game
-              </Button>
-            </Link>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   )

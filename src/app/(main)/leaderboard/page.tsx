@@ -10,6 +10,7 @@ interface LeaderboardProduct {
   id: string;
   title: string;
   description: string;
+  tagline: string | null;
   thumbnail: string | null;
   url: string;
   platforms: string[];
@@ -203,7 +204,7 @@ export default function LeaderboardPage() {
                       </div>
                       
                       <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 line-clamp-2">
-                        {product.description}
+                        {product.tagline || product.description}
                       </p>
 
                       {/* Platforms & Countries */}
