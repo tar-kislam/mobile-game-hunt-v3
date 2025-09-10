@@ -387,54 +387,77 @@ export default function ProfilePage() {
             <TabsContent value="games" className="space-y-4">
               <h2 className="text-xl font-semibold">My Submitted Games</h2>
 
-              <MagicBento
-                className="md:grid-cols-2"
-                enableTilt
-                enableSpotlight
-                enableStars
-                enableBorderGlow
-                glowColor="132, 0, 255"
-                items={(liveGames.length ? liveGames : userGames).map((game: any) => ({
-                  id: game.id,
-                  children: (
-                    <div className="flex gap-4">
-                      <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-muted">
-                        <img src={game.image} alt={game.title} className="w-full h-full object-cover" />
+              {liveGames.length === 0 ? (
+                <Card className="rounded-2xl shadow-soft">
+                  <CardContent className="p-8 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center">
+                        <GamepadIcon className="h-8 w-8 text-white" />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <Link href={`/product/${game.id}`} className="hover:underline">
-                              <h3 className="font-semibold text-sm leading-tight">{game.title}</h3>
-                            </Link>
-                            <p className="text-sm text-muted-foreground line-clamp-2">{game.description}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="secondary" className="rounded-2xl text-xs">
-                            {game.platforms?.map((p: string) => p.toUpperCase()).join(', ') || 'No platforms listed'}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">by {game.maker.name}</span>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <ArrowUpIcon className="h-3 w-3" />
-                            {game.votes} votes
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <MessageCircleIcon className="h-3 w-3" />
-                            {game.comments} comments
-                          </div>
-                          <Link href={`/product/${game.id}`} className="flex items-center gap-1 hover:text-foreground">
-                            <ExternalLinkIcon className="h-3 w-3" />
-                            View
-                          </Link>
-                        </div>
+                      <div>
+                        <h3 className="text-lg font-semibold mb-2">No games submitted yet</h3>
+                        <p className="text-muted-foreground mb-4">
+                          You haven't submitted any games yet. Submit your first game to get started!
+                        </p>
+                        <Link href="/submit">
+                          <Button className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white">
+                            Submit Your First Game
+                          </Button>
+                        </Link>
                       </div>
                     </div>
-                  )
-                }))}
-              />
+                  </CardContent>
+                </Card>
+              ) : (
+                <MagicBento
+                  className="md:grid-cols-2"
+                  enableTilt
+                  enableSpotlight
+                  enableStars
+                  enableBorderGlow
+                  glowColor="132, 0, 255"
+                  items={liveGames.map((game: any) => ({
+                    id: game.id,
+                    children: (
+                      <div className="flex gap-4">
+                        <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-muted">
+                          <img src={game.image} alt={game.title} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <Link href={`/product/${game.id}`} className="hover:underline">
+                                <h3 className="font-semibold text-sm leading-tight">{game.title}</h3>
+                              </Link>
+                              <p className="text-sm text-muted-foreground line-clamp-2">{game.description}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge variant="secondary" className="rounded-2xl text-xs">
+                              {game.platforms?.map((p: string) => p.toUpperCase()).join(', ') || 'No platforms listed'}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">by {game.maker.name}</span>
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <ArrowUpIcon className="h-3 w-3" />
+                              {game.votes} votes
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MessageCircleIcon className="h-3 w-3" />
+                              {game.comments} comments
+                            </div>
+                            <Link href={`/product/${game.id}`} className="flex items-center gap-1 hover:text-foreground">
+                              <ExternalLinkIcon className="h-3 w-3" />
+                              View
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }))}
+                />
+              )}
             </TabsContent>
 
             {/* Notifications */}
