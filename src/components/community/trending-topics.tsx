@@ -1,12 +1,21 @@
+"use client"
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { TrendingUp, Hash } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 interface TrendingTopicsProps {
   topics: string[]
+  onSelectTag?: (tag: string) => void
 }
 
-export function TrendingTopics({ topics }: TrendingTopicsProps) {
+export function TrendingTopics({ topics, onSelectTag }: TrendingTopicsProps) {
+  const router = useRouter()
+  const handleClick = (raw: string) => {
+    const tag = raw.replace(/^#/, '')
+    if (onSelectTag) return onSelectTag(tag)
+    router.push(`/community?hashtag=${encodeURIComponent(tag)}`)
+  }
   return (
     <Card className="bg-card/50 border-white/10 backdrop-blur-sm">
       <CardHeader className="pb-3">
@@ -26,10 +35,14 @@ export function TrendingTopics({ topics }: TrendingTopicsProps) {
           </div>
         ) : (
           <div className="space-y-3">
-            {topics.map((topic, index) => (
+            {topics.map((topic, index) => {
+              const clean = (topic || '').toString().replace(/^#+/, '')
+              const display = clean
+              return (
               <div
                 key={topic}
                 className="flex items-center justify-between p-3 rounded-lg bg-background/30 hover:bg-background/50 transition-colors cursor-pointer group"
+                onClick={() => handleClick(clean)}
               >
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-bold">
@@ -38,7 +51,7 @@ export function TrendingTopics({ topics }: TrendingTopicsProps) {
                   <div className="flex items-center space-x-2">
                     <Hash className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium group-hover:text-blue-400 transition-colors">
-                      {topic}
+                      {display}
                     </span>
                   </div>
                 </div>
@@ -46,7 +59,8 @@ export function TrendingTopics({ topics }: TrendingTopicsProps) {
                   #{index + 1}
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         )}
         

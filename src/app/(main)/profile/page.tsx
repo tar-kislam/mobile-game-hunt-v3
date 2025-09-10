@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { toast } from 'sonner'
 import { MyGamesSection } from "@/components/games/my-games-section"
 import { 
   ArrowUpIcon, 
@@ -123,6 +124,10 @@ const userComments = [
 export default function ProfilePage() {
   const { data: session, status } = useSession()
   const [userBadges, setUserBadges] = useState<string[]>([])
+  const [myPosts, setMyPosts] = useState<any[]>([])
+  const [loadingPosts, setLoadingPosts] = useState<boolean>(false)
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [unreadCount, setUnreadCount] = useState<number>(0)
   const cardRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -139,6 +144,47 @@ export default function ProfilePage() {
     }
     load()
   }, [])
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      if (!session?.user?.id) return
+      setLoadingPosts(true)
+      try {
+        const res = await fetch(`/api/community/user/${session.user.id}/posts?limit=20`)
+        if (!res.ok) throw new Error('Failed to load posts')
+        const data = await res.json()
+        setMyPosts(data.posts || [])
+      } catch (e) {
+        setMyPosts([])
+      } finally {
+        setLoadingPosts(false)
+      }
+    }
+    fetchPosts()
+  }, [session?.user?.id])
+
+  useEffect(() => {
+    let timer: any
+    const fetchNotifications = async (showToast = false) => {
+      if (!session?.user?.id) return
+      try {
+        const res = await fetch('/api/community/notifications?limit=20&unreadOnly=false', { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json()
+        setNotifications(data.notifications || [])
+        setUnreadCount(data.unreadCount || 0)
+        if (showToast && data.notifications?.[0]) {
+          const n = data.notifications[0]
+          toast(`${n.type === 'like' ? 'New like' : 'New comment'}`, {
+            description: n.message
+          })
+        }
+      } catch {}
+    }
+    fetchNotifications()
+    timer = setInterval(() => fetchNotifications(true), 15000)
+    return () => clearInterval(timer)
+  }, [session?.user?.id])
 
   if (status === "loading") {
     return (
@@ -273,10 +319,12 @@ export default function ProfilePage() {
 
           {/* Profile Tabs */}
           <Tabs defaultValue="games" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 rounded-2xl mb-6">
+            <TabsList className="grid w-full grid-cols-5 rounded-2xl mb-6">
               <TabsTrigger value="games" className="rounded-2xl">My Games</TabsTrigger>
               <TabsTrigger value="votes" className="rounded-2xl">Voted Games</TabsTrigger>
               <TabsTrigger value="comments" className="rounded-2xl">Comments</TabsTrigger>
+              <TabsTrigger value="posts" className="rounded-2xl">My Posts</TabsTrigger>
+              <TabsTrigger value="notifications" className="rounded-2xl">Notifications {unreadCount > 0 ? `(${unreadCount})` : ''}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="games" className="space-y-4">
@@ -330,6 +378,49 @@ export default function ProfilePage() {
                   )
                 }))}
               />
+            </TabsContent>
+
+            {/* Notifications */}
+            <TabsContent value="notifications" className="space-y-4">
+              <h2 className="text-xl font-semibold">Notifications</h2>
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">Latest activity on your posts</div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    await fetch('/api/community/notifications', {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ markAllAsRead: true })
+                    })
+                    setUnreadCount(0)
+                  }}
+                >
+                  Mark all as read
+                </Button>
+              </div>
+              <div className="space-y-3">
+                {notifications.length === 0 ? (
+                  <Card className="rounded-2xl shadow-soft">
+                    <CardContent className="p-6 text-center text-muted-foreground">
+                      No notifications yet.
+                    </CardContent>
+                  </Card>
+                ) : (
+                  notifications.map((n:any) => (
+                    <Card key={n.id} className={`rounded-2xl shadow-soft ${n.isRead ? 'opacity-80' : ''}`}>
+                      <CardContent className="p-4 flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-sm">{n.type === 'like' ? 'Someone liked your post' : 'New comment on your post'}</div>
+                          <div className="text-xs text-muted-foreground">{n.message}</div>
+                        </div>
+                        <div className="text-xs text-muted-foreground">{new Date(n.createdAt).toLocaleString()}</div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
             </TabsContent>
             
             <TabsContent value="votes" className="space-y-4">
@@ -398,6 +489,71 @@ export default function ProfilePage() {
                   </Card>
                 ))}
               </div>
+            </TabsContent>
+
+            {/* My Posts */}
+            <TabsContent value="posts" className="space-y-4">
+              <h2 className="text-xl font-semibold">My Posts</h2>
+              {loadingPosts ? (
+                <div className="space-y-4">
+                  <div className="h-24 w-full rounded-xl bg-white/5 animate-pulse"></div>
+                  <div className="h-24 w-full rounded-xl bg-white/5 animate-pulse"></div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {myPosts.length === 0 ? (
+                    <Card className="rounded-2xl shadow-soft">
+                      <CardContent className="p-6 text-center text-muted-foreground">
+                        No posts yet.
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    myPosts.map((post:any) => (
+                      <Card key={post.id} className="rounded-2xl shadow-soft bg-card/60 border-white/10">
+                        <CardContent className="p-4 space-y-3">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={session?.user?.image || ''} />
+                              <AvatarFallback>{session?.user?.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium text-sm">{session?.user?.name || 'You'}</div>
+                              <div className="text-xs text-muted-foreground">{new Date(post.createdAt).toLocaleString()}</div>
+                            </div>
+                          </div>
+                          <div className="text-sm whitespace-pre-wrap">
+                            {post.content}
+                          </div>
+                          {Array.isArray(post.images) && post.images.length > 0 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {post.images.slice(0,4).map((img:string, idx:number) => (
+                                <img key={idx} src={img} alt="Post image" className="w-full h-auto rounded-lg border border-white/10" />
+                              ))}
+                            </div>
+                          )}
+                          {Array.isArray(post.hashtags) && post.hashtags.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {post.hashtags.map((tag:string) => (
+                                <UIBadge key={tag} variant="secondary" className="bg-blue-500/20 text-blue-300 border-blue-500/30">{tag}</UIBadge>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-6 pt-2 border-t border-white/10 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <ArrowUpIcon className="h-3 w-3" />
+                              {post._count?.likes ?? 0}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MessageCircleIcon className="h-3 w-3" />
+                              {post._count?.comments ?? 0}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </div>

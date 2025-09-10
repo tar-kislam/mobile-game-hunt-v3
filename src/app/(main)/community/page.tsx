@@ -3,10 +3,12 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { CommunityFeed } from '@/components/community/community-feed'
+import { CommunityFeedContainer } from '@/components/community/CommunityFeedContainer'
 import { TrendingTopics } from '@/components/community/trending-topics'
 import { CommunitySidebar } from '@/components/community/community-sidebar'
 import { CreatePostBox } from '@/components/community/create-post-box'
 import { Skeleton } from '@/components/ui/skeleton'
+import { CreatePostRefresh } from '@/components/community/CreatePostRefresh'
 
 export default async function CommunityPage() {
   const session = await getServerSession(authOptions)
@@ -25,7 +27,7 @@ export default async function CommunityPage() {
             image: true,
           }
         },
-        postLikes: true,
+        likes: true,
         comments: {
           select: {
             id: true,
@@ -33,7 +35,7 @@ export default async function CommunityPage() {
         },
         _count: {
           select: {
-            postLikes: true,
+            likes: true,
             comments: true,
           }
         }
@@ -44,31 +46,39 @@ export default async function CommunityPage() {
       take: 20
     })
 
-    // Fetch trending topics (most used tags in posts)
+    // Fetch trending topics (most used hashtags in posts)
     const trendingTags = await prisma.post.findMany({
       select: {
-        tags: true,
+        hashtags: true,
       },
       where: {
         createdAt: {
           gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
+        },
+        hashtags: {
+          not: null
         }
       }
     })
 
-    // Count tag usage
+    // Count hashtag usage
     const tagCounts: Record<string, number> = {}
     trendingTags.forEach(post => {
-      post.tags.forEach(tag => {
-        tagCounts[tag] = (tagCounts[tag] || 0) + 1
-      })
+      if (post.hashtags && Array.isArray(post.hashtags)) {
+        post.hashtags.forEach((hashtag: string) => {
+          if (typeof hashtag === 'string' && hashtag.trim()) {
+            const cleanHashtag = hashtag.trim().toLowerCase()
+            tagCounts[cleanHashtag] = (tagCounts[cleanHashtag] || 0) + 1
+          }
+        })
+      }
     })
 
-    // Get top 5 trending tags
+    // Get top 5 trending hashtags
     trendingTopics = Object.entries(tagCounts)
       .sort(([,a], [,b]) => b - a)
       .slice(0, 5)
-      .map(([tag]) => tag)
+      .map(([tag]) => `#${tag}`)
   } catch (error) {
     console.error('Error fetching community data:', error)
     posts = []
@@ -89,7 +99,9 @@ export default async function CommunityPage() {
               <CreatePostBox />
             </Suspense>
           )}
-          <CommunityFeed posts={posts} currentUserId={session?.user?.id} />
+          {/* lightweight client refresh hook for after-create */}
+          <CreatePostRefresh trigger={0} />
+          <CommunityFeedContainer />
         </main>
         <aside className="lg:col-span-1">
           <Suspense fallback={<Skeleton className="h-64 w-full rounded-xl" />}>

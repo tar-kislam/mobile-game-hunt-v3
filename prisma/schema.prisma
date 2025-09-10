@@ -52,7 +52,7 @@ model User {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   accounts       Account[]
-  comments       Comment[]
+  comments       ProductComment[]
   commentVotes   CommentVote[]
   follows        Follow[]
   metrics        Metric[]
@@ -64,7 +64,7 @@ model User {
   productMakers  ProductMaker[]
   studios        Studio[]
   posts          Post[]
-  postLikes      PostLike[]
+  likes          Like[]
   postComments   PostComment[]
 }
 
@@ -113,7 +113,7 @@ model Product {
   clicks       Int           @default(0)
   follows      Int           @default(0)
   editorChoice Boolean       @default(false)
-  comments     Comment[]
+  comments     ProductComment[]
   followUsers  Follow[]
   metrics      Metric[]
   playtests    Playtest[]
@@ -170,7 +170,7 @@ model Metric {
   @@index([gameId, timestamp], map: "idx_metric_gameId_timestamp")
 }
 
-model Comment {
+model ProductComment {
   id        String        @id @default(cuid())
   content   String
   parentId  String?
@@ -178,8 +178,8 @@ model Comment {
   userId    String
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
-  parent    Comment?      @relation("CommentReplies", fields: [parentId], references: [id])
-  replies   Comment[]     @relation("CommentReplies")
+  parent    ProductComment?      @relation("ProductCommentReplies", fields: [parentId], references: [id])
+  replies   ProductComment[]     @relation("ProductCommentReplies")
   product   Product       @relation(fields: [productId], references: [id])
   user      User          @relation(fields: [userId], references: [id])
   votes     CommentVote[]
@@ -190,20 +190,21 @@ model CommentVote {
   userId    String
   commentId String
   createdAt DateTime @default(now())
-  comment   Comment  @relation(fields: [commentId], references: [id])
+  comment   ProductComment  @relation(fields: [commentId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, commentId])
 }
 
 model Notification {
-  id        String           @id @default(cuid())
-  type      NotificationType
+  id        String   @id @default(cuid())
   userId    String
-  entityId  String
-  read      Boolean          @default(false)
-  createdAt DateTime         @default(now())
-  user      User             @relation(fields: [userId], references: [id])
+  type      String   // "like" | "comment"
+  postId    String?
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model PressKit {
@@ -244,13 +245,6 @@ model PlaytestClaim {
 enum UserRole {
   USER
   ADMIN
-}
-
-enum NotificationType {
-  COMMENT
-  MENTION
-  PRODUCT_APPROVED
-  UPVOTE
 }
 
 enum ProductStatus {
@@ -358,26 +352,24 @@ model SponsorshipRequest {
 model Post {
   id        String   @id @default(cuid())
   content   String
-  imageUrl  String?
-  tags      String[] // Array of tags like #IndieDev, #PixelArt
-  likes     Int      @default(0)
+  images    Json?    // array of image URLs (max 4)
+  hashtags  Json?    // array of hashtags
   userId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  postLikes PostLike[]
+  likes     Like[]
   comments  PostComment[]
   
   @@index([createdAt])
   @@index([userId])
-  @@index([tags])
 }
 
-model PostLike {
-  id        String   @id @default(cuid())
-  userId    String
-  postId    String
+model Like {
+  id      String   @id @default(cuid())
+  postId  String
+  userId  String
   createdAt DateTime @default(now())
   
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -388,9 +380,9 @@ model PostLike {
 
 model PostComment {
   id        String   @id @default(cuid())
-  content   String
-  userId    String
   postId    String
+  userId    String
+  content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   

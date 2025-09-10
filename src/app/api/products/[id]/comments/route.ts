@@ -14,7 +14,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const comments = await prisma.comment.findMany({
+    const comments = await prisma.productComment.findMany({
       where: {
         productId: id,
       },
@@ -92,7 +92,7 @@ export async function POST(
       )
     }
 
-    const comment = await prisma.comment.create({
+    const comment = await prisma.productComment.create({
       data: {
         content: validatedData.content,
         userId: user.id,
