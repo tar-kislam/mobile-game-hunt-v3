@@ -111,11 +111,14 @@ export const authOptions: NextAuthOptions = {
         // Use the actual user ID from the database, not token.sub
         const user = await prisma.user.findUnique({
           where: { email: token.email as string },
-          select: { id: true }
+          select: { id: true, name: true, image: true, username: true }
         });
         
         if (user) {
           session.user.id = user.id;
+          session.user.name = user.name;
+          session.user.image = user.image;
+          session.user.username = user.username;
         } else {
           session.user.id = token.sub!;
         }

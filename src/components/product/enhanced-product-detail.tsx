@@ -154,6 +154,23 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
   const [currentUrl, setCurrentUrl] = useState('')
   const [isPromoExpanded, setIsPromoExpanded] = useState(false)
 
+  // Track product detail page view
+  const trackProductView = async () => {
+    try {
+      await fetch('/api/metrics/click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          gameId: product.id, 
+          type: 'view',
+          referrer: window.location.href
+        })
+      });
+    } catch (error) {
+      console.error('Error tracking product view:', error);
+    }
+  };
+
   // Check follow status and press kit on mount
   useEffect(() => {
     if (session?.user?.id) {
@@ -163,6 +180,9 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
     fetchComments();
     // Set current URL on client side
     setCurrentUrl(window.location.href);
+    
+    // Track product detail page view
+    trackProductView();
   }, [session, product.id]);
 
   useEffect(() => {

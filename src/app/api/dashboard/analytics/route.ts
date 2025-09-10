@@ -18,6 +18,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    // Get gameId from query params
+    const { searchParams } = new URL(request.url)
+    const gameId = searchParams.get('gameId')
+
     // Get all product IDs for the developer
     const userProducts = await prisma.product.findMany({
       where: { userId: user.id },
@@ -30,15 +34,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         clicksByPlatform: [],
         clicksOverTime: [],
-        votesVsFollows: []
+        votesVsFollows: [],
+        internalClicks: [],
+        externalClicks: []
       })
+    }
+
+    // Filter by specific gameId if provided, otherwise use all user's games
+    const targetProductIds = gameId ? [gameId] : productIds
+
+    // Verify the gameId belongs to the user
+    if (gameId && !productIds.includes(gameId)) {
+      return NextResponse.json({ error: 'Game not found or access denied' }, { status: 404 })
     }
 
     // Single optimized query for all metrics
     const allMetrics = await prisma.metric.groupBy({
       by: ['type'],
       where: {
-        gameId: { in: productIds }
+        gameId: { in: targetProductIds }
       },
       _count: {
         type: true
@@ -46,12 +60,14 @@ export async function GET(request: NextRequest) {
     })
 
     // Process metrics into categories
-    const internalClicks = allMetrics.filter(m => m.type === 'INTERNAL')
+    const internalClicks = allMetrics.filter(m => 
+      ['INTERNAL', 'view'].includes(m.type)
+    )
     const externalClicks = allMetrics.filter(m => 
-      ['STORE', 'PRE_REGISTER', 'DISCORD', 'WEBSITE', 'TIKTOK', 'STEAM'].includes(m.type)
+      ['IOS', 'ANDROID', 'STORE', 'PRE_REGISTER', 'DISCORD', 'WEBSITE', 'TIKTOK', 'STEAM'].includes(m.type)
     )
     const clicksByPlatform = allMetrics.filter(m => 
-      ['APPLE', 'ANDROID', 'STEAM', 'WEB', 'DISCORD', 'TIKTOK'].includes(m.type)
+      ['IOS', 'ANDROID', 'STORE', 'PRE_REGISTER', 'DISCORD', 'WEBSITE', 'TIKTOK', 'STEAM'].includes(m.type)
     )
 
     // 4. Clicks Over Time by Category (last 30 days)
@@ -61,12 +77,12 @@ export async function GET(request: NextRequest) {
     const clicksOverTimeByCategory = await prisma.metric.groupBy({
       by: ['timestamp', 'type'],
       where: {
-        gameId: { in: productIds },
+        gameId: { in: targetProductIds },
         timestamp: {
           gte: thirtyDaysAgo
         },
         type: {
-          in: ['INTERNAL', 'STORE', 'PRE_REGISTER', 'DISCORD', 'WEBSITE', 'TIKTOK', 'STEAM']
+          in: ['INTERNAL', 'view', 'IOS', 'ANDROID', 'STORE', 'PRE_REGISTER', 'DISCORD', 'WEBSITE', 'TIKTOK', 'STEAM']
         }
       },
       _count: {
@@ -78,7 +94,7 @@ export async function GET(request: NextRequest) {
     const votesByGame = await prisma.vote.groupBy({
       by: ['productId'],
       where: {
-        productId: { in: productIds }
+        productId: { in: targetProductIds }
       },
       _count: {
         productId: true
@@ -88,7 +104,7 @@ export async function GET(request: NextRequest) {
     const followsByGame = await prisma.follow.groupBy({
       by: ['gameId'],
       where: {
-        gameId: { in: productIds }
+        gameId: { in: targetProductIds }
       },
       _count: {
         gameId: true
@@ -97,29 +113,31 @@ export async function GET(request: NextRequest) {
 
     // Get product names for votes vs follows
     const productNames = await prisma.product.findMany({
-      where: { id: { in: productIds } },
+      where: { id: { in: targetProductIds } },
       select: { id: true, title: true }
     })
 
     const productNameMap = new Map(productNames.map(p => [p.id, p.title]))
 
-    // Process internal clicks
-    const processedInternalClicks = internalClicks.map(item => ({
+    // Process internal clicks - aggregate INTERNAL and view types
+    const totalInternalClicks = internalClicks.reduce((sum, item) => sum + item._count.type, 0)
+    const processedInternalClicks = totalInternalClicks > 0 ? [{
       name: 'Internal',
-      value: item._count.type,
+      value: totalInternalClicks,
       color: '#8B5CF6' // Purple for internal
-    }))
+    }] : []
 
-    // Process external clicks
-    const processedExternalClicks = externalClicks.map(item => ({
-      name: item.type,
-      value: item._count.type,
-      color: getExternalClickColor(item.type)
-    }))
+    // Process external clicks - aggregate all external types into one "External" category
+    const totalExternalClicks = externalClicks.reduce((sum, item) => sum + item._count.type, 0)
+    const processedExternalClicks = totalExternalClicks > 0 ? [{
+      name: 'External',
+      value: totalExternalClicks,
+      color: '#10B981' // Green for external
+    }] : []
 
-    // Process clicks by platform
+    // Process clicks by platform with correct mapping
     const processedClicksByPlatform = clicksByPlatform.map(item => ({
-      name: item.type,
+      name: getPlatformDisplayName(item.type),
       value: item._count.type,
       color: getPlatformColor(item.type)
     }))
@@ -145,9 +163,9 @@ export async function GET(request: NextRequest) {
       const existing = clicksByDateAndCategory.get(dateStr)
       
       if (existing) {
-        if (item.type === 'INTERNAL') {
+        if (['INTERNAL', 'view'].includes(item.type)) {
           existing.internal += item._count.timestamp
-        } else {
+        } else if (['IOS', 'ANDROID', 'STORE', 'PRE_REGISTER', 'DISCORD', 'WEBSITE', 'TIKTOK', 'STEAM'].includes(item.type)) {
           existing.external += item._count.timestamp
         }
       }
@@ -160,8 +178,8 @@ export async function GET(request: NextRequest) {
     // Process votes vs follows
     const votesVsFollowsMap = new Map()
     
-    // Initialize with all products
-    productIds.forEach(productId => {
+    // Initialize with all target products
+    targetProductIds.forEach(productId => {
       votesVsFollowsMap.set(productId, {
         name: productNameMap.get(productId) || 'Unknown',
         votes: 0,
@@ -203,30 +221,30 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function getPlatformColor(platform: string): string {
-  const colors: { [key: string]: string } = {
-    'IOS': '#10B981',
-    'ANDROID': '#3B82F6',
-    'WEB': '#8B5CF6',
-    'STEAM': '#F59E0B',
-    'APPLE': '#10B981',
-    'GOOGLE': '#3B82F6',
-    'MICROSOFT': '#8B5CF6',
-    'NINTENDO': '#EF4444',
-    'PLAYSTATION': '#6366F1',
-    'XBOX': '#10B981'
+function getPlatformDisplayName(type: string): string {
+  const displayNames: { [key: string]: string } = {
+    'IOS': 'App Store',
+    'ANDROID': 'Google Play',
+    'STORE': 'App Store',
+    'PRE_REGISTER': 'Pre-register',
+    'DISCORD': 'Discord',
+    'WEBSITE': 'Website',
+    'TIKTOK': 'TikTok',
+    'STEAM': 'Steam'
   }
-  return colors[platform.toUpperCase()] || '#6B7280'
+  return displayNames[type.toUpperCase()] || type
 }
 
-function getExternalClickColor(type: string): string {
+function getPlatformColor(platform: string): string {
   const colors: { [key: string]: string } = {
-    'STORE': '#10B981',      // Green for store
-    'PRE_REGISTER': '#3B82F6', // Blue for pre-register
-    'DISCORD': '#8B5CF6',     // Purple for Discord
-    'WEBSITE': '#F59E0B',     // Orange for website
-    'TIKTOK': '#EF4444',      // Red for TikTok
-    'STEAM': '#6366F1'        // Indigo for Steam
+    'IOS': '#10B981',        // Green for App Store
+    'ANDROID': '#3B82F6',    // Blue for Google Play
+    'STORE': '#10B981',      // Green for App Store
+    'PRE_REGISTER': '#8B5CF6', // Purple for Pre-register
+    'DISCORD': '#8B5CF6',    // Purple for Discord
+    'WEBSITE': '#F59E0B',    // Orange for Website
+    'TIKTOK': '#EF4444',    // Red for TikTok
+    'STEAM': '#6366F1'       // Indigo for Steam
   }
-  return colors[type.toUpperCase()] || '#6B7280'
+  return colors[platform.toUpperCase()] || '#6B7280'
 }

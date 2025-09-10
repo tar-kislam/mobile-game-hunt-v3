@@ -258,15 +258,19 @@ const PillNav = ({
           <Link
             href="/"
             aria-label="Home"
-            className="rounded-full p-2 inline-flex items-center justify-center overflow-hidden border border-white/10"
+            className="rounded-full p-1 inline-flex items-center justify-center overflow-hidden border border-white/10 hover:scale-105 hover:drop-shadow-[0_0_8px_rgba(128,90,213,0.8)] transition-all duration-200"
             style={{
               width: 'var(--nav-h)',
               height: 'var(--nav-h)',
               background: 'var(--base)'
             }}
           >
-            <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs">MG</span>
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-neutral-900 p-0.5 drop-shadow-lg">
+              <img
+                src="/logo.png"
+                alt="Mobile Game Hunt Logo"
+                className="w-full h-full object-contain rounded-md"
+              />
             </div>
           </Link>
 
@@ -351,15 +355,19 @@ const PillNav = ({
           aria-label="Home"
           onMouseEnter={handleLogoEnter}
           ref={logoRef}
-          className="rounded-full p-2 inline-flex items-center justify-center overflow-hidden border border-white/10"
+          className="rounded-full p-1 inline-flex items-center justify-center overflow-hidden border border-white/10 hover:scale-105 hover:drop-shadow-[0_0_8px_rgba(128,90,213,0.8)] transition-all duration-200"
           style={{
             width: 'var(--nav-h)',
             height: 'var(--nav-h)',
             background: 'var(--base)'
           }}
         >
-          <div ref={logoImgRef} className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-xs">MG</span>
+          <div ref={logoImgRef} className="w-7 h-7 rounded-lg flex items-center justify-center bg-neutral-900 p-0.5 drop-shadow-lg">
+            <img
+              src="/logo.png"
+              alt="Mobile Game Hunt Logo"
+              className="w-full h-full object-contain rounded-md"
+            />
           </div>
         </Link>
 

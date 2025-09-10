@@ -11,21 +11,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { Eye, TrendingUp, BarChart3, PieChart } from 'lucide-react';
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as ReTooltip,
-  PieChart as RePieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-} from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { DonutWithText, BarCompare, LineOverTime } from '@/components/dashboard/charts';
+import useSWR from 'swr';
+
+// Fetcher function for SWR
+const fetcher = (url: string) => fetch(url, { credentials: 'include' }).then((res) => {
+  if (!res.ok) throw new Error('Failed to fetch data');
+  return res.json();
+});
+
 
 type DashboardGame = { id: string; title: string; status?: string; thumbnail?: string | null };
 
@@ -35,8 +29,10 @@ type GameAnalytics = {
   charts: {
     votesOverTime: Array<{ date: string; votes: number }>;
     followersGrowth: Array<{ date: string; followers: number }>;
-    clicksByType: Array<{ type: string; value: number; color?: string }>;
-    internalVsExternal: Array<{ type: string; value: number; color?: string }>;
+    clicksByType: Array<{ name: string; value: number; color?: string }>;
+    internalVsExternal: Array<{ name: string; value: number; color?: string }>;
+    votesVsFollows: Array<{ name: string; votes: number; follows: number }>;
+    clicksOverTime: Array<{ date: string; internal: number; external: number }>;
     geoStats: Array<{ country: string; count: number }>;
     languagePreferences: Array<{ type: string; value: number; color?: string }>;
     trafficTimeline: Array<{ hour: string; traffic: number }>;
@@ -49,9 +45,22 @@ export default function DashboardPage() {
 
   const [games, setGames] = useState<DashboardGame[]>([]);
   const [selectedGameId, setSelectedGameId] = useState<string>('');
-  const [analytics, setAnalytics] = useState<GameAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
-  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+  // SWR hook for analytics data with real-time updates
+  const { data: analyticsData, error: analyticsError, isLoading: analyticsLoading } = useSWR(
+    selectedGameId ? `/api/dashboard/analytics?gameId=${selectedGameId}` : null,
+    fetcher,
+    {
+      refreshInterval: 15000, // Refresh every 15 seconds
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      onError: (error) => {
+        console.error('Analytics fetch error:', error);
+        toast.error('Failed to load analytics');
+      }
+    }
+  );
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -59,11 +68,6 @@ export default function DashboardPage() {
     }
   }, [status]);
 
-  useEffect(() => {
-    if (selectedGameId) {
-      void loadAnalytics(selectedGameId);
-    }
-  }, [selectedGameId]);
 
   const loadGames = async () => {
     try {
@@ -81,19 +85,47 @@ export default function DashboardPage() {
     }
   };
 
-  const loadAnalytics = async (gameId: string) => {
-    try {
-      setAnalyticsLoading(true);
-      const res = await fetch(`/api/analytics/${gameId}`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch analytics');
-      const data: GameAnalytics = await res.json();
-      setAnalytics(data);
-    } catch (e) {
-      toast.error('Failed to load analytics');
-    } finally {
-      setAnalyticsLoading(false);
-    }
-  };
+  // Transform analytics data
+  const analytics = useMemo(() => {
+    if (!analyticsData || !selectedGameId) return null;
+    
+    return {
+      game: { id: selectedGameId, title: games.find(g => g.id === selectedGameId)?.title || 'Unknown Game' },
+      overview: {
+        totalViews: 0, // Not provided by current API
+        totalVotes: analyticsData.votesVsFollows?.reduce((sum: number, item: any) => sum + item.votes, 0) || 0,
+        totalFollows: analyticsData.votesVsFollows?.reduce((sum: number, item: any) => sum + item.follows, 0) || 0,
+        totalClicks: analyticsData.clicksByPlatform?.reduce((sum: number, item: any) => sum + item.value, 0) || 0,
+        engagementRate: 0 // Calculate if needed
+      },
+      charts: {
+        votesOverTime: [], // Not provided by current API
+        followersGrowth: [], // Not provided by current API
+        clicksByType: (analyticsData.clicksByPlatform || []).map((item: { name: string; value: number; color?: string }) => ({
+          name: item.name,
+          value: item.value,
+          color: item.color
+        })),
+        internalVsExternal: [
+          ...(analyticsData.internalClicks || []).map((item: { name: string; value: number; color?: string }) => ({
+            name: item.name,
+            value: item.value,
+            color: item.color
+          })),
+          ...(analyticsData.externalClicks || []).map((item: { name: string; value: number; color?: string }) => ({
+            name: item.name,
+            value: item.value,
+            color: item.color
+          }))
+        ],
+        geoStats: [], // Not provided by current API
+        languagePreferences: [], // Not provided by current API
+        trafficTimeline: [], // Not provided by current API
+        votesVsFollows: analyticsData.votesVsFollows || [],
+        clicksOverTime: analyticsData.clicksOverTime || []
+      }
+    };
+  }, [analyticsData, selectedGameId, games]);
 
   const overview = analytics?.overview;
   const showAnalytics = !!(analytics && selectedGameId);
@@ -262,116 +294,46 @@ export default function DashboardPage() {
 
             {/* Interactions */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              {/* Votes Over Time */}
-              <Card className="bg-gray-800/50 border-purple-500/20">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2"><TrendingUp className="w-5 h-5 text-red-400" />Votes Over Time</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {analyticsLoading ? (
-                    <Skeleton className="h-64 w-full bg-gray-600" />
-                  ) : (
-                    <ChartContainer config={{ votes: { label: 'Votes' } }} className="h-[300px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={analytics!.charts.votesOverTime}>
-                          <defs>
-                            <linearGradient id="colorVotes" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8} />
-                              <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1} />
-                            </linearGradient>
-                          </defs>
-                          <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
-                          <YAxis stroke="#6b7280" fontSize={12} />
-                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                          <ReTooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #6b7280', borderRadius: 8, color: '#f9fafb' }} />
-                          <Area type="monotone" dataKey="votes" stroke="#ef4444" fill="url(#colorVotes)" strokeWidth={2} />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
-                  )}
-                </CardContent>
-              </Card>
+              {/* Clicks Over Time */}
+              <LineOverTime
+                title="Clicks Over Time"
+                data={analytics?.charts.clicksOverTime || []}
+                isLoading={analyticsLoading}
+                error={analyticsError ? 'Failed to load data' : undefined}
+              />
 
-              {/* Followers Growth */}
-              <Card className="bg-gray-800/50 border-purple-500/20">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2"><BarChart3 className="w-5 h-5 text-green-400" />Followers Growth</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {analyticsLoading ? (
-                    <Skeleton className="h-64 w-full bg-gray-600" />
-                  ) : (
-                    <ChartContainer config={{ followers: { label: 'Followers' } }} className="h-[300px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={analytics!.charts.followersGrowth}>
-                          <defs>
-                            <linearGradient id="colorFollowers" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
-                              <stop offset="95%" stopColor="#10b981" stopOpacity={0.1} />
-                            </linearGradient>
-                          </defs>
-                          <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
-                          <YAxis stroke="#6b7280" fontSize={12} />
-                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                          <ReTooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #6b7280', borderRadius: 8, color: '#f9fafb' }} />
-                          <Area type="monotone" dataKey="followers" stroke="#10b981" fill="url(#colorFollowers)" strokeWidth={2} />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
-                  )}
-                </CardContent>
-              </Card>
+              {/* Votes vs Follows */}
+              <BarCompare
+                title="Votes vs Follows"
+                data={analytics?.charts.votesVsFollows || []}
+                isLoading={analyticsLoading}
+                error={analyticsError ? 'Failed to load data' : undefined}
+              />
             </div>
 
             {/* Clicks Breakdown */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              <Card className="bg-gray-800/50 border-purple-500/20">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2"><PieChart className="w-5 h-5 text-purple-400" />Clicks by Type</CardTitle>
-              </CardHeader>
-              <CardContent>
-                  {analyticsLoading ? (
-                    <Skeleton className="h-64 w-full bg-gray-600" />
-                  ) : (
-                    <div className="mx-auto aspect-square max-h-[250px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RePieChart>
-                          <Pie data={analytics!.charts.clicksByType} dataKey="value" nameKey="type" innerRadius={60} outerRadius={100} paddingAngle={5}>
-                            {analytics!.charts.clicksByType.map((d, i) => (
-                              <Cell key={i} fill={d.color || ['#8b5cf6', '#10b981', '#ef4444', '#06b6d4', '#f59e0b'][i % 5]} />
-                            ))}
-                          </Pie>
-                          <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                        </RePieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              {/* Clicks by Type */}
+              <DonutWithText
+                title="Clicks by Type"
+                data={analytics?.charts.clicksByType || []}
+                totalLabel="Clicks"
+                isLoading={analyticsLoading}
+                error={analyticsError ? 'Failed to load data' : undefined}
+                trendingText="Trending up by 12% this week"
+                trendingColor="green"
+              />
 
-              <Card className="bg-gray-800/50 border-purple-500/20">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2"><PieChart className="w-5 h-5 text-cyan-400" />Internal vs External</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {analyticsLoading ? (
-                    <Skeleton className="h-64 w-full bg-gray-600" />
-                  ) : (
-                    <div className="mx-auto aspect-square max-h-[250px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RePieChart>
-                          <Pie data={analytics!.charts.internalVsExternal} dataKey="value" nameKey="type" innerRadius={60} outerRadius={100} paddingAngle={5}>
-                            {analytics!.charts.internalVsExternal.map((d, i) => (
-                              <Cell key={i} fill={d.color || ['#06b6d4', '#f59e0b'][i % 2]} />
-                            ))}
-                          </Pie>
-                          <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                        </RePieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              {/* Internal vs External */}
+              <DonutWithText
+                title="Internal vs External"
+                data={analytics?.charts.internalVsExternal || []}
+                totalLabel="Interactions"
+                isLoading={analyticsLoading}
+                error={analyticsError ? 'Failed to load data' : undefined}
+                trendingText="Balanced engagement this week"
+                trendingColor="blue"
+              />
             </div>
 
             {/* Audience Insights */}
@@ -383,27 +345,9 @@ export default function DashboardPage() {
                     <CardTitle className="text-white flex items-center gap-2"><BarChart3 className="w-5 h-5 text-blue-400" />Top Countries</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {analyticsLoading ? (
-                      <Skeleton className="h-64 w-full bg-gray-600" />
-                    ) : (
-                      <ChartContainer config={{ views: { label: 'Views' } }} className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={analytics!.charts.geoStats.slice(0, 8)}>
-                            <XAxis dataKey="country" stroke="#6b7280" fontSize={12} angle={-45} textAnchor="end" height={80} />
-                            <YAxis stroke="#6b7280" fontSize={12} />
-                            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                            <ReTooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #6b7280', borderRadius: 8, color: '#f9fafb' }} />
-                            <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                              {analytics!.charts.geoStats.slice(0, 8).map((entry, index, arr) => {
-                                const top = Math.max(...arr.map((x) => x.count));
-                                const isTop = entry.count === top;
-                                return <Cell key={index} fill={isTop ? '#60a5fa' : '#3b82f6'} />;
-                              })}
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </ChartContainer>
-                    )}
+                    <div className="text-center text-gray-400 py-8">
+                      <p className="text-sm">Geographic data not available</p>
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -412,19 +356,9 @@ export default function DashboardPage() {
                     <CardTitle className="text-white flex items-center gap-2"><PieChart className="w-5 h-5 text-yellow-400" />Language Preferences</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {analyticsLoading ? (
-                      <Skeleton className="h-64 w-full bg-gray-600" />
-                    ) : (
-                      <ChartContainer config={{ languages: { label: 'Languages' } }} className="mx-auto aspect-square max-h-[250px]">
-                        <RePieChart>
-                          <Pie data={analytics!.charts.languagePreferences} dataKey="value" nameKey="type" innerRadius={60} outerRadius={100} paddingAngle={5}>
-                            {analytics!.charts.languagePreferences.map((d, i) => (
-                              <Cell key={i} fill={d.color || ['#f59e0b', '#10b981', '#8b5cf6', '#06b6d4'][i % 4]} />
-                            ))}
-                          </Pie>
-                        </RePieChart>
-                      </ChartContainer>
-                    )}
+                    <div className="text-center text-gray-400 py-8">
+                      <p className="text-sm">Language data not available</p>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -461,8 +395,8 @@ export default function DashboardPage() {
                   )}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
         </div>
       </div>
     </div>

@@ -132,7 +132,7 @@ async function main() {
   })
 
   // Create comments
-  await prisma.comment.createMany({
+  await prisma.productComment.createMany({
     data: [
       {
         content: 'This game is amazing! I love the strategy elements.',

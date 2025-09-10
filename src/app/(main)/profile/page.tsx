@@ -21,13 +21,15 @@ import {
 } from "lucide-react"
 import { Badge as UIBadge } from '@/components/ui/badge'
 import { useEffect, useRef, useState } from "react"
+import useSWR from 'swr'
 import MagicBento from '@/components/ui/magic-bento'
+import { format } from "date-fns"
 
-// Mock data - In a real app, this would come from your database
+// Mock defaults, will be overridden by live data
 const userStats = {
-  gamesSubmitted: 12,
-  totalVotes: 245,
-  commentsReceived: 89,
+  gamesSubmitted: 0,
+  totalVotes: 0,
+  commentsReceived: 0,
   joinDate: "January 2024"
 }
 
@@ -123,6 +125,61 @@ const userComments = [
 
 export default function ProfilePage() {
   const { data: session, status } = useSession()
+  const fetcher = (url: string) => fetch(url).then(r => r.json())
+  const { data: statsData } = useSWR(session?.user?.id ? '/api/user/stats' : null, fetcher, {
+    refreshInterval: 5000,
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true
+  })
+  const { data: gamesData } = useSWR(session?.user?.id ? '/api/user/games' : null, fetcher, {
+    refreshInterval: 5000,
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true
+  })
+  const { data: votesData } = useSWR(session?.user?.id ? '/api/user/votes' : null, fetcher, {
+    refreshInterval: 5000,
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true
+  })
+  const { data: commentsData } = useSWR(session?.user?.id ? '/api/user/comments' : null, fetcher, {
+    refreshInterval: 5000,
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true
+  })
+  const { data: userData } = useSWR(session?.user?.email ? `/api/user?email=${encodeURIComponent(session.user.email)}` : null, fetcher)
+
+  // Format joined date
+  const getJoinedDate = () => {
+    if (userData?.createdAt) {
+      try {
+        return format(new Date(userData.createdAt), "MMMM yyyy")
+      } catch (error) {
+        console.error('Error formatting date:', error)
+        return "Recently"
+      }
+    }
+    return "Recently"
+  }
+
+  // Adapt stats for UI
+  const liveStats = {
+    totalGames: statsData?.totalGames ?? userStats.gamesSubmitted,
+    totalVotes: statsData?.totalVotes ?? userStats.totalVotes,
+    totalComments: statsData?.totalComments ?? userStats.commentsReceived,
+    ranking: statsData?.ranking ?? 0,
+  }
+
+  // Adapt games to UI expectations without changing layout
+  const liveGames = Array.isArray(gamesData?.games) ? gamesData.games.map((g: any) => ({
+    id: g.id,
+    title: g.title,
+    image: g.thumbnail || g.image || (g.images?.[0] ?? '/placeholder.png'),
+    description: g.description || '',
+    platforms: g.platforms || [],
+    maker: { name: session?.user?.name || 'You' },
+    votes: g._count?.votes ?? 0,
+    comments: g._count?.comments ?? 0,
+  })) : []
   const [userBadges, setUserBadges] = useState<string[]>([])
   const [myPosts, setMyPosts] = useState<any[]>([])
   const [loadingPosts, setLoadingPosts] = useState<boolean>(false)
@@ -219,7 +276,7 @@ export default function ProfilePage() {
       </div>
     )
   }
-
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]">
       <div className="container mx-auto px-4 py-8">
@@ -240,7 +297,7 @@ export default function ProfilePage() {
                     <div className="space-y-6">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-4">
-                          <Avatar className="h-14 w-14 ring-2 ring-purple-500/40">
+                          <Avatar className="h-16 w-16 ring-2 ring-purple-500/40 shadow-lg">
                             <AvatarImage src={session?.user?.image || ''} />
                             <AvatarFallback className="bg-purple-600 text-white">
                               {session?.user?.name?.[0]?.toUpperCase() || 'U'}
@@ -250,7 +307,7 @@ export default function ProfilePage() {
                             <div className="text-lg font-semibold">{session?.user?.name}</div>
                             <div className="text-sm text-muted-foreground">{session?.user?.email}</div>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                              <CalendarIcon className="h-3 w-3" /> Joined {userStats.joinDate}
+                              <CalendarIcon className="h-3 w-3" /> Joined {getJoinedDate()}
                             </div>
                           </div>
                         </div>
@@ -261,22 +318,22 @@ export default function ProfilePage() {
                       <div className="grid grid-cols-2 gap-4 mt-4 md:mt-8">
                         <div className="rounded-xl border border-white/10 bg-gray-900/60 p-4 text-center shadow-inner">
                           <GamepadIcon className="h-5 w-5 mx-auto mb-1 text-primary" />
-                          <div className="text-xl font-bold">{userStats.gamesSubmitted}</div>
+                          <div className="text-xl font-bold">{liveStats.totalGames}</div>
                           <div className="text-xs text-muted-foreground">Games</div>
                         </div>
                         <div className="rounded-xl border border-white/10 bg-gray-900/60 p-4 text-center shadow-inner">
                           <ArrowUpIcon className="h-5 w-5 mx-auto mb-1 text-green-500" />
-                          <div className="text-xl font-bold">{userStats.totalVotes}</div>
+                          <div className="text-xl font-bold">{liveStats.totalVotes}</div>
                           <div className="text-xs text-muted-foreground">Votes</div>
                         </div>
                         <div className="rounded-xl border border-white/10 bg-gray-900/60 p-4 text-center shadow-inner">
                           <MessageCircleIcon className="h-5 w-5 mx-auto mb-1 text-blue-500" />
-                          <div className="text-xl font-bold">{userStats.commentsReceived}</div>
+                          <div className="text-xl font-bold">{liveStats.totalComments}</div>
                           <div className="text-xs text-muted-foreground">Comments</div>
                         </div>
                         <div className="rounded-xl border border-white/10 bg-gray-900/60 p-4 text-center shadow-inner">
                           <TrophyIcon className="h-5 w-5 mx-auto mb-1 text-yellow-400" />
-                          <div className="text-xl font-bold">#{Math.floor(Math.random() * 100) + 1}</div>
+                          <div className="text-xl font-bold">#{liveStats.ranking || 0}</div>
                           <div className="text-xs text-muted-foreground">Ranking</div>
                         </div>
                       </div>
@@ -337,7 +394,7 @@ export default function ProfilePage() {
                 enableStars
                 enableBorderGlow
                 glowColor="132, 0, 255"
-                items={userGames.map((game) => ({
+                items={(liveGames.length ? liveGames : userGames).map((game: any) => ({
                   id: game.id,
                   children: (
                     <div className="flex gap-4">
@@ -355,7 +412,7 @@ export default function ProfilePage() {
                         </div>
                         <div className="flex items-center gap-2 mt-2">
                           <Badge variant="secondary" className="rounded-2xl text-xs">
-                            {game.platforms?.map(p => p.toUpperCase()).join(', ') || 'No platforms listed'}
+                            {game.platforms?.map((p: string) => p.toUpperCase()).join(', ') || 'No platforms listed'}
                           </Badge>
                           <span className="text-xs text-muted-foreground">by {game.maker.name}</span>
                         </div>
@@ -426,69 +483,77 @@ export default function ProfilePage() {
             <TabsContent value="votes" className="space-y-4">
               <h2 className="text-xl font-semibold">Games I've Voted For</h2>
               
-              <div className="space-y-4">
-                {userVotes.map((vote) => (
-                  <Card key={vote.id} className="rounded-2xl shadow-soft">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
-                        <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-muted">
-                          <img 
-                            src={vote.game.maker.avatar || ""} 
-                            alt={vote.game.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-medium text-sm">{vote.game.title}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {vote.game.platforms?.map(p => p.toUpperCase()).join(', ') || 'No platforms listed'}
-                              </div>
-                            </div>
-                            <ArrowUpIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+              {(!votesData || votesData.votes?.length === 0) ? (
+                <Card className="rounded-2xl shadow-soft"><CardContent className="p-6 text-center text-muted-foreground">You haven't voted yet.</CardContent></Card>
+              ) : (
+                <MagicBento
+                  className="md:grid-cols-2"
+                  enableTilt
+                  enableSpotlight
+                  enableStars
+                  enableBorderGlow
+                  glowColor="132, 0, 255"
+                  items={votesData.votes.map((vote: any) => ({
+                    id: `vote-${vote.gameId}`,
+                    className: 'col-span-1',
+                    children: (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-4">
+                          <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-muted">
+                            <img src={vote.coverImage} alt={vote.title} className="w-full h-full object-cover" />
                           </div>
+                          <div className="flex-1">
+                            <div className="font-medium text-sm">{vote.title}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {vote.platforms?.map((p:string) => p.toUpperCase()).join(', ') || 'No platforms listed'}
+                            </div>
+                          </div>
+                          <ArrowUpIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                    )
+                  }))}
+                />
+              )}
             </TabsContent>
             
             <TabsContent value="comments" className="space-y-4">
               <h2 className="text-xl font-semibold">My Comments</h2>
               
-              <div className="space-y-4">
-                {userComments.map((comment) => (
-                  <Card key={comment.id} className="rounded-2xl shadow-soft">
-                    <CardContent className="p-4">
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Link 
-                            href={`/product/${comment.game.id}`}
-                            className="font-medium hover:underline"
-                          >
-                            {comment.game.title}
-                          </Link>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
-                            <div className="flex items-center gap-1">
-                              <ArrowUpIcon className="h-3 w-3" />
-                              {comment.votes}
+              {(!commentsData || commentsData.comments?.length === 0) ? (
+                <Card className="rounded-2xl shadow-soft"><CardContent className="p-6 text-center text-muted-foreground">No comments yet.</CardContent></Card>
+              ) : (
+                <MagicBento
+                  className="md:grid-cols-2"
+                  enableTilt
+                  enableSpotlight
+                  enableStars
+                  enableBorderGlow
+                  glowColor="132, 0, 255"
+                  items={commentsData.comments.map((item: any) => ({
+                    id: `comment-${item.gameId}`,
+                    className: 'col-span-1',
+                    children: (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-4">
+                          <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-muted">
+                            <img src={item.coverImage} alt={item.title} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <Link href={`/product/${item.gameId}`} className="font-medium hover:underline text-sm">{item.title}</Link>
+                                <div className="text-xs text-muted-foreground">{item.platforms?.map((p:string) => p.toUpperCase()).join(', ') || 'No platforms listed'}</div>
+                              </div>
+                              <Badge variant="secondary" className="rounded-2xl text-xs">{item.commentCount} comments</Badge>
                             </div>
                           </div>
                         </div>
-                        
-                        <p className="text-sm text-muted-foreground">
-                          {comment.content}
-                        </p>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                    )
+                  }))}
+                />
+              )}
             </TabsContent>
 
             {/* My Posts */}

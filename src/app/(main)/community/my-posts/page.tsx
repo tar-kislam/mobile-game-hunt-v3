@@ -3,8 +3,8 @@ import { authOptions } from '@/lib/auth'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CommunityFeed } from '@/components/community/community-feed'
-import { TrendingTopics } from '@/components/community/trending-topics'
 import { CommunitySidebar } from '@/components/community/community-sidebar'
+import { UserStatsCard } from '@/components/community/user-stats-card'
 import { prisma } from '@/lib/prisma'
 
 async function fetchUserPostsDirect(userId: string) {
@@ -67,7 +67,7 @@ export default async function MyPostsPage() {
           )}
         </main>
         <aside className="lg:col-span-1">
-          <TrendingTopics topics={[]} />
+          {userId && <UserStatsCard userId={userId} />}
         </aside>
       </div>
     </div>

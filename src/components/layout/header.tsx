@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -37,9 +38,15 @@ export function Header() {
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo - Hidden on desktop when using PillNav */}
-          <Link href="/" className="flex md:hidden items-center space-x-2">
-            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">MG</span>
+          <Link href="/" className="flex md:hidden items-center space-x-2 group">
+            <div className="bg-neutral-900 p-1 rounded-lg drop-shadow-lg group-hover:scale-105 group-hover:drop-shadow-[0_0_8px_rgba(128,90,213,0.8)] transition-all duration-200">
+              <Image
+                src="/logo.png"
+                alt="Mobile Game Hunt Logo"
+                width={40}
+                height={40}
+                className="rounded-md"
+              />
             </div>
             <span className="font-bold text-xl">Mobile Game Hunt</span>
           </Link>

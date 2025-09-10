@@ -19,10 +19,13 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         name: true,
+        username: true,
         email: true,
         image: true,
         role: true,
         createdAt: true,
+        notificationsEnabled: true,
+        marketingOptIn: true,
       }
     })
 

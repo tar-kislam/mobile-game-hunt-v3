@@ -40,16 +40,26 @@ export default function SignUpPage() {
     }
 
     try {
-      // Here you would typically make an API call to create the user
-      // For now, we'll simulate the process
-      console.log("Creating user:", { 
-        name: formData.name, 
-        email: formData.email 
+      // Create user via API
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        }),
       })
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || 'Failed to create account')
+        return
+      }
+
       // After successful registration, sign them in
       const result = await signIn("credentials", {
         email: formData.email,

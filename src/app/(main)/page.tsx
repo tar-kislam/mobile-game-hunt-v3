@@ -10,10 +10,15 @@ import { ArrowUpIcon, MessageCircleIcon, ExternalLinkIcon, TrendingUpIcon } from
 import { EnhancedSubmitGameModal } from "@/components/games/enhanced-submit-game-modal"
 import { GameCard } from "@/components/games/game-card"
 import { TapTapGameCardNoScale } from "@/components/games/taptap-game-card-no-scale"
-import { FeaturedGamesCarousel } from "@/components/games/featured-games-carousel"
+import { EpicFeaturedGames } from "@/components/games/epic-featured-games"
 import { TiltedGameCard } from "@/components/games/tilted-game-card"
 import { CTASection } from "@/components/sections/cta-section"
+import { NewsletterModal } from "@/components/modals/newsletter-modal"
 import { toast } from "sonner"
+import useSWR from 'swr'
+
+// Fetcher function for SWR
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 // Mock data - In a real app, this would come from your database
 const featuredProduct = {
@@ -62,13 +67,6 @@ const dailyProducts = [
     platforms: ["ios", "android", "web"],
     maker: { name: "InnerSloth", avatar: "" }
   }
-]
-
-const trendingGames = [
-  { name: "Subway Surfers", platforms: ["ios", "android"], votes: 245 },
-  { name: "Candy Crush Saga", platforms: ["ios", "android", "web"], votes: 198 },
-  { name: "PUBG Mobile", platforms: ["ios", "android"], votes: 187 },
-  { name: "Minecraft", platforms: ["ios", "android", "web"], votes: 156 },
 ]
 
 function ProductCard({ product, rank }: { product: typeof dailyProducts[0], rank?: number }) {
@@ -165,6 +163,11 @@ export default function HomePage() {
     rank: number
   }[]>([])
   const [isLoadingPreview, setIsLoadingPreview] = useState(false)
+  const [isNewsletterModalOpen, setIsNewsletterModalOpen] = useState(false)
+
+  // Fetch sidebar data using SWR
+  const { data: topRatedData, error: topRatedError } = useSWR('/api/sidebar/top-rated', fetcher)
+  const { data: trendingData, error: trendingError } = useSWR('/api/sidebar/trending', fetcher)
 
   useEffect(() => {
     fetchGames()
@@ -259,7 +262,7 @@ export default function HomePage() {
           <div className="lg:col-span-3 space-y-8">
             {/* Featured Games Carousel */}
             {!isLoading && games.length > 0 && (
-              <FeaturedGamesCarousel 
+              <EpicFeaturedGames 
                 games={games} 
                 onGameClick={(gameId) => {
                   // Navigate to game detail page (handled by Link in component)
@@ -363,18 +366,18 @@ export default function HomePage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Leaderboard Preview */}
+            {/* Top Rated Games */}
             <Card className="rounded-2xl shadow-lg border-white/10">
               <CardHeader className="p-4 pb-2">
                 <CardTitle className="flex items-center justify-between">
                   <span>Top Rated Games</span>
                   <Button variant="ghost" size="sm" asChild className="h-auto py-0 px-2 text-xs">
-                    <Link href="/leaderboard">View all</Link>
+                    <Link href="/products?filter=top-rated">View all</Link>
                   </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 pt-0">
-                {isLoadingPreview ? (
+                {!topRatedData ? (
                   <div className="space-y-3">
                     {[1,2,3,4,5].map(i => (
                       <div key={i} className="flex items-center justify-between animate-pulse">
@@ -386,23 +389,28 @@ export default function HomePage() {
                       </div>
                     ))}
                   </div>
-                ) : leaderboardPreview.length === 0 ? (
+                ) : topRatedData.games?.length === 0 ? (
                   <div className="text-sm text-muted-foreground">No data yet</div>
                 ) : (
                   <div className="space-y-3">
-                    {leaderboardPreview.map(item => (
-                      <div key={item.id} className="flex items-center justify-between">
+                    {topRatedData.games?.map((game: any) => (
+                      <div key={game.id} className="flex items-center justify-between">
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="w-6 h-6 rounded-lg bg-muted text-muted-foreground flex items-center justify-center text-xs font-semibold">
-                            {item.rank}
+                            {game.rank}
                           </div>
-                          <Link href={`/product/${item.id}`} className="truncate hover:underline text-sm font-medium">
-                            {item.title}
-                          </Link>
+                          <div className="min-w-0">
+                            <Link href={`/product/${game.id}`} className="truncate hover:underline text-sm font-medium block">
+                              {game.title}
+                            </Link>
+                            <div className="text-xs text-muted-foreground">
+                              {game.platforms?.map((p: string) => p.toUpperCase()).join(', ') || 'No platforms listed'}
+                            </div>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <ArrowUpIcon className="h-3 w-3" />
-                          {item.votes}
+                          {game.votes}
                         </div>
                       </div>
                     ))}
@@ -410,7 +418,7 @@ export default function HomePage() {
                 )}
               </CardContent>
             </Card>
-            {/* Trending Section */}
+            {/* Trending This Week */}
             <Card className="rounded-2xl shadow-lg border-white/10">
               <CardHeader className="p-4">
                 <CardTitle className="flex items-center gap-2">
@@ -419,21 +427,39 @@ export default function HomePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 pt-0">
-                <div className="space-y-3">
-                  {trendingGames.map((game, index) => (
-                    <div key={game.name} className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium text-sm">{game.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {game.platforms?.map(p => p.toUpperCase()).join(', ') || 'No platforms listed'}
+                {!trendingData ? (
+                  <div className="space-y-3">
+                    {[1,2,3,4,5].map(i => (
+                      <div key={i} className="flex items-center justify-between animate-pulse">
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 rounded bg-muted" />
+                          <div className="h-3 w-40 bg-muted rounded" />
+                        </div>
+                        <div className="h-3 w-10 bg-muted rounded" />
+                      </div>
+                    ))}
+                  </div>
+                ) : trendingData.games?.length === 0 ? (
+                  <div className="text-sm text-muted-foreground">No data yet</div>
+                ) : (
+                  <div className="space-y-3">
+                    {trendingData.games?.map((game: any) => (
+                      <div key={game.id} className="flex items-center justify-between">
+                        <div className="min-w-0">
+                          <Link href={`/product/${game.id}`} className="font-medium text-sm hover:underline block">
+                            {game.title}
+                          </Link>
+                          <div className="text-xs text-muted-foreground">
+                            {game.platforms?.map((p: string) => p.toUpperCase()).join(', ') || 'No platforms listed'}
+                          </div>
+                        </div>
+                        <div className="text-xs font-medium text-muted-foreground">
+                          {game.votes} votes
                         </div>
                       </div>
-                      <div className="text-xs font-medium text-muted-foreground">
-                        {game.votes} votes
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -448,7 +474,11 @@ export default function HomePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-4 pt-0">
-                <Button variant="outline" className="w-full rounded-2xl">
+                <Button 
+                  variant="outline" 
+                  className="w-full rounded-2xl"
+                  onClick={() => setIsNewsletterModalOpen(true)}
+                >
                   Subscribe to Newsletter
                 </Button>
               </CardContent>
@@ -511,6 +541,12 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      {/* Newsletter Modal */}
+      <NewsletterModal 
+        isOpen={isNewsletterModalOpen} 
+        onClose={() => setIsNewsletterModalOpen(false)} 
+      />
     </div>
   )
 }

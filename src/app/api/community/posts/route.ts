@@ -117,13 +117,10 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    // Ensure author sees own posts but still respects active tag/filters
-    const whereWithAuthor = session?.user?.id
-      ? { OR: [ { ...where }, { ...where, userId: session.user.id } ] }
-      : where
-
+    // Show all posts to everyone (no published field exists, all posts are public)
+    // Authors can see their own posts, but everyone sees all posts
     let posts = await prisma.post.findMany({
-      where: whereWithAuthor,
+      where: where,
       include: {
         user: {
           select: {
@@ -146,7 +143,7 @@ export async function GET(request: NextRequest) {
 
     // No extra filtering needed; stored normalized
 
-    const total = await prisma.post.count({ where })
+    const total = await prisma.post.count({ where: where })
 
     if (process.env.NODE_ENV !== 'production') {
       console.log(`[COMMUNITY][FEED] user=${session?.user?.id || 'anon'} count=${posts.length} filter=${validatedQuery.filter} hashtag=${validatedQuery.hashtag || ''}`)
