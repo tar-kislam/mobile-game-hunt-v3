@@ -3,7 +3,7 @@ import { z } from 'zod'
 // Post creation schema
 export const createPostSchema = z.object({
   content: z.string().min(1, 'Content is required').max(2000, 'Content too long (max 2000 characters)'),
-  images: z.array(z.string().url()).max(4, 'Maximum 4 images allowed').optional(),
+  images: z.array(z.string()).max(4, 'Maximum 4 images allowed').optional(),
   hashtags: z.array(z.string()).max(10, 'Maximum 10 hashtags allowed').optional(),
 })
 

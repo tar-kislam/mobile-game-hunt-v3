@@ -1,7 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
 import { CommunityFeed } from './community-feed'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -12,6 +14,8 @@ export function CommunityFeedContainer() {
   const [loading, setLoading] = useState<boolean>(true)
   const [sort, setSort] = useState<SortFilter>('latest')
   const [hashtag, setHashtag] = useState<string | undefined>(undefined)
+  const searchParams = useSearchParams()
+  const router = useRouter()
 
   const fetchPosts = useCallback(async () => {
     setLoading(true)
@@ -35,6 +39,12 @@ export function CommunityFeedContainer() {
     fetchPosts()
   }, [fetchPosts])
 
+  // Sync hashtag with URL (?hashtag=...)
+  useEffect(() => {
+    const tag = searchParams?.get('tag') || searchParams?.get('hashtag') || undefined
+    setHashtag(tag || undefined)
+  }, [searchParams])
+
   // Listen for create events and prepend optimistically
   useEffect(() => {
     const handler = (e: any) => {
@@ -51,6 +61,15 @@ export function CommunityFeedContainer() {
 
   const handleTagClick = (tag: string) => {
     setHashtag(tag)
+    const sp = new URLSearchParams(Array.from(searchParams?.entries?.() || []))
+    if (tag) {
+      sp.set('tag', tag)
+      sp.delete('hashtag')
+    } else {
+      sp.delete('tag')
+      sp.delete('hashtag')
+    }
+    router.push(`/community?${sp.toString()}`)
   }
 
   const handleToggleLike = async (postId: string) => {
@@ -74,6 +93,18 @@ export function CommunityFeedContainer() {
           <TabsTrigger value="trending">Trending</TabsTrigger>
         </TabsList>
       </Tabs>
+
+      {hashtag && (
+        <div className="flex items-center justify-between">
+          <Badge variant="secondary" className="bg-blue-500/20 text-blue-300 border-blue-500/30">Showing posts for #{hashtag}</Badge>
+          <button
+            className="text-sm text-muted-foreground hover:text-foreground underline"
+            onClick={() => handleTagClick('')}
+          >
+            Clear
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-4">

@@ -15,14 +15,19 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const validatedData = createPostSchema.parse(body)
-    const { content, images, hashtags } = validatedData
+    let { content, images, hashtags } = validatedData
+
+    // Normalize hashtags: extract from content, strip '#', lowercase, unique
+    const extracted = content.match(/#[A-Za-z0-9_]+/g)?.map(h => h.replace(/^#/, '').toLowerCase()) || []
+    const provided = (hashtags || []).map(h => h.replace(/^#/, '').toLowerCase())
+    const normalizedTags = Array.from(new Set([ ...extracted, ...provided ]))
 
     // Create the post
     const post = await prisma.post.create({
       data: {
         content: content.trim(),
         images: images || null,
-        hashtags: hashtags || null,
+        hashtags: normalizedTags,
         userId: session.user.id,
       },
       include: {
@@ -69,11 +74,12 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     const { searchParams } = new URL(request.url)
+    const tagParam = new URL(request.url).searchParams.get('tag') || undefined
     const parsed = postsQuerySchema.safeParse({
       page: searchParams.get('page') ?? undefined,
       limit: searchParams.get('limit') ?? undefined,
       filter: searchParams.get('filter') ?? undefined,
-      hashtag: searchParams.get('hashtag') ?? undefined,
+      hashtag: searchParams.get('hashtag') ?? tagParam,
     })
     const validatedQuery = parsed.success
       ? parsed.data
@@ -87,9 +93,15 @@ export async function GET(request: NextRequest) {
     let where: any = {}
     
     if (validatedQuery.hashtag) {
-      where.hashtags = {
-        path: '$[*]',
-        array_contains: [validatedQuery.hashtag]
+      const lc = validatedQuery.hashtag.toLowerCase()
+      where = {
+        ...where,
+        OR: [
+          // New normalized storage (array of strings without '#')
+          { hashtags: { array_contains: [lc] } },
+          // Backward-compat for older rows saved with '#'
+          { hashtags: { array_contains: [`#${lc}`] } }
+        ]
       }
     }
 
@@ -105,12 +117,12 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    // Ensure author sees their own posts if any moderation flags are introduced later
+    // Ensure author sees own posts but still respects active tag/filters
     const whereWithAuthor = session?.user?.id
-      ? { OR: [ where, { userId: session.user.id } ] }
+      ? { OR: [ { ...where }, { ...where, userId: session.user.id } ] }
       : where
 
-    const posts = await prisma.post.findMany({
+    let posts = await prisma.post.findMany({
       where: whereWithAuthor,
       include: {
         user: {
@@ -131,6 +143,8 @@ export async function GET(request: NextRequest) {
       skip,
       take: limit
     })
+
+    // No extra filtering needed; stored normalized
 
     const total = await prisma.post.count({ where })
 
