@@ -538,6 +538,33 @@ export default function HomePage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Legal */}
+            <Card className="rounded-2xl shadow-lg border-white/10">
+              <CardHeader className="p-4 pb-2">
+                <CardTitle>Legal</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Link href="/terms">
+                    <Button 
+                      variant="outline" 
+                      className="text-purple-400 hover:text-white border-purple-400/30 hover:border-purple-400 hover:shadow-[0_0_18px_rgba(168,85,247,0.25)] transition-all duration-200"
+                    >
+                      📜 Terms and Conditions
+                    </Button>
+                  </Link>
+                  <Link href="/privacy">
+                    <Button 
+                      variant="outline" 
+                      className="text-purple-400 hover:text-white border-purple-400/30 hover:border-purple-400 hover:shadow-[0_0_18px_rgba(168,85,247,0.25)] transition-all duration-200"
+                    >
+                      🔒 Privacy Policy
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
