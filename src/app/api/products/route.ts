@@ -389,8 +389,8 @@ export async function POST(request: NextRequest) {
 
     // Award XP for game submission with first-time bonus
     try {
-      const xpResult = await addXPWithBonus(user.id, 50, 20, 'submit')
-      console.log(`[XP] Awarded ${xpResult.isFirstTime ? '70' : '50'} XP to user ${user.id} for game submission${xpResult.isFirstTime ? ' (first-time bonus!)' : ''}`)
+      const xpResult = await addXPWithBonus(user.id, 20, 10, 'submit')
+      console.log(`[XP] Awarded ${xpResult.isFirstTime ? '30' : '20'} XP to user ${user.id} for game submission${xpResult.isFirstTime ? ' (first-time bonus!)' : ''}`)
       
       // Check for new badges after XP award
       try {

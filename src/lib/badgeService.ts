@@ -1,7 +1,7 @@
 import { redisClient } from '@/lib/redis'
 import { prisma } from '@/lib/prisma'
 
-type BadgeType = 'EARLY_HUNTER' | 'TOP_VOTER' | 'EXPLORER' | 'BUILDER'
+type BadgeType = 'WISE_OWL' | 'FIRE_DRAGON' | 'CLEVER_FOX' | 'GENTLE_PANDA' | 'SWIFT_PUMA'
 
 type UserBadges = {
   userId: string
@@ -13,39 +13,76 @@ const BADGE_KEY = 'badges:users'
 interface BadgeInfo {
   type: BadgeType
   name: string
-  description: string
+  animal: string
   emoji: string
-  criteria: string
+  description: string
+  story: string
+  requirementType: 'comments' | 'votes' | 'games' | 'likes' | 'follows'
+  requirementValue: number
+  xpReward: number
+  nextMilestone?: string
 }
 
 const BADGE_CONFIG: Record<BadgeType, BadgeInfo> = {
-  EARLY_HUNTER: {
-    type: 'EARLY_HUNTER',
-    name: 'Early Hunter',
-    description: 'One of the first users to join the platform',
-    emoji: '🎯',
-    criteria: 'Joined within first 100 users'
+  WISE_OWL: {
+    type: 'WISE_OWL',
+    name: 'Wise Owl',
+    animal: 'Owl',
+    emoji: '🦉',
+    description: 'Master of wisdom and knowledge sharing',
+    story: 'The Wise Owl has spent countless nights studying the art of meaningful conversation. Known for their insightful comments and thoughtful discussions, they guide others through the vast forest of knowledge.',
+    requirementType: 'comments',
+    requirementValue: 50,
+    xpReward: 100,
+    nextMilestone: 'Reach 100 comments for the Elder Owl badge'
   },
-  TOP_VOTER: {
-    type: 'TOP_VOTER',
-    name: 'Top Voter',
-    description: 'Consistently votes on quality games',
-    emoji: '🏆',
-    criteria: 'Voted on 50+ games'
+  FIRE_DRAGON: {
+    type: 'FIRE_DRAGON',
+    name: 'Fire Dragon',
+    animal: 'Dragon',
+    emoji: '🐉',
+    description: 'Creator of legendary games and adventures',
+    story: 'The Fire Dragon breathes life into incredible gaming experiences. With each game they create, they forge new worlds and adventures that captivate players across the realm.',
+    requirementType: 'games',
+    requirementValue: 10,
+    xpReward: 200,
+    nextMilestone: 'Submit 25 games for the Ancient Dragon badge'
   },
-  EXPLORER: {
-    type: 'EXPLORER',
-    name: 'Explorer',
-    description: 'Discovers and shares new games',
-    emoji: '🧭',
-    criteria: 'Commented on 25+ games'
+  CLEVER_FOX: {
+    type: 'CLEVER_FOX',
+    name: 'Clever Fox',
+    animal: 'Fox',
+    emoji: '🦊',
+    description: 'Sharp-eyed discoverer of hidden gems',
+    story: 'The Clever Fox has an uncanny ability to spot the most promising games in the wild. Their votes help guide the community to the best gaming treasures.',
+    requirementType: 'votes',
+    requirementValue: 100,
+    xpReward: 150,
+    nextMilestone: 'Cast 250 votes for the Master Fox badge'
   },
-  BUILDER: {
-    type: 'BUILDER',
-    name: 'Builder',
-    description: 'Creates and submits games to the platform',
-    emoji: '🔨',
-    criteria: 'Submitted 5+ games'
+  GENTLE_PANDA: {
+    type: 'GENTLE_PANDA',
+    name: 'Gentle Panda',
+    animal: 'Panda',
+    emoji: '🐼',
+    description: 'Beloved creator with a caring heart',
+    story: 'The Gentle Panda creates games that warm hearts and bring joy. Their creations are loved by many, spreading happiness throughout the gaming community.',
+    requirementType: 'likes',
+    requirementValue: 50,
+    xpReward: 120,
+    nextMilestone: 'Receive 100 likes for the Sacred Panda badge'
+  },
+  SWIFT_PUMA: {
+    type: 'SWIFT_PUMA',
+    name: 'Swift Puma',
+    animal: 'Puma',
+    emoji: '🐆',
+    description: 'Fast follower of exciting adventures',
+    story: 'The Swift Puma moves with lightning speed to follow the most exciting games and adventures. They never miss an opportunity to be part of something amazing.',
+    requirementType: 'follows',
+    requirementValue: 25,
+    xpReward: 80,
+    nextMilestone: 'Follow 50 games for the Thunder Puma badge'
   }
 }
 
@@ -113,39 +150,68 @@ export async function checkAndAwardBadges(userId: string): Promise<BadgeType[]> 
     // Get current user badges
     const currentBadges = await getUserBadges(userId)
     
-    // Check Early Hunter badge (first 100 users)
-    if (!currentBadges.includes('EARLY_HUNTER')) {
-      const userCount = await prisma.user.count()
-      if (userCount <= 100) {
-        const awarded = await awardBadge(userId, 'EARLY_HUNTER')
-        if (awarded) newlyAwardedBadges.push('EARLY_HUNTER')
+    // Get user stats for badge checking
+    const userStats = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        _count: {
+          select: {
+            products: true,
+            votes: true,
+            comments: true,
+            follows: true
+          }
+        }
+      }
+    })
+
+    if (!userStats) return newlyAwardedBadges
+
+    // Check Wise Owl badge (50+ comments)
+    if (!currentBadges.includes('WISE_OWL')) {
+      if (userStats._count.comments >= 50) {
+        const awarded = await awardBadge(userId, 'WISE_OWL')
+        if (awarded) newlyAwardedBadges.push('WISE_OWL')
       }
     }
     
-    // Check Top Voter badge (50+ votes)
-    if (!currentBadges.includes('TOP_VOTER')) {
-      const voteCount = await prisma.vote.count({ where: { userId } })
-      if (voteCount >= 50) {
-        const awarded = await awardBadge(userId, 'TOP_VOTER')
-        if (awarded) newlyAwardedBadges.push('TOP_VOTER')
+    // Check Fire Dragon badge (10+ games)
+    if (!currentBadges.includes('FIRE_DRAGON')) {
+      if (userStats._count.products >= 10) {
+        const awarded = await awardBadge(userId, 'FIRE_DRAGON')
+        if (awarded) newlyAwardedBadges.push('FIRE_DRAGON')
       }
     }
     
-    // Check Explorer badge (25+ comments)
-    if (!currentBadges.includes('EXPLORER')) {
-      const commentCount = await prisma.productComment.count({ where: { userId } })
-      if (commentCount >= 25) {
-        const awarded = await awardBadge(userId, 'EXPLORER')
-        if (awarded) newlyAwardedBadges.push('EXPLORER')
+    // Check Clever Fox badge (100+ votes)
+    if (!currentBadges.includes('CLEVER_FOX')) {
+      if (userStats._count.votes >= 100) {
+        const awarded = await awardBadge(userId, 'CLEVER_FOX')
+        if (awarded) newlyAwardedBadges.push('CLEVER_FOX')
       }
     }
     
-    // Check Builder badge (5+ submissions)
-    if (!currentBadges.includes('BUILDER')) {
-      const submissionCount = await prisma.product.count({ where: { userId } })
-      if (submissionCount >= 5) {
-        const awarded = await awardBadge(userId, 'BUILDER')
-        if (awarded) newlyAwardedBadges.push('BUILDER')
+    // Check Gentle Panda badge (50+ likes received)
+    if (!currentBadges.includes('GENTLE_PANDA')) {
+      // Count likes received on user's products
+      const likesReceived = await prisma.vote.count({
+        where: {
+          product: {
+            userId: userId
+          }
+        }
+      })
+      if (likesReceived >= 50) {
+        const awarded = await awardBadge(userId, 'GENTLE_PANDA')
+        if (awarded) newlyAwardedBadges.push('GENTLE_PANDA')
+      }
+    }
+    
+    // Check Swift Puma badge (25+ follows)
+    if (!currentBadges.includes('SWIFT_PUMA')) {
+      if (userStats._count.follows >= 25) {
+        const awarded = await awardBadge(userId, 'SWIFT_PUMA')
+        if (awarded) newlyAwardedBadges.push('SWIFT_PUMA')
       }
     }
     

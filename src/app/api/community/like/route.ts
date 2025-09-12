@@ -75,8 +75,8 @@ export async function POST(request: NextRequest) {
 
       // Award XP for liking
       try {
-        await addXP(session.user.id, 5)
-        console.log(`[XP] Awarded 5 XP to user ${session.user.id} for liking`)
+        await addXP(session.user.id, 2)
+        console.log(`[XP] Awarded 2 XP to user ${session.user.id} for liking`)
       } catch (xpError) {
         console.error('[XP] Error awarding XP for liking:', xpError)
         // Don't fail the request if XP awarding fails
@@ -85,8 +85,8 @@ export async function POST(request: NextRequest) {
       // Award XP to post author for receiving a like (if not the same user)
       if (post.userId !== session.user.id) {
         try {
-          await addXP(post.userId, 5)
-          console.log(`[XP] Awarded 5 XP to user ${post.userId} for receiving a like`)
+          await addXP(post.userId, 2)
+          console.log(`[XP] Awarded 2 XP to user ${post.userId} for receiving a like`)
         } catch (xpError) {
           console.error('[XP] Error awarding XP for receiving like:', xpError)
           // Don't fail the request if XP awarding fails

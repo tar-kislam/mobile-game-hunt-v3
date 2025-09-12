@@ -68,8 +68,8 @@ export async function POST(request: NextRequest) {
 
     // Award XP for commenting with first-time bonus
     try {
-      const xpResult = await addXPWithBonus(session.user.id, 15, 20, 'comment')
-      console.log(`[XP] Awarded ${xpResult.isFirstTime ? '35' : '15'} XP to user ${session.user.id} for commenting${xpResult.isFirstTime ? ' (first-time bonus!)' : ''}`)
+      const xpResult = await addXPWithBonus(session.user.id, 5, 10, 'comment')
+      console.log(`[XP] Awarded ${xpResult.isFirstTime ? '15' : '5'} XP to user ${session.user.id} for commenting${xpResult.isFirstTime ? ' (first-time bonus!)' : ''}`)
       
       // Check for new badges after XP award
       try {

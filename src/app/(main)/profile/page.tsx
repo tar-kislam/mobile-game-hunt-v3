@@ -17,7 +17,8 @@ import {
   GamepadIcon,
   TrophyIcon,
   UserIcon,
-  SettingsIcon
+  SettingsIcon,
+  StarIcon
 } from "lucide-react"
 import { Badge as UIBadge } from '@/components/ui/badge'
 import { useEffect, useRef, useState } from "react"
@@ -25,7 +26,7 @@ import useSWR from 'swr'
 import MagicBento from '@/components/ui/magic-bento'
 import { format } from "date-fns"
 import { Progress } from "@/components/ui/progress"
-import { StarIcon } from "lucide-react"
+import { BadgesGrid } from "@/components/badges/BadgesGrid"
 
 // Mock defaults, will be overridden by live data
 const userStats = {
@@ -149,7 +150,22 @@ export default function ProfilePage() {
     revalidateOnReconnect: true
   })
   const { data: userData } = useSWR(session?.user?.email ? `/api/user?email=${encodeURIComponent(session.user.email)}` : null, fetcher)
-  const { data: xpData } = useSWR(session?.user?.id ? `/api/user/${session.user.id}/xp` : null, fetcher)
+  const { data: xpData, mutate: mutateXP } = useSWR(session?.user?.id ? `/api/user/${session.user.id}/xp` : null, fetcher, {
+    refreshInterval: 10000, // Refresh every 10 seconds
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+    dedupingInterval: 5000 // Prevent duplicate requests within 5 seconds
+  })
+
+  // Listen for XP updates from other components
+  useEffect(() => {
+    const handleXPUpdate = () => {
+      mutateXP()
+    }
+
+    window.addEventListener('xp-updated', handleXPUpdate)
+    return () => window.removeEventListener('xp-updated', handleXPUpdate)
+  }, [mutateXP])
 
   // Format joined date
   const getJoinedDate = () => {
@@ -402,6 +418,15 @@ export default function ProfilePage() {
                 },
               ]}
             />
+          </div>
+
+          {/* Badges Section */}
+          <div className="mb-8">
+            <div className="text-center space-y-2 mb-6">
+              <h2 className="text-2xl font-bold text-white">Your Badges</h2>
+              <p className="text-muted-foreground">Collect achievements and show off your progress</p>
+            </div>
+            <BadgesGrid />
           </div>
 
           {/* Profile Tabs */}

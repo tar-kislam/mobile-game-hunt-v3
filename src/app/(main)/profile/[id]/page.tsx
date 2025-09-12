@@ -23,7 +23,7 @@ import { useEffect, useState } from "react"
 import useSWR from 'swr'
 import MagicBento from '@/components/ui/magic-bento'
 import { format } from "date-fns"
-import { getUserXPInfo } from "@/lib/xpService"
+import { BadgeCard } from "@/components/ui/badge-card"
 
 interface ProfilePageProps {
   params: Promise<{ id: string }>
@@ -72,6 +72,12 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   // Fetch XP info
   const { data: xpData } = useSWR(
     resolvedParams?.id ? `/api/user/${resolvedParams.id}/xp` : null, 
+    fetcher
+  )
+
+  // Fetch badge progress data
+  const { data: badgesData } = useSWR(
+    resolvedParams?.id ? `/api/user/${resolvedParams.id}/badges` : null, 
     fetcher
   )
 
@@ -265,6 +271,34 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                     </Link>
                   )
                 },
+              ]}
+            />
+          </div>
+
+          {/* Magic Bento - Badges & Progress */}
+          <div className="mb-8">
+            <MagicBento
+              enableTilt
+              enableSpotlight
+              enableStars
+              enableBorderGlow
+              glowColor="132, 0, 255"
+              items={[
+                {
+                  id: 'badges-header',
+                  className: 'col-span-full',
+                  children: (
+                    <div className="text-center space-y-2">
+                      <h2 className="text-2xl font-bold text-white">Your Badges</h2>
+                      <p className="text-muted-foreground">Collect achievements and show off your progress</p>
+                    </div>
+                  )
+                },
+                ...(badgesData?.badges || []).map((badge: any) => ({
+                  id: `badge-${badge.type}`,
+                  className: 'col-span-1',
+                  children: <BadgeCard badge={badge} />
+                }))
               ]}
             />
           </div>

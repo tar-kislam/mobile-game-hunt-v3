@@ -127,7 +127,7 @@ export async function addXPWithBonus(
   userId: string, 
   baseAmount: number, 
   bonusAmount: number, 
-  actionType: 'vote' | 'comment' | 'submit'
+  actionType: 'vote' | 'comment' | 'submit' | 'like' | 'follow'
 ): Promise<{
   id: string
   name: string | null
@@ -160,6 +160,20 @@ export async function addXPWithBonus(
           where: { userId }
         })
         isFirstTime = !existingProduct
+        break
+        
+      case 'like':
+        const existingLike = await prisma.vote.findFirst({
+          where: { userId }
+        })
+        isFirstTime = !existingLike
+        break
+        
+      case 'follow':
+        const existingFollow = await prisma.follow.findFirst({
+          where: { userId }
+        })
+        isFirstTime = !existingFollow
         break
         
       default:

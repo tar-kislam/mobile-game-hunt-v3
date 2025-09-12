@@ -3,6 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useSession, signOut } from "next-auth/react"
+import { useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -15,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { ThemeToggle } from "@/components/ui/theme-toggle"
+import { NotificationBell } from "@/components/ui/notification-bell"
 import PillNav from "@/components/ui/pill-nav"
 import { UserBadges, LevelBadge } from "@/components/ui/user-badges"
 import { StarIcon } from "lucide-react"
@@ -26,13 +27,35 @@ export function Header() {
   const fetcher = (url: string) => fetch(url).then(r => r.json())
   
   // Fetch XP data
-  const { data: xpData } = useSWR(
+  const { data: xpData, mutate: mutateXP } = useSWR(
     session?.user?.id ? `/api/user/${session.user.id}/xp` : null, 
-    fetcher
+    fetcher,
+    {
+      refreshInterval: 10000,
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 5000
+    }
   )
   
   // Fetch badges data
-  const { data: badgesData } = useSWR('/api/badges', fetcher)
+  const { data: badgesData, mutate: mutateBadges } = useSWR('/api/badges', fetcher, {
+    refreshInterval: 10000,
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+    dedupingInterval: 5000
+  })
+
+  // Listen for XP updates from other components
+  useEffect(() => {
+    const handleXPUpdate = () => {
+      mutateXP()
+      mutateBadges()
+    }
+
+    window.addEventListener('xp-updated', handleXPUpdate)
+    return () => window.removeEventListener('xp-updated', handleXPUpdate)
+  }, [mutateXP, mutateBadges])
   
   // Get user's badges
   const userBadges = badgesData?.users?.find((u: any) => u.userId === session?.user?.id)?.badges || []
@@ -82,11 +105,11 @@ export function Header() {
 
           {/* User Actions */}
           <div className="flex items-center space-x-3">
-            <ThemeToggle />
             {status === "loading" ? (
               <div className="h-8 w-20 bg-muted animate-pulse rounded-2xl" />
             ) : session ? (
               <div className="flex items-center space-x-3">
+                <NotificationBell />
                 <Button asChild className="rounded-2xl shadow-soft">
                   <Link href="/submit">Submit Game</Link>
                 </Button>
