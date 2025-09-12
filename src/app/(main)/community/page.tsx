@@ -33,6 +33,17 @@ export default async function CommunityPage() {
             id: true,
           }
         },
+        poll: {
+          include: {
+            options: {
+              include: {
+                _count: {
+                  select: { votes: true }
+                }
+              }
+            }
+          }
+        },
         _count: {
           select: {
             likes: true,

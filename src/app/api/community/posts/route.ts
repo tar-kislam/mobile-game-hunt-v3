@@ -13,39 +13,145 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Verify user exists in database (should always exist due to auth callback)
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true, name: true, email: true }
+    })
+
+    if (!user) {
+      console.error(`[COMMUNITY][CREATE] User not found: ${session.user.id}`)
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
     const body = await request.json()
-    const validatedData = createPostSchema.parse(body)
-    let { content, images, hashtags } = validatedData
+    console.log('[COMMUNITY][CREATE] Request body:', JSON.stringify(body, null, 2))
+    
+    try {
+      const validatedData = createPostSchema.parse(body)
+      let { content, images, hashtags, poll } = validatedData
+      
+      console.log('[COMMUNITY][CREATE] Validated data:', { 
+        content: content?.substring(0, 50) + '...', 
+        imagesCount: images?.length || 0, 
+        hashtagsCount: hashtags?.length || 0,
+        hasPoll: !!poll,
+        pollOptions: poll?.options?.length || 0
+      })
 
-    // Normalize hashtags: extract from content, strip '#', lowercase, unique
-    const extracted = content.match(/#[A-Za-z0-9_]+/g)?.map(h => h.replace(/^#/, '').toLowerCase()) || []
-    const provided = (hashtags || []).map(h => h.replace(/^#/, '').toLowerCase())
-    const normalizedTags = Array.from(new Set([ ...extracted, ...provided ]))
+      // Normalize hashtags: extract from content, strip '#', lowercase, unique
+      const extracted = content.match(/#[A-Za-z0-9_]+/g)?.map(h => h.replace(/^#/, '').toLowerCase()) || []
+      const provided = (hashtags || []).map(h => h.replace(/^#/, '').toLowerCase())
+      const normalizedTags = Array.from(new Set([ ...extracted, ...provided ]))
 
-    // Create the post
-    const post = await prisma.post.create({
-      data: {
-        content: content.trim(),
-        images: images || null,
-        hashtags: normalizedTags,
-        userId: session.user.id,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
-          }
-        },
-        _count: {
-          select: {
-            likes: true,
-            comments: true,
+    // Create the post (with optional poll)
+    const postData: any = {
+      content: content.trim(),
+      images: images || null,
+      hashtags: normalizedTags,
+      userId: session.user.id,
+    }
+
+    // If poll data exists, create it inline
+    if (poll) {
+      // Validate poll data
+      if (poll.options.length < 2) {
+        return NextResponse.json({ error: 'At least 2 poll options required' }, { status: 400 })
+      }
+
+      // Check if expiresAt is in the future
+      const expirationDate = new Date(poll.expiresAt)
+      const now = new Date()
+      if (expirationDate <= now) {
+        return NextResponse.json({ error: 'Poll expiration must be in the future' }, { status: 400 })
+      }
+
+      // Derive question from first 100 chars of content
+      const pollQuestion = content.trim().substring(0, 100)
+
+      console.log('[COMMUNITY][CREATE] Creating poll:', {
+        questionFromPost: poll.questionFromPost,
+        question: pollQuestion,
+        optionsCount: poll.options.length,
+        expiresAt: poll.expiresAt
+      })
+      
+      try {
+        const pollCreateData = {
+          question: pollQuestion,
+          expiresAt: expirationDate,
+          options: {
+            create: poll.options.map((optionText: string) => ({
+              text: optionText.trim()
+            }))
           }
         }
+        
+        console.log('[COMMUNITY][CREATE] Poll create data:', JSON.stringify(pollCreateData, null, 2))
+        
+        postData.poll = {
+          create: pollCreateData
+        }
+        console.log('[COMMUNITY][CREATE] Poll data structure created successfully')
+      } catch (pollError) {
+        console.error('[COMMUNITY][CREATE] Error creating poll data structure:', pollError)
+        
+        // Log detailed error information
+        if (pollError instanceof Error) {
+          console.error('[COMMUNITY][CREATE] Poll error details:', {
+            message: pollError.message,
+            stack: pollError.stack,
+            name: pollError.name
+          })
+        }
+        
+        throw pollError
       }
-    })
+    }
+
+    console.log('[COMMUNITY][CREATE] Post data to create:', JSON.stringify(postData, null, 2))
+    
+    let post
+    try {
+      post = await prisma.post.create({
+        data: postData,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            }
+          },
+          _count: {
+            select: {
+              likes: true,
+              comments: true,
+            }
+          },
+          poll: {
+            include: {
+              options: {
+                include: {
+                  _count: {
+                    select: { votes: true }
+                  }
+                }
+              }
+            }
+          }
+        }
+      })
+      console.log('[COMMUNITY][CREATE] Post created successfully:', post.id)
+    } catch (prismaError) {
+      console.error('[COMMUNITY][CREATE] Prisma error:', prismaError)
+      console.error('[COMMUNITY][CREATE] Error details:', {
+        message: prismaError.message,
+        code: prismaError.code,
+        meta: prismaError.meta
+      })
+      throw prismaError
+    }
 
     // Dev-only debug log
     if (process.env.NODE_ENV !== 'production') {
@@ -57,7 +163,14 @@ export async function POST(request: NextRequest) {
       revalidatePath('/community')
     } catch {}
 
-    return NextResponse.json(post, { status: 201 })
+      return NextResponse.json(post, { status: 201 })
+    } catch (validationError) {
+      console.error('[COMMUNITY][CREATE] Validation error:', validationError)
+      if (validationError instanceof Error && validationError.name === 'ZodError') {
+        return NextResponse.json({ error: 'Validation error', details: validationError.message }, { status: 400 })
+      }
+      throw validationError
+    }
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json({ error: 'Validation error', details: error.message }, { status: 400 })
@@ -133,6 +246,17 @@ export async function GET(request: NextRequest) {
           select: {
             likes: true,
             comments: true,
+          }
+        },
+        poll: {
+          include: {
+            options: {
+              include: {
+                _count: {
+                  select: { votes: true }
+                }
+              }
+            }
           }
         }
       },

@@ -11,7 +11,7 @@ import Link from 'next/link'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
-import { Textarea } from '@/components/ui/textarea'
+import { PollDisplay } from './poll-display'
 
 interface Post {
   id: string
@@ -24,6 +24,18 @@ interface Post {
     name: string | null
     image: string | null
   }
+  poll?: {
+    id: string
+    question: string
+    expiresAt: string
+    options: {
+      id: string
+      text: string
+      _count: {
+        votes: number
+      }
+    }[]
+  } | null
   _count: {
     likes: number
     comments: number
@@ -177,6 +189,28 @@ export function CommunityFeed({ posts, currentUserId, onTagClick, onToggleLike }
                   </Badge>
                 ))}
               </div>
+            )}
+
+            {/* Poll Display */}
+            {post.poll && (
+              <PollDisplay
+                postId={post.id}
+                poll={{
+                  id: post.poll.id,
+                  question: post.poll.question,
+                  expiresAt: post.poll.expiresAt,
+                  isExpired: new Date(post.poll.expiresAt) < new Date()
+                }}
+                options={post.poll.options.map(option => ({
+                  id: option.id,
+                  text: option.text,
+                  votesCount: option._count.votes,
+                  percentage: 0 // Will be calculated by the component
+                }))}
+                userVote={null} // Will be fetched by the component
+                hasVoted={false} // Will be determined by the component
+                totalVotes={post.poll.options.reduce((sum, opt) => sum + opt._count.votes, 0)}
+              />
             )}
 
             {/* Actions */}

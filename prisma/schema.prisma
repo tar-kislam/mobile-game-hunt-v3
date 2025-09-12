@@ -69,6 +69,7 @@ model User {
   posts          Post[]
   likes          Like[]
   postComments   PostComment[]
+  pollVotes      PollVote[]
 }
 
 model Product {
@@ -354,9 +355,10 @@ model SponsorshipRequest {
 // Community Posts
 model Post {
   id        String   @id @default(cuid())
-  content   String
+  content   String?
   images    Json?    // array of image URLs (max 4)
   hashtags  Json?    // array of hashtags
+  pollId    String?  @unique // reference to Poll model (one-to-one)
   userId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -364,6 +366,7 @@ model Post {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   likes     Like[]
   comments  PostComment[]
+  poll      Poll?    @relation
   
   @@index([createdAt])
   @@index([userId])
@@ -393,6 +396,48 @@ model PostComment {
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   
   @@index([postId])
+  @@index([createdAt])
+}
+
+model Poll {
+  id        String   @id @default(cuid())
+  question  String
+  expiresAt DateTime
+  options   PollOption[]
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String?  @unique
+  votes     PollVote[]
+  createdAt DateTime @default(now())
+  
+  @@index([expiresAt])
+  @@index([createdAt])
+}
+
+model PollOption {
+  id      String @id @default(cuid())
+  text    String
+  pollId  String
+  createdAt DateTime @default(now())
+  
+  poll    Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes   PollVote[]
+  
+  @@index([pollId])
+}
+
+model PollVote {
+  id        String @id @default(cuid())
+  userId    String
+  optionId  String
+  createdAt DateTime @default(now())
+  
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  poll      Poll?      @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId    String?
+  
+  @@unique([userId, optionId]) // prevent multiple votes per option
+  @@index([optionId])
   @@index([createdAt])
 }
 

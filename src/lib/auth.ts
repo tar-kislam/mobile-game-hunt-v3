@@ -120,7 +120,24 @@ export const authOptions: NextAuthOptions = {
           session.user.image = user.image;
           session.user.username = user.username;
         } else {
-          session.user.id = token.sub!;
+          // If user doesn't exist, create them (this handles OAuth users)
+          if (token.email) {
+            const newUser = await prisma.user.create({
+              data: {
+                email: token.email,
+                name: token.name || null,
+                image: token.picture || null,
+                role: 'USER'
+              },
+              select: { id: true, name: true, image: true, username: true }
+            });
+            session.user.id = newUser.id;
+            session.user.name = newUser.name;
+            session.user.image = newUser.image;
+            session.user.username = newUser.username;
+          } else {
+            session.user.id = token.sub!;
+          }
         }
         session.user.role = token.role;
       }
