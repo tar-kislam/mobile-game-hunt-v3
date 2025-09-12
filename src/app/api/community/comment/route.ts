@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { createCommentSchema } from '@/lib/validations/community'
+import { addXPWithBonus } from '@/lib/xpService'
+import { checkAndAwardBadges } from '@/lib/badgeService'
 
 export async function POST(request: NextRequest) {
   try {
@@ -62,6 +64,26 @@ export async function POST(request: NextRequest) {
           isRead: false
         }
       })
+    }
+
+    // Award XP for commenting with first-time bonus
+    try {
+      const xpResult = await addXPWithBonus(session.user.id, 15, 20, 'comment')
+      console.log(`[XP] Awarded ${xpResult.isFirstTime ? '35' : '15'} XP to user ${session.user.id} for commenting${xpResult.isFirstTime ? ' (first-time bonus!)' : ''}`)
+      
+      // Check for new badges after XP award
+      try {
+        const newBadges = await checkAndAwardBadges(session.user.id)
+        if (newBadges.length > 0) {
+          console.log(`[BADGES] User ${session.user.id} earned new badges:`, newBadges)
+        }
+      } catch (badgeError) {
+        console.error('[BADGES] Error checking badges:', badgeError)
+        // Don't fail the request if badge checking fails
+      }
+    } catch (xpError) {
+      console.error('[XP] Error awarding XP for commenting:', xpError)
+      // Don't fail the request if XP awarding fails
     }
 
     return NextResponse.json(comment, { status: 201 })

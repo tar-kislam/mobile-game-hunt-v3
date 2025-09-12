@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { rateLimit } from '@/lib/rate-limit'
+import { addXPWithBonus } from '@/lib/xpService'
+import { checkAndAwardBadges } from '@/lib/badgeService'
 import { z } from 'zod'
 
 const voteSchema = z.object({
@@ -102,6 +104,26 @@ export async function POST(request: NextRequest) {
         data: voteData
       })
       console.log('[POLL][VOTE] Vote created successfully')
+
+      // Award XP for poll voting with first-time bonus
+      try {
+        const xpResult = await addXPWithBonus(userId, 10, 20, 'vote')
+        console.log(`[XP] Awarded ${xpResult.isFirstTime ? '30' : '10'} XP to user ${userId} for poll voting${xpResult.isFirstTime ? ' (first-time bonus!)' : ''}`)
+        
+        // Check for new badges after XP award
+        try {
+          const newBadges = await checkAndAwardBadges(userId)
+          if (newBadges.length > 0) {
+            console.log(`[BADGES] User ${userId} earned new badges:`, newBadges)
+          }
+        } catch (badgeError) {
+          console.error('[BADGES] Error checking badges:', badgeError)
+          // Don't fail the request if badge checking fails
+        }
+      } catch (xpError) {
+        console.error('[XP] Error awarding XP for poll voting:', xpError)
+        // Don't fail the request if XP awarding fails
+      }
     } catch (voteError) {
       console.error('[POLL][VOTE] Error creating vote:', voteError)
       throw voteError

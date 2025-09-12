@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { CacheService } from "@/lib/redis"
 import { RateLimiter, RATE_LIMITS } from "@/lib/rate-limiter"
+import { addXPWithBonus } from "@/lib/xpService"
+import { checkAndAwardBadges } from "@/lib/badgeService"
 
 import { z } from "zod"
 
@@ -384,6 +386,26 @@ export async function POST(request: NextRequest) {
         }
       }
     })
+
+    // Award XP for game submission with first-time bonus
+    try {
+      const xpResult = await addXPWithBonus(user.id, 50, 20, 'submit')
+      console.log(`[XP] Awarded ${xpResult.isFirstTime ? '70' : '50'} XP to user ${user.id} for game submission${xpResult.isFirstTime ? ' (first-time bonus!)' : ''}`)
+      
+      // Check for new badges after XP award
+      try {
+        const newBadges = await checkAndAwardBadges(user.id)
+        if (newBadges.length > 0) {
+          console.log(`[BADGES] User ${user.id} earned new badges:`, newBadges)
+        }
+      } catch (badgeError) {
+        console.error('[BADGES] Error checking badges:', badgeError)
+        // Don't fail the request if badge checking fails
+      }
+    } catch (xpError) {
+      console.error('[XP] Error awarding XP for game submission:', xpError)
+      // Don't fail the request if XP awarding fails
+    }
 
     return NextResponse.json(product, { status: 201 })
   } catch (error) {

@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
 import { PollDisplay } from './poll-display'
+import { UserAvatarTooltip } from '@/components/ui/user-avatar-tooltip'
 
 interface Post {
   id: string
@@ -83,12 +84,12 @@ export function CommunityFeed({ posts, currentUserId, onTagClick, onToggleLike }
           <CardHeader className="px-4 py-3 pb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={post.user.image || ''} />
-                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                    {post.user.name?.charAt(0) || 'U'}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatarTooltip 
+                  userId={post.user.id}
+                  userName={post.user.name}
+                  userImage={post.user.image}
+                  size="md"
+                />
                 <div>
                   <Link 
                     href={`/profile/${post.user.id}`}

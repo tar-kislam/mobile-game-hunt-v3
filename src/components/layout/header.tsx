@@ -14,11 +14,28 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import PillNav from "@/components/ui/pill-nav"
+import { UserBadges, LevelBadge } from "@/components/ui/user-badges"
+import { StarIcon } from "lucide-react"
+import useSWR from 'swr'
 
 export function Header() {
   const { data: session, status } = useSession()
+  const fetcher = (url: string) => fetch(url).then(r => r.json())
+  
+  // Fetch XP data
+  const { data: xpData } = useSWR(
+    session?.user?.id ? `/api/user/${session.user.id}/xp` : null, 
+    fetcher
+  )
+  
+  // Fetch badges data
+  const { data: badgesData } = useSWR('/api/badges', fetcher)
+  
+  // Get user's badges
+  const userBadges = badgesData?.users?.find((u: any) => u.userId === session?.user?.id)?.badges || []
 
   const baseNavItems = [
     { label: "Home", href: "/" },
@@ -85,13 +102,44 @@ export function Header() {
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 rounded-2xl shadow-large" align="end" forceMount>
+                  <DropdownMenuContent className="w-64 rounded-2xl shadow-large" align="end" forceMount>
                     <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{session.user?.name}</p>
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium leading-none">{session.user?.name}</p>
+                          {xpData && <LevelBadge level={xpData.level} />}
+                        </div>
                         <p className="text-xs leading-none text-muted-foreground">
                           {session.user?.email}
                         </p>
+                        
+                        {/* XP Progress Bar */}
+                        {xpData && (
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-gray-300">XP Progress</span>
+                              <span className="text-purple-300 font-medium">
+                                {xpData.xp} / {(xpData.level * 100)} XP
+                              </span>
+                            </div>
+                            <Progress 
+                              value={xpData.xpProgress} 
+                              className="h-2 bg-gray-700 rounded-full"
+                            />
+                            <div className="text-xs text-gray-400 text-center">
+                              {xpData.xpToNextLevel} XP to Level {xpData.level + 1}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Badges */}
+                        {userBadges.length > 0 && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-400">Badges:</span>
+                            <UserBadges badges={userBadges} />
+                          </div>
+                        )}
+                        
                         {session.user?.role === "ADMIN" && (
                           <Badge variant="secondary" className="rounded-full w-fit text-xs">
                             Admin

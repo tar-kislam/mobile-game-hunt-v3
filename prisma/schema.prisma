@@ -54,6 +54,11 @@ model User {
   role           UserRole        @default(USER)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  
+  // Level & XP System
+  xp             Int             @default(0)   // total XP accumulated
+  level          Int             @default(1)   // current user level
+  
   accounts       Account[]
   comments       ProductComment[]
   commentVotes   CommentVote[]

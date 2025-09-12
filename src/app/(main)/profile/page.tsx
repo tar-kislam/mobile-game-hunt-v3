@@ -24,6 +24,8 @@ import { useEffect, useRef, useState } from "react"
 import useSWR from 'swr'
 import MagicBento from '@/components/ui/magic-bento'
 import { format } from "date-fns"
+import { Progress } from "@/components/ui/progress"
+import { StarIcon } from "lucide-react"
 
 // Mock defaults, will be overridden by live data
 const userStats = {
@@ -147,6 +149,7 @@ export default function ProfilePage() {
     revalidateOnReconnect: true
   })
   const { data: userData } = useSWR(session?.user?.email ? `/api/user?email=${encodeURIComponent(session.user.email)}` : null, fetcher)
+  const { data: xpData } = useSWR(session?.user?.id ? `/api/user/${session.user.id}/xp` : null, fetcher)
 
   // Format joined date
   const getJoinedDate = () => {
@@ -304,7 +307,14 @@ export default function ProfilePage() {
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="text-lg font-semibold">{session?.user?.name}</div>
+                            <div className="flex items-center gap-3">
+                              <div className="text-lg font-semibold">{session?.user?.name}</div>
+                              {/* Level Badge */}
+                              <Badge variant="secondary" className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-300 border-purple-500/30 rounded-full px-3 py-1">
+                                <StarIcon className="h-3 w-3 mr-1" />
+                                Level {xpData?.level || 1}
+                              </Badge>
+                            </div>
                             <div className="text-sm text-muted-foreground">{session?.user?.email}</div>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                               <CalendarIcon className="h-3 w-3" /> Joined {getJoinedDate()}
@@ -313,6 +323,26 @@ export default function ProfilePage() {
                         </div>
                         <UserIcon className="h-5 w-5 text-purple-300" />
                       </div>
+
+                      {/* XP Progress Bar */}
+                      {xpData && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-300">Experience Points</span>
+                            <span className="text-purple-300 font-medium">
+                              {xpData.xp} / {(xpData.level * 100)} XP
+                            </span>
+                          </div>
+                          <Progress 
+                            value={xpData.xpProgress} 
+                            className="h-3 bg-gray-700 rounded-full overflow-hidden"
+                          />
+                          <div className="flex items-center justify-between text-xs text-gray-400">
+                            <span>Level {xpData.level}</span>
+                            <span>{xpData.xpToNextLevel} XP to Level {xpData.level + 1}</span>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Embedded Stats 2x2 inside Profile card */}
                       <div className="grid grid-cols-2 gap-4 mt-4 md:mt-8">
