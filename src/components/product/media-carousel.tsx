@@ -19,9 +19,10 @@ interface MediaCarouselProps {
   video?: string | null
   mainImage?: string | null
   title: string
+  gameplayGifUrl?: string | null
 }
 
-export function MediaCarousel({ images, video, mainImage, title }: MediaCarouselProps) {
+export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl }: MediaCarouselProps) {
   const [api, setApi] = useState<CarouselApi>()
   const [current, setCurrent] = useState(0)
   const [count, setCount] = useState(0)
@@ -57,13 +58,23 @@ export function MediaCarousel({ images, video, mainImage, title }: MediaCarousel
     } catch { return url }
   }
   
-  // Build media list in order: main image, video (if any), then gallery
-  const mediaItems: Array<{ type: 'image' | 'youtube' | 'video' | 'placeholder'; src: string }> = []
+  // Build media list in order: first gallery image, gameplay GIF, video (if any), then remaining gallery images
+  const mediaItems: Array<{ type: 'image' | 'youtube' | 'video' | 'gif' | 'placeholder'; src: string }> = []
 
-  if (mainImage && mainImage.trim() !== '' && isValidImageUrl(mainImage)) {
-    mediaItems.push({ type: 'image', src: mainImage })
+  // Get valid gallery images
+  const validImages = (images || []).filter(img => img && img.trim() !== '' && isValidImageUrl(img))
+  
+  // Add first gallery image as main image (if available)
+  if (validImages.length > 0) {
+    mediaItems.push({ type: 'image', src: validImages[0] })
   }
 
+  // Add gameplay GIF if available
+  if (gameplayGifUrl && gameplayGifUrl.trim() !== '' && isValidImageUrl(gameplayGifUrl)) {
+    mediaItems.push({ type: 'gif', src: gameplayGifUrl })
+  }
+
+  // Add video if available
   if (video) {
     if (isYouTubeUrl(video)) {
       mediaItems.push({ type: 'youtube', src: toYouTubeEmbed(video) })
@@ -72,8 +83,14 @@ export function MediaCarousel({ images, video, mainImage, title }: MediaCarousel
     }
   }
   
-  const validImages = (images || []).filter(img => img && img.trim() !== '' && isValidImageUrl(img) && img !== mainImage)
-  validImages.forEach(img => mediaItems.push({ type: 'image', src: img }))
+  // Add remaining gallery images (skip first one as it's already added)
+  const remainingImages = validImages.slice(1)
+  remainingImages.forEach(img => mediaItems.push({ type: 'image', src: img }))
+  
+  // If no gallery images, fallback to mainImage/thumbnail for small contexts only
+  if (mediaItems.length === 0 && mainImage && mainImage.trim() !== '' && isValidImageUrl(mainImage)) {
+    mediaItems.push({ type: 'image', src: mainImage })
+  }
   
   if (mediaItems.length === 0) {
     mediaItems.push({ type: 'placeholder', src: '' })
@@ -122,6 +139,33 @@ export function MediaCarousel({ images, video, mainImage, title }: MediaCarousel
                       preload="metadata"
                     />
                     <div className="absolute top-4 left-4"><span className="bg-black/70 text-white px-2 py-1 rounded-lg text-xs font-medium">Video</span></div>
+                  </div>
+                ) : media.type === 'gif' ? (
+                  <div className="relative w-full h-full group">
+                    {media.src.startsWith('/') ? (
+                      <img
+                        src={media.src}
+                        alt={`${title} - Gameplay GIF`}
+                        className="w-full h-full object-cover"
+                        onError={(e)=>{(e.currentTarget as HTMLImageElement).src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='24'%3E%F0%9F%8E%AE%20Gameplay%20GIF%3C/text%3E%3C/svg%3E"}}
+                      />
+                    ) : (
+                      <Image
+                        src={media.src}
+                        alt={`${title} - Gameplay GIF`}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
+                        unoptimized={true}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          ;(target as any).onerror = null
+                          target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='24'%3E%F0%9F%8E%AE%20Gameplay%20GIF%3C/text%3E%3C/svg%3E"
+                        }}
+                      />
+                    )}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                    <div className="absolute top-4 left-4"><span className="bg-black/70 text-white px-2 py-1 rounded-lg text-xs font-medium">Gameplay GIF</span></div>
                   </div>
                 ) : media.type === 'image' ? (
                   <div className="relative w-full h-full group">

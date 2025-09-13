@@ -13,6 +13,10 @@ interface Game {
   tagline?: string | null
   description: string
   image?: string | null
+  thumbnail?: string | null
+  images?: string[]
+  gallery?: string[]
+  gameplayGifUrl?: string | null
   url: string
   platforms?: string[]
   _count: {
@@ -31,6 +35,19 @@ interface TapTapGameCardProps {
   showAuthor?: boolean
 }
 
+// Helper function to get the main display image for product cards
+function getMainDisplayImage(game: Game): string | null {
+  // Priority: first gallery image > first images array item > thumbnail (for small contexts only)
+  if (game.images && game.images.length > 0) {
+    return game.images[0]
+  }
+  if (game.gallery && Array.isArray(game.gallery) && game.gallery.length > 0) {
+    return game.gallery[0]
+  }
+  // Only use thumbnail as fallback for small contexts
+  return game.thumbnail || game.image || null
+}
+
 export function TapTapGameCard({ game, onVote, showAuthor = true }: TapTapGameCardProps) {
   const handleVote = () => {
     onVote?.(game.id)
@@ -46,9 +63,9 @@ export function TapTapGameCard({ game, onVote, showAuthor = true }: TapTapGameCa
       <Card className="overflow-hidden bg-card hover:shadow-lg transition-all duration-300 border border-white/10 shadow-lg rounded-xl group-hover:scale-[1.02] hover:shadow-black/20">
         {/* Game Image */}
         <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
-          {game.image ? (
+          {getMainDisplayImage(game) ? (
             <Image
-              src={game.image}
+              src={getMainDisplayImage(game) as string}
               alt={game.title}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -68,7 +85,7 @@ export function TapTapGameCard({ game, onVote, showAuthor = true }: TapTapGameCa
           ) : null}
           
           {/* Fallback icon */}
-          <div className={`fallback-icon w-full h-full flex items-center justify-center ${game.image ? 'hidden' : ''}`}>
+          <div className={`fallback-icon w-full h-full flex items-center justify-center ${getMainDisplayImage(game) ? 'hidden' : ''}`}>
             <div className="text-4xl">🎮</div>
           </div>
 

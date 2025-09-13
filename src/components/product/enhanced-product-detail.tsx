@@ -564,6 +564,7 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
             video={product.youtubeUrl ?? product.video ?? (product as any).videoUrl ?? undefined}
             mainImage={product.image ?? (product as any).thumbnail ?? undefined}
             title={product.title}
+            gameplayGifUrl={product.gameplayGifUrl ?? undefined}
           />
           
           {/* Game Overview Block - Steam Style */}

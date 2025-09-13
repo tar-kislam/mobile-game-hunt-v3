@@ -168,6 +168,19 @@ function MobileGamesCarousel({ games, onVote }: MobileGamesCarouselProps) {
   )
 }
 
+// Helper function to get the main display image for product cards
+function getMainDisplayImage(game: Game): string | null {
+  // Priority: first gallery image > first images array item > thumbnail (for small contexts only)
+  if (game.images && game.images.length > 0) {
+    return game.images[0]
+  }
+  if (game.gallery && Array.isArray(game.gallery) && game.gallery.length > 0) {
+    return game.gallery[0]
+  }
+  // Only use thumbnail as fallback for small contexts
+  return game.thumbnail || game.image || null
+}
+
 // Mobile Game Card Component for Discover Games
 interface MobileGameCardProps {
   game: Game
@@ -180,9 +193,9 @@ function MobileGameCard({ game, onVote }: MobileGameCardProps) {
       <Card className="overflow-hidden bg-black border-0 rounded-xl aspect-[3/4] relative shadow-lg w-full max-w-full mx-auto">
         {/* Background Image */}
         <div className="absolute inset-0">
-          {game.image ? (
+          {getMainDisplayImage(game) ? (
             <Image
-              src={game.image as string}
+              src={getMainDisplayImage(game) as string}
               alt={`${game.title} - Mobile Game`}
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -318,6 +331,10 @@ interface Game {
   description: string
   url: string
   image?: string | null
+  thumbnail?: string | null
+  images?: string[]
+  gallery?: string[]
+  gameplayGifUrl?: string | null
   createdAt: string
   user: {
     id: string

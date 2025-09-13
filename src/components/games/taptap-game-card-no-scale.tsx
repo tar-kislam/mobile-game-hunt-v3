@@ -13,7 +13,11 @@ interface Game {
   title: string
   tagline?: string | null
   description: string
+  image?: string | null
   thumbnail?: string | null
+  images?: string[]
+  gallery?: string[]
+  gameplayGifUrl?: string | null
   url: string
   platforms?: string[]
   createdAt: string
@@ -31,6 +35,19 @@ interface TapTapGameCardNoScaleProps {
   game: Game
   onVote?: (gameId: string) => void
   showAuthor?: boolean
+}
+
+// Helper function to get the main display image for product cards
+function getMainDisplayImage(game: Game): string | null {
+  // Priority: first gallery image > first images array item > thumbnail (for small contexts only)
+  if (game.images && game.images.length > 0) {
+    return game.images[0]
+  }
+  if (game.gallery && Array.isArray(game.gallery) && game.gallery.length > 0) {
+    return game.gallery[0]
+  }
+  // Only use thumbnail as fallback for small contexts
+  return game.thumbnail || game.image || null
 }
 
 export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTapGameCardNoScaleProps) {
@@ -64,9 +81,9 @@ export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTa
       <Card className="overflow-hidden bg-card hover:shadow-lg transition-all duration-300 border border-white/10 shadow-lg rounded-xl hover:shadow-black/20">
         {/* Game Image - Removed image scaling on hover */}
         <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
-          {game.thumbnail ? (
+          {getMainDisplayImage(game) ? (
             <Image
-              src={game.thumbnail}
+              src={getMainDisplayImage(game) as string}
               alt={game.title}
               fill
               className="object-cover transition-transform duration-300"
@@ -86,7 +103,7 @@ export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTa
           ) : null}
           
           {/* Fallback icon - hidden */}
-          <div className="fallback-icon absolute inset-0 flex items-center justify-center text-4xl text-gray-400" style={{ display: 'none' }}>
+          <div className={`fallback-icon absolute inset-0 flex items-center justify-center text-4xl text-gray-400 ${getMainDisplayImage(game) ? 'hidden' : ''}`}>
             🎮
           </div>
 
