@@ -108,7 +108,6 @@ interface Product {
     comments: number;
   };
   // Extras fields
-  pricing?: string | null;
   promoOffer?: string | null;
   promoCode?: string | null;
   promoExpiry?: string | null;
@@ -370,31 +369,6 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
     return `Launching ${date.toLocaleDateString('en-US', options)}`;
   };
 
-  const getPricingBadgeVariant = (pricing: string) => {
-    switch (pricing?.toUpperCase()) {
-      case 'FREE':
-        return 'default';
-      case 'PAID':
-        return 'secondary';
-      case 'FREEMIUM':
-        return 'outline';
-      default:
-        return 'secondary';
-    }
-  };
-
-  const getPricingDisplayText = (pricing: string) => {
-    switch (pricing?.toUpperCase()) {
-      case 'FREE':
-        return 'Free';
-      case 'PAID':
-        return 'Paid';
-      case 'FREEMIUM':
-        return 'Freemium';
-      default:
-        return pricing || 'Unknown';
-    }
-  };
 
   const formatPromoExpiry = (expiryDate: string) => {
     const expiry = new Date(expiryDate);
@@ -808,20 +782,6 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
                 />
               </div>
 
-              {/* Pricing Model */}
-              {product.pricing && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Pricing:
-                  </span>
-                  <Badge 
-                    variant={getPricingBadgeVariant(product.pricing)}
-                    className="text-xs"
-                  >
-                    {getPricingDisplayText(product.pricing)}
-                  </Badge>
-                </div>
-              )}
 
               {/* Promo Code Section */}
               {product.promoCode && (
@@ -1102,20 +1062,6 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
                       day: 'numeric' 
                     })}
                   </span>
-                </div>
-              )}
-
-              {/* Pricing Model */}
-              {product.pricing && (
-                <div className="flex items-center gap-2">
-                  <Star className="w-4 h-4 text-yellow-400" />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Pricing:</span>
-                  <Badge 
-                    variant={getPricingBadgeVariant(product.pricing)}
-                    className="text-xs"
-                  >
-                    {getPricingDisplayText(product.pricing)}
-                  </Badge>
                 </div>
               )}
 

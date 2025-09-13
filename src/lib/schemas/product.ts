@@ -109,7 +109,6 @@ export const productLaunchDetailsSchema = z.object({
 })
 
 export const productCommunityExtrasSchema = z.object({
-  pricing: z.enum(['FREE', 'PAID', 'FREEMIUM']).optional(),
   promoOffer: z.string().optional(),
   promoCode: z.string().optional(),
   promoExpiry: z.string().optional(),
@@ -118,7 +117,7 @@ export const productCommunityExtrasSchema = z.object({
   sponsorRequest: z.boolean().default(false),
   sponsorNote: z.string().max(500, 'Sponsor note must be 500 characters or less').optional(),
   crowdfundingPledge: z.boolean().default(false),
-  gamificationTags: z.array(z.string()).max(5, 'Maximum 5 gamification tags allowed').optional()
+  gamificationTags: z.array(z.string()).min(1, 'At least 1 gamification tag is required').max(5, 'Maximum 5 gamification tags allowed')
 })
 
 export const productFullSchema = productMainInfoSchema

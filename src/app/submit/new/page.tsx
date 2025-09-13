@@ -52,7 +52,7 @@ export default function NewSubmitPage() {
       tags: [], categories: [], termsAccepted: false, confirmImagesOwned: false,
       makers: [], studioName: '', inviteEmail: '', inviteRole: 'MAKER',
       launchType: '', launchDate: '', softLaunchCountries: [], monetization: '', engine: '',
-      pricing: '', promoOffer: '', promoCode: '', promoExpiry: '', playtestQuota: undefined, playtestExpiry: '', sponsorRequest: false, sponsorNote: '', crowdfundingPledge: false, gamificationTags: [],
+      promoOffer: '', promoCode: '', promoExpiry: '', playtestQuota: undefined, playtestExpiry: '', sponsorRequest: false, sponsorNote: '', crowdfundingPledge: false, gamificationTags: [],
     }
   })
 
@@ -124,7 +124,7 @@ export default function NewSubmitPage() {
       case 4:
         return !!form.watch('launchType') && !!form.watch('launchDate') && !!form.watch('monetization') && !!form.watch('engine')
       case 5:
-        return true // Step 5 is optional extras
+        return (form.watch('gamificationTags') || []).length >= 1 // Require at least 1 gamification tag
       case 6:
         return completionPercentage === 100
       default:
@@ -1432,56 +1432,10 @@ export default function NewSubmitPage() {
                   )}
                   {step===5 && (
                     <div className="space-y-8">
-                      {/* Pricing / Promo Codes */}
+                      {/* Promo Codes */}
                       <div>
-                        <h3 className="text-lg font-semibold">Pricing & Promo Codes</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Configure pricing and promotional offers for the community.</p>
-                        
-                        {/* Pricing */}
-                        <div className="mb-6">
-                          <Label className="text-sm font-medium">Pricing Model</Label>
-                          <div className="space-y-3 mt-3">
-                            <label className="flex items-start gap-3 cursor-pointer">
-                              <input 
-                                type="radio" 
-                                name="pricing" 
-                                value="FREE"
-                                onChange={() => form.setValue('pricing', 'FREE')}
-                                className="mt-1"
-                              />
-                              <div>
-                                <span className="font-medium">Free</span>
-                                <div className="text-sm text-muted-foreground">This game is completely free to play</div>
-                              </div>
-                            </label>
-                            <label className="flex items-start gap-3 cursor-pointer">
-                              <input 
-                                type="radio" 
-                                name="pricing" 
-                                value="PAID"
-                                onChange={() => form.setValue('pricing', 'PAID')}
-                                className="mt-1"
-                              />
-                              <div>
-                                <span className="font-medium">Paid</span>
-                                <div className="text-sm text-muted-foreground">One-time purchase required</div>
-                              </div>
-                            </label>
-                            <label className="flex items-start gap-3 cursor-pointer">
-                              <input 
-                                type="radio" 
-                                name="pricing" 
-                                value="FREEMIUM"
-                                onChange={() => form.setValue('pricing', 'FREEMIUM')}
-                                className="mt-1"
-                              />
-                              <div>
-                                <span className="font-medium">Freemium</span>
-                                <div className="text-sm text-muted-foreground">Free with optional purchases</div>
-                              </div>
-                            </label>
-                          </div>
-                        </div>
+                        <h3 className="text-lg font-semibold">Promotional Offers</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Configure promotional offers for the community.</p>
 
                         {/* Promo Codes */}
                         <div>
@@ -1639,6 +1593,11 @@ export default function NewSubmitPage() {
                         <p className="text-xs text-muted-foreground mt-2">
                           Selected: {(form.watch('gamificationTags') || []).length}/5 tags
                         </p>
+                        {(!form.watch('gamificationTags') || form.watch('gamificationTags').length === 0) && (
+                          <p className="text-sm text-amber-600 dark:text-amber-400 mt-2">
+                            At least 1 gamification tag is required (max 5).
+                          </p>
+                        )}
                       </div>
 
                       {/* Validation Summary */}
@@ -1647,9 +1606,19 @@ export default function NewSubmitPage() {
                           <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
                           <span className="font-medium">Validation Warnings</span>
                         </div>
-                        {form.watch('playtestQuota') && form.watch('playtestQuota') > 1000 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Playtest quota cannot exceed 1000</div>}
-                        {form.watch('sponsorNote') && (form.watch('sponsorNote') || '').length > 500 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Sponsor note must be 500 characters or less</div>}
-                        {form.watch('gamificationTags') && (form.watch('gamificationTags') || []).length > 5 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Maximum 5 gamification tags allowed</div>}
+                        {(form.watch('playtestQuota') && form.watch('playtestQuota') > 1000) || 
+                         (form.watch('sponsorNote') && (form.watch('sponsorNote') || '').length > 500) || 
+                         (form.watch('gamificationTags') && (form.watch('gamificationTags') || []).length > 5) || 
+                         (!form.watch('gamificationTags') || form.watch('gamificationTags').length === 0) ? (
+                          <>
+                            {form.watch('playtestQuota') && form.watch('playtestQuota') > 1000 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Playtest quota cannot exceed 1000</div>}
+                            {form.watch('sponsorNote') && (form.watch('sponsorNote') || '').length > 500 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Sponsor note must be 500 characters or less</div>}
+                            {form.watch('gamificationTags') && (form.watch('gamificationTags') || []).length > 5 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Maximum 5 gamification tags allowed</div>}
+                            {(!form.watch('gamificationTags') || form.watch('gamificationTags').length === 0) && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> At least 1 gamification tag is required (max 5)</div>}
+                          </>
+                        ) : (
+                          <div className="text-green-600 dark:text-green-400">All validations passed!</div>
+                        )}
                       </div>
                     </div>
                   )}

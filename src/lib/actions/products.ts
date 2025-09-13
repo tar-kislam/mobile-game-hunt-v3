@@ -94,7 +94,6 @@ export async function createProductAction(data: ProductFullInput) {
         userId: user.id,
         status: 'PUBLISHED',
         // Community & Extras fields
-        pricing: data.pricing,
         promoOffer: data.promoOffer,
         promoCode: data.promoCode,
         promoExpiry: data.promoExpiry ? new Date(data.promoExpiry) : null,
@@ -223,7 +222,6 @@ export async function saveDraftAction(data: ProductFullInput) {
         userId: user.id,
         status: 'DRAFT',
         // Community & Extras fields
-        pricing: data.pricing,
         promoOffer: data.promoOffer,
         promoCode: data.promoCode,
         promoExpiry: data.promoExpiry ? new Date(data.promoExpiry) : null,
@@ -328,7 +326,6 @@ export async function scheduleLaunchAction(data: ProductFullInput, launchDate: s
         userId: user.id,
         status: 'PENDING',
         // Community & Extras fields
-        pricing: data.pricing,
         promoOffer: data.promoOffer,
         promoCode: data.promoCode,
         promoExpiry: data.promoExpiry ? new Date(data.promoExpiry) : null,
@@ -433,7 +430,6 @@ export async function submitApprovalAction(data: ProductFullInput) {
         userId: user.id,
         status: 'PUBLISHED',
         // Community & Extras fields
-        pricing: data.pricing,
         promoOffer: data.promoOffer,
         promoCode: data.promoCode,
         promoExpiry: data.promoExpiry ? new Date(data.promoExpiry) : null,
