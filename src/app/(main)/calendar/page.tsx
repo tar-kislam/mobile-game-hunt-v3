@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Calendar, Download, Filter, Globe, Smartphone, CalendarDays, MapPin, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { Calendar, Download, Filter, Globe, Smartphone, CalendarDays, MapPin, ChevronLeft, ChevronRight, Eye, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import Link from 'next/link';
 
 interface CalendarProduct {
@@ -55,6 +56,7 @@ export default function CalendarPage() {
     category: 'all',
     year: searchParams.get('year') || new Date().getFullYear().toString()
   });
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() + i);
   const platforms = ['ios', 'android', 'web', 'windows', 'mac'];
@@ -238,7 +240,100 @@ export default function CalendarPage() {
         </div>
 
         {/* Filters */}
-        <Card className="mb-8">
+        {/* Mobile Filters - Accordion */}
+        <div className="block md:hidden mb-6">
+          <Collapsible open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                <span className="flex items-center gap-2">
+                  <Filter className="w-4 h-4" />
+                  Filters
+                </span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${mobileFiltersOpen ? 'rotate-180' : ''}`} />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Platform
+                      </label>
+                      <Select value={filters.platform} onValueChange={(value) => setFilters(prev => ({ ...prev, platform: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All platforms" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All platforms</SelectItem>
+                          {platforms.map(platform => (
+                            <SelectItem key={platform} value={platform}>
+                              {platform.toUpperCase()}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Country
+                      </label>
+                      <Select value={filters.country} onValueChange={(value) => setFilters(prev => ({ ...prev, country: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All countries" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All countries</SelectItem>
+                          {countries.map(country => (
+                            <SelectItem key={country} value={country}>
+                              {country}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Category
+                      </label>
+                      <Select value={filters.category} onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All categories" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All categories</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Year
+                      </label>
+                      <Select value={filters.year} onValueChange={(value) => setFilters(prev => ({ ...prev, year: value }))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {years.map(year => (
+                            <SelectItem key={year} value={year.toString()}>
+                              {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+
+        {/* Desktop Filters */}
+        <Card className="hidden md:block mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Filter className="w-5 h-5" />
@@ -295,7 +390,6 @@ export default function CalendarPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All categories</SelectItem>
-                    {/* We'll populate this dynamically */}
                   </SelectContent>
                 </Select>
               </div>
@@ -322,7 +416,46 @@ export default function CalendarPage() {
         </Card>
 
         {/* Quick Actions */}
-        <div className="flex flex-wrap gap-4 mb-8 justify-center">
+        {/* Mobile Actions - Pill-shaped buttons */}
+        <div className="block md:hidden mb-8">
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            <Button 
+              onClick={goToToday}
+              variant="outline"
+              size="sm"
+              className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full text-xs"
+            >
+              Today
+            </Button>
+            <Button 
+              onClick={goToUpcoming}
+              variant="outline"
+              size="sm"
+              className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full text-xs"
+            >
+              Upcoming
+            </Button>
+            <Button 
+              onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
+              variant="outline"
+              size="sm"
+              className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full text-xs"
+            >
+              {viewMode === 'calendar' ? 'List' : 'Calendar'}
+            </Button>
+            <Button 
+              onClick={downloadICS}
+              size="sm"
+              className="bg-purple-600 hover:bg-purple-700 text-white rounded-full text-xs"
+            >
+              <Download className="w-3 h-3 mr-1" />
+              Download
+            </Button>
+          </div>
+        </div>
+
+        {/* Desktop Actions */}
+        <div className="hidden md:flex flex-wrap gap-4 mb-8 justify-center">
           <Button 
             onClick={goToToday}
             variant="outline"
@@ -475,87 +608,107 @@ export default function CalendarPage() {
             ) : (
               products.map((product) => (
                 <Card key={product.id} className="hover:shadow-lg transition-shadow duration-200">
-                  <CardContent className="p-6">
-                    <div className="flex items-start space-x-4">
-                      {/* Product Image */}
+                  <CardContent className="p-4 md:p-6">
+                    <div className="flex items-start space-x-3 md:space-x-4">
+                      {/* Product Image - Clickable on mobile */}
                       <div className="flex-shrink-0">
-                        {product.thumbnail ? (
-                          <img
-                            src={product.thumbnail}
-                            alt={product.title}
-                            className="w-20 h-20 rounded-lg object-cover"
-                          />
-                        ) : (
-                          <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                            <span className="text-gray-500 dark:text-gray-400 text-sm">No Image</span>
-                          </div>
-                        )}
+                        <Link href={`/product/${product.id}`} className="block">
+                          {product.thumbnail ? (
+                            <img
+                              src={product.thumbnail}
+                              alt={product.title}
+                              className="w-16 h-16 md:w-20 md:h-20 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                            />
+                          ) : (
+                            <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
+                              <span className="text-gray-500 dark:text-gray-400 text-xs md:text-sm">No Image</span>
+                            </div>
+                          )}
+                        </Link>
                       </div>
 
                       {/* Product Info */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate flex-1">
-                            {product.title}
-                          </h3>
-                          <Badge className={getStatusColor(product.releaseAt)}>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <Link href={`/product/${product.id}`} className="flex-1 min-w-0">
+                            <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white truncate hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                              {product.title}
+                            </h3>
+                          </Link>
+                          <Badge className={`${getStatusColor(product.releaseAt)} text-xs`}>
                             {getTimeUntilRelease(product.releaseAt)}
                           </Badge>
                         </div>
                         
                         {product.tagline && (
-                          <p className="text-gray-600 dark:text-gray-400 text-sm mb-2 truncate">
+                          <p className="text-gray-600 dark:text-gray-400 text-sm mb-2 line-clamp-2">
                             {product.tagline}
                           </p>
                         )}
                         
-                        <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 break-words">
+                        <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 line-clamp-2 hidden md:block">
                           {product.description.length > 150 ? `${product.description.substring(0, 150)}...` : product.description}
                         </p>
 
                         {/* Release Date */}
                         <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-3">
-                          <Calendar className="w-4 h-4" />
-                          <span className="font-medium">{formatDate(product.releaseAt)}</span>
+                          <Calendar className="w-3 h-3 md:w-4 md:h-4" />
+                          <span className="font-medium text-xs md:text-sm">{formatDate(product.releaseAt)}</span>
                         </div>
 
-                        {/* Platforms & Countries */}
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {product.platforms?.map((platform) => (
-                            <Badge key={platform} variant="outline" className="text-xs">
-                              <Smartphone className="w-3 h-3 mr-1" />
-                              {platform.toUpperCase()}
+                        {/* Platforms & Countries - Smaller on mobile */}
+                        <div className="flex flex-wrap gap-1 md:gap-2 mb-2 md:mb-3">
+                          {product.platforms?.slice(0, 3).map((platform) => (
+                            <Badge key={platform} variant="outline" className="text-xs px-2 py-0.5">
+                              <Smartphone className="w-2 h-2 md:w-3 md:h-3 mr-1" />
+                              <span className="hidden sm:inline">{platform.toUpperCase()}</span>
+                              <span className="sm:hidden">{platform.toUpperCase().slice(0, 2)}</span>
                             </Badge>
                           ))}
-                          {product.countries?.map((country) => (
-                            <Badge key={country} variant="outline" className="text-xs">
-                              <Globe className="w-3 h-3 mr-1" />
+                          {product.platforms?.length > 3 && (
+                            <Badge variant="outline" className="text-xs px-2 py-0.5">
+                              +{product.platforms.length - 3}
+                            </Badge>
+                          )}
+                          {product.countries?.slice(0, 2).map((country) => (
+                            <Badge key={country} variant="outline" className="text-xs px-2 py-0.5">
+                              <Globe className="w-2 h-2 md:w-3 md:h-3 mr-1" />
                               {country}
                             </Badge>
                           ))}
+                          {product.countries?.length > 2 && (
+                            <Badge variant="outline" className="text-xs px-2 py-0.5">
+                              +{product.countries.length - 2}
+                            </Badge>
+                          )}
                         </div>
 
-                        {/* Categories */}
+                        {/* Categories - Smaller on mobile */}
                         {product.categories && product.categories.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            {product.categories.map((cat) => (
-                              <Badge key={cat.category.id} variant="outline" className="text-xs">
-                                {cat.category.name}
+                          <div className="flex flex-wrap gap-1 md:gap-2 mb-2 md:mb-3">
+                            {product.categories.slice(0, 2).map((cat) => (
+                              <Badge key={cat.category.id} variant="outline" className="text-xs px-2 py-0.5">
+                                {cat.category.name.length > 10 ? `${cat.category.name.slice(0, 10)}...` : cat.category.name}
                               </Badge>
                             ))}
+                            {product.categories.length > 2 && (
+                              <Badge variant="outline" className="text-xs px-2 py-0.5">
+                                +{product.categories.length - 2}
+                              </Badge>
+                            )}
                           </div>
                         )}
 
                         {/* User Info */}
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                        <div className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
                           by <span className="font-medium text-gray-700 dark:text-gray-300">
                             {product.user.name || 'Anonymous'}
                           </span>
                         </div>
                       </div>
 
-                      {/* Action */}
-                      <div className="flex-shrink-0">
+                      {/* Desktop Action Button - Hidden on mobile */}
+                      <div className="hidden md:flex flex-shrink-0">
                         <Button asChild variant="outline" size="sm">
                           <Link href={`/product/${product.id}`}>
                             <Eye className="w-4 h-4 mr-1" />

@@ -204,6 +204,7 @@ export default function ProfilePage() {
   const [loadingPosts, setLoadingPosts] = useState<boolean>(false)
   const [notifications, setNotifications] = useState<any[]>([])
   const [unreadCount, setUnreadCount] = useState<number>(0)
+  const [activeTab, setActiveTab] = useState<string>('games')
   const cardRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -298,8 +299,8 @@ export default function ProfilePage() {
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
+      <div className="container mx-auto px-4 py-8 max-w-full overflow-hidden">
+        <div className="max-w-[420px] md:max-w-6xl mx-auto">
           {/* Magic Bento - exact grid behavior */}
           <div className="mb-8">
             <MagicBento
@@ -313,37 +314,38 @@ export default function ProfilePage() {
                   id: 'profile',
                   className: 'col-span-1 md:col-span-2 row-span-2',
                   children: (
-                    <div className="space-y-6">
+                    <div className="space-y-4 md:space-y-6 p-4 md:p-6">
                       <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-4">
-                          <Avatar className="h-16 w-16 ring-2 ring-purple-500/40 shadow-lg">
+                        <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
+                          <Avatar className="h-12 w-12 md:h-16 md:w-16 ring-2 ring-purple-500/40 shadow-lg flex-shrink-0">
                             <AvatarImage src={session?.user?.image || ''} />
                             <AvatarFallback className="bg-purple-600 text-white">
                               {session?.user?.name?.[0]?.toUpperCase() || 'U'}
                             </AvatarFallback>
                           </Avatar>
-                          <div>
-                            <div className="flex items-center gap-3">
-                              <div className="text-lg font-semibold">{session?.user?.name}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+                            <div className="text-base md:text-lg font-semibold truncate">{session?.user?.name}</div>
                               {/* Level Badge */}
-                              <Badge variant="secondary" className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-300 border-purple-500/30 rounded-full px-3 py-1">
+                              <Badge variant="secondary" className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-300 border-purple-500/30 rounded-full px-2 md:px-3 py-1 text-xs flex-shrink-0">
                                 <StarIcon className="h-3 w-3 mr-1" />
                                 Level {xpData?.level || 1}
                               </Badge>
                             </div>
-                            <div className="text-sm text-muted-foreground">{session?.user?.email}</div>
+                            <div className="text-xs md:text-sm text-muted-foreground truncate">{session?.user?.email}</div>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                              <CalendarIcon className="h-3 w-3" /> Joined {getJoinedDate()}
+                              <CalendarIcon className="h-3 w-3 flex-shrink-0" /> 
+                              <span className="truncate">Joined {getJoinedDate()}</span>
                             </div>
                           </div>
                         </div>
-                        <UserIcon className="h-5 w-5 text-purple-300" />
+                        <UserIcon className="h-4 w-4 md:h-5 md:w-5 text-purple-300 flex-shrink-0 ml-2" />
                       </div>
 
                       {/* XP Progress Bar */}
                       {xpData && (
                         <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center justify-between text-xs md:text-sm">
                             <span className="text-gray-300">Experience Points</span>
                             <span className="text-purple-300 font-medium">
                               {xpData.xp} / {(xpData.level * 100)} XP
@@ -351,17 +353,44 @@ export default function ProfilePage() {
                           </div>
                           <Progress 
                             value={xpData.xpProgress} 
-                            className="h-3 bg-gray-700 rounded-full overflow-hidden"
+                            className="h-2 md:h-3 bg-gray-700 rounded-full overflow-hidden"
                           />
                           <div className="flex items-center justify-between text-xs text-gray-400">
                             <span>Level {xpData.level}</span>
-                            <span>{xpData.xpToNextLevel} XP to Level {xpData.level + 1}</span>
+                            <span className="truncate ml-2">{xpData.xpToNextLevel} XP to Level {xpData.level + 1}</span>
                           </div>
                         </div>
                       )}
 
-                      {/* Embedded Stats 2x2 inside Profile card */}
-                      <div className="grid grid-cols-2 gap-4 mt-4 md:mt-8">
+                      {/* Mobile Stats as Text - Desktop Stats as Cards */}
+                      {/* Mobile Text Stats */}
+                      <div className="md:hidden mt-4 pt-4 border-t border-white/10">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="flex items-center gap-2">
+                            <GamepadIcon className="h-4 w-4 text-primary flex-shrink-0" />
+                            <span className="text-muted-foreground">Games:</span>
+                            <span className="font-semibold text-white">{liveStats.totalGames}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <ArrowUpIcon className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <span className="text-muted-foreground">Votes:</span>
+                            <span className="font-semibold text-white">{liveStats.totalVotes}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <MessageCircleIcon className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                            <span className="text-muted-foreground">Comments:</span>
+                            <span className="font-semibold text-white">{liveStats.totalComments}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <TrophyIcon className="h-4 w-4 text-yellow-400 flex-shrink-0" />
+                            <span className="text-muted-foreground">Ranking:</span>
+                            <span className="font-semibold text-white">#{liveStats.ranking || 0}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Desktop Card Stats */}
+                      <div className="hidden md:grid grid-cols-2 gap-4 mt-8">
                         <div className="rounded-xl border border-white/10 bg-gray-900/60 p-4 text-center shadow-inner">
                           <GamepadIcon className="h-5 w-5 mx-auto mb-1 text-primary" />
                           <div className="text-xl font-bold">{liveStats.totalGames}</div>
@@ -388,7 +417,7 @@ export default function ProfilePage() {
                 },
                 {
                   id: 'settings',
-                  className: 'row-span-1',
+                  className: 'row-span-1 hidden md:block',
                   children: (
                     <Link href="/profile/settings" className="block">
                       <div className="flex items-center justify-between">
@@ -403,7 +432,7 @@ export default function ProfilePage() {
                 },
                 {
                   id: 'dashboard',
-                  className: 'row-span-1',
+                  className: 'row-span-1 hidden md:block',
                   children: (
                     <Link href="/dashboard" className="block">
                       <div className="flex items-center justify-between">
@@ -431,15 +460,94 @@ export default function ProfilePage() {
 
           {/* Profile Tabs */}
           <Tabs defaultValue="games" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 rounded-2xl mb-6">
-              <TabsTrigger value="games" className="rounded-2xl">My Games</TabsTrigger>
-              <TabsTrigger value="votes" className="rounded-2xl">Voted Games</TabsTrigger>
-              <TabsTrigger value="comments" className="rounded-2xl">Comments</TabsTrigger>
-              <TabsTrigger value="posts" className="rounded-2xl">My Posts</TabsTrigger>
-              <TabsTrigger value="notifications" className="rounded-2xl">Notifications {unreadCount > 0 ? `(${unreadCount})` : ''}</TabsTrigger>
+            {/* Mobile Navigation - Horizontal Scrollable Tabs */}
+            <div className="block md:hidden mb-6">
+              <div className="mx-auto max-w-[420px] px-4">
+                <nav role="tablist" className="relative">
+                  <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-2 snap-x snap-mandatory" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    <button
+                      role="tab"
+                      onClick={() => setActiveTab('games')}
+                      className={`flex-shrink-0 snap-start px-3 py-2 text-sm font-medium transition-all duration-200 whitespace-nowrap rounded-lg ${
+                        activeTab === 'games'
+                          ? 'bg-primary text-white shadow-md shadow-primary/50'
+                          : 'text-muted-foreground hover:text-primary bg-transparent hover:bg-primary/10'
+                      }`}
+                      aria-selected={activeTab === 'games'}
+                      aria-label="My Games tab"
+                    >
+                      My Games
+                    </button>
+                    <button
+                      role="tab"
+                      onClick={() => setActiveTab('votes')}
+                      className={`flex-shrink-0 snap-start px-3 py-2 text-sm font-medium transition-all duration-200 whitespace-nowrap rounded-lg ${
+                        activeTab === 'votes'
+                          ? 'bg-primary text-white shadow-md shadow-primary/50'
+                          : 'text-muted-foreground hover:text-primary bg-transparent hover:bg-primary/10'
+                      }`}
+                      aria-selected={activeTab === 'votes'}
+                      aria-label="Voted Games tab"
+                    >
+                      Voted Games
+                    </button>
+                    <button
+                      role="tab"
+                      onClick={() => setActiveTab('comments')}
+                      className={`flex-shrink-0 snap-start px-3 py-2 text-sm font-medium transition-all duration-200 whitespace-nowrap rounded-lg ${
+                        activeTab === 'comments'
+                          ? 'bg-primary text-white shadow-md shadow-primary/50'
+                          : 'text-muted-foreground hover:text-primary bg-transparent hover:bg-primary/10'
+                      }`}
+                      aria-selected={activeTab === 'comments'}
+                      aria-label="Comments tab"
+                    >
+                      Comments
+                    </button>
+                    <button
+                      role="tab"
+                      onClick={() => setActiveTab('posts')}
+                      className={`flex-shrink-0 snap-start px-3 py-2 text-sm font-medium transition-all duration-200 whitespace-nowrap rounded-lg ${
+                        activeTab === 'posts'
+                          ? 'bg-primary text-white shadow-md shadow-primary/50'
+                          : 'text-muted-foreground hover:text-primary bg-transparent hover:bg-primary/10'
+                      }`}
+                      aria-selected={activeTab === 'posts'}
+                      aria-label="My Posts tab"
+                    >
+                      My Posts
+                    </button>
+                    <button
+                      role="tab"
+                      onClick={() => setActiveTab('notifications')}
+                      className={`flex-shrink-0 snap-start px-3 py-2 text-sm font-medium transition-all duration-200 whitespace-nowrap rounded-lg ${
+                        activeTab === 'notifications'
+                          ? 'bg-primary text-white shadow-md shadow-primary/50'
+                          : 'text-muted-foreground hover:text-primary bg-transparent hover:bg-primary/10'
+                      }`}
+                      aria-selected={activeTab === 'notifications'}
+                      aria-label={`Notifications tab${unreadCount > 0 ? ` - ${unreadCount} unread` : ''}`}
+                    >
+                      Notifications {unreadCount > 0 ? `(${unreadCount})` : ''}
+                    </button>
+                  </div>
+                </nav>
+              </div>
+            </div>
+
+            {/* Desktop Navigation */}
+            <TabsList className="hidden md:grid w-full grid-cols-5 rounded-2xl mb-6">
+              <TabsTrigger value="games" className="rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-primary/40 data-[state=active]:scale-105 transition-all duration-200 hover:bg-muted/20">My Games</TabsTrigger>
+              <TabsTrigger value="votes" className="rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-primary/40 data-[state=active]:scale-105 transition-all duration-200 hover:bg-muted/20">Voted Games</TabsTrigger>
+              <TabsTrigger value="comments" className="rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-primary/40 data-[state=active]:scale-105 transition-all duration-200 hover:bg-muted/20">Comments</TabsTrigger>
+              <TabsTrigger value="posts" className="rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-primary/40 data-[state=active]:scale-105 transition-all duration-200 hover:bg-muted/20">My Posts</TabsTrigger>
+              <TabsTrigger value="notifications" className="rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-primary/40 data-[state=active]:scale-105 transition-all duration-200 hover:bg-muted/20">Notifications {unreadCount > 0 ? `(${unreadCount})` : ''}</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="games" className="space-y-4">
+            {/* Mobile Content - Conditional Rendering */}
+            <div className="block md:hidden">
+              {activeTab === 'games' && (
+                <div className="space-y-4">
               <h2 className="text-xl font-semibold">My Submitted Games</h2>
 
               {liveGames.length === 0 ? (
@@ -513,10 +621,11 @@ export default function ProfilePage() {
                   }))}
                 />
               )}
-            </TabsContent>
+                </div>
+              )}
 
-            {/* Notifications */}
-            <TabsContent value="notifications" className="space-y-4">
+              {activeTab === 'notifications' && (
+                <div className="space-y-4">
               <h2 className="text-xl font-semibold">Notifications</h2>
               <div className="flex items-center justify-between">
                 <div className="text-sm text-muted-foreground">Latest activity on your posts</div>
@@ -556,9 +665,11 @@ export default function ProfilePage() {
                   ))
                 )}
               </div>
-            </TabsContent>
+                </div>
+              )}
             
-            <TabsContent value="votes" className="space-y-4">
+              {activeTab === 'votes' && (
+                <div className="space-y-4">
               <h2 className="text-xl font-semibold">Games I've Voted For</h2>
               
               {(!votesData || votesData.votes?.length === 0) ? (
@@ -593,9 +704,11 @@ export default function ProfilePage() {
                   }))}
                 />
               )}
-            </TabsContent>
+                </div>
+              )}
             
-            <TabsContent value="comments" className="space-y-4">
+              {activeTab === 'comments' && (
+                <div className="space-y-4">
               <h2 className="text-xl font-semibold">My Comments</h2>
               
               {(!commentsData || commentsData.comments?.length === 0) ? (
@@ -632,10 +745,11 @@ export default function ProfilePage() {
                   }))}
                 />
               )}
-            </TabsContent>
+                </div>
+              )}
 
-            {/* My Posts */}
-            <TabsContent value="posts" className="space-y-4">
+              {activeTab === 'posts' && (
+                <div className="space-y-4">
               <h2 className="text-xl font-semibold">My Posts</h2>
               {loadingPosts ? (
                 <div className="space-y-4">
@@ -697,7 +811,270 @@ export default function ProfilePage() {
                   )}
                 </div>
               )}
+                </div>
+              )}
+            </div>
+
+            {/* Desktop Content - Original TabsContent */}
+            <div className="hidden md:block">
+              <TabsContent value="games" className="space-y-4">
+                <h2 className="text-xl font-semibold">My Submitted Games</h2>
+
+                {liveGames.length === 0 ? (
+                  <Card className="rounded-2xl shadow-soft">
+                    <CardContent className="p-8 text-center">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center">
+                          <GamepadIcon className="h-8 w-8 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">No games submitted yet</h3>
+                          <p className="text-muted-foreground mb-4">
+                            You haven't submitted any games yet. Submit your first game to get started!
+                          </p>
+                          <Link href="/submit">
+                            <Button className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white">
+                              Submit Your First Game
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <MagicBento
+                    className="md:grid-cols-2"
+                    enableTilt
+                    enableSpotlight
+                    enableStars
+                    enableBorderGlow
+                    glowColor="132, 0, 255"
+                    items={liveGames.map((game: any) => ({
+                      id: game.id,
+                      children: (
+                        <div className="flex gap-4">
+                          <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-muted">
+                            <img src={game.image} alt={game.title} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <Link href={`/product/${game.id}`} className="hover:underline">
+                                  <h3 className="font-semibold text-sm leading-tight">{game.title}</h3>
+                                </Link>
+                                <p className="text-sm text-muted-foreground line-clamp-2">{game.description}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 mt-2">
+                              <Badge variant="secondary" className="rounded-2xl text-xs">
+                                {game.platforms?.map((p: string) => p.toUpperCase()).join(', ') || 'No platforms listed'}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">by {game.maker.name}</span>
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <ArrowUpIcon className="h-3 w-3" />
+                                {game.votes} votes
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <MessageCircleIcon className="h-3 w-3" />
+                                {game.comments} comments
+                              </div>
+                              <Link href={`/product/${game.id}`} className="flex items-center gap-1 hover:text-foreground">
+                                <ExternalLinkIcon className="h-3 w-3" />
+                                View
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    }))}
+                  />
+              )}
             </TabsContent>
+
+              <TabsContent value="notifications" className="space-y-4">
+                <h2 className="text-xl font-semibold">Notifications</h2>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">Latest activity on your posts</div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      await fetch('/api/community/notifications', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ markAllAsRead: true })
+                      })
+                      setUnreadCount(0)
+                    }}
+                  >
+                    Mark all as read
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {notifications.length === 0 ? (
+                    <Card className="rounded-2xl shadow-soft">
+                      <CardContent className="p-6 text-center text-muted-foreground">
+                        No notifications yet.
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    notifications.map((n:any) => (
+                      <Card key={n.id} className={`rounded-2xl shadow-soft ${n.isRead ? 'opacity-80' : ''}`}>
+                        <CardContent className="p-4 flex items-center justify-between">
+                          <div>
+                            <div className="font-medium text-sm">{n.type === 'like' ? 'Someone liked your post' : 'New comment on your post'}</div>
+                            <div className="text-xs text-muted-foreground">{n.message}</div>
+                          </div>
+                          <div className="text-xs text-muted-foreground">{new Date(n.createdAt).toLocaleString()}</div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="votes" className="space-y-4">
+                <h2 className="text-xl font-semibold">Games I've Voted For</h2>
+                
+                {(!votesData || votesData.votes?.length === 0) ? (
+                  <Card className="rounded-2xl shadow-soft"><CardContent className="p-6 text-center text-muted-foreground">You haven't voted yet.</CardContent></Card>
+                ) : (
+                  <MagicBento
+                    className="md:grid-cols-2"
+                    enableTilt
+                    enableSpotlight
+                    enableStars
+                    enableBorderGlow
+                    glowColor="132, 0, 255"
+                    items={votesData.votes.map((vote: any) => ({
+                      id: `vote-${vote.gameId}`,
+                      className: 'col-span-1',
+                      children: (
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-4">
+                            <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-muted">
+                              <img src={vote.coverImage} alt={vote.title} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="font-medium text-sm">{vote.title}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {vote.platforms?.map((p:string) => p.toUpperCase()).join(', ') || 'No platforms listed'}
+                              </div>
+                            </div>
+                            <ArrowUpIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                          </div>
+                        </div>
+                      )
+                    }))}
+                  />
+                )}
+              </TabsContent>
+              
+              <TabsContent value="comments" className="space-y-4">
+                <h2 className="text-xl font-semibold">My Comments</h2>
+                
+                {(!commentsData || commentsData.comments?.length === 0) ? (
+                  <Card className="rounded-2xl shadow-soft"><CardContent className="p-6 text-center text-muted-foreground">No comments yet.</CardContent></Card>
+                ) : (
+                  <MagicBento
+                    className="md:grid-cols-2"
+                    enableTilt
+                    enableSpotlight
+                    enableStars
+                    enableBorderGlow
+                    glowColor="132, 0, 255"
+                    items={commentsData.comments.map((comment: any) => ({
+                      id: `comment-${comment.id}`,
+                      className: 'col-span-1',
+                      children: (
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-4">
+                            <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-muted">
+                              <img src={comment.game?.coverImage} alt={comment.game?.title} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="font-medium text-sm">{comment.game?.title}</div>
+                              <div className="text-xs text-muted-foreground line-clamp-2">{comment.content}</div>
+                            </div>
+                            <MessageCircleIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                          </div>
+                        </div>
+                      )
+                    }))}
+                  />
+                )}
+              </TabsContent>
+
+              <TabsContent value="posts" className="space-y-4">
+                <h2 className="text-xl font-semibold">My Posts</h2>
+                {loadingPosts ? (
+                  <div className="space-y-4">
+                    <div className="h-24 w-full rounded-xl bg-white/5 animate-pulse"></div>
+                    <div className="h-24 w-full rounded-xl bg-white/5 animate-pulse"></div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {myPosts.length === 0 ? (
+                      <Card className="rounded-2xl shadow-soft">
+                        <CardContent className="p-6 text-center text-muted-foreground">
+                          No posts yet.
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      myPosts.map((post:any) => (
+                        <Card key={post.id} className="rounded-2xl shadow-soft bg-card/60 border-white/10">
+                          <CardContent className="p-4 space-y-3">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={session?.user?.image || ''} />
+                                <AvatarFallback>{session?.user?.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium text-sm">{session?.user?.name || 'You'}</div>
+                                <div className="text-xs text-muted-foreground">{new Date(post.createdAt).toLocaleString()}</div>
+                              </div>
+                            </div>
+                            <div className="text-sm whitespace-pre-wrap">
+                              {post.content}
+                            </div>
+                            {Array.isArray(post.images) && post.images.length > 0 && (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {post.images.slice(0,4).map((img:string, idx:number) => (
+                                  <img key={idx} src={img} alt="Post image" className="w-full h-auto rounded-lg border border-white/10" />
+                                ))}
+                              </div>
+                            )}
+                            {Array.isArray(post.hashtags) && post.hashtags.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {post.hashtags.map((tag:string) => (
+                                  <UIBadge key={tag} variant="secondary" className="bg-blue-500/20 text-blue-300 border-blue-500/30">{tag}</UIBadge>
+                                ))}
+                              </div>
+                            )}
+                            <div className="flex items-center gap-6 pt-2 border-t border-white/10 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <ArrowUpIcon className="h-4 w-4" />
+                                {post.likes || 0}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <MessageCircleIcon className="h-4 w-4" />
+                                {post.comments || 0}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <StarIcon className="h-4 w-4" />
+                                {post.shares || 0}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
+                  </div>
+                )}
+              </TabsContent>
+            </div>
           </Tabs>
         </div>
       </div>

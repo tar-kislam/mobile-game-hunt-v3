@@ -40,7 +40,7 @@ export function GogSearchBar({
   const hasActiveFilters = selectedCategory !== "all" || selectedPlatform !== "all" || selectedReleaseStatus !== "all"
 
   return (
-    <div className={`bg-card/50 backdrop-blur-sm border border-white/10 rounded-lg p-4 ${className}`}>
+    <div className={`bg-card/50 backdrop-blur-sm border border-white/10 rounded-lg p-4 products-font ${className}`}>
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Search Input */}
         <div className="flex-1">

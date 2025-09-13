@@ -153,7 +153,7 @@ export function GogSidebar({
   ]
 
   return (
-    <div className={`w-64 flex-shrink-0 ${className}`}>
+    <div className={`w-64 flex-shrink-0 products-font ${className}`}>
       <Card className="bg-card/50 backdrop-blur-sm border-white/10">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">

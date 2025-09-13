@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -147,20 +148,56 @@ export default function SettingsPage() {
     <>
       <Header />
       <div className="container mx-auto px-4 py-6">
-      {/* Mobile tabs header */}
-      <div className="md:hidden mb-4">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-          <TabsList className="w-full grid grid-cols-3">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          </TabsList>
-        </Tabs>
+      {/* Mobile horizontal scrollable tabs - Only visible on mobile */}
+      <div className="md:hidden mb-6">
+        <nav role="tablist" className="relative">
+          <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-2 snap-x snap-mandatory" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <button
+              role="tab"
+              onClick={() => setActiveTab('profile')}
+              className={`flex-shrink-0 snap-start px-4 py-2 text-sm font-medium transition-all duration-200 whitespace-nowrap rounded-lg ${
+                activeTab === 'profile'
+                  ? 'bg-primary text-white shadow-md shadow-primary/40'
+                  : 'text-muted-foreground hover:text-white hover:bg-muted/20'
+              }`}
+              aria-selected={activeTab === 'profile'}
+              aria-label="Profile settings tab"
+            >
+              Profile
+            </button>
+            <button
+              role="tab"
+              onClick={() => setActiveTab('security')}
+              className={`flex-shrink-0 snap-start px-4 py-2 text-sm font-medium transition-all duration-200 whitespace-nowrap rounded-lg ${
+                activeTab === 'security'
+                  ? 'bg-primary text-white shadow-md shadow-primary/40'
+                  : 'text-muted-foreground hover:text-white hover:bg-muted/20'
+              }`}
+              aria-selected={activeTab === 'security'}
+              aria-label="Security settings tab"
+            >
+              Security
+            </button>
+            <button
+              role="tab"
+              onClick={() => setActiveTab('notifications')}
+              className={`flex-shrink-0 snap-start px-4 py-2 text-sm font-medium transition-all duration-200 whitespace-nowrap rounded-lg ${
+                activeTab === 'notifications'
+                  ? 'bg-primary text-white shadow-md shadow-primary/40'
+                  : 'text-muted-foreground hover:text-white hover:bg-muted/20'
+              }`}
+              aria-selected={activeTab === 'notifications'}
+              aria-label="Notifications settings tab"
+            >
+              Notifications
+            </button>
+          </div>
+        </nav>
       </div>
 
       <div className="grid md:grid-cols-12 gap-4">
-        {/* Sidebar */}
-        <div className="md:col-span-4 lg:col-span-3">
+        {/* Sidebar - Hidden on mobile, visible on desktop */}
+        <div className="hidden md:block md:col-span-4 lg:col-span-3">
           <Card className="bg-card/60 backdrop-blur border-white/10 md:sticky md:top-20">
             <CardHeader>
               <CardTitle className="text-lg">Settings</CardTitle>
@@ -188,7 +225,7 @@ export default function SettingsPage() {
           </Card>
         </div>
 
-        {/* Content */}
+        {/* Content - Full width on mobile, adjusted on desktop */}
         <div className="md:col-span-8 lg:col-span-9">
           <Card className="bg-card/60 backdrop-blur border-white/10">
             <CardContent className="pt-6">

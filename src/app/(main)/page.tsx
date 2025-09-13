@@ -2,11 +2,27 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowUpIcon, MessageCircleIcon, ExternalLinkIcon, TrendingUpIcon } from "lucide-react"
+import { ArrowUpIcon, MessageCircleIcon, ExternalLinkIcon, TrendingUpIcon, ChevronDownIcon } from "lucide-react"
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from "@/components/ui/carousel"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import Autoplay from "embla-carousel-autoplay"
 import { EnhancedSubmitGameModal } from "@/components/games/enhanced-submit-game-modal"
 import { GameCard } from "@/components/games/game-card"
 import { TapTapGameCardNoScale } from "@/components/games/taptap-game-card-no-scale"
@@ -16,9 +32,221 @@ import { CTASection } from "@/components/sections/cta-section"
 import { NewsletterModal } from "@/components/modals/newsletter-modal"
 import { toast } from "sonner"
 import useSWR from 'swr'
+import ShinyText from "@/components/ShinyText"
 
 // Fetcher function for SWR
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
+
+// Mobile Filter Dropdown Component
+interface MobileFilterDropdownProps {
+  sortBy: "newest" | "most-upvoted" | "most-viewed" | "editors-choice"
+  onSortChange: (value: "newest" | "most-upvoted" | "most-viewed" | "editors-choice") => void
+}
+
+function MobileFilterDropdown({ sortBy, onSortChange }: MobileFilterDropdownProps) {
+  const filterNames = {
+    newest: "Newest",
+    "most-upvoted": "Most Upvoted", 
+    "most-viewed": "Most Viewed",
+    "editors-choice": "Editor's Choice"
+  }
+
+  return (
+    <nav className="w-full">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button 
+            variant="outline" 
+            className="w-full justify-between bg-gray-900/80 backdrop-blur-sm border border-white/10 text-white hover:bg-white/5 transition-all duration-300 rounded-xl shadow-lg shadow-purple-500/10 hover:shadow-purple-500/20 hover:scale-[1.02]"
+          >
+            {filterNames[sortBy as keyof typeof filterNames] || "Newest"}
+            <ChevronDownIcon className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-full bg-gray-900/95 backdrop-blur-sm border border-white/10 rounded-xl shadow-lg shadow-purple-500/20">
+          {Object.entries(filterNames).map(([value, label]) => (
+            <DropdownMenuItem
+              key={value}
+              onClick={() => onSortChange(value as "newest" | "most-upvoted" | "most-viewed" | "editors-choice")}
+              className={`text-white hover:bg-gradient-to-r hover:from-purple-600/20 hover:to-violet-600/20 cursor-pointer transition-all duration-300 rounded-lg ${
+                sortBy === value ? "bg-gradient-to-r from-purple-600/30 to-violet-600/30 shadow-lg shadow-purple-500/20" : ""
+              }`}
+            >
+              {label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </nav>
+  )
+}
+
+// Mobile Games Carousel Component
+interface MobileGamesCarouselProps {
+  games: Game[]
+  onVote: (gameId: string) => void
+}
+
+function MobileGamesCarousel({ games, onVote }: MobileGamesCarouselProps) {
+  const [api, setApi] = useState<CarouselApi>()
+  const [current, setCurrent] = useState(0)
+  const [count, setCount] = useState(0)
+
+  useEffect(() => {
+    if (!api) return
+
+    setCount(api.scrollSnapList().length)
+    setCurrent(api.selectedScrollSnap() + 1)
+
+    api.on("select", () => {
+      setCurrent(api.selectedScrollSnap() + 1)
+    })
+  }, [api])
+
+  const scrollTo = (index: number) => {
+    if (api) {
+      api.scrollTo(index)
+    }
+  }
+
+  if (games.length === 0) {
+    return (
+      <Card className="rounded-2xl shadow-lg p-8 text-center border-white/10">
+        <div className="text-6xl mb-4">🎮</div>
+        <h3 className="text-xl font-semibold mb-2">No games yet</h3>
+        <p className="text-muted-foreground mb-4">Be the first to submit a game to the community!</p>
+      </Card>
+    )
+  }
+
+  return (
+    <div className="space-y-4 w-full max-w-full overflow-hidden">
+      <Carousel
+        setApi={setApi}
+        plugins={[
+          Autoplay({
+            delay: 4000,
+            stopOnInteraction: true,
+          }),
+        ]}
+        className="w-full max-w-full overflow-hidden mx-auto"
+        opts={{
+          align: "start",
+          loop: true,
+          containScroll: "trimSnaps",
+        }}
+      >
+        <CarouselContent className="-ml-0">
+          {games.map((game, index) => (
+            <CarouselItem key={game.id} className="pl-0 basis-full">
+              <article className="w-full max-w-full">
+                <MobileGameCard game={game} onVote={onVote} />
+              </article>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+      </Carousel>
+
+      {/* Pagination Dots */}
+      {count > 1 && (
+        <div className="flex justify-center gap-2 w-full overflow-hidden">
+          {Array.from({ length: count }).map((_, index) => (
+            <button
+              key={index}
+              onClick={() => scrollTo(index)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                index === current - 1
+                  ? "bg-purple-500 scale-125"
+                  : "bg-gray-400 hover:bg-gray-300"
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Mobile Game Card Component for Discover Games
+interface MobileGameCardProps {
+  game: Game
+  onVote: (gameId: string) => void
+}
+
+function MobileGameCard({ game, onVote }: MobileGameCardProps) {
+  return (
+    <Link href={`/product/${game.id}`} className="block w-full max-w-full">
+      <Card className="overflow-hidden bg-black border-0 rounded-xl aspect-[3/4] relative shadow-lg w-full max-w-full mx-auto">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          {game.image ? (
+            <Image
+              src={game.image as string}
+              alt={`${game.title} - Mobile Game`}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, 100vw"
+              unoptimized={true}
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+              <div className="text-6xl">🎮</div>
+            </div>
+          )}
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        </div>
+
+        {/* Vote Button */}
+        <button
+          className="absolute top-2 right-2 z-20 px-2 py-1 rounded-full bg-black/60 hover:bg-purple-600/90 transition-all duration-200 backdrop-blur-sm border border-white/20"
+          onClick={(e) => {
+            e.preventDefault()
+            onVote(game.id)
+          }}
+          aria-label={`Vote for ${game.title}`}
+        >
+          <ArrowUpIcon className="w-3 h-3 text-white" />
+        </button>
+
+        {/* Content Overlay */}
+        <CardContent className="relative z-10 p-3 h-full flex flex-col justify-end text-white">
+          {/* Title */}
+          <h3 className="text-lg font-bold leading-tight mb-2 line-clamp-2">
+            {game.title}
+          </h3>
+          
+          {/* Description */}
+          {game.tagline && (
+            <p className="text-xs text-gray-200 leading-relaxed mb-2 line-clamp-2">
+              {game.tagline}
+            </p>
+          )}
+          
+          {/* Stats */}
+          <div className="mb-2 flex items-center gap-2">
+            <span className="text-sm font-semibold text-green-400">Free</span>
+            <span className="text-gray-400">•</span>
+            <span className="text-gray-300 text-xs">{game._count.votes} votes</span>
+          </div>
+          
+          {/* Action Button */}
+          <Button 
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-[0_0_15px_rgba(168,85,247,0.8)] w-full text-sm"
+            onClick={(e) => {
+              e.preventDefault()
+              window.open(game.url, '_blank', 'noopener,noreferrer')
+            }}
+          >
+            <ExternalLinkIcon className="w-3 h-3 mr-1" />
+            Play Now
+          </Button>
+        </CardContent>
+      </Card>
+    </Link>
+  )
+}
 
 // Mock data - In a real app, this would come from your database
 const featuredProduct = {
@@ -253,13 +481,13 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 max-w-full overflow-hidden">
         {/* CTA Section - Main Hero */}
         <CTASection />
 
         <div className="grid lg:grid-cols-4 gap-8 mt-16">
           {/* Main Content */}
-          <div className="lg:col-span-3 space-y-8">
+          <div className="lg:col-span-3 space-y-8 w-full max-w-full overflow-hidden">
             {/* Featured Games Carousel */}
             {!isLoading && games.length > 0 && (
               <EpicFeaturedGames 
@@ -272,39 +500,48 @@ export default function HomePage() {
             )}
 
             {/* All Games */}
-            <section>
+            <section className="w-full max-w-full overflow-hidden">
               <div className="mb-6">
-                <h2 className="text-2xl font-bold mb-4">🎮 Discover Games</h2>
+                <h2 className="text-2xl font-bold mb-4" style={{ fontFamily: '"Epunda Slab", serif', fontWeight: 600 }}>
+                  <ShinyText>Discover Games</ShinyText>
+                </h2>
                 
-                {/* Filter Tabs */}
-                <Tabs value={sortBy} onValueChange={(value) => setSortBy(value as any)} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-gray-800/50 border-purple-500/20">
-                    <TabsTrigger 
-                      value="newest" 
-                      className="data-[state=active]:bg-purple-500 data-[state=active]:text-white text-gray-300 hover:text-white"
-                    >
-                      Newest
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="most-upvoted" 
-                      className="data-[state=active]:bg-purple-500 data-[state=active]:text-white text-gray-300 hover:text-white"
-                    >
-                      Most Upvoted
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="most-viewed" 
-                      className="data-[state=active]:bg-purple-500 data-[state=active]:text-white text-gray-300 hover:text-white"
-                    >
-                      Most Viewed
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="editors-choice" 
-                      className="data-[state=active]:bg-purple-500 data-[state=active]:text-white text-gray-300 hover:text-white"
-                    >
-                      Editor's Choice
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                {/* Desktop Filter Tabs - Magic Bento Style */}
+                <div className="hidden md:block">
+                  <Tabs value={sortBy} onValueChange={(value) => setSortBy(value as any)} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-gray-900/80 backdrop-blur-sm border border-white/10 rounded-xl p-1 shadow-lg shadow-purple-500/10">
+                      <TabsTrigger 
+                        value="newest" 
+                        className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
+                      >
+                        Newest
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="most-upvoted" 
+                        className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
+                      >
+                        Most Upvoted
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="most-viewed" 
+                        className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
+                      >
+                        Most Viewed
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="editors-choice" 
+                        className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
+                      >
+                        Editor's Choice
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+
+                {/* Mobile Filter Dropdown */}
+                <div className="md:hidden">
+                  <MobileFilterDropdown sortBy={sortBy} onSortChange={setSortBy} />
+                </div>
               </div>
               
               {isLoading ? (
@@ -335,7 +572,8 @@ export default function HomePage() {
                 </Card>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {/* Desktop Games Grid */}
+                  <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full max-w-full">
                     {getDisplayGames().map((game) => (
                       <TiltedGameCard key={`tilted-${game.id}`} className="h-full">
                         <TapTapGameCardNoScale 
@@ -346,6 +584,14 @@ export default function HomePage() {
                         />
                       </TiltedGameCard>
                     ))}
+                  </div>
+
+                  {/* Mobile Games Carousel */}
+                  <div className="md:hidden w-full max-w-full overflow-hidden">
+                    <MobileGamesCarousel 
+                      games={getDisplayGames()} 
+                      onVote={handleVote}
+                    />
                   </div>
                   
                   {/* Expand/Collapse Button */}

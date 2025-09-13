@@ -23,7 +23,7 @@ export function TimeWindowControl({
   className = "" 
 }: TimeWindowControlProps) {
   return (
-    <div className={cn("flex flex-wrap gap-2", className)}>
+    <div className={cn("flex flex-wrap gap-2 products-font", className)}>
       {TIME_WINDOWS.map((window) => (
         <Button
           key={window.value}

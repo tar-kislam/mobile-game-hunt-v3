@@ -52,7 +52,7 @@ export function GameSortBar({
   const currentSort = SORT_OPTIONS.find(option => option.value === sortBy) || SORT_OPTIONS[0]
 
   return (
-    <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${className}`}>
+    <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 products-font ${className}`}>
       {/* Results Count */}
       <div className="flex items-center space-x-2">
         <h2 className="text-lg font-semibold text-white">

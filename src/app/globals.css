@@ -2,6 +2,36 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Epunda Slab font family for products page */
+.products-font {
+  font-family: 'Epunda Slab', 'Underdog', serif, sans-serif;
+}
+
+/* ReactBits ShinyText Basic Model */
+.shiny-text {
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0) 60%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: rgba(255, 255, 255, 0.7);
+  display: inline-block;
+  animation: shine 3s linear infinite;
+}
+
+@keyframes shine {
+  0% {
+    background-position: 100%;
+  }
+  100% {
+    background-position: -100%;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -177,4 +207,14 @@
 
 .dark .featured-games-scroll::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
