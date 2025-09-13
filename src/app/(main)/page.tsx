@@ -248,56 +248,9 @@ function MobileGameCard({ game, onVote }: MobileGameCardProps) {
   )
 }
 
-// Mock data - In a real app, this would come from your database
-const featuredProduct = {
-  id: "1",
-  title: "Clash of Clans",
-  description: "A popular strategy mobile game where you build and defend your village.",
-  image: "https://images.unsplash.com/photo-1556438064-2d7646166914?w=400&h=300&fit=crop",
-  votes: 152,
-  comments: 23,
-  url: "https://clashofclans.com",
-  platforms: ["ios", "android"],
-  maker: {
-    name: "Supercell",
-    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
-  }
-}
+// Mock data removed - now using database data only
 
-const dailyProducts = [
-  {
-    id: "2",
-    title: "Pokemon GO",
-    description: "Augmented reality mobile game that lets you catch Pokemon in the real world.",
-    image: "https://images.unsplash.com/photo-1606503153255-59d8b8b91448?w=300&h=200&fit=crop",
-    votes: 89,
-    comments: 15,
-    platforms: ["ios", "android"],
-    maker: { name: "Niantic", avatar: "" }
-  },
-  {
-    id: "3",
-    title: "Genshin Impact",
-    description: "Open-world action RPG with gacha mechanics and stunning visuals.",
-    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=300&h=200&fit=crop",
-    votes: 134,
-    comments: 28,
-    platforms: ["ios", "android", "web"],
-    maker: { name: "miHoYo", avatar: "" }
-  },
-  {
-    id: "4",
-    title: "Among Us",
-    description: "Social deduction game where you find the impostor among crewmates.",
-    image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=300&h=200&fit=crop",
-    votes: 76,
-    comments: 19,
-    platforms: ["ios", "android", "web"],
-    maker: { name: "InnerSloth", avatar: "" }
-  }
-]
-
-function ProductCard({ product, rank }: { product: typeof dailyProducts[0], rank?: number }) {
+function ProductCard({ product, rank }: { product: any, rank?: number }) {
   return (
     <Card className="rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border-white/10 hover:scale-[1.02] hover:shadow-black/20">
       <CardContent className="p-0">
@@ -327,7 +280,7 @@ function ProductCard({ product, rank }: { product: typeof dailyProducts[0], rank
                 </p>
                 <div className="flex items-center gap-2 mt-2">
                   <Badge variant="secondary" className="rounded-2xl text-xs">
-                    {product.platforms?.map(p => p.toUpperCase()).join(', ') || 'No platforms listed'}
+                    {product.platforms?.map((p: string) => p.toUpperCase()).join(', ') || 'No platforms listed'}
                   </Badge>
                   <span className="text-xs text-muted-foreground">by {product.maker.name}</span>
                 </div>
@@ -508,34 +461,34 @@ export default function HomePage() {
                 
                 {/* Desktop Filter Tabs - Magic Bento Style */}
                 <div className="hidden md:block">
-                  <Tabs value={sortBy} onValueChange={(value) => setSortBy(value as any)} className="w-full">
+                <Tabs value={sortBy} onValueChange={(value) => setSortBy(value as any)} className="w-full">
                     <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-gray-900/80 backdrop-blur-sm border border-white/10 rounded-xl p-1 shadow-lg shadow-purple-500/10">
-                      <TabsTrigger 
-                        value="newest" 
+                    <TabsTrigger 
+                      value="newest" 
                         className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
-                      >
-                        Newest
-                      </TabsTrigger>
-                      <TabsTrigger 
-                        value="most-upvoted" 
+                    >
+                      Newest
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="most-upvoted" 
                         className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
-                      >
-                        Most Upvoted
-                      </TabsTrigger>
-                      <TabsTrigger 
-                        value="most-viewed" 
+                    >
+                      Most Upvoted
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="most-viewed" 
                         className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
-                      >
-                        Most Viewed
-                      </TabsTrigger>
-                      <TabsTrigger 
-                        value="editors-choice" 
+                    >
+                      Most Viewed
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="editors-choice" 
                         className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
-                      >
-                        Editor's Choice
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+                    >
+                      Editor's Choice
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
                 </div>
 
                 {/* Mobile Filter Dropdown */}
