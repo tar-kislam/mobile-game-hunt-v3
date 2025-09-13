@@ -3,8 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { createCommentSchema } from '@/lib/validations/community'
-import { addXPWithBonus } from '@/lib/xpService'
-import { checkAndAwardBadges } from '@/lib/badgeService'
+import { notify } from '@/lib/notificationService'
 
 export async function POST(request: NextRequest) {
   try {
@@ -80,6 +79,19 @@ export async function POST(request: NextRequest) {
       } catch (badgeError) {
         console.error('[BADGES] Error checking badges:', badgeError)
         // Don't fail the request if badge checking fails
+      }
+
+      // Send milestone notification for first comment
+      try {
+        const existingComments = await prisma.postComment.count({
+          where: { userId: session.user.id }
+        })
+        
+        if (existingComments === 1) {
+          await notify(session.user.id, "💬 Your comment has been posted 🔥", "milestone")
+        }
+      } catch (notificationError) {
+        console.error('[NOTIFICATION] Error sending comment notification:', notificationError)
       }
     } catch (xpError) {
       console.error('[XP] Error awarding XP for commenting:', xpError)

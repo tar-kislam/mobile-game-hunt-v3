@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { CacheService } from "@/lib/redis"
 import { RateLimiter, RATE_LIMITS } from "@/lib/rate-limiter"
+import { notify } from '@/lib/notificationService'
 import { addXPWithBonus } from "@/lib/xpService"
 import { checkAndAwardBadges } from "@/lib/badgeService"
 
@@ -401,6 +402,19 @@ export async function POST(request: NextRequest) {
       } catch (badgeError) {
         console.error('[BADGES] Error checking badges:', badgeError)
         // Don't fail the request if badge checking fails
+      }
+
+      // Send milestone notification for first game submission
+      try {
+        const existingGames = await prisma.product.count({
+          where: { userId: user.id }
+        })
+        
+        if (existingGames === 1) {
+          await notify(user.id, "🕹️ Your first game was submitted successfully 👏", "milestone")
+        }
+      } catch (notificationError) {
+        console.error('[NOTIFICATION] Error sending game submission notification:', notificationError)
       }
     } catch (xpError) {
       console.error('[XP] Error awarding XP for game submission:', xpError)

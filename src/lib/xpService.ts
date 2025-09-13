@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { toast } from 'sonner'
+import { notify } from '@/lib/notificationService'
+import { xpGained, levelReached } from '@/lib/notifications/messages'
 
 /**
  * XP Service - Handles user experience points and level calculations
@@ -102,6 +104,20 @@ export async function addXP(userId: string, amount: number): Promise<{
         description: `Congratulations! You've gained ${amount} XP and leveled up!`,
         duration: 5000,
       })
+
+      // Send level up notification
+      try {
+        await notify(userId, levelReached(newLevel), 'level_up')
+      } catch (notificationError) {
+        console.error('[XP SERVICE] Error sending level up notification:', notificationError)
+      }
+    }
+
+    // Send XP gained notification
+    try {
+      await notify(userId, xpGained(amount), 'xp')
+    } catch (notificationError) {
+      console.error('[XP SERVICE] Error sending XP notification:', notificationError)
     }
 
     return updatedUser

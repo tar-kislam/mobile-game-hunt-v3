@@ -3,8 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { rateLimit } from '@/lib/rate-limit'
-import { addXPWithBonus } from '@/lib/xpService'
-import { checkAndAwardBadges } from '@/lib/badgeService'
+import { notify } from '@/lib/notificationService'
 import { z } from 'zod'
 
 export async function POST(
@@ -122,6 +121,19 @@ export async function POST(
             } catch (badgeError) {
               console.error('[BADGES] Error checking badges:', badgeError)
               // Don't fail the request if badge checking fails
+            }
+
+            // Send milestone notification for first vote
+            try {
+              const existingVotes = await prisma.vote.count({
+                where: { userId }
+              })
+              
+              if (existingVotes === 1) {
+                await notify(userId, "👍 You voted for a game! Keep supporting creators 🕹️", "milestone")
+              }
+            } catch (notificationError) {
+              console.error('[NOTIFICATION] Error sending vote notification:', notificationError)
             }
           } catch (xpError) {
             console.error('[XP] Error awarding XP for voting:', xpError)

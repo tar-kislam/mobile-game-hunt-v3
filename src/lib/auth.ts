@@ -6,6 +6,7 @@ import EmailProvider from "next-auth/providers/email"
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
+import { notify } from "@/lib/notificationService"
 
 // Build providers conditionally to avoid 500s when env vars are missing
 const providers: any[] = []
@@ -103,45 +104,16 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role
+        token.id = user.id
       }
       return token
     },
     async session({ session, token }) {
       if (token) {
-        // Use the actual user ID from the database, not token.sub
-        const user = await prisma.user.findUnique({
-          where: { email: token.email as string },
-          select: { id: true, name: true, image: true, username: true }
-        });
-        
-        if (user) {
-          session.user.id = user.id;
-          session.user.name = user.name;
-          session.user.image = user.image;
-          session.user.username = user.username;
-        } else {
-          // If user doesn't exist, create them (this handles OAuth users)
-          if (token.email) {
-            const newUser = await prisma.user.create({
-              data: {
-                email: token.email,
-                name: token.name || null,
-                image: token.picture || null,
-                role: 'USER'
-              },
-              select: { id: true, name: true, image: true, username: true }
-            });
-            session.user.id = newUser.id;
-            session.user.name = newUser.name;
-            session.user.image = newUser.image;
-            session.user.username = newUser.username;
-          } else {
-            session.user.id = token.sub!;
-          }
-        }
-        session.user.role = token.role;
+        session.user.id = token.id as string || token.sub as string
+        session.user.role = token.role as string
       }
-      return session;
+      return session
     },
   },
   pages: {

@@ -23,7 +23,7 @@ import { useEffect, useState } from "react"
 import useSWR from 'swr'
 import MagicBento from '@/components/ui/magic-bento'
 import { format } from "date-fns"
-import { BadgeCard } from "@/components/ui/badge-card"
+import { BadgeCard } from "@/components/badges/BadgeCard"
 
 interface ProfilePageProps {
   params: Promise<{ id: string }>

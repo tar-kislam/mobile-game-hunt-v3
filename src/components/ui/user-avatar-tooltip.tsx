@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress"
 import { UserBadges, LevelBadge } from "@/components/ui/user-badges"
 import Link from "next/link"
 import useSWR from 'swr'
+import { useSession } from 'next-auth/react'
 
 interface UserAvatarTooltipProps {
   userId: string
@@ -22,6 +23,7 @@ export function UserAvatarTooltip({
   className = "",
   size = "md"
 }: UserAvatarTooltipProps) {
+  const { data: session } = useSession()
   const fetcher = (url: string) => fetch(url).then(r => r.json())
   
   // Fetch XP data
@@ -32,6 +34,9 @@ export function UserAvatarTooltip({
   
   // Get user's badges
   const userBadges = badgesData?.users?.find((u: any) => u.userId === userId)?.badges || []
+
+  // Determine profile link - redirect to public profile for others, private for self
+  const profileLink = session?.user?.id === userId ? '/profile' : `/profile/${userId}/public`
 
   const sizeClasses = {
     sm: "h-8 w-8",
@@ -45,7 +50,7 @@ export function UserAvatarTooltip({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Link href={`/profile/${userId}`}>
+          <Link href={profileLink}>
             <Avatar className={`${avatarSize} cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all duration-200 ${className}`}>
               <AvatarImage src={userImage || ''} />
               <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">

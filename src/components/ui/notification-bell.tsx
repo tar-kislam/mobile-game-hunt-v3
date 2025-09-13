@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -11,22 +10,17 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import Link from "next/link"
+import { toast } from "sonner"
 import useSWR from 'swr'
 import { formatDistanceToNow } from "date-fns"
+import { getNotificationIcon } from "@/lib/notificationService"
 
 interface Notification {
   id: string
-  type: string
   message: string
-  postId?: string
-  isRead: boolean
+  type: string
+  read: boolean
   createdAt: string
-  user: {
-    id: string
-    name: string
-    image?: string
-  }
 }
 
 interface NotificationData {
@@ -35,56 +29,46 @@ interface NotificationData {
 }
 
 export function NotificationBell() {
-  const [isOpen, setIsOpen] = useState(false)
-  
   const fetcher = (url: string) => fetch(url).then(r => r.json())
   
   const { data: notificationData, mutate } = useSWR<NotificationData>(
-    '/api/notifications?limit=5',
+    '/api/notifications?includeUnreadCount=true&limit=10',
     fetcher,
     {
-      refreshInterval: 30000, // Refresh every 30 seconds
-      revalidateOnFocus: true
+      refreshInterval: 5000, // Refresh every 5 seconds for real-time updates
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true
     }
   )
 
-  const handleNotificationClick = async (notificationId: string) => {
+  const handleMarkAllAsRead = async () => {
     try {
-      await fetch('/api/notifications', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notificationId })
+      const response = await fetch("/api/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "markAllAsRead" })
       })
-      
+
+      if (!response.ok) {
+        throw new Error("Failed to mark notifications as read")
+      }
+
+      toast.success("All notifications marked as read", {
+        duration: 2000,
+      })
+
       // Refresh notifications
       mutate()
     } catch (error) {
-      console.error('Error marking notification as read:', error)
-    }
-  }
-
-  const getNotificationLink = (notification: Notification) => {
-    if (notification.postId) {
-      return `/community/post/${notification.postId}`
-    }
-    return '/community'
-  }
-
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'like':
-        return '❤️'
-      case 'comment':
-        return '💬'
-      case 'follow':
-        return '👥'
-      default:
-        return '🔔'
+      console.error('Error marking notifications as read:', error)
+      toast.error("Failed to mark notifications as read", {
+        duration: 3000,
+      })
     }
   }
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button 
           variant="ghost" 
@@ -110,15 +94,27 @@ export function NotificationBell() {
       >
         <Card className="border-0 bg-transparent shadow-none">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
-              <Bell className="h-5 w-5 text-purple-400" />
-              Notifications
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+                <Bell className="h-5 w-5 text-purple-400" />
+                Notifications
+                {notificationData?.unreadCount > 0 && (
+                  <Badge variant="secondary" className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-xs">
+                    {notificationData.unreadCount} new
+                  </Badge>
+                )}
+              </CardTitle>
               {notificationData?.unreadCount > 0 && (
-                <Badge variant="secondary" className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-xs">
-                  {notificationData.unreadCount} new
-                </Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleMarkAllAsRead}
+                  className="text-xs text-muted-foreground hover:text-white"
+                >
+                  Mark all as read
+                </Button>
               )}
-            </CardTitle>
+            </div>
           </CardHeader>
           
           <CardContent className="p-0">
@@ -133,20 +129,18 @@ export function NotificationBell() {
                 <div className="space-y-1">
                   {notificationData.notifications.map((notification, index) => (
                     <div key={notification.id}>
-                      <Link
-                        href={getNotificationLink(notification)}
-                        onClick={() => handleNotificationClick(notification.id)}
+                      <div
                         className={`block p-3 hover:bg-purple-500/10 transition-colors duration-200 ${
-                          !notification.isRead ? 'bg-purple-500/5 border-l-2 border-purple-500' : ''
+                          !notification.read ? 'bg-purple-500/5 border-l-2 border-purple-500' : ''
                         }`}
                       >
                         <div className="flex items-start gap-3">
                           <div className="text-lg flex-shrink-0 mt-0.5">
-                            {getNotificationIcon(notification.type)}
+                            {getNotificationIcon(notification.type as any)}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className={`text-sm font-medium ${
-                              !notification.isRead ? 'text-white' : 'text-gray-300'
+                              !notification.read ? 'text-white' : 'text-gray-300'
                             }`}>
                               {notification.message}
                             </p>
@@ -154,11 +148,11 @@ export function NotificationBell() {
                               {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                             </p>
                           </div>
-                          {!notification.isRead && (
+                          {!notification.read && (
                             <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0 mt-2"></div>
                           )}
                         </div>
-                      </Link>
+                      </div>
                       {index < notificationData.notifications.length - 1 && (
                         <Separator className="bg-gray-700" />
                       )}
@@ -172,13 +166,9 @@ export function NotificationBell() {
               <>
                 <Separator className="bg-gray-700" />
                 <div className="p-3">
-                  <Link
-                    href="/notifications"
-                    className="block w-full text-center text-sm text-purple-400 hover:text-purple-300 transition-colors duration-200"
-                    onClick={() => setIsOpen(false)}
-                  >
+                  <div className="block w-full text-center text-sm text-purple-400 hover:text-purple-300 transition-colors duration-200 cursor-pointer">
                     View all notifications
-                  </Link>
+                  </div>
                 </div>
               </>
             )}

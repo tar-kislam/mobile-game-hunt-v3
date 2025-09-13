@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
+import { notify } from '@/lib/notificationService'
 
 const signupSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -49,6 +50,14 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // Send welcome notification
+    try {
+      await notify(user.id, `Welcome to Mobile Game Hunt, ${user.name || "Hunter"}! Your journey starts now 🚀`, "welcome")
+    } catch (notificationError) {
+      console.error('[SIGNUP] Error sending welcome notification:', notificationError)
+      // Don't fail signup if notification fails
+    }
+
     return NextResponse.json({
       message: 'User created successfully',
       user
@@ -59,7 +68,7 @@ export async function POST(request: NextRequest) {
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validation failed', details: error.issues },
         { status: 400 }
       )
     }

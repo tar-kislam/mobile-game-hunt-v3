@@ -1,5 +1,7 @@
 import { redisClient } from '@/lib/redis'
 import { prisma } from '@/lib/prisma'
+import { notify } from '@/lib/notificationService'
+import { badgeUnlocked, badgeClaimed } from '@/lib/notifications/messages'
 
 type BadgeType = 'WISE_OWL' | 'FIRE_DRAGON' | 'CLEVER_FOX' | 'GENTLE_PANDA' | 'SWIFT_PUMA'
 
@@ -212,6 +214,16 @@ export async function checkAndAwardBadges(userId: string): Promise<BadgeType[]> 
       if (userStats._count.follows >= 25) {
         const awarded = await awardBadge(userId, 'SWIFT_PUMA')
         if (awarded) newlyAwardedBadges.push('SWIFT_PUMA')
+      }
+    }
+    
+    // Send notifications for newly awarded badges
+    for (const badgeType of newlyAwardedBadges) {
+      try {
+        const badgeInfo = BADGE_CONFIG[badgeType]
+        await notify(userId, badgeUnlocked(badgeInfo.name), 'badge_unlocked')
+      } catch (notificationError) {
+        console.error(`[BADGE SERVICE] Error sending badge unlocked notification for ${badgeType}:`, notificationError)
       }
     }
     
