@@ -1,8 +1,15 @@
 "use client"
 
+import { motion } from 'framer-motion'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import PixelBlast from '@/components/effects/pixel-blast'
 import FuzzyText from '@/components/effects/fuzzy-text'
 import { useTheme } from 'next-themes'
+import Link from 'next/link'
+import { LuGamepad2 } from 'react-icons/lu'
+import { IoPeople } from 'react-icons/io5'
+import { HiOutlineChat } from 'react-icons/hi'
 
 export function CTASection() {
   const { resolvedTheme } = useTheme()
@@ -38,24 +45,151 @@ export function CTASection() {
       {/* Content */}
       <div className="relative z-20 flex flex-col items-center justify-center h-full px-4 text-center">
         <div className="max-w-5xl mx-auto space-y-10">
-          {/* Fuzzy Brand Title */}
-          <div className="space-y-4">
-            <div className="flex justify-center">
-              <FuzzyText
-                fontSize="clamp(2rem, 8vw, 6rem)"
-                fontWeight={900}
-                color={brandColor}
-                enableHover={true}
-                baseIntensity={0.2}
-                hoverIntensity={0.5}
-              >
-                Mobile Game Hunt
-              </FuzzyText>
+          {/* Hero Content with Title and Avatar */}
+          <div className="flex flex-col lg:flex-row items-center justify-center lg:justify-between w-full max-w-5xl mx-auto mb-8 gap-4 lg:gap-2">
+            {/* Left side - Title */}
+            <div className="flex-1 text-left mb-8 lg:mb-0">
+              <div className="flex flex-col">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.8, delay: 0.3 }}
+                >
+                  <FuzzyText
+                    fontSize="clamp(2rem, 8vw, 6rem)"
+                    fontWeight={900}
+                    color={brandColor}
+                    enableHover={true}
+                    baseIntensity={0.2}
+                    hoverIntensity={0.5}
+                  >
+                    Mobile Game
+                  </FuzzyText>
+                </motion.div>
+                <div className="flex justify-end">
+                  <div className="mr-0">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.8, delay: 0.3 }}
+                    >
+                      <FuzzyText
+                        fontSize="clamp(2rem, 8vw, 6rem)"
+                        fontWeight={900}
+                        color={brandColor}
+                        enableHover={true}
+                        baseIntensity={0.2}
+                        hoverIntensity={0.5}
+                      >
+                        Hunt
+                      </FuzzyText>
+                    </motion.div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto">
-              Discover the best mobile games, curated by the gaming community.
-            </p>
+
+            {/* Right side - Clean Avatar (no circular background) */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="flex-shrink-0 lg:-ml-8 xl:-ml-12"
+            >
+              <img 
+                src="/logo/mgh.png" 
+                alt="Mobile Game Hunt Avatar" 
+                className="w-36 h-36 md:w-44 md:h-44 lg:w-52 lg:h-52 object-contain hover:scale-105 transition-all duration-300"
+                onError={(e) => {
+                  e.currentTarget.src = '/logo/moblogo.png';
+                }}
+              />
+            </motion.div>
           </div>
+
+          {/* CTA Text */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="text-center mb-6"
+          >
+            <p 
+              className="text-lg md:text-xl font-semibold text-white"
+              style={{ 
+                fontFamily: '"Underdog", cursive',
+                textShadow: '0 0 10px rgba(168, 85, 247, 0.5)'
+              }}
+            >
+              Join the Hunt — Submit games, cast your votes, and rise to the top!
+            </p>
+          </motion.div>
+
+          {/* Action Buttons - positioned above stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-center mb-8"
+          >
+            <Link href="/submit">
+              <Button 
+                className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-2xl font-semibold transition-all duration-300 hover:shadow-[0_0_30px_rgba(168,85,247,0.8)] hover:scale-105"
+              >
+                Submit Game
+              </Button>
+            </Link>
+            
+            <Link href="/community">
+              <Button 
+                variant="outline"
+                className="bg-transparent border-2 border-purple-500/70 text-purple-300 hover:text-white hover:bg-purple-500/20 px-8 py-3 rounded-2xl font-semibold transition-all duration-300 hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] hover:border-purple-400 hover:scale-105"
+              >
+                Join Community
+              </Button>
+            </Link>
+          </motion.div>
+
+          {/* Transparent Stats Row - below buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+            className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-center justify-center"
+          >
+            {/* Stat 1: Curated Games */}
+            <div className="text-center hover:scale-105 transition-all duration-300">
+              <div className="mb-2 flex justify-center">
+                <div className="text-3xl drop-shadow-[0_0_6px_rgba(168,85,247,0.8)]" style={{ color: '#a855f7' }}>
+                  <LuGamepad2 />
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-white mb-1">100+</div>
+              <div className="text-sm text-gray-400">Curated Games</div>
+            </div>
+
+            {/* Stat 2: Community Members */}
+            <div className="text-center hover:scale-105 transition-all duration-300">
+              <div className="mb-2 flex justify-center">
+                <div className="text-3xl drop-shadow-[0_0_6px_rgba(168,85,247,0.8)]" style={{ color: '#a855f7' }}>
+                  <IoPeople />
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-white mb-1">10k+</div>
+              <div className="text-sm text-gray-400">Community Members</div>
+            </div>
+
+            {/* Stat 3: User Reviews */}
+            <div className="text-center hover:scale-105 transition-all duration-300">
+              <div className="mb-2 flex justify-center">
+                <div className="text-3xl drop-shadow-[0_0_6px_rgba(168,85,247,0.8)]" style={{ color: '#a855f7' }}>
+                  <HiOutlineChat />
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-white mb-1">250+</div>
+              <div className="text-sm text-gray-400">User Reviews</div>
+            </div>
+          </motion.div>
 
         </div>
       </div>

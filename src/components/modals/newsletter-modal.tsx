@@ -8,6 +8,7 @@ import ShinyText from '@/components/ui/shiny-text'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTheme } from 'next-themes'
+import PixelBlast from '@/components/effects/pixel-blast'
 
 interface NewsletterModalProps {
   isOpen: boolean
@@ -101,14 +102,41 @@ export function NewsletterModal({ isOpen, onClose }: NewsletterModalProps) {
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-zinc-900 border border-purple-600 shadow-xl rounded-2xl max-w-5xl w-full mx-auto p-8 relative">
-              {/* Close Button */}
-              <button
-                onClick={onClose}
-                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white transition-colors"
-              >
-                <XIcon className="h-5 w-5" />
-              </button>
+            <div className="bg-zinc-900 border border-purple-600 shadow-xl rounded-2xl max-w-5xl w-full mx-auto p-8 relative overflow-hidden">
+              {/* Pixel Blast Background - Same as hero section */}
+              <div className="absolute inset-0 z-0">
+                <PixelBlast
+                  variant="square"
+                  pixelSize={4}
+                  color="#8B5CF6"
+                  patternScale={1.5}
+                  patternDensity={0.8}
+                  enableRipples={true}
+                  rippleIntensityScale={2.0}
+                  rippleThickness={0.2}
+                  rippleSpeed={0.6}
+                  speed={0.3}
+                  transparent={true}
+                  edgeFade={0.3}
+                  liquid={true}
+                  liquidStrength={0.05}
+                  liquidRadius={1.5}
+                  className="w-full h-full"
+                />
+              </div>
+              
+              {/* Overlay for better text readability */}
+              <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background/80 z-10" />
+              
+              {/* Content */}
+              <div className="relative z-20">
+                {/* Close Button */}
+                <button
+                  onClick={onClose}
+                  className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white transition-colors z-30"
+                >
+                  <XIcon className="h-5 w-5" />
+                </button>
 
               {/* Content - Hero Section Style */}
               <div className="text-center space-y-10">
@@ -139,10 +167,13 @@ export function NewsletterModal({ isOpen, onClose }: NewsletterModalProps) {
                   <div className="flex items-center gap-4 w-full lg:w-auto">
                     {/* Logo */}
                     <img
-                      src="/logo/mgh.png"
+                      src="/logo/mgh-newsletter.png"
                       alt="Mobile Game Hunt Logo"
                       className="object-contain flex-shrink-0"
                       style={{ width: '150px', height: '150px' }}
+                      onError={(e) => {
+                        e.currentTarget.src = '/logo/moblogo.png';
+                      }}
                     />
                     
                     {/* Input Field */}
@@ -209,6 +240,7 @@ export function NewsletterModal({ isOpen, onClose }: NewsletterModalProps) {
                 >
                   Get exclusive early access, shape new features, and be the first to discover the next big mobile games.
                 </motion.p>
+              </div>
               </div>
             </div>
           </motion.div>
