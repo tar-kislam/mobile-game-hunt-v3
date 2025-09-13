@@ -1322,9 +1322,6 @@ export default function NewSubmitPage() {
                             </div>
                           </label>
                         </div>
-                        {form.formState.errors.launchType && (
-                          <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.launchType.message)}</p>
-                        )}
                       </div>
 
                       {/* Launch Date */}
@@ -1400,9 +1397,6 @@ export default function NewSubmitPage() {
                             </label>
                           ))}
                         </div>
-                        {form.formState.errors.monetization && (
-                          <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.monetization.message)}</p>
-                        )}
                       </div>
 
                       {/* Engine Used */}
@@ -1419,53 +1413,8 @@ export default function NewSubmitPage() {
                           <option value="GODOT">Godot</option>
                           <option value="CUSTOM">Custom Engine</option>
                         </select>
-                        {form.formState.errors.engine && (
-                          <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.engine.message)}</p>
-                        )}
                       </div>
 
-                      {/* Press Kit Generator */}
-                      <div>
-                        <Label className="text-sm font-medium">Press Kit Generator</Label>
-                        <p className="text-sm text-muted-foreground mt-1 mb-3">Generate a downloadable press kit for media and influencers</p>
-                        <PressKitModal
-                          onGenerate={async (data) => {
-                            try {
-                              const response = await fetch('/api/presskit/generate', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  gameId: 'temp', // Will be updated when product is created
-                                  ...data
-                                })
-                              })
-                              
-                              const result = await response.json()
-                              
-                              if (result.success) {
-                                // Save press kit data to form
-                                form.setValue('pressKit', data)
-                                toast.success('Press kit generated successfully!')
-                                
-                                // Download the zip file
-                                if (result.pressKit.zipUrl) {
-                                  const link = document.createElement('a')
-                                  link.href = result.pressKit.zipUrl
-                                  link.download = `press-kit-${Date.now()}.zip`
-                                  document.body.appendChild(link)
-                                  link.click()
-                                  document.body.removeChild(link)
-                                }
-                              } else {
-                                toast.error(result.error || 'Failed to generate press kit')
-                              }
-                            } catch (error) {
-                              console.error('Error generating press kit:', error)
-                              toast.error('Failed to generate press kit')
-                            }
-                          }}
-                        />
-                      </div>
 
                       {/* Validation Summary */}
                       <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm rounded-xl p-4 space-y-2 shadow-lg shadow-amber-500/10">
