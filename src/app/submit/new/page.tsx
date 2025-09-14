@@ -25,7 +25,7 @@ import { PressKitModal } from '@/components/ui/press-kit-modal'
 import { GamePreviewCard } from '@/components/ui/game-preview-card'
 import { ScheduleLaunchModal } from '@/components/ui/schedule-launch-modal'
 import { LanguageSelector } from '@/components/ui/language-selector'
-import { CustomStepper, MobileStepper, DesktopStepper, TopHorizontalStepper } from '@/components/ui/custom-stepper'
+import { SubmitStepper, MobileSubmitStepper } from '@/components/ui/submit-stepper'
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6
 
@@ -50,7 +50,7 @@ export default function NewSubmitPage() {
       image: '', images: [], video: '',
       releaseAt: '',
       tags: [], categories: [], termsAccepted: false, confirmImagesOwned: false,
-      makers: [], studioName: '', inviteEmail: '', inviteRole: 'MAKER',
+      makers: [], studioName: '',
       launchType: '', launchDate: '', softLaunchCountries: [], monetization: '', engine: '',
       promoOffer: '', promoCode: '', promoExpiry: '', playtestQuota: undefined, playtestExpiry: '', sponsorRequest: false, sponsorNote: '', crowdfundingPledge: false, gamificationTags: [],
     }
@@ -321,15 +321,6 @@ export default function NewSubmitPage() {
   return (
     <TooltipProvider>
       <div className="container mx-auto px-4 py-8">
-        {/* Top Horizontal Stepper */}
-        <div className="mb-8">
-          <TopHorizontalStepper
-            activeStep={step - 1}
-            onStepClick={handleStepClick}
-            completedSteps={completedSteps}
-          />
-        </div>
-
         {/* Auto-save toggle */}
         <div className="flex items-center justify-end mb-6">
           <div className="flex items-center gap-2">
@@ -344,10 +335,31 @@ export default function NewSubmitPage() {
           </div>
         </div>
 
-        {/* Main Form Content */}
+        {/* Unified Container with Stepper and Form */}
         <div className="max-w-4xl mx-auto">
-          <Card className="rounded-2xl shadow-soft">
-            <CardHeader>
+          <Card className="rounded-xl shadow-lg bg-gradient-to-br from-gray-900/80 via-gray-800/90 to-gray-900/80 backdrop-blur-sm border border-purple-500/20">
+            {/* Stepper Section */}
+            <div className="pt-6 pb-4">
+              {/* Desktop Stepper */}
+              <div className="hidden md:block">
+                <SubmitStepper
+                  activeStep={step}
+                  completedSteps={completedSteps}
+                  onStepClick={handleStepClick}
+                />
+              </div>
+              
+              {/* Mobile Stepper */}
+              <div className="md:hidden">
+                <MobileSubmitStepper
+                  activeStep={step}
+                  completedSteps={completedSteps}
+                  onStepClick={handleStepClick}
+                />
+              </div>
+            </div>
+            {/* Form Header */}
+            <div className="px-4 md:px-6 pb-4">
               <div className="transition-all duration-300 ease-in-out">
                 {step===1 && (<div><h1 className="text-2xl font-semibold">Tell us more about this launch</h1><p className="text-sm text-muted-foreground">We'll need its name, tagline, links, launch tags, and description.</p></div>)}
                 {step===2 && (<div><h1 className="text-2xl font-semibold">Images and media</h1><p className="text-sm text-muted-foreground">Upload your thumbnail, gallery, and optional video or demo link.</p></div>)}
@@ -356,8 +368,9 @@ export default function NewSubmitPage() {
                 {step===5 && (<div><h1 className="text-2xl font-semibold">Community & Extras</h1><p className="text-sm text-muted-foreground">Configure community features, playtests, sponsorships, and gamification.</p></div>)}
                 {step===6 && (<div><h1 className="text-2xl font-semibold">Launch checklist</h1><p className="text-sm text-muted-foreground">Review required and recommended items before launch.</p></div>)}
               </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
+            </div>
+            {/* Form Content */}
+            <div className="px-4 md:px-6 pb-6 space-y-6">
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <div className="transition-all duration-300 ease-in-out">
                   {step===1 && (
@@ -1183,99 +1196,6 @@ export default function NewSubmitPage() {
                         )}
                       </div>
 
-                      {/* Invite Collaborators */}
-                      <div>
-                        <h4 className="text-base font-semibold">Invite Collaborators</h4>
-                        <p className="text-sm text-muted-foreground mb-4">Invite people who aren't registered yet by email</p>
-                        
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="md:col-span-2">
-                              <Label htmlFor="inviteEmail" className="text-sm font-medium">Email Address</Label>
-                              <Input
-                                id="inviteEmail"
-                                type="email"
-                                placeholder="collaborator@example.com"
-                                {...form.register('inviteEmail')}
-                                className="mt-1"
-                              />
-                              {form.formState.errors.inviteEmail && (
-                                <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.inviteEmail.message)}</p>
-                              )}
-                            </div>
-                            <div>
-                              <Label htmlFor="inviteRole" className="text-sm font-medium">Role</Label>
-                              <select
-                                id="inviteRole"
-                                {...form.register('inviteRole')}
-                                className="w-full mt-1 px-3 py-2 border border-border rounded-md bg-background text-sm"
-                              >
-                                <option value="MAKER">Maker</option>
-                                <option value="DESIGNER">Designer</option>
-                                <option value="DEVELOPER">Developer</option>
-                                <option value="PUBLISHER">Publisher</option>
-                                <option value="HUNTER">Hunter</option>
-                              </select>
-                            </div>
-                          </div>
-                          
-                          {/* Add button - visible when typing */}
-                          {form.watch('inviteEmail') && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={async () => {
-                                const inviteEmail = form.watch('inviteEmail')
-                                const inviteRole = form.watch('inviteRole')
-                                
-                                if (!inviteEmail) {
-                                  toast.error('Please enter an email address')
-                                  return
-                                }
-                                
-                                try {
-                                  const response = await fetch('/api/invite', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                      email: inviteEmail,
-                                      productId: 'temp', // Will be updated when product is created
-                                      role: inviteRole
-                                    })
-                                  })
-                                  
-                                  const result = await response.json()
-                                  
-                                  if (result.success) {
-                                    toast.success('Invite sent successfully!')
-                                    form.setValue('inviteEmail', '')
-                                    
-                                    // Add to makers list for display
-                                    const currentMakers = form.watch('makers') || []
-                                    const newMaker = {
-                                      userId: '', // No userId for invited users
-                                      email: inviteEmail,
-                                      role: inviteRole,
-                                      name: inviteEmail.split('@')[0], // Use email prefix as name
-                                      image: undefined,
-                                      isCreator: false
-                                    }
-                                    form.setValue('makers', [...currentMakers, newMaker])
-                                  } else {
-                                    toast.error(result.error || 'Failed to send invite')
-                                  }
-                                } catch (error) {
-                                  console.error('Error sending invite:', error)
-                                  toast.error('Failed to send invite')
-                                }
-                              }}
-                              className="w-full md:w-auto"
-                            >
-                              Send Invite
-                            </Button>
-                          )}
-                        </div>
-                      </div>
 
                       {/* Validation Summary */}
                       <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm rounded-xl p-4 space-y-2 shadow-lg shadow-amber-500/10">
@@ -1735,15 +1655,16 @@ export default function NewSubmitPage() {
                         <Button
                           onClick={handleSubmitApproval}
                           disabled={isSubmitting || completionPercentage < 100}
-                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+                          className="w-full bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 hover:from-purple-700 hover:via-blue-700 hover:to-cyan-700 text-white font-bold py-4 rounded-2xl transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/25 border border-purple-400/20 backdrop-blur-sm relative overflow-hidden group"
                         >
+                          <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                           {isSubmitting ? (
                             <>
                               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                               Submitting...
                             </>
                           ) : (
-                            'Submit for Approval'
+                            'Ready, Set, Submit!'
                           )}
                         </Button>
 
@@ -1757,7 +1678,7 @@ export default function NewSubmitPage() {
                   )}
                   <div className="flex items-center justify-between pt-2">
                     <Button type="button" variant="outline" onClick={prev} disabled={step===1}>Back</Button>
-                    {step<6 ? (
+                    {step<6 && (
                       <Button 
                         type="button" 
                         onClick={next} 
@@ -1775,13 +1696,11 @@ export default function NewSubmitPage() {
                           'Launch checklist'
                         }
                       </Button>
-                    ) : (
-                      <Button type="submit">Final Submit</Button>
                     )}
                 </div>
                 </div>
               </form>
-            </CardContent>
+            </div>
           </Card>
         </div>
       </div>

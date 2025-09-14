@@ -20,6 +20,7 @@ export default withAuth(
           pathname.startsWith('/api/calendar') ||   // Allow calendar API
           pathname.startsWith('/api/sidebar') ||   // Allow sidebar API
           pathname.startsWith('/api/newsletter') || // Allow newsletter API
+          pathname.startsWith('/api/metrics') ||   // Allow metrics API for tracking
           pathname.startsWith('/api/user') ||
           pathname.startsWith('/product') ||       // Added product detail pages
           pathname.startsWith('/uploads') ||       // Allow public uploads

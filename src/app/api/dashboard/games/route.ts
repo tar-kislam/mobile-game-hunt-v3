@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
         id: true,
         title: true,
         status: true,
+        thumbnail: true,
         images: true,
         createdAt: true,
       },
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
       id: g.id,
       title: g.title,
       status: g.status ?? 'PUBLISHED',
-      thumbnail: Array.isArray(g.images) && g.images.length > 0 ? String(g.images[0]) : null,
+      thumbnail: g.thumbnail,
     }))
 
     return NextResponse.json({ games: result })

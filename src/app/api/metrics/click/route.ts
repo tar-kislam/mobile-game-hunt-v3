@@ -10,6 +10,8 @@ export async function POST(request: NextRequest) {
     const ip = request.headers.get('x-forwarded-for') || 'ip:unknown'
     const rl = await rateLimit(`metrics:post:${ip}`, 120, 60)
     if (!rl.allowed) return NextResponse.json({ error: 'Rate limit' }, { status: 429 })
+    
+    // Get session but don't require authentication for view tracking
     const session = await getServerSession(authOptions);
     const schema = z.object({
       gameId: z.string().min(1),

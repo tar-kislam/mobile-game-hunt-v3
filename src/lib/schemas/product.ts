@@ -74,9 +74,7 @@ export const productMakersSchema = z.object({
     role: z.enum(['MAKER', 'DESIGNER', 'DEVELOPER', 'PUBLISHER', 'HUNTER']).default('MAKER'),
     isCreator: z.boolean().default(false)
   })).min(1, 'At least one maker is required').max(5, 'Maximum 5 makers allowed'),
-  studioName: z.string().max(80, 'Studio name must be 80 characters or less').optional().or(z.literal('')),
-  inviteEmail: z.string().email('Please enter a valid email').optional().or(z.literal('')),
-  inviteRole: z.enum(['MAKER', 'DESIGNER', 'DEVELOPER', 'PUBLISHER', 'HUNTER']).default('MAKER')
+  studioName: z.string().max(80, 'Studio name must be 80 characters or less').optional().or(z.literal(''))
 })
 
 export const productExtrasSchema = z.object({

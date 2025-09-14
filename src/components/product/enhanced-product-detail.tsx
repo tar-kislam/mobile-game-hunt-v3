@@ -46,6 +46,7 @@ import { toast } from 'sonner';
 import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { LANGUAGES } from '@/lib/constants/languages'
+import { UserAvatarTooltip } from '@/components/ui/user-avatar-tooltip'
 
 interface Product {
   id: string;
@@ -117,7 +118,6 @@ interface Product {
   sponsorRequest?: boolean | null;
   sponsorNote?: string | null;
   // Additional fields
-  crowdfundingPledge?: boolean | null;
   gamificationTags?: string[] | null;
   languages?: Array<{
     name: string;
@@ -145,18 +145,17 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
   const [comments, setComments] = useState<any[]>([]);
   const [productVotes, setProductVotes] = useState(product._count.votes);
   const [isProductUpvoted, setIsProductUpvoted] = useState(hasVoted);
-  const [pledgeAmount, setPledgeAmount] = useState('')
-  const [pledgeNote, setPledgeNote] = useState('')
-  const [pledgeTotal, setPledgeTotal] = useState<number | null>(null)
-  const [isPledging, setIsPledging] = useState(false)
   const [recommended, setRecommended] = useState<any[]>([])
   const [currentUrl, setCurrentUrl] = useState('')
   const [isPromoExpanded, setIsPromoExpanded] = useState(false)
 
   // Track product detail page view
   const trackProductView = async () => {
+    // Only track in browser environment
+    if (typeof window === 'undefined') return;
+    
     try {
-      await fetch('/api/metrics/click', {
+      const response = await fetch('/api/metrics/click', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -165,8 +164,17 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
           referrer: window.location.href
         })
       });
+
+      if (!response.ok) {
+        console.warn('Metrics tracking failed:', response.status, response.statusText);
+        return;
+      }
+
+      const result = await response.json();
+      console.log('Product view tracked successfully:', result);
     } catch (error) {
-      console.error('Error tracking product view:', error);
+      console.warn('Error tracking product view (non-critical):', error);
+      // Don't throw - this is non-critical functionality
     }
   };
 
@@ -184,18 +192,6 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
     trackProductView();
   }, [session, product.id]);
 
-  useEffect(() => {
-    // Load pledge total on mount
-    const loadPledges = async () => {
-      try {
-        const res = await fetch(`/api/pledge?gameId=${product.id}`)
-        if (!res.ok) return
-        const data = await res.json()
-        setPledgeTotal(Number(data.total) || 0)
-      } catch {}
-    }
-    loadPledges()
-  }, [product.id])
 
   useEffect(() => {
     const likes = [product.title, product.tagline || '', ...(product.platforms || [])].join(',')
@@ -505,25 +501,6 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
     toast.success('Comment link copied to clipboard!');
   };
 
-  const handlePledge = async () => {
-    if (!pledgeAmount || isNaN(Number(pledgeAmount))) return
-    try {
-      setIsPledging(true)
-      const res = await fetch('/api/pledge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gameId: product.id, amount: Number(pledgeAmount), note: pledgeNote })
-      })
-      if (res.ok) {
-        const list = await fetch(`/api/pledge?gameId=${product.id}`).then(r => r.json())
-        setPledgeTotal(Number(list.total) || 0)
-        setPledgeAmount('')
-        setPledgeNote('')
-      }
-    } finally {
-      setIsPledging(false)
-    }
-  }
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
@@ -1196,7 +1173,7 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
             </Card>
           )}
 
-          {/* Supported Languages Card - Above Pledge Support */}
+          {/* Supported Languages Card */}
           {product.languages && product.languages.length > 0 && (
       <Card className="rounded-2xl shadow-soft">
         <CardHeader>
@@ -1254,34 +1231,8 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
       </Card>
           )}
 
-          {/* Pledge Card - Right below Download/Playtest cards */}
-        <Card className="rounded-2xl shadow-soft">
-          <CardHeader>
-              <CardTitle className="text-xl font-semibold">Pledge Support</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="text-sm text-muted-foreground">Total pledged: {pledgeTotal === null ? '—' : `$${pledgeTotal.toFixed(0)}`}</div>
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  min="1"
-                  placeholder="Amount"
-                  value={pledgeAmount}
-                  onChange={(e) => setPledgeAmount(e.target.value)}
-                />
-                <Button onClick={handlePledge} disabled={isPledging || !pledgeAmount}>
-                  {isPledging ? 'Sending…' : 'Pledge'}
-                </Button>
-              </div>
-              <Input
-                placeholder="Add a note (optional)"
-                value={pledgeNote}
-                onChange={(e) => setPledgeNote(e.target.value)}
-              />
-            </CardContent>
-          </Card>
 
-          {/* Press Kit Card - Right below Pledge Card */}
+          {/* Press Kit Card */}
           {hasPressKit && (
             <Card className="rounded-2xl shadow-soft">
               <CardHeader>
@@ -1336,28 +1287,6 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
             </Card>
           )}
 
-          {/* Crowdfunding Pledge Card */}
-          {product.crowdfundingPledge && (
-            <Card className="rounded-2xl shadow-soft">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold">Crowdfunding</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Support this project through crowdfunding pledges.
-            </div>
-                <Button
-                  onClick={() => {
-                    toast.info('Crowdfunding functionality coming soon!');
-                  }}
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                >
-                  <Heart className="w-4 h-4 mr-2" />
-                  Support Project
-                </Button>
-          </CardContent>
-        </Card>
-      )}
 
           {/* Gamification Tags Card */}
           {product.gamificationTags && product.gamificationTags.length > 0 && (
@@ -1398,65 +1327,84 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
             </Card>
           )}
 
-          {/* Team/Makers Info */}
+          {/* Team Info */}
           <Card className="rounded-2xl shadow-soft">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">
-                {product.makers && product.makers.length > 0 ? 'Team' : 'Developer'}
-              </CardTitle>
+              <CardTitle className="text-lg font-semibold">Team</CardTitle>
             </CardHeader>
-            <CardContent>
-              {product.makers && product.makers.length > 0 ? (
-                <div className="space-y-4">
-                  {product.makers.map((maker) => (
-                    <div key={maker.id} className="flex items-start gap-3">
-                      <Avatar className="w-10 h-10">
-                        <AvatarImage 
-                          src={maker.user?.image || undefined} 
-                          alt={maker.user?.name || maker.email || 'Team member'}
-                        />
-                        <AvatarFallback className="bg-gradient-to-br from-purple-400 to-blue-500 text-white">
-                          {maker.user?.name ? maker.user.name.charAt(0).toUpperCase() : 
-                           maker.email ? maker.email.charAt(0).toUpperCase() : 'T'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium text-gray-900 dark:text-white truncate">
-                            {maker.user?.name || maker.email || 'Team Member'}
-                          </p>
-                          {maker.isCreator && (
-                            <Badge variant="secondary" className="text-xs bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200">
-                              Creator
-                            </Badge>
-                          )}
-                        </div>
-                        <Badge variant="outline" className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-                          {maker.role === 'MAKER' ? 'Maker' :
-                           maker.role === 'DESIGNER' ? 'Designer' :
-                           maker.role === 'DEVELOPER' ? 'Developer' :
-                           maker.role === 'PUBLISHER' ? 'Publisher' :
-                           maker.role === 'HUNTER' ? 'Hunter' : maker.role}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {product.user.name || 'Anonymous'}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {formatDate(product.createdAt)}
-                    </p>
-                  </div>
+            <CardContent className="space-y-6">
+              {/* Studio/Publisher Name */}
+              {product.studioName && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Studio / Publisher</h4>
+                  <p className="text-base font-semibold text-gray-900 dark:text-white">
+                    {product.studioName}
+                  </p>
                 </div>
               )}
+
+              {/* Team Members */}
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Team Members</h4>
+                {product.makers && product.makers.length > 0 ? (
+                  <div className="space-y-4">
+                    {product.makers.map((maker) => (
+                      <div key={maker.id} className="flex items-start gap-3">
+                        {maker.user ? (
+                          <UserAvatarTooltip
+                            userId={maker.user.id}
+                            userName={maker.user.name}
+                            userImage={maker.user.image || null}
+                            size="md"
+                          />
+                        ) : (
+                          <Avatar className="w-10 h-10">
+                            <AvatarFallback className="bg-gradient-to-br from-purple-400 to-blue-500 text-white">
+                              {maker.email ? maker.email.charAt(0).toUpperCase() : 'T'}
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-medium text-gray-900 dark:text-white truncate">
+                              {maker.user?.name || maker.email || 'Team Member'}
+                            </p>
+                            {maker.isCreator && (
+                              <Badge variant="secondary" className="text-xs bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200">
+                                Creator
+                              </Badge>
+                            )}
+                          </div>
+                          <Badge variant="outline" className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                            {maker.role === 'MAKER' ? 'Maker' :
+                             maker.role === 'DESIGNER' ? 'Designer' :
+                             maker.role === 'DEVELOPER' ? 'Developer' :
+                             maker.role === 'PUBLISHER' ? 'Publisher' :
+                             maker.role === 'HUNTER' ? 'Hunter' : maker.role}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <UserAvatarTooltip
+                      userId={product.user.id}
+                      userName={product.user.name}
+                      userImage={product.user.image || null}
+                      size="md"
+                    />
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {product.user.name || 'Anonymous'}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {formatDate(product.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 

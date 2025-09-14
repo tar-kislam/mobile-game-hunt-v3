@@ -193,14 +193,17 @@ export default function DashboardPage() {
                             : 'border-purple-500/20 hover:border-purple-400/60 hover:shadow-[0_0_12px_rgba(168,85,247,0.25)]'
                         }`}>
                           <div className="p-4 flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-700 flex items-center justify-center">
+                            <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-700 flex items-center justify-center transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 hover:ring-2 hover:ring-purple-400/50">
                               {g.thumbnail ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img src={g.thumbnail} alt={g.title} className="w-full h-full object-cover" />
                               ) : (
-                                <PieChart className="w-6 h-6 text-purple-300" />
-                    )}
-                  </div>
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src="/logo/mgh.png" alt="Game placeholder" className="w-8 h-8 object-contain" onError={(e) => {
+                                  e.currentTarget.src = '/logo/moblogo.png';
+                                }} />
+                              )}
+                            </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-white font-medium truncate">{g.title}</p>
                               {g.status ? (
@@ -376,7 +379,7 @@ export default function DashboardPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-gray-700">
-                    <TableHead className="text-gray-300">Title</TableHead>
+                    <TableHead className="text-gray-300">Game</TableHead>
                     <TableHead className="text-gray-300">Status</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -388,7 +391,22 @@ export default function DashboardPage() {
                   ) : (
                     games.map((g) => (
                       <TableRow key={g.id} className="border-gray-700">
-                        <TableCell className="text-white">{g.title}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-700 flex items-center justify-center transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 hover:ring-2 hover:ring-purple-400/50">
+                              {g.thumbnail ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={g.thumbnail} alt={g.title} className="w-full h-full object-cover" />
+                              ) : (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src="/logo/mgh.png" alt="Game placeholder" className="w-6 h-6 object-contain" onError={(e) => {
+                                  e.currentTarget.src = '/logo/moblogo.png';
+                                }} />
+                              )}
+                            </div>
+                            <span className="text-white">{g.title}</span>
+                          </div>
+                        </TableCell>
                         <TableCell className="text-gray-300">{g.status || '—'}</TableCell>
                       </TableRow>
                     ))

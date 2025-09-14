@@ -80,7 +80,7 @@ export default function SubmitPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <Button variant="outline" asChild className="rounded-2xl">
@@ -91,10 +91,6 @@ export default function SubmitPage() {
           </Button>
         </div>
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">Submit your Game</h1>
-          <Button asChild className="rounded-2xl">
-            <Link href="/submit/new">Submit New Game</Link>
-          </Button>
         </div>
 
         {submissions.length > 0 && (
