@@ -3,7 +3,7 @@ import { withAuth } from "next-auth/middleware"
 export default withAuth(
   function middleware(req) {
     // Add any additional middleware logic here
-    console.log("Token:", req.nextauth.token)
+    // Token logging removed to reduce log spam
   },
   {
     callbacks: {
@@ -21,9 +21,13 @@ export default withAuth(
           pathname.startsWith('/api/sidebar') ||   // Allow sidebar API
           pathname.startsWith('/api/newsletter') || // Allow newsletter API
           pathname.startsWith('/api/metrics') ||   // Allow metrics API for tracking
+          pathname.startsWith('/api/featured-games') || // Allow featured games API
           pathname.startsWith('/api/user') ||
           pathname.startsWith('/product') ||       // Added product detail pages
           pathname.startsWith('/uploads') ||       // Allow public uploads
+          pathname.startsWith('/logo') ||          // Allow logo assets
+          pathname.startsWith('/images') ||        // Allow image assets
+          pathname.startsWith('/assets') ||        // Allow asset files
           pathname === '/' ||
           pathname.startsWith('/public') ||
           pathname.startsWith('/_next') ||
@@ -48,7 +52,12 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder
+     * - uploads folder
+     * - logo folder
+     * - images folder
+     * - assets folder
+     * - Note: Static file extensions handled by path-based exclusions
      */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|public|uploads).*)',
+    '/((?!api/auth|_next/static|_next/image|favicon.ico|public|uploads|logo|images|assets).*)',
   ],
 }

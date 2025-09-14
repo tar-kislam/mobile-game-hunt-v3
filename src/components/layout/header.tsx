@@ -4,6 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { useSession, signOut } from "next-auth/react"
 import { useEffect, useState } from 'react'
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -26,7 +27,11 @@ import useSWR from 'swr'
 export function Header() {
   const { data: session, status } = useSession()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const pathname = usePathname()
   const fetcher = (url: string) => fetch(url).then(r => r.json())
+  
+  // Check if we're on the editorial dashboard page
+  const isEditorialDashboard = pathname === '/editorial-dashboard'
   
   // Fetch XP data
   const { data: xpData, mutate: mutateXP } = useSWR(
@@ -76,7 +81,11 @@ export function Header() {
   ] : baseNavItems
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/35">
+    <header className={`sticky top-0 z-50 w-full border-b transition-colors ${
+      isEditorialDashboard 
+        ? 'bg-black/40 backdrop-blur-md' 
+        : 'bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/35'
+    }`}>
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Mobile Layout (max-width: 768px) */}
@@ -85,9 +94,15 @@ export function Header() {
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="Open menu"
-              className="p-2 rounded-lg hover:bg-muted/50 transition-colors"
+              className={`p-2 rounded-lg transition-colors ${
+                isEditorialDashboard 
+                  ? 'hover:bg-white/10 text-white hover:text-white/90' 
+                  : 'hover:bg-muted/50'
+              }`}
             >
-              <HiOutlineMenu className="h-6 w-6 text-foreground" />
+              <HiOutlineMenu className={`h-6 w-6 ${
+                isEditorialDashboard ? 'text-white' : 'text-foreground'
+              }`} />
             </button>
 
             {/* Right Side - Notification Bell and Profile Avatar */}
@@ -190,10 +205,10 @@ export function Header() {
               <PillNav 
                 items={navItems}
                 className="md:justify-center"
-                baseColor="hsl(var(--background))"
-                pillColor="hsl(var(--card))"
-                hoveredPillTextColor="hsl(var(--card-foreground))"
-                pillTextColor="hsl(var(--muted-foreground))"
+                baseColor={isEditorialDashboard ? "rgba(0, 0, 0, 0.4)" : "hsl(var(--background))"}
+                pillColor={isEditorialDashboard ? "rgba(255, 255, 255, 0.1)" : "hsl(var(--card))"}
+                hoveredPillTextColor={isEditorialDashboard ? "white" : "hsl(var(--card-foreground))"}
+                pillTextColor={isEditorialDashboard ? "rgba(255, 255, 255, 0.8)" : "hsl(var(--muted-foreground))"}
               />
             </div>
 
@@ -204,7 +219,9 @@ export function Header() {
               ) : session ? (
                 <div className="flex items-center space-x-3">
                   <NotificationBell />
-                  <Button asChild className="rounded-2xl shadow-soft">
+                  <Button asChild className={`rounded-2xl ${
+                    isEditorialDashboard ? 'bg-white/20 hover:bg-white/30 text-white border-white/30' : 'shadow-soft'
+                  }`}>
                     <Link href="/submit">Submit Game</Link>
                   </Button>
                   

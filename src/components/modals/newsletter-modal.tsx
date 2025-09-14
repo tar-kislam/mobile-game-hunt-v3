@@ -59,15 +59,32 @@ export function NewsletterModal({ isOpen, onClose }: NewsletterModalProps) {
     setIsSubmitting(true)
     
     try {
-      // Simulate API call (same as hero section)
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      toast.success('Welcome to the early community! We\'ll be in touch soon.')
-      setEmail('')
-      // Close modal after 2 seconds
-      setTimeout(() => {
-        onClose()
-      }, 2000)
+      const response = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success(data.message || 'Welcome to the early community! We\'ll be in touch soon.')
+        setEmail('')
+        // Close modal after 2 seconds
+        setTimeout(() => {
+          onClose()
+        }, 2000)
+      } else {
+        if (response.status === 409) {
+          toast.info('You\'re already subscribed to our newsletter!')
+        } else {
+          toast.error(data.error || 'Something went wrong. Please try again.')
+        }
+      }
     } catch (error) {
+      console.error('Newsletter subscription error:', error)
       toast.error('Something went wrong. Please try again.')
     } finally {
       setIsSubmitting(false)

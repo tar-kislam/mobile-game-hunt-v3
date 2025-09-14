@@ -57,14 +57,43 @@ export default function CalendarPage() {
     year: searchParams.get('year') || new Date().getFullYear().toString()
   });
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [filterOptions, setFilterOptions] = useState({
+    platforms: [] as string[],
+    countries: [] as string[],
+    categories: [] as Array<{ id: string; name: string }>,
+    years: [] as number[]
+  });
 
-  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() + i);
-  const platforms = ['ios', 'android', 'web', 'windows', 'mac'];
-  const countries = ['US', 'UK', 'CA', 'AU', 'DE', 'FR', 'JP', 'KR', 'CN', 'IN'];
+  useEffect(() => {
+    fetchFilterOptions();
+    fetchProducts();
+  }, []);
 
   useEffect(() => {
     fetchProducts();
   }, [filters]);
+
+  const fetchFilterOptions = async () => {
+    try {
+      const response = await fetch('/api/calendar/filters');
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch filter options: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      setFilterOptions(data);
+    } catch (err) {
+      console.error('Error fetching filter options:', err);
+      // Set fallback options to prevent the page from breaking
+      setFilterOptions({
+        platforms: ['IOS', 'ANDROID', 'WEB', 'WINDOWS', 'MAC'],
+        countries: ['US', 'UK', 'CA', 'AU', 'DE', 'FR', 'JP', 'KR', 'CN', 'IN'],
+        categories: [],
+        years: [new Date().getFullYear(), new Date().getFullYear() + 1, new Date().getFullYear() + 2]
+      });
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -229,15 +258,6 @@ export default function CalendarPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            📅 Release Calendar
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
-            Track upcoming mobile game and app releases globally
-          </p>
-        </div>
 
         {/* Filters */}
         {/* Mobile Filters - Accordion */}
@@ -266,9 +286,9 @@ export default function CalendarPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">All platforms</SelectItem>
-                          {platforms.map(platform => (
+                          {filterOptions.platforms.map(platform => (
                             <SelectItem key={platform} value={platform}>
-                              {platform.toUpperCase()}
+                              {platform}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -285,7 +305,7 @@ export default function CalendarPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">All countries</SelectItem>
-                          {countries.map(country => (
+                          {filterOptions.countries.map(country => (
                             <SelectItem key={country} value={country}>
                               {country}
                             </SelectItem>
@@ -304,6 +324,11 @@ export default function CalendarPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">All categories</SelectItem>
+                          {filterOptions.categories.map(category => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -317,7 +342,7 @@ export default function CalendarPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {years.map(year => (
+                          {filterOptions.years.map(year => (
                             <SelectItem key={year} value={year.toString()}>
                               {year}
                             </SelectItem>
@@ -352,9 +377,9 @@ export default function CalendarPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All platforms</SelectItem>
-                    {platforms.map(platform => (
+                    {filterOptions.platforms.map(platform => (
                       <SelectItem key={platform} value={platform}>
-                        {platform.toUpperCase()}
+                        {platform}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -371,7 +396,7 @@ export default function CalendarPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All countries</SelectItem>
-                    {countries.map(country => (
+                    {filterOptions.countries.map(country => (
                       <SelectItem key={country} value={country}>
                         {country}
                       </SelectItem>
@@ -390,6 +415,11 @@ export default function CalendarPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All categories</SelectItem>
+                    {filterOptions.categories.map(category => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -403,7 +433,7 @@ export default function CalendarPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {years.map(year => (
+                    {filterOptions.years.map(year => (
                       <SelectItem key={year} value={year.toString()}>
                         {year}
                       </SelectItem>

@@ -5,7 +5,14 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const yearParam = searchParams.get('year')
+    const platformParam = searchParams.get('platform')
+    const countryParam = searchParams.get('country')
+    const categoryParam = searchParams.get('categoryId')
+    
     let yearFilter: { gte?: Date; lt?: Date } | undefined
+    let platformFilter: { hasSome: string[] } | undefined
+    let countryFilter: { hasSome: string[] } | undefined
+    let categoryFilter: { some: { categoryId: string } } | undefined
 
     if (yearParam) {
       const y = parseInt(yearParam, 10)
@@ -17,6 +24,18 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    if (platformParam && platformParam !== 'all') {
+      platformFilter = { hasSome: [platformParam.toLowerCase()] }
+    }
+
+    if (countryParam && countryParam !== 'all') {
+      countryFilter = { hasSome: [countryParam] }
+    }
+
+    if (categoryParam && categoryParam !== 'all') {
+      categoryFilter = { some: { categoryId: categoryParam } }
+    }
+
     const products = await prisma.product.findMany({
       where: {
         status: 'PUBLISHED',
@@ -24,6 +43,9 @@ export async function GET(request: NextRequest) {
           not: null,
           ...(yearFilter ?? {}),
         },
+        ...(platformFilter && { platforms: platformFilter }),
+        ...(countryFilter && { countries: countryFilter }),
+        ...(categoryFilter && { categories: categoryFilter }),
       },
       select: {
         id: true,

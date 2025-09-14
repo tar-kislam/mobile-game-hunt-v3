@@ -122,6 +122,8 @@ model Product {
   clicks       Int           @default(0)
   follows      Int           @default(0)
   editorChoice Boolean       @default(false)
+  editorial_boost Boolean    @default(false)
+  editorial_override Boolean @default(false)
   comments     ProductComment[]
   followUsers  Follow[]
   metrics      Metric[]
