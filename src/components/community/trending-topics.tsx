@@ -3,13 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { TrendingUp, Hash } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { CommunitySearchSimple } from './community-search-simple'
 
 interface TrendingTopicsProps {
   topics: string[]
   onSelectTag?: (tag: string) => void
+  onSimpleSearch?: (query: string) => void
+  onSimpleSearchClear?: () => void
 }
 
-export function TrendingTopics({ topics, onSelectTag }: TrendingTopicsProps) {
+export function TrendingTopics({ topics, onSelectTag, onSimpleSearch, onSimpleSearchClear }: TrendingTopicsProps) {
   const router = useRouter()
   const handleClick = (raw: string) => {
     const tag = raw.replace(/^#/, '')
@@ -17,15 +20,25 @@ export function TrendingTopics({ topics, onSelectTag }: TrendingTopicsProps) {
     router.push(`/community?hashtag=${encodeURIComponent(tag)}`)
   }
   return (
-    <Card className="bg-card/50 border-white/10 backdrop-blur-sm">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-orange-500" />
-          <span className="bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
-            Trending in Community
-          </span>
-        </CardTitle>
-      </CardHeader>
+    <div className="space-y-4">
+      {/* Simple Search Bar */}
+      {onSimpleSearch && onSimpleSearchClear && (
+        <CommunitySearchSimple 
+          onSearch={onSimpleSearch}
+          onClear={onSimpleSearchClear}
+        />
+      )}
+      
+      {/* Trending Topics Card */}
+      <Card className="bg-card/50 border-white/10 backdrop-blur-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-orange-500" />
+            <span className="bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
+              Trending in Community
+            </span>
+          </CardTitle>
+        </CardHeader>
       <CardContent>
         {topics.length === 0 ? (
           <div className="text-center py-4">
@@ -71,5 +84,6 @@ export function TrendingTopics({ topics, onSelectTag }: TrendingTopicsProps) {
         </div>
       </CardContent>
     </Card>
+    </div>
   )
 }

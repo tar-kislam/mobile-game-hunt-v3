@@ -6,6 +6,8 @@ import { RateLimiter, RATE_LIMITS } from "@/lib/rate-limiter"
 import { notify } from '@/lib/notificationService'
 import { addXPWithBonus } from "@/lib/xpService"
 import { checkAndAwardBadges } from "@/lib/badgeService"
+import { notifyFollowersOfGameSubmission } from '@/lib/followNotifications'
+import { generateSlug, generateUniqueSlug } from '@/lib/slug'
 
 import { z } from "zod"
 
@@ -183,7 +185,7 @@ export async function GET(request: NextRequest) {
     })
     
     // Aggregate follows in time window
-    const followsInWindow = await prisma.follow.groupBy({
+    const followsInWindow = await prisma.gameFollow.groupBy({
       by: ['gameId'],
       where: whereWindow,
       _count: { id: true }
@@ -210,6 +212,7 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         title: true,
+        slug: true,
         tagline: true,
         thumbnail: true,
         image: true,
@@ -355,10 +358,18 @@ export async function POST(request: NextRequest) {
     // Validate input
     const validatedData = createProductSchema.parse(body)
 
+    // Generate unique slug
+    const baseSlug = generateSlug(validatedData.title)
+    const existingSlugs = await prisma.product.findMany({
+      select: { slug: true }
+    }).then(products => products.map(p => p.slug))
+    const uniqueSlug = generateUniqueSlug(baseSlug, existingSlugs)
+
     // Create the product
     const product = await prisma.product.create({
       data: {
         title: validatedData.title,
+        slug: uniqueSlug,
         tagline: validatedData.tagline,
         description: validatedData.description,
         url: validatedData.iosUrl || validatedData.androidUrl || '', // Use one of the URLs as the primary URL
@@ -415,6 +426,15 @@ export async function POST(request: NextRequest) {
         }
       } catch (notificationError) {
         console.error('[NOTIFICATION] Error sending game submission notification:', notificationError)
+      }
+
+      // Notify followers of new game submission
+      try {
+        if (user.username) {
+          await notifyFollowersOfGameSubmission(user.id, user.username, product.title, product.id)
+        }
+      } catch (followNotificationError) {
+        console.error('[FOLLOW_NOTIFICATIONS] Error notifying followers of game submission:', followNotificationError)
       }
     } catch (xpError) {
       console.error('[XP] Error awarding XP for game submission:', xpError)

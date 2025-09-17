@@ -11,6 +11,7 @@ import { ArrowUpIcon, MessageCircleIcon, ExternalLinkIcon } from "lucide-react"
 interface Game {
   id: string
   title: string
+  slug: string
   tagline?: string | null
   description: string
   image?: string | null
@@ -76,7 +77,7 @@ export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTa
   }
 
   return (
-    <Link href={`/product/${game.id}`} className="block group">
+    <Link href={`/product/${game.slug}`} className="block group">
       {/* Removed group-hover:scale-[1.02] from card to prevent double scaling with tilt effect */}
       <Card className="overflow-hidden bg-card hover:shadow-lg transition-all duration-300 border border-white/10 shadow-lg rounded-xl hover:shadow-black/20">
         {/* Game Image - Removed image scaling on hover */}

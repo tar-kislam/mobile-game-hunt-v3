@@ -133,6 +133,7 @@ export async function GET(
       select: {
         id: true,
         title: true,
+        slug: true,
         tagline: true,
         description: true,
         url: true,

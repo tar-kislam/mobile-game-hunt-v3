@@ -1,7 +1,73 @@
 import { withAuth } from "next-auth/middleware"
+import { NextResponse } from "next/server"
 
 export default withAuth(
-  function middleware(req) {
+  async function middleware(req) {
+    const { pathname, origin } = req.nextUrl
+    
+    // Product ID redirect: /product/:id -> /product/:slug (backward compatibility)
+    const productMatch = pathname.match(/^\/product\/([a-z0-9]{20,})$/)
+    if (productMatch) {
+      const productId = productMatch[1]
+      try {
+        const resp = await fetch(`${origin}/api/products/${productId}`, { headers: { accept: 'application/json' } })
+        if (resp.ok) {
+          const data = await resp.json()
+          const slug = data?.slug
+          if (slug) {
+            return NextResponse.redirect(new URL(`/product/${slug}`, req.url), 301)
+          }
+        }
+      } catch (error) {
+        // ignore and continue to next
+      }
+    }
+
+    // DB-backed redirect: /profile/:id/public -> /@username (compat)
+    const match = pathname.match(/^\/profile\/([^/]+)\/public$/)
+    if (match) {
+      const id = match[1]
+      try {
+        const resp = await fetch(`${origin}/api/user/${id}/public`, { headers: { accept: 'application/json' } })
+        if (resp.ok) {
+          const data = await resp.json()
+          const username = data?.user?.username
+          if (username) {
+            return NextResponse.redirect(new URL(`/@${username}`, req.url), 301)
+          }
+        }
+      } catch (error) {
+        // ignore and continue to next
+      }
+    }
+
+    // Allow pretty handle: /@username -> serve /[username]
+    const atMatch = pathname.match(/^\/@(.+)$/)
+    if (atMatch) {
+      const username = atMatch[1]
+      // rewrite to the internal route without changing the URL
+      return NextResponse.rewrite(new URL(`/${username}`, req.url))
+    }
+
+    // Legacy: single-segment cuid-like IDs -> redirect to /@username
+    // Only attempt when path is a single segment without slashes and not prefixed with known routes
+    const singleSeg = pathname.match(/^\/([a-z0-9]{20,})$/)
+    if (singleSeg) {
+      const candidateId = singleSeg[1]
+      try {
+        const resp = await fetch(`${origin}/api/user/${candidateId}/public`, { headers: { accept: 'application/json' } })
+        if (resp.ok) {
+          const data = await resp.json()
+          const username = data?.user?.username
+          if (username) {
+            return NextResponse.redirect(new URL(`/@${username}`, req.url), 301)
+          }
+        }
+      } catch (error) {
+        // ignore
+      }
+    }
+
     // Add any additional middleware logic here
     // Token logging removed to reduce log spam
   },
@@ -24,6 +90,10 @@ export default withAuth(
           pathname.startsWith('/api/featured-games') || // Allow featured games API
           pathname.startsWith('/api/user') ||
           pathname.startsWith('/product') ||       // Added product detail pages
+          pathname.startsWith('/user/') ||        // Allow username-based profile pages
+          pathname.match(/^\/[^\/]+\/public$/) || // Allow /[username]/public routes (legacy)
+          pathname.match(/^\/[^\/]+$/) ||          // Allow single-segment usernames
+          pathname.startsWith('/profile/') ||     // Allow old profile routes for backward compatibility
           pathname.startsWith('/uploads') ||       // Allow public uploads
           pathname.startsWith('/logo') ||          // Allow logo assets
           pathname.startsWith('/images') ||        // Allow image assets

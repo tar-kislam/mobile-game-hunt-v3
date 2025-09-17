@@ -138,6 +138,22 @@ const nextConfig: NextConfig = {
     ];
   },
 
+  // Static redirects
+  async redirects() {
+    return [
+      {
+        source: '/:username/public',
+        destination: '/:username',
+        permanent: true,
+      },
+      {
+        source: '/@:username',
+        destination: '/:username',
+        permanent: true,
+      },
+    ]
+  },
+
   // Performance optimizations
   webpack: (config, { dev, isServer }) => {
     // Optimize bundle size in production

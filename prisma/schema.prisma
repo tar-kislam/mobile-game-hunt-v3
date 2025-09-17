@@ -42,98 +42,97 @@ model VerificationToken {
 }
 
 model User {
-  id             String          @id @default(cuid())
-  name           String?
-  username       String?
-  email          String          @unique
-  password       String?
-  emailVerified  DateTime?
-  image          String?
-  notificationsEnabled Boolean    @default(true)
-  marketingOptIn      Boolean     @default(false)
-  role           UserRole        @default(USER)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  
-  // Level & XP System
-  xp             Int             @default(0)   // total XP accumulated
-  level          Int             @default(1)   // current user level
-  
-  accounts       Account[]
-  comments       ProductComment[]
-  commentVotes   CommentVote[]
-  follows        Follow[]
-  metrics        Metric[]
-  notifications  Notification[]
-  playtestClaims PlaytestClaim[]
-  products       Product[]
-  sessions       Session[]
-  votes          Vote[]
-  productMakers  ProductMaker[]
-  studios        Studio[]
-  posts          Post[]
-  likes          Like[]
-  postComments   PostComment[]
-  pollVotes      PollVote[]
+  id                   String           @id @default(cuid())
+  name                 String?
+  email                String           @unique
+  emailVerified        DateTime?
+  image                String?
+  role                 UserRole         @default(USER)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  marketingOptIn       Boolean          @default(false)
+  notificationsEnabled Boolean          @default(true)
+  username             String?          @unique
+  level                Int              @default(1)
+  xp                   Int              @default(0)
+  passwordHash         String?          @db.VarChar(255)
+  accounts             Account[]
+  commentVotes         CommentVote[]
+  following            Follow[]         @relation("follower")
+  followers            Follow[]         @relation("following")
+  gameFollows          GameFollow[]
+  likes                Like[]
+  metrics              Metric[]
+  notifications        Notification[]
+  playtestClaims       PlaytestClaim[]
+  pollVotes            PollVote[]
+  posts                Post[]
+  postComments         PostComment[]
+  products             Product[]
+  comments             ProductComment[]
+  productMakers        ProductMaker[]
+  sessions             Session[]
+  studios              Studio[]
+  votes                Vote[]
 }
 
 model Product {
-  id           String        @id @default(cuid())
-  title        String
-  description  String
-  url          String?
-  image        String?
-  thumbnail    String?
-  gallery      Json?
-  videoUrl     String?
-  gameplayGifUrl String?
-  demoUrl      String?
-  youtubeUrl   String?
-  studioName   String?  // Studio/Publisher name
-  userId       String
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  tagline      String?
-  iosUrl       String?        // iPhone App Store link
-  images       String[]
-  platforms    String[]
-  androidUrl   String?        // Google Play link
-  socialLinks  Json?
-  video        String?
-  countries    String[]
-  languages    Json?           // Array of language objects with support types
-  status       ProductStatus @default(DRAFT)
-  releaseAt    DateTime?
-  launchType   String?       // Soft launch / Global launch
-  launchDate   DateTime?      // Launch date
-  monetization String?        // Free, Paid, Freemium, Ads supported, Subscription
-  engine       String?        // Unity, Unreal, Godot, Custom
-  // Community & Extras fields
-  pricing      String?        // FREE, PAID, FREEMIUM
-  promoOffer   String?        // Promotional offer description
-  promoCode    String?        // Promo code
-  promoExpiry  DateTime?      // Promo expiry date
-  playtestQuota Int?          // Number of playtest keys
-  playtestExpiry DateTime?    // Playtest keys expiry date
-  sponsorRequest Boolean      @default(false)
-  sponsorNote   String?        // Additional notes for sponsor request
-  crowdfundingPledge Boolean  @default(false)
-  gamificationTags String[]   // Array of gamification tag IDs
-  clicks       Int           @default(0)
-  follows      Int           @default(0)
-  editorChoice Boolean       @default(false)
-  editorial_boost Boolean    @default(false)
-  editorial_override Boolean @default(false)
-  comments     ProductComment[]
-  followUsers  Follow[]
-  metrics      Metric[]
-  playtests    Playtest[]
-  pressKit     PressKit?
-  user         User          @relation(fields: [userId], references: [id])
-  votes        Vote[]
-  tags         ProductTag[]
-  categories   ProductCategory[]
-  makers       ProductMaker[]
+  id                 String            @id @default(cuid())
+  title              String
+  description        String
+  url                String?
+  image              String?
+  userId             String
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  tagline            String?
+  images             String[]
+  platforms          String[]
+  socialLinks        Json?
+  video              String?
+  countries          String[]
+  status             ProductStatus     @default(DRAFT)
+  releaseAt          DateTime?
+  clicks             Int               @default(0)
+  follows            Int               @default(0)
+  crowdfundingPledge Boolean           @default(false)
+  demoUrl            String?
+  engine             String?
+  gallery            Json?
+  gameplayGifUrl     String?
+  gamificationTags   String[]
+  languages          Json?
+  launchDate         DateTime?
+  launchType         String?
+  monetization       String?
+  playtestExpiry     DateTime?
+  playtestQuota      Int?
+  pricing            String?
+  promoCode          String?
+  promoExpiry        DateTime?
+  promoOffer         String?
+  sponsorNote        String?
+  sponsorRequest     Boolean           @default(false)
+  studioName         String?
+  thumbnail          String?
+  videoUrl           String?
+  youtubeUrl         String?
+  androidUrl         String?
+  iosUrl             String?
+  editorChoice       Boolean           @default(false)
+  editorial_boost    Boolean           @default(false)
+  editorial_override Boolean           @default(false)
+  slug               String            @unique
+  followUsers        GameFollow[]
+  metrics            Metric[]
+  playtests          Playtest[]
+  pressKit           PressKit?
+  user               User              @relation(fields: [userId], references: [id])
+  categories         ProductCategory[]
+  comments           ProductComment[]
+  makers             ProductMaker[]
+  tags               ProductTag[]
+  votes              Vote[]
 
   @@index([createdAt], map: "idx_product_createdAt")
   @@index([status, createdAt], map: "idx_product_status_createdAt")
@@ -152,15 +151,28 @@ model Vote {
 }
 
 model Follow {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  followerId  String
+  followingId String
+  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId, createdAt], map: "idx_follow_followerId_createdAt")
+  @@index([followingId, createdAt], map: "idx_follow_followingId_createdAt")
+}
+
+model GameFollow {
   id        String   @id @default(cuid())
   userId    String
   gameId    String
   createdAt DateTime @default(now())
-  product   Product  @relation(fields: [gameId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, gameId])
-  @@index([gameId, createdAt], map: "idx_follow_gameId_createdAt")
+  @@index([gameId, createdAt], map: "idx_gamefollow_gameId_createdAt")
 }
 
 model Metric {
@@ -174,7 +186,7 @@ model Metric {
   timestamp DateTime @default(now())
   product   Product  @relation(fields: [gameId], references: [id])
   user      User?    @relation(fields: [userId], references: [id])
-  
+
   @@index([gameId, type])
   @@index([timestamp])
   @@index([type])
@@ -182,27 +194,27 @@ model Metric {
 }
 
 model ProductComment {
-  id        String        @id @default(cuid())
+  id        String           @id @default(cuid())
   content   String
   parentId  String?
   productId String
   userId    String
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  parent    ProductComment?      @relation("ProductCommentReplies", fields: [parentId], references: [id])
-  replies   ProductComment[]     @relation("ProductCommentReplies")
-  product   Product       @relation(fields: [productId], references: [id])
-  user      User          @relation(fields: [userId], references: [id])
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
   votes     CommentVote[]
+  parent    ProductComment?  @relation("ProductCommentReplies", fields: [parentId], references: [id])
+  replies   ProductComment[] @relation("ProductCommentReplies")
+  product   Product          @relation(fields: [productId], references: [id])
+  user      User             @relation(fields: [userId], references: [id])
 }
 
 model CommentVote {
-  id        String   @id @default(cuid())
+  id        String         @id @default(cuid())
   userId    String
   commentId String
-  createdAt DateTime @default(now())
-  comment   ProductComment  @relation(fields: [commentId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime       @default(now())
+  comment   ProductComment @relation(fields: [commentId], references: [id])
+  user      User           @relation(fields: [userId], references: [id])
 
   @@unique([userId, commentId])
 }
@@ -210,10 +222,10 @@ model CommentVote {
 model Notification {
   id        String   @id @default(cuid())
   userId    String
-  message   String
-  type      String   // "welcome" | "milestone" | "progress" | "achievement" | "reminder"
-  read      Boolean  @default(false)
   createdAt DateTime @default(now())
+  message   String
+  type      String
+  read      Boolean  @default(false)
   user      User     @relation(fields: [userId], references: [id])
 }
 
@@ -224,7 +236,7 @@ model PressKit {
   about     String
   features  String[]
   media     String[]
-  zipUrl    String?  // URL to downloadable zip file
+  zipUrl    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   product   Product  @relation(fields: [gameId], references: [id], onDelete: Cascade)
@@ -252,6 +264,184 @@ model PlaytestClaim {
   @@unique([playtestId, userId])
 }
 
+model Tag {
+  id        String       @id @default(cuid())
+  slug      String       @unique
+  name      String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  products  ProductTag[]
+}
+
+model ProductTag {
+  id        String   @id @default(cuid())
+  productId String
+  tagId     String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, tagId])
+  @@index([tagId])
+}
+
+model Category {
+  id        String            @id @default(cuid())
+  name      String            @unique
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  products  ProductCategory[]
+}
+
+model ProductCategory {
+  id         String   @id @default(cuid())
+  productId  String
+  categoryId String
+  createdAt  DateTime @default(now())
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, categoryId])
+  @@index([categoryId])
+}
+
+model ProductMaker {
+  id        String    @id @default(cuid())
+  productId String
+  userId    String?
+  email     String?
+  role      MakerRole @default(MAKER)
+  isCreator Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
+  @@index([userId])
+}
+
+model Studio {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([name])
+}
+
+model SponsorshipRequest {
+  id        String        @id @default(cuid())
+  title     String
+  gameUrl   String
+  developer String
+  email     String
+  slot      String
+  notes     String?
+  status    RequestStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Post {
+  id        String        @id @default(cuid())
+  content   String?
+  userId    String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  hashtags  Json?
+  images    Json?
+  pollId    String?       @unique
+  likes     Like[]
+  poll      Poll?
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments  PostComment[]
+
+  @@index([createdAt])
+  @@index([userId])
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+}
+
+model PostComment {
+  id        String   @id @default(cuid())
+  content   String
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([createdAt])
+}
+
+model Poll {
+  id        String       @id @default(cuid())
+  question  String
+  expiresAt DateTime
+  createdAt DateTime     @default(now())
+  postId    String?      @unique
+  post      Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  options   PollOption[]
+  votes     PollVote[]
+
+  @@index([expiresAt])
+  @@index([createdAt])
+}
+
+model PollOption {
+  id        String     @id @default(cuid())
+  text      String
+  pollId    String
+  createdAt DateTime   @default(now())
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes     PollVote[]
+
+  @@index([pollId])
+}
+
+model PollVote {
+  id        String     @id @default(cuid())
+  userId    String
+  createdAt DateTime   @default(now())
+  optionId  String
+  pollId    String?
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  poll      Poll?      @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, optionId])
+  @@index([optionId])
+  @@index([createdAt])
+}
+
+model NewsletterSubscription {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isActive  Boolean  @default(true)
+
+  @@index([email])
+  @@index([createdAt])
+}
+
 enum UserRole {
   USER
   ADMIN
@@ -271,197 +461,10 @@ enum RequestStatus {
   REJECTED
 }
 
-// New tagging system
-model Tag {
-  id        String        @id @default(cuid())
-  slug      String        @unique
-  name      String
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  products  ProductTag[]
-}
-
-model ProductTag {
-  id        String   @id @default(cuid())
-  productId String
-  tagId     String
-  createdAt DateTime @default(now())
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@unique([productId, tagId])
-  @@index([tagId])
-}
-
-// Game categories
-model Category {
-  id        String            @id @default(cuid())
-  name      String            @unique
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-  products  ProductCategory[]
-}
-
-model ProductCategory {
-  id         String   @id @default(cuid())
-  productId  String
-  categoryId String
-  createdAt  DateTime @default(now())
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  @@unique([productId, categoryId])
-  @@index([categoryId])
-}
-
-// Makers attached to a product (e.g., Hunter, Maker)
-model ProductMaker {
-  id        String      @id @default(cuid())
-  productId String
-  userId    String?
-  email     String?     // for invited collaborators
-  role      MakerRole   @default(MAKER)
-  isCreator Boolean     @default(false)
-  createdAt DateTime    @default(now())
-  product   Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  user      User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([productId, userId])
-  @@index([userId])
-}
-
-model Studio {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([name])
-}
-
-model SponsorshipRequest {
-  id         String        @id @default(cuid())
-  title      String
-  gameUrl    String
-  developer  String
-  email      String
-  slot       String
-  notes      String?
-  status     RequestStatus @default(PENDING)
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-
-  @@index([status])
-  @@index([createdAt])
-}
-
-// Community Posts
-model Post {
-  id        String   @id @default(cuid())
-  content   String?
-  images    Json?    // array of image URLs (max 4)
-  hashtags  Json?    // array of hashtags
-  pollId    String?  @unique // reference to Poll model (one-to-one)
-  userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  likes     Like[]
-  comments  PostComment[]
-  poll      Poll?    @relation
-  
-  @@index([createdAt])
-  @@index([userId])
-}
-
-model Like {
-  id      String   @id @default(cuid())
-  postId  String
-  userId  String
-  createdAt DateTime @default(now())
-  
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  
-  @@unique([userId, postId])
-}
-
-model PostComment {
-  id        String   @id @default(cuid())
-  postId    String
-  userId    String
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  
-  @@index([postId])
-  @@index([createdAt])
-}
-
-model Poll {
-  id        String   @id @default(cuid())
-  question  String
-  expiresAt DateTime
-  options   PollOption[]
-  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId    String?  @unique
-  votes     PollVote[]
-  createdAt DateTime @default(now())
-  
-  @@index([expiresAt])
-  @@index([createdAt])
-}
-
-model PollOption {
-  id      String @id @default(cuid())
-  text    String
-  pollId  String
-  createdAt DateTime @default(now())
-  
-  poll    Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
-  votes   PollVote[]
-  
-  @@index([pollId])
-}
-
-model PollVote {
-  id        String @id @default(cuid())
-  userId    String
-  optionId  String
-  createdAt DateTime @default(now())
-  
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
-  poll      Poll?      @relation(fields: [pollId], references: [id], onDelete: Cascade)
-  pollId    String?
-  
-  @@unique([userId, optionId]) // prevent multiple votes per option
-  @@index([optionId])
-  @@index([createdAt])
-}
-
 enum MakerRole {
   MAKER
   DESIGNER
   DEVELOPER
   PUBLISHER
   HUNTER
-}
-
-model NewsletterSubscription {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isActive  Boolean  @default(true)
-
-  @@index([email])
-  @@index([createdAt])
 }

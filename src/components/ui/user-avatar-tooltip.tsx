@@ -12,6 +12,7 @@ interface UserAvatarTooltipProps {
   userId: string
   userName: string | null
   userImage: string | null
+  userUsername?: string | null
   className?: string
   size?: "sm" | "md" | "lg"
 }
@@ -20,6 +21,7 @@ export function UserAvatarTooltip({
   userId, 
   userName, 
   userImage, 
+  userUsername,
   className = "",
   size = "md"
 }: UserAvatarTooltipProps) {
@@ -35,8 +37,12 @@ export function UserAvatarTooltip({
   // Get user's badges
   const userBadges = badgesData?.users?.find((u: any) => u.userId === userId)?.badges || []
 
-  // Determine profile link - redirect to public profile for others, private for self
-  const profileLink = session?.user?.id === userId ? '/profile' : `/profile/${userId}/public`
+  // Determine profile link - use username-based routing if available
+  const profileLink = session?.user?.id === userId 
+    ? '/profile' 
+    : userUsername 
+      ? `/@${userUsername}` 
+      : `/${userId}`
 
   const sizeClasses = {
     sm: "h-8 w-8",

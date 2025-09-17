@@ -47,6 +47,7 @@ import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { LANGUAGES } from '@/lib/constants/languages'
 import { UserAvatarTooltip } from '@/components/ui/user-avatar-tooltip'
+import { ProductTags } from './product-tags'
 
 interface Product {
   id: string;
@@ -80,6 +81,7 @@ interface Product {
     tag: {
       id: string;
       name: string;
+      slug: string;
     };
   }>;
   user: {
@@ -598,6 +600,9 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
                   </div>
                 </div>
               )}
+
+              {/* Tags */}
+              <ProductTags tags={product.tags || []} />
 
 
 

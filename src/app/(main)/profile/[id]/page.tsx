@@ -297,7 +297,18 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                 ...(badgesData?.badges || []).map((badge: any) => ({
                   id: `badge-${badge.type}`,
                   className: 'col-span-1',
-                  children: <BadgeCard badge={badge} />
+                  children: (
+                    <BadgeCard
+                      title={badge.title}
+                      emoji={badge.emoji}
+                      description={badge.description}
+                      progress={badge.progress}
+                      xp={badge.xp}
+                      locked={badge.locked}
+                      claimable={badge.claimable}
+                      badgeCode={badge.code}
+                    />
+                  )
                 }))
               ]}
             />

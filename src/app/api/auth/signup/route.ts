@@ -6,6 +6,10 @@ import { notify } from '@/lib/notificationService'
 
 const signupSchema = z.object({
   name: z.string().min(1, 'Name is required'),
+  username: z.string()
+    .min(3, 'Username must be at least 3 characters')
+    .max(20, 'Username must be no more than 20 characters')
+    .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 })
@@ -16,34 +20,44 @@ export async function POST(request: NextRequest) {
     
     // Validate input
     const validatedData = signupSchema.parse(body)
-    const { name, email, password } = validatedData
+    const { name, username, email, password } = validatedData
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    })
+    // Check if user already exists by email or username
+    const [existingUserByEmail, existingUserByUsername] = await Promise.all([
+      prisma.user.findUnique({ where: { email } }),
+      prisma.user.findFirst({ where: { username } })
+    ])
 
-    if (existingUser) {
+    if (existingUserByEmail) {
       return NextResponse.json(
         { error: 'User with this email already exists' },
         { status: 400 }
       )
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12)
+    if (existingUserByUsername) {
+      return NextResponse.json(
+        { error: 'Username is already taken' },
+        { status: 409 }
+      )
+    }
+
+    // Hash password with salt of 10
+    const hashedPassword = await bcrypt.hash(password, 10)
 
     // Create user
     const user = await prisma.user.create({
       data: {
         name,
+        username,
         email,
-        password: hashedPassword,
+        passwordHash: hashedPassword,
         role: 'USER',
       },
       select: {
         id: true,
         name: true,
+        username: true,
         email: true,
         role: true,
         createdAt: true,

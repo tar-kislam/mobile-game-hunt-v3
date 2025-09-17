@@ -18,6 +18,7 @@ export const FEATURED_WEIGHTS = {
 export interface FeaturedGame {
   id: string;
   title: string;
+  slug: string;
   upvotes: number;
   comments: number;
   rating: number | null;

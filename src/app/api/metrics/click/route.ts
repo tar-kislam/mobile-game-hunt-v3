@@ -37,13 +37,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate userId if provided
+    let validUserId = null;
+    if (session?.user?.id) {
+      const userExists = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { id: true }
+      });
+      if (userExists) {
+        validUserId = session.user.id;
+      } else {
+        console.warn(`User ID ${session.user.id} not found in database`);
+      }
+    }
+
     // Create metric record
     const metric = await prisma.metric.create({
       data: {
         gameId,
         type,
         referrer: referrer || null,
-        userId: session?.user?.id || null,
+        userId: validUserId, // Use validated userId or null
         userAgent: request.headers.get('user-agent') || null,
         ipAddress: request.headers.get('x-forwarded-for') || 
                    request.headers.get('x-real-ip') || 

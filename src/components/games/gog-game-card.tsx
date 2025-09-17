@@ -12,6 +12,7 @@ import { formatDistanceToNow } from "date-fns"
 interface Game {
   id: string
   title: string
+  slug: string
   tagline?: string | null
   description: string
   thumbnail?: string | null
@@ -74,7 +75,7 @@ export function GogGameCard({ game, onVote }: GogGameCardProps) {
   const coverImage = game.thumbnail || game.image
 
   return (
-    <Link href={`/product/${game.id}`}>
+    <Link href={`/product/${game.slug}`}>
       <Card className="group h-full flex flex-col bg-transparent hover:bg-card/20 transition-all duration-300 border-0 hover:border-purple-500/30 rounded-lg overflow-hidden hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/20 products-font">
         {/* Game Cover Image - GOG Style */}
         <div className="relative aspect-[3/4] bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden rounded-lg">

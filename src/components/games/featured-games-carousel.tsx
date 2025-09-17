@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,7 @@ import { PlatformIcons } from "@/components/ui/platform-icons"
 interface FeaturedGame {
   id: string
   title: string
+  slug: string
   tagline?: string | null
   description: string
   url: string
@@ -39,7 +40,8 @@ interface FeaturedGamesCarouselProps {
 }
 
 export function FeaturedGamesCarousel({ games, onGameClick }: FeaturedGamesCarouselProps) {
-  // Get top-rated games for featured section (top 6 games for TapTap-style layout)
+  // Get top-rated games for featured section
+  // Enforce max 6 total items, with up to 5 on the right side
   const featuredGames = games
     .sort((a, b) => b._count.votes - a._count.votes)
     .slice(0, 6)
@@ -52,8 +54,9 @@ export function FeaturedGamesCarousel({ games, onGameClick }: FeaturedGamesCarou
     onGameClick?.(gameId)
   }
 
-  // Split games: first game as hero, rest as side cards
-  const sideGames = featuredGames.slice(0, 5) // Show 5 side games
+  // Left hero is the first; right column renders the next max 5
+  const heroGame = featuredGames[0]
+  const sideGames = useMemo(() => featuredGames.slice(1, 6), [featuredGames])
   
   return (
     <section className="w-full">
@@ -67,6 +70,7 @@ export function FeaturedGamesCarousel({ games, onGameClick }: FeaturedGamesCarou
       </div>
 
       <TapTapInteractiveLayout 
+        heroGame={heroGame}
         sideGames={sideGames}
         onGameClick={handleGameClick}
       />
@@ -76,42 +80,37 @@ export function FeaturedGamesCarousel({ games, onGameClick }: FeaturedGamesCarou
 
 // Interactive TapTap-style layout with hover effect
 interface TapTapInteractiveLayoutProps {
+  heroGame: FeaturedGame
   sideGames: FeaturedGame[]
   onGameClick: (gameId: string) => void
 }
 
-function TapTapInteractiveLayout({ sideGames, onGameClick }: TapTapInteractiveLayoutProps) {
-  const [selectedGame, setSelectedGame] = useState<FeaturedGame>(sideGames[0])
+function TapTapInteractiveLayout({ heroGame, sideGames, onGameClick }: TapTapInteractiveLayoutProps) {
+  const [selectedGame, setSelectedGame] = useState<FeaturedGame>(heroGame)
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 h-80">
-      {/* Hero Game - Left Side (Dynamic based on hover) */}
-      <div className="flex-[2] min-h-0">
+    <div className="grid gap-6 items-start md:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] xl:grid-cols-[minmax(0,1fr)_minmax(320px,360px)]">
+      {/* Hero Game - Left Column */}
+      <div className="min-h-0">
         <HeroGameCard 
           game={selectedGame} 
           onClick={() => onGameClick(selectedGame.id)} 
         />
       </div>
       
-      {/* Side Games - Right Side (Scrollable List) */}
-      <div className="flex-1 min-h-0">
-        <div 
-          className="h-[320px] overflow-y-auto featured-games-scroll"
-        >
-          <div className="space-y-3 p-1">
-            {sideGames.map((game, index) => (
-              <div key={game.id}>
-                <SideGameCard 
-                  game={game} 
-                  onClick={() => onGameClick(game.id)}
-                  onHover={() => setSelectedGame(game)}
-                  isSelected={selectedGame.id === game.id}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* Side Games - Right Column (No scrollbars, exactly 5 items) */}
+      <aside className="w-full flex flex-col gap-3">
+        {sideGames.map((game) => (
+          <SideGameCard
+            key={game.id}
+            game={game}
+            onClick={() => onGameClick(game.id)}
+            onHover={() => setSelectedGame(game)}
+            isSelected={selectedGame.id === game.id}
+            compact
+          />
+        ))}
+      </aside>
     </div>
   )
 }
@@ -130,7 +129,7 @@ function HeroGameCard({ game, onClick }: HeroGameCardProps) {
   if (game.url && !game.appStoreUrl && !game.playStoreUrl) platforms.push('web')
 
   return (
-    <Link href={`/product/${game.id}`} className="block group h-full">
+    <Link href={`/product/${game.slug}`} className="block group h-full">
       <Card className="overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 hover:shadow-2xl transition-all duration-300 border-0 shadow-lg rounded-2xl group-hover:scale-[1.02] h-full relative">
         {/* Background Image */}
         <div className="absolute inset-0">
@@ -214,84 +213,47 @@ interface SideGameCardProps {
   onClick?: () => void
   onHover?: () => void
   isSelected?: boolean
+  compact?: boolean
 }
 
-function SideGameCard({ game, onClick, onHover, isSelected }: SideGameCardProps) {
+function SideGameCard({ game, onClick, onHover, isSelected, compact = false }: SideGameCardProps) {
   const rating = (game._count.votes / 10).toFixed(1)
   const platforms = game.platforms || []
 
   return (
-    <Link 
-      href={`/product/${game.id}`} 
-      className="block group flex-1 min-h-0"
+    <Link
+      href={`/product/${game.slug}`}
       onMouseEnter={onHover}
+      className="w-full h-[84px] lg:h-[92px] rounded-2xl bg-[hsla(0,0%,12%,0.7)] hover:bg-[hsla(0,0%,12%,0.9)] transition shadow-[0_0_0_1px_hsla(0,0%,100%,0.06)_inset] flex items-center gap-3 px-3"
     >
-      <Card className={cn(
-        "overflow-hidden transition-all duration-300 border border-white/10 rounded-xl group-hover:scale-[1.02] h-full hover:shadow-black/20",
-        isSelected 
-          ? "bg-card/80 border-blue-400/30 shadow-lg shadow-blue-500/20" 
-          : "bg-card hover:shadow-lg"
-      )}>
-        <div className="flex gap-3 p-3 h-full">
-          {/* Game Image */}
-          <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100 flex-shrink-0">
-            {game.thumbnail || game.image ? (
-              <Image
-                src={game.thumbnail || (game.image as string)}
-                alt={game.title}
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-110"
-                sizes="48px"
-                unoptimized={true}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-lg">
-                🎮
-              </div>
-            )}
-          </div>
+      {/* Thumbnail */}
+      <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-muted">
+        {game.thumbnail || game.image ? (
+          <Image
+            src={game.thumbnail || (game.image as string)}
+            alt={game.title}
+            fill
+            className="object-cover"
+            sizes="48px"
+            unoptimized={true}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-lg">🎮</div>
+        )}
+      </div>
 
-          {/* Game Info */}
-          <div className="flex-1 min-w-0 flex flex-col justify-center">
-            <h4 className={cn(
-              "font-semibold text-sm line-clamp-1 transition-colors",
-              isSelected 
-                ? "text-blue-700" 
-                : "text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400"
-            )}>
-              {game.title}
-            </h4>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="flex items-center gap-1">
-                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{rating}</span>
-              </div>
-              <span className="text-xs text-gray-500 dark:text-gray-400">•</span>
-              <div className="flex items-center gap-1">
-                {platforms.slice(0, 2).map((platform, index) => {
-                  if (platform === 'ios') {
-                    return <div key={`${platform}-${index}`} className="w-3 h-3 bg-black rounded-sm flex items-center justify-center">
-                      <Smartphone className="w-2 h-2 text-white" />
-                    </div>
-                  } else if (platform === 'android') {
-                    return <div key={`${platform}-${index}`} className="w-3 h-3 bg-green-600 rounded-sm flex items-center justify-center">
-                      <Smartphone className="w-2 h-2 text-white" />
-                    </div>
-                  } else if (platform === 'web') {
-                    return <div key={`${platform}-${index}`} className="w-3 h-3 bg-blue-600 rounded-sm flex items-center justify-center">
-                      <Monitor className="w-2 h-2 text-white" />
-                    </div>
-                  }
-                  return null
-                })}
-                {platforms.length > 2 && (
-                  <span className="text-xs text-gray-500 dark:text-gray-400">+{platforms.length - 2}</span>
-                )}
-              </div>
-            </div>
+      {/* Text */}
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm lg:text-[15px] font-medium text-white/90">{game.title}</div>
+        <div className="mt-1 flex items-center gap-2 text-xs text-white/60">
+          <div className="flex items-center gap-1">
+            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+            <span>{rating}</span>
           </div>
+          <span>•</span>
+          <span>{game._count.votes} votes</span>
         </div>
-      </Card>
+      </div>
     </Link>
   )
 }

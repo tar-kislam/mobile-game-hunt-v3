@@ -32,8 +32,9 @@ async function main() {
     update: {},
     create: {
       name: 'John Doe',
+      username: 'johndoe',
       email: 'john@example.com',
-      password: hashedPassword,
+      passwordHash: hashedPassword,
       role: 'USER',
     },
   })
@@ -43,8 +44,9 @@ async function main() {
     update: {},
     create: {
       name: 'Jane Smith',
+      username: 'janesmith',
       email: 'jane@example.com',
-      password: hashedPassword,
+      passwordHash: hashedPassword,
       role: 'USER',
     },
   })
@@ -54,8 +56,9 @@ async function main() {
     update: {},
     create: {
       name: 'Admin User',
+      username: 'admin',
       email: 'admin@example.com',
-      password: hashedPassword,
+      passwordHash: hashedPassword,
       role: 'ADMIN',
     },
   })
@@ -64,6 +67,7 @@ async function main() {
   const product1 = await prisma.product.create({
     data: {
       title: 'Clash of Clans',
+      slug: 'clash-of-clans',
       description: 'A popular strategy mobile game where you build and defend your village.',
       url: 'https://clashofclans.com',
       image: 'https://images.unsplash.com/photo-1556438064-2d7646166914?w=400',
@@ -84,6 +88,7 @@ async function main() {
   const product2 = await prisma.product.create({
     data: {
       title: 'Pokemon GO',
+      slug: 'pokemon-go',
       description: 'Augmented reality mobile game that lets you catch Pokemon in the real world.',
       url: 'https://pokemongo.com',
       image: 'https://images.unsplash.com/photo-1606503153255-598b8b91448?w=400',
@@ -104,6 +109,7 @@ async function main() {
   const product3 = await prisma.product.create({
     data: {
       title: 'Todoist',
+      slug: 'todoist',
       description: 'A powerful task management app to organize your life and work.',
       url: 'https://todoist.com',
       image: 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400',

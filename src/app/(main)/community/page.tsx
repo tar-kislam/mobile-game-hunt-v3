@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { CommunityFeed } from '@/components/community/community-feed'
 import { CommunityFeedContainer } from '@/components/community/CommunityFeedContainer'
-import { TrendingTopics } from '@/components/community/trending-topics'
+import { TrendingTopicsWrapper } from '@/components/community/trending-topics-wrapper'
 import { CommunitySidebar } from '@/components/community/community-sidebar'
 import { CreatePostBox } from '@/components/community/create-post-box'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -116,7 +116,7 @@ export default async function CommunityPage() {
         </main>
         <aside className="lg:col-span-1">
           <Suspense fallback={<Skeleton className="h-64 w-full rounded-xl" />}>
-            <TrendingTopics topics={trendingTopics} />
+            <TrendingTopicsWrapper topics={trendingTopics} />
           </Suspense>
         </aside>
       </div>

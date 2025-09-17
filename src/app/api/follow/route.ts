@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if already following
-    const existingFollow = await prisma.follow.findFirst({
+    const existingFollow = await prisma.gameFollow.findFirst({
       where: {
         userId: session.user.id,
         gameId
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     if (existingFollow) {
       // Unfollow
-      await prisma.follow.delete({
+      await prisma.gameFollow.delete({
         where: { id: existingFollow.id }
       });
 
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
       });
     } else {
       // Follow
-      await prisma.follow.create({
+      await prisma.gameFollow.create({
         data: {
           userId: session.user.id,
           gameId
@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user is following this game
-    const follow = await prisma.follow.findFirst({
+    const follow = await prisma.gameFollow.findFirst({
       where: {
         userId: session.user.id,
         gameId

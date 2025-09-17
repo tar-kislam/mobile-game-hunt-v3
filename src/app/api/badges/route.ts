@@ -59,37 +59,58 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user stats for progress calculation
-    const userStats = await prisma.user.findUnique({
+    // Check if user exists - try by ID first, then by email if needed
+    let user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
+        id: true,
         _count: {
           select: {
             products: true,
             votes: true,
             comments: true,
-            follows: true
+            gameFollows: true
           }
         }
       }
     })
 
-    if (!userStats) {
+    // If user not found by ID, try by email (for OAuth users)
+    if (!user && session.user.email) {
+      user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: {
+          id: true,
+          _count: {
+            select: {
+              products: true,
+              votes: true,
+              comments: true,
+              gameFollows: true
+            }
+          }
+        }
+      })
+    }
+
+    if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
+
+    const userStats = user
 
     // Get likes received on user's products
     const likesReceived = await prisma.vote.count({
       where: {
         product: {
-          userId: session.user.id
+          userId: user.id
         }
       }
     })
 
     // Get user's earned badges from Redis
     const { getUserBadges } = await import('@/lib/badgeService')
-    const earnedBadges = await getUserBadges(session.user.id)
+    const earnedBadges = await getUserBadges(user.id)
 
     // Calculate progress for each badge
     const badges = BADGE_CONFIG.map(badgeConfig => {
@@ -109,7 +130,7 @@ export async function GET() {
           current = likesReceived
           break
         case 'follows':
-          current = userStats._count.follows
+          current = userStats._count.gameFollows
           break
       }
 

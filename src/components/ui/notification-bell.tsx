@@ -14,6 +14,7 @@ import { toast } from "sonner"
 import useSWR from 'swr'
 import { formatDistanceToNow } from "date-fns"
 import { getNotificationIcon } from "@/lib/notificationService"
+import Link from "next/link"
 
 interface Notification {
   id: string
@@ -104,16 +105,7 @@ export function NotificationBell() {
                   </Badge>
                 )}
               </CardTitle>
-              {notificationData?.unreadCount > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleMarkAllAsRead}
-                  className="text-xs text-muted-foreground hover:text-white"
-                >
-                  Mark all as read
-                </Button>
-              )}
+              {/* Mark all moved to /notifications page header */}
             </div>
           </CardHeader>
           
@@ -166,9 +158,9 @@ export function NotificationBell() {
               <>
                 <Separator className="bg-gray-700" />
                 <div className="p-3">
-                  <div className="block w-full text-center text-sm text-purple-400 hover:text-purple-300 transition-colors duration-200 cursor-pointer">
+                  <Link href="/notifications" className="block w-full text-center text-sm text-purple-400 hover:text-purple-300 transition-colors duration-200">
                     View all notifications
-                  </div>
+                  </Link>
                 </div>
               </>
             )}

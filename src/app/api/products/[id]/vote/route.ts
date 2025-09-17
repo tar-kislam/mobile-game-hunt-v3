@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { rateLimit } from '@/lib/rate-limit'
 import { notify } from '@/lib/notificationService'
+import { addXPWithBonus } from '@/lib/xpService'
+import { checkAndAwardBadges } from '@/lib/badgeService'
 import { z } from 'zod'
 
 export async function POST(
@@ -35,12 +37,24 @@ export async function POST(
     }
 
     const productId = id
-    const userId = session.user.id
+    let userId = session.user.id
 
-    // Check if user exists
-    const user = await prisma.user.findUnique({
+    // Check if user exists - try by ID first, then by email if needed
+    let user = await prisma.user.findUnique({
       where: { id: userId },
     })
+
+    // If user not found by ID, try by email (for OAuth users)
+    if (!user && session.user.email) {
+      user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+      })
+      
+      if (user) {
+        // Update the userId to the correct database ID
+        userId = user.id
+      }
+    }
 
     if (!user) {
       return NextResponse.json(

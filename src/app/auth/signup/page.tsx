@@ -4,18 +4,21 @@ import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { ArrowLeftIcon, GithubIcon, MailIcon } from "lucide-react"
+import DarkVeil from "@/components/DarkVeil"
 
 export default function SignUpPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
+    username: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -39,6 +42,18 @@ export default function SignUpPage() {
       return
     }
 
+    if (formData.username.length < 3) {
+      setError("Username must be at least 3 characters")
+      setIsLoading(false)
+      return
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
+      setError("Username can only contain letters, numbers, and underscores")
+      setIsLoading(false)
+      return
+    }
+
     try {
       // Create user via API
       const response = await fetch('/api/auth/signup', {
@@ -48,6 +63,7 @@ export default function SignUpPage() {
         },
         body: JSON.stringify({
           name: formData.name,
+          username: formData.username,
           email: formData.email,
           password: formData.password,
         }),
@@ -91,23 +107,33 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
-        {/* Back Button */}
+    <div className="min-h-screen w-full relative">
+      <DarkVeil className="min-h-screen w-full" />
+      {/* Back Button - top-left, outside the card */}
+      <div className="absolute top-4 left-4">
         <Button variant="outline" size="sm" asChild className="rounded-2xl">
           <Link href="/">
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Back to Home
           </Link>
         </Button>
+      </div>
+
+      <div className="absolute inset-0 flex items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-6">
 
         {/* Sign Up Card */}
         <Card className="rounded-2xl shadow-soft">
           <CardHeader className="p-4 text-center">
             <div className="flex justify-center mb-4">
-              <div className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">MG</span>
-              </div>
+              <Image
+                src="/logo/mgh.png"
+                alt="Mobile Game Hunt"
+                width={64}
+                height={64}
+                className="h-16 w-16 rounded-2xl object-contain"
+                priority
+              />
             </div>
             <CardTitle className="text-2xl">Create your account</CardTitle>
             <CardDescription>
@@ -131,26 +157,6 @@ export default function SignUpPage() {
                   <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
                 Continue with Google
-              </Button>
-
-              <Button 
-                variant="outline" 
-                className="w-full rounded-2xl" 
-                onClick={() => handleOAuthSignIn("github")}
-                disabled={isLoading}
-              >
-                <GithubIcon className="h-4 w-4 mr-2" />
-                Continue with GitHub
-              </Button>
-
-              <Button 
-                variant="outline" 
-                className="w-full rounded-2xl" 
-                onClick={() => handleOAuthSignIn("email")}
-                disabled={isLoading}
-              >
-                <MailIcon className="h-4 w-4 mr-2" />
-                Continue with Magic Link
               </Button>
             </div>
 
@@ -179,6 +185,25 @@ export default function SignUpPage() {
                   required
                   disabled={isLoading}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="Choose a username"
+                  value={formData.username}
+                  onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') }))}
+                  className="rounded-2xl border-border focus:ring-2 focus:ring-ring"
+                  required
+                  disabled={isLoading}
+                  minLength={3}
+                  maxLength={20}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Only letters, numbers, and underscores allowed
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -262,6 +287,7 @@ export default function SignUpPage() {
             </div>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   )

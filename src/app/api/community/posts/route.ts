@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { createPostSchema, postsQuerySchema } from '@/lib/validations/community'
 import { revalidatePath } from 'next/cache'
+import { notifyFollowersOfCommunityPost } from '@/lib/followNotifications'
 
 export async function POST(request: NextRequest) {
   try {
@@ -143,6 +144,20 @@ export async function POST(request: NextRequest) {
         }
       })
       console.log('[COMMUNITY][CREATE] Post created successfully:', post.id)
+
+      // Notify followers of new community post
+      try {
+        const userWithUsername = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { username: true }
+        })
+        
+        if (userWithUsername?.username) {
+          await notifyFollowersOfCommunityPost(session.user.id, userWithUsername.username, post.id)
+        }
+      } catch (followNotificationError) {
+        console.error('[FOLLOW_NOTIFICATIONS] Error notifying followers of community post:', followNotificationError)
+      }
     } catch (prismaError) {
       console.error('[COMMUNITY][CREATE] Prisma error:', prismaError)
       console.error('[COMMUNITY][CREATE] Error details:', {

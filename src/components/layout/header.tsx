@@ -170,7 +170,7 @@ export function Header() {
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link href="/profile">Profile</Link>
+                        <Link href={session?.user?.username ? `/@${session.user.username}` : '/profile'}>Profile</Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href="/profile/settings">Settings</Link>
@@ -283,7 +283,7 @@ export function Header() {
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link href="/profile">Profile</Link>
+                        <Link href={session?.user?.username ? `/@${session.user.username}` : '/profile'}>Profile</Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href="/profile/settings">Settings</Link>

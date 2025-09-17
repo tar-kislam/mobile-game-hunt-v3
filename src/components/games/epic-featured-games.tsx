@@ -13,6 +13,7 @@ import ShinyText from "@/components/ShinyText"
 interface FeaturedGame {
   id: string
   title: string
+  slug: string
   tagline?: string | null
   description: string
   url: string
@@ -205,7 +206,7 @@ function EpicHeroCard({ game, isMobile = false }: EpicHeroCardProps) {
   const mainImage = getMainDisplayImage(game)
 
   return (
-    <Link href={`/product/${game.id}`} className="block group h-full">
+    <Link href={`/product/${game.slug}`} className="block group h-full">
       <Card className={cn(
         "overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 hover:shadow-2xl hover:shadow-[0_0_30px_8px_rgba(168,85,247,0.4)] transition-all duration-500 border-0 shadow-lg rounded-xl group-hover:scale-[1.02] relative",
         isMobile ? "h-[400px]" : "h-[500px]"

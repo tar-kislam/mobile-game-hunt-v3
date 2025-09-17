@@ -21,6 +21,7 @@ export async function getFeaturedGamesFromDB(limit: number = 6) {
       select: {
         id: true,
         title: true,
+        slug: true,
         _count: {
           select: {
             votes: true,
@@ -43,6 +44,7 @@ export async function getFeaturedGamesFromDB(limit: number = 6) {
     const featuredGames: FeaturedGame[] = games.map(game => ({
       id: game.id,
       title: game.title,
+      slug: game.slug,
       upvotes: game._count.votes,
       comments: game._count.comments,
       rating: null, // TODO: Implement rating calculation from existing data

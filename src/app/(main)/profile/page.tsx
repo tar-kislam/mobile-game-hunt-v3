@@ -128,7 +128,21 @@ const userComments = [
 
 export default function ProfilePage() {
   const { data: session, status } = useSession()
-  const fetcher = (url: string) => fetch(url).then(r => r.json())
+  const fetcher = async (url: string) => {
+    try {
+      const res = await fetch(url, { redirect: 'manual' })
+      if (res.status === 401 || res.status === 307) {
+        return null // Return null for unauthenticated requests
+      }
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`)
+      }
+      return res.json()
+    } catch (error) {
+      console.warn('Profile fetcher error:', error)
+      return null
+    }
+  }
   const { data: statsData } = useSWR(session?.user?.id ? '/api/user/stats' : null, fetcher, {
     refreshInterval: 5000,
     revalidateOnFocus: true,
