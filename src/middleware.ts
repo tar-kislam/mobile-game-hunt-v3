@@ -91,7 +91,6 @@ export default withAuth(
           pathname.startsWith('/api/games') ||     // Allow games search API
           pathname.startsWith('/api/user') ||
           pathname.startsWith('/product') ||       // Added product detail pages
-          pathname.startsWith('/blog') ||         // Allow blog pages
           pathname.startsWith('/user/') ||        // Allow username-based profile pages
           pathname.match(/^\/[^\/]+\/public$/) || // Allow /[username]/public routes (legacy)
           pathname.match(/^\/[^\/]+$/) ||          // Allow single-segment usernames
