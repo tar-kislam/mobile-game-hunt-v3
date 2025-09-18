@@ -157,6 +157,17 @@ const nextConfig: NextConfig = {
         destination: '/:username',
         permanent: true,
       },
+      // Temporary redirects for blog routes (while blog is disabled)
+      {
+        source: '/blog',
+        destination: '/',
+        permanent: false,
+      },
+      {
+        source: '/blog/:slug*',
+        destination: '/',
+        permanent: false,
+      },
     ]
   },
 
