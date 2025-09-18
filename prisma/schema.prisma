@@ -76,7 +76,6 @@ model User {
   votes                Vote[]
   advertiseCampaigns   AdvertiseCampaign[]
   adRequests           AdRequest[]
-  blogPosts            BlogPost[]
 }
 
 model Product {
@@ -369,24 +368,6 @@ model Post {
   @@index([userId])
 }
 
-model BlogPost {
-  id          String      @id @default(cuid())
-  title       String
-  slug        String      @unique
-  excerpt     String?
-  content     Json        // Slate.js JSON content
-  authorId    String
-  status      BlogStatus  @default(DRAFT)
-  coverImage  String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  author      User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
-
-  @@index([slug])
-  @@index([status])
-  @@index([createdAt])
-  @@index([authorId])
-}
 
 model Like {
   id        String   @id @default(cuid())
@@ -483,11 +464,6 @@ enum RequestStatus {
   REJECTED
 }
 
-enum BlogStatus {
-  DRAFT
-  PUBLISHED
-  ARCHIVED
-}
 
 enum MakerRole {
   MAKER
