@@ -273,7 +273,7 @@ export default function CalendarPage() {
       const data = await response.json();
       setSelectedDayReleases(data.releases || []);
       
-      // Open accordion and scroll into view after a brief delay
+      // Open accordion and scroll into view after animation completes
       setTimeout(() => {
         setIsAccordionOpen(true);
         setTimeout(() => {
@@ -281,7 +281,7 @@ export default function CalendarPage() {
             behavior: 'smooth', 
             block: 'start' 
           });
-        }, 100);
+        }, 750); // Wait for animation to complete (0.7s + small buffer)
       }, 50);
       
     } catch (err) {
@@ -711,9 +711,9 @@ export default function CalendarPage() {
               }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ 
-                duration: 0.3, 
+                duration: 0.7, 
                 ease: 'easeInOut',
-                height: { duration: 0.3 }
+                height: { duration: 0.7 }
               }}
               className="overflow-hidden"
             >
@@ -793,7 +793,7 @@ export default function CalendarPage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3, delay: index * 0.1 }}
                           >
-                            <Card className="hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-200 bg-zinc-800/40 backdrop-blur-sm border border-white/10 hover:border-purple-500/50">
+                            <Card className="bg-zinc-800/40 backdrop-blur-sm border border-white/10">
                               <CardContent className="p-4 md:p-6">
                                 <div className="flex items-start space-x-3 md:space-x-4">
                                   {/* Product Image - Clickable on mobile */}
@@ -803,10 +803,10 @@ export default function CalendarPage() {
                                         <img
                                           src={product.thumbnail}
                                           alt={product.title}
-                                          className="w-16 h-16 md:w-20 md:h-20 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                                          className="w-16 h-16 md:w-20 md:h-20 rounded-lg object-cover cursor-pointer"
                                         />
                                       ) : (
-                                        <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
+                                        <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center cursor-pointer">
                                           <span className="text-gray-500 dark:text-gray-400 text-xs md:text-sm">No Image</span>
                                         </div>
                                       )}
@@ -817,7 +817,7 @@ export default function CalendarPage() {
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-start justify-between gap-2 mb-2">
                                       <Link href={`/product/${product.id}`} className="flex-1 min-w-0">
-                                        <h3 className="text-base md:text-lg font-semibold text-white truncate hover:text-purple-400 transition-colors">
+                                        <h3 className="text-base md:text-lg font-semibold text-white truncate">
                                           {product.title}
                                         </h3>
                                       </Link>
@@ -895,7 +895,7 @@ export default function CalendarPage() {
 
                                   {/* Desktop Action Button - Hidden on mobile */}
                                   <div className="hidden md:flex flex-shrink-0">
-                                    <Button asChild variant="outline" size="sm" className="border-purple-500/50 text-purple-300 hover:bg-purple-500/10">
+                                    <Button asChild variant="outline" size="sm" className="border-purple-500/50 text-purple-300">
                                       <Link href={`/product/${product.id}`}>
                                         <Eye className="w-4 h-4 mr-1" />
                                         View Details
