@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import ReleaseModal from '@/components/calendar/release-modal';
+import { useReleasesCache } from '@/hooks/useReleasesCache';
 import Link from 'next/link';
 
 interface CalendarProduct {
@@ -63,11 +65,21 @@ export default function CalendarPage() {
     categories: [] as Array<{ id: string; name: string }>,
     years: [] as number[]
   });
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const { preloadMonthReleases } = useReleasesCache();
 
   useEffect(() => {
     fetchFilterOptions();
     fetchProducts();
   }, []);
+
+  useEffect(() => {
+    // Preload releases for the current month
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    preloadMonthReleases(year, month);
+  }, [currentDate, preloadMonthReleases]);
 
   useEffect(() => {
     fetchProducts();
@@ -239,6 +251,24 @@ export default function CalendarPage() {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   };
 
+  const handleDateClick = (date: Date) => {
+    const dateString = date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    setSelectedDate(dateString);
+    setModalOpen(true);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      previousMonth();
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      nextMonth();
+    } else if (event.key === 'Escape') {
+      setModalOpen(false);
+    }
+  };
+
   const calendarDays = generateCalendarDays();
   const monthName = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
@@ -256,7 +286,11 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]">
+    <div 
+      className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]"
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+    >
       <div className="container mx-auto px-4 py-8">
 
         {/* Filters */}
@@ -539,6 +573,9 @@ export default function CalendarPage() {
                   </Button>
                 </div>
               </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                Click on any day to see game releases • Use ← → arrow keys to navigate months • Press ESC to close modal
+              </p>
             </CardHeader>
             <CardContent>
               {/* Calendar Grid */}
@@ -554,22 +591,31 @@ export default function CalendarPage() {
                 {calendarDays.map((day, index) => (
                   <div
                     key={index}
-                    className={`min-h-[120px] p-2 border border-gray-200 dark:border-gray-700 rounded-lg ${
+                    onClick={() => handleDateClick(day.date)}
+                    className={`min-h-[120px] p-2 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:border-purple-400 dark:hover:border-purple-500 transition-colors ${
                       day.isToday 
                         ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-300 dark:border-purple-600' 
                         : day.isCurrentMonth 
-                          ? 'bg-white dark:bg-gray-800' 
-                          : 'bg-gray-50 dark:bg-gray-900'
+                          ? 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700' 
+                          : 'bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800'
                     }`}
                   >
-                    <div className={`text-sm font-medium mb-1 ${
+                    <div className={`text-sm font-medium mb-1 flex items-center justify-between ${
                       day.isToday 
                         ? 'text-purple-600 dark:text-purple-400' 
                         : day.isCurrentMonth 
                           ? 'text-gray-900 dark:text-white' 
                           : 'text-gray-400 dark:text-gray-500'
                     }`}>
-                      {day.date.getDate()}
+                      <span>{day.date.getDate()}</span>
+                      {day.products.length > 0 && (
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                          <span className="text-xs text-purple-500 font-medium">
+                            {day.products.length}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     
                     {/* Products for this day */}
@@ -762,6 +808,13 @@ export default function CalendarPage() {
             </p>
           </div>
         )}
+
+        {/* Release Modal */}
+        <ReleaseModal 
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          selectedDate={selectedDate}
+        />
       </div>
     </div>
   );
