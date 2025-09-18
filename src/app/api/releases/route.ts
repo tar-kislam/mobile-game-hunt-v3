@@ -83,10 +83,12 @@ export async function GET(request: NextRequest) {
       url: release.url,
       slug: release.slug,
       categories: release.categories.map(cat => ({
-        id: cat.category.id,
-        name: cat.category.name
+        category: {
+          id: cat.category.id,
+          name: cat.category.name
+        }
       })),
-      developer: {
+      user: {
         name: release.user.name,
         username: release.user.username
       },
