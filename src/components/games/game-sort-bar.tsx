@@ -52,13 +52,13 @@ export function GameSortBar({
   const currentSort = SORT_OPTIONS.find(option => option.value === sortBy) || SORT_OPTIONS[0]
 
   return (
-    <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 products-font ${className}`}>
+    <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 products-font` + ` ${className}`}>
       {/* Results Count */}
       <div className="flex items-center space-x-2">
         <h2 className="text-lg font-semibold text-white">
           Mobile Games
         </h2>
-        <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300">
+        <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300 font-[Lexend]">
           {filteredGames === totalGames ? (
             `${totalGames} games`
           ) : (
@@ -72,7 +72,7 @@ export function GameSortBar({
         <span className="text-sm text-gray-400 hidden sm:block">Sort by:</span>
         
         {/* Desktop: Button Group */}
-        <div className="hidden sm:flex items-center space-x-1 bg-gray-800/50 rounded-lg p-1">
+        <div className="hidden sm:flex items-center space-x-1 bg-gray-800/50 rounded-lg p-1 font-[Lexend]">
           {SORT_OPTIONS.map((option) => {
             const Icon = option.icon
             const isSelected = option.value === sortBy
@@ -98,7 +98,7 @@ export function GameSortBar({
 
         {/* Mobile: Dropdown */}
         <Select value={sortBy} onValueChange={onSortChange}>
-          <SelectTrigger className="w-[180px] bg-gray-800/50 border-gray-600 text-white sm:hidden">
+          <SelectTrigger className="w-[180px] bg-gray-800/50 border-gray-600 text-white sm:hidden font-[Lexend]">
             <SelectValue>
               <div className="flex items-center">
                 <ArrowUpDown className="w-4 h-4 mr-2" />
@@ -106,7 +106,7 @@ export function GameSortBar({
               </div>
             </SelectValue>
           </SelectTrigger>
-          <SelectContent className="bg-gray-800 border-gray-600">
+          <SelectContent className="bg-gray-800 border-gray-600 font-[Lexend]">
             {SORT_OPTIONS.map((option) => {
               const Icon = option.icon
               return (

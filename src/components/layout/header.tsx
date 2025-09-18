@@ -71,6 +71,7 @@ export function Header() {
     { label: "Home", href: "/" },
     { label: "All Games", href: "/products" },
     { label: "Community", href: "/community" },
+    { label: "Blog", href: "/blog" },
     { label: "Advertise", href: "/advertise" },
     { label: "Calendar", href: "/calendar" }
   ]

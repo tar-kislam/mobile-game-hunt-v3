@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Star, Play, Smartphone, Monitor } from "lucide-react"
 import Image from "next/image"
@@ -64,9 +63,6 @@ export function FeaturedGamesCarousel({ games, onGameClick }: FeaturedGamesCarou
         <h2 className="text-2xl font-bold flex items-center gap-2">
           🎮 Featured Games
         </h2>
-        <Badge variant="secondary" className="text-sm px-3 py-1 rounded-full bg-orange-100 text-orange-800">
-          Editor's Choice
-        </Badge>
       </div>
 
       <TapTapInteractiveLayout 

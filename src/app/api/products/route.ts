@@ -177,22 +177,27 @@ export async function GET(request: NextRequest) {
     // Get time-window aggregated counts for all products
     const whereWindow = windowStart ? { createdAt: { gte: windowStart } } : {}
     
+    // Guard against missing models
+    if (!(prisma as any).vote || !(prisma as any).gameFollow || !(prisma as any).metric) {
+      return NextResponse.json({ products: [], totalCount: 0, page, limit, totalPages: 0 })
+    }
+    
     // Aggregate votes in time window
-    const votesInWindow = await prisma.vote.groupBy({
+    const votesInWindow = await (prisma as any).vote.groupBy({
       by: ['productId'],
       where: whereWindow,
       _count: { id: true }
     })
     
     // Aggregate follows in time window
-    const followsInWindow = await prisma.gameFollow.groupBy({
+    const followsInWindow = await (prisma as any).gameFollow.groupBy({
       by: ['gameId'],
       where: whereWindow,
       _count: { id: true }
     })
     
     // Aggregate clicks/views in time window (using Metric table)
-    const clicksInWindow = await prisma.metric.groupBy({
+    const clicksInWindow = await (prisma as any).metric.groupBy({
       by: ['gameId'],
       where: {
         timestamp: windowStart ? { gte: windowStart } : undefined,

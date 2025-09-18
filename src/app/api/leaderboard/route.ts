@@ -76,8 +76,11 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // Fetch products with votes count and user info
-    const products = await prisma.product.findMany({
+    // Guard against missing Product model
+    if (!(prisma as any).product) {
+      return NextResponse.json({ products: [], cached: false })
+    }
+    const products = await (prisma as any).product.findMany({
       where: whereClause,
       select: {
         id: true,

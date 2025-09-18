@@ -74,6 +74,9 @@ model User {
   sessions             Session[]
   studios              Studio[]
   votes                Vote[]
+  advertiseCampaigns   AdvertiseCampaign[]
+  adRequests           AdRequest[]
+  blogPosts            BlogPost[]
 }
 
 model Product {
@@ -366,6 +369,25 @@ model Post {
   @@index([userId])
 }
 
+model BlogPost {
+  id          String      @id @default(cuid())
+  title       String
+  slug        String      @unique
+  excerpt     String?
+  content     Json        // Slate.js JSON content
+  authorId    String
+  status      BlogStatus  @default(DRAFT)
+  coverImage  String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  author      User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([slug])
+  @@index([status])
+  @@index([createdAt])
+  @@index([authorId])
+}
+
 model Like {
   id        String   @id @default(cuid())
   postId    String
@@ -461,10 +483,71 @@ enum RequestStatus {
   REJECTED
 }
 
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 enum MakerRole {
   MAKER
   DESIGNER
   DEVELOPER
   PUBLISHER
   HUNTER
+}
+
+model AdvertiseCampaign {
+  id                  String   @id @default(cuid())
+  userId              String?
+  goal                String
+  placements          String[]
+  durationType        String
+  totalPrice          Int       @default(0)
+  priceBreakdown      Json?
+  gameId              String?
+  campaignTagline     String?
+  creativeUrl         String?
+  budgetDaily         Int
+  budgetTotal         Int
+  duration            String
+  countries           String[]
+  platforms           String[]
+  ageGroups           String[]
+  promotionFocus      String[]
+  bannerPlacement     String
+  featuredSlot        String
+  newsletterHighlight String
+  status              CampaignStatus @default(PENDING)
+  strategySuggestion  String?
+  contactEmail        String?
+  notes               String?
+  createdAt           DateTime @default(now())
+
+  user                User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+enum CampaignStatus {
+  PENDING
+  APPROVED
+  ACTIVE
+  REJECTED
+}
+
+model AdRequest {
+  id           String   @id @default(cuid())
+  userId       String
+  gameId       String
+  gameName     String
+  promotionType String
+  package      String   // daily/weekly/monthly
+  duration     String
+  price        Int
+  status       RequestStatus @default(PENDING)
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }

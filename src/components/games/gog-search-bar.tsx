@@ -44,7 +44,7 @@ export function GogSearchBar({
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Search Input */}
         <div className="flex-1">
-          <div className="relative">
+          <div className="relative font-[Lexend]">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
               type="text"
@@ -60,10 +60,10 @@ export function GogSearchBar({
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Category Filter */}
           <Select value={selectedCategory} onValueChange={onCategoryChange}>
-            <SelectTrigger className="w-full sm:w-[180px] bg-gray-800/50 border-gray-600 text-white">
+            <SelectTrigger className="w-full sm:w-[180px] bg-gray-800/50 border-gray-600 text-white font-[Lexend]">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-600">
+            <SelectContent className="bg-gray-800 border-gray-600 font-[Lexend]">
               <SelectItem value="all" className="text-white hover:bg-gray-700 focus:bg-gray-700">
                 All Categories
               </SelectItem>
@@ -86,10 +86,10 @@ export function GogSearchBar({
 
           {/* Platform Filter */}
           <Select value={selectedPlatform} onValueChange={onPlatformChange}>
-            <SelectTrigger className="w-full sm:w-[180px] bg-gray-800/50 border-gray-600 text-white">
+            <SelectTrigger className="w-full sm:w-[180px] bg-gray-800/50 border-gray-600 text-white font-[Lexend]">
               <SelectValue placeholder="Platform" />
             </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-600">
+            <SelectContent className="bg-gray-800 border-gray-600 font-[Lexend]">
               <SelectItem value="all" className="text-white hover:bg-gray-700 focus:bg-gray-700">
                 All Platforms
               </SelectItem>
@@ -112,10 +112,10 @@ export function GogSearchBar({
 
           {/* Release Status Filter */}
           <Select value={selectedReleaseStatus} onValueChange={onReleaseStatusChange}>
-            <SelectTrigger className="w-full sm:w-[180px] bg-gray-800/50 border-gray-600 text-white">
+            <SelectTrigger className="w-full sm:w-[180px] bg-gray-800/50 border-gray-600 text-white font-[Lexend]">
               <SelectValue placeholder="Release Status" />
             </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-600">
+            <SelectContent className="bg-gray-800 border-gray-600 font-[Lexend]">
               <SelectItem value="all" className="text-white hover:bg-gray-700 focus:bg-gray-700">
                 All Status
               </SelectItem>

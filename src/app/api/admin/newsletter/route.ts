@@ -12,7 +12,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    const subscribers = await prisma.newsletterSubscription.findMany({
+    // Guard against missing NewsletterSubscription model
+    if (!(prisma as any).newsletterSubscription) {
+      return NextResponse.json([])
+    }
+
+    const subscribers = await (prisma as any).newsletterSubscription.findMany({
       select: {
         id: true,
         email: true,

@@ -7,7 +7,6 @@ import { prisma } from '@/lib/prisma'
 import { EnhancedProductDetail } from '@/components/product/enhanced-product-detail'
 import { ChevronLeftIcon } from 'lucide-react'
 import Link from 'next/link'
-import PixelBlast from '@/components/effects/pixel-blast'
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>
@@ -128,33 +127,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 relative">
-      {/* PixelBlast Background */}
-      <div className="absolute inset-0 z-0">
-        <PixelBlast
-          variant="square"
-          pixelSize={4}
-          color="#8B5CF6"
-          patternScale={1.5}
-          patternDensity={0.8}
-          enableRipples={true}
-          rippleIntensityScale={2.0}
-          rippleThickness={0.2}
-          rippleSpeed={0.6}
-          speed={0.3}
-          transparent={true}
-          edgeFade={0.3}
-          liquid={true}
-          liquidStrength={0.05}
-          liquidRadius={1.5}
-          className="w-full h-full"
-        />
-      </div>
-      
-      {/* Overlay for better content readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background/80 z-10" />
-      
-      <div className="container mx-auto px-4 py-6 relative z-20">
+    <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]">
+      <div className="container mx-auto px-4 py-6">
         {/* Back Navigation */}
         <div className="mb-6">
           <Link 
@@ -169,6 +143,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <EnhancedProductDetail 
           product={product}
           hasVoted={hasVoted}
+          session={session}
         />
       </div>
     </div>

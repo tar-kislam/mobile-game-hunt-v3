@@ -122,7 +122,7 @@ export function CTASection() {
             >
               <Link href="/submit" className="w-full max-w-xs">
                 <Button 
-                  className="w-full max-w-xs bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-300 hover:shadow-[0_0_30px_rgba(168,85,247,0.8)] hover:scale-105 text-center"
+                  className="w-full max-w-xs bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-full font-semibold transition-all duration-300 hover:shadow-[0_0_30px_rgba(168,85,247,0.8)] hover:scale-105 text-center"
                 >
                   Submit Game
                 </Button>
@@ -131,7 +131,7 @@ export function CTASection() {
               <Link href="/community" className="w-full max-w-xs">
                 <Button 
                   variant="outline"
-                  className="w-full max-w-xs bg-transparent border-2 border-purple-500/70 text-purple-300 hover:text-white hover:bg-purple-500/20 px-4 py-3 rounded-lg font-semibold transition-all duration-300 hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] hover:border-purple-400 hover:scale-105 text-center"
+                  className="w-full max-w-xs bg-transparent border-2 border-purple-500/70 text-purple-300 hover:text-white hover:bg-purple-500/20 px-4 py-3 rounded-full font-semibold transition-all duration-300 hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] hover:border-purple-400 hover:scale-105 text-center"
                 >
                   Join Community
                 </Button>
@@ -267,24 +267,41 @@ export function CTASection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.5 }}
-              className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-center mb-8"
+              className="flex items-center justify-center mb-8"
             >
-              <Link href="/submit">
-                <Button 
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-2xl font-semibold transition-all duration-300 hover:shadow-[0_0_30px_rgba(168,85,247,0.8)] hover:scale-105"
-                >
-                  Submit Game
-                </Button>
-              </Link>
-              
-              <Link href="/community">
-                <Button 
-                  variant="outline"
-                  className="bg-transparent border-2 border-purple-500/70 text-purple-300 hover:text-white hover:bg-purple-500/20 px-8 py-3 rounded-2xl font-semibold transition-all duration-300 hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] hover:border-purple-400 hover:scale-105"
-                >
-                  Join Community
-                </Button>
-              </Link>
+              {/* Wrapper defines width based on first row buttons; newsletter fills full width below */}
+              <div className="inline-block">
+                <div className="inline-flex gap-3 sm:gap-4 items-center justify-center w-full">
+                  <Link href="/submit">
+                    <Button 
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 hover:shadow-[0_0_30px_rgba(168,85,247,0.8)] hover:scale-105"
+                    >
+                      Submit Game
+                    </Button>
+                  </Link>
+                  
+                  <Link href="/community">
+                    <Button 
+                      variant="outline"
+                      className="bg-transparent border-2 border-purple-500/70 text-purple-300 hover:text-white hover:bg-purple-500/20 px-8 py-3 rounded-full font-semibold transition-all duration-300 hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] hover:border-purple-400 hover:scale-105"
+                    >
+                      Join Community
+                    </Button>
+                  </Link>
+                </div>
+
+                {/* Newsletter CTA - full width under the two buttons */}
+                <div className="mt-3 sm:mt-4">
+                  <Button
+                    onClick={() => (window as any)?.dispatchEvent?.(new CustomEvent('newsletter:open'))}
+                    className="w-full p-[2px] rounded-full bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 [background-size:200%_200%] [background-position:0%_50%] hover:[background-position:100%_50%] transition-all duration-300 shadow-md hover:shadow-purple-500/50 hover:scale-105"
+                  >
+                    <span className="block w-full text-center px-8 sm:px-16 py-3 rounded-full bg-black/90 text-white font-semibold">
+                      Subscribe to Newsletter
+                    </span>
+                  </Button>
+                </div>
+              </div>
             </motion.div>
 
             {/* Transparent Stats Row - below buttons */}

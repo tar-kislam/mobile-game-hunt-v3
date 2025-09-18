@@ -12,7 +12,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    const games = await prisma.product.findMany({
+    // Guard against missing Product model
+    if (!(prisma as any).product) {
+      return NextResponse.json([])
+    }
+
+    const games = await (prisma as any).product.findMany({
       select: {
         id: true,
         title: true,

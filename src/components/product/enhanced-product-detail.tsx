@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,7 +31,8 @@ import {
   Smartphone,
   Instagram,
   Facebook,
-  Linkedin
+  Linkedin,
+  Building
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -134,10 +134,10 @@ interface Product {
 interface EnhancedProductDetailProps {
   product: Product;
   hasVoted: boolean;
+  session: any;
 }
 
-export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDetailProps) {
-  const { data: session } = useSession();
+export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedProductDetailProps) {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
   const [followCount, setFollowCount] = useState(product.follows);
@@ -1044,6 +1044,15 @@ export function EnhancedProductDetail({ product, hasVoted }: EnhancedProductDeta
                       day: 'numeric' 
                     })}
                   </span>
+                </div>
+              )}
+
+              {/* Studio */}
+              {product.studioName && (
+                <div className="flex items-center gap-2">
+                  <Building className="w-4 h-4 text-purple-400" />
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Studio:</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{product.studioName}</span>
                 </div>
               )}
 

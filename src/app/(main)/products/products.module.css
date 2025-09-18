@@ -1,0 +1,31 @@
+.productsPage {
+  font-family: 'Sansation', sans-serif;
+}
+
+.productsPage h1,
+.productsPage h2,
+.productsPage h3 {
+  font-family: 'Orbitron', sans-serif;
+}
+
+.subheading {
+  font-family: 'Quantico', sans-serif;
+}
+
+/* Decorative / emphasis text */
+.productsPage :global(.badge),
+.productsPage :global(.tag),
+.productsPage :global([data-slot="badge"]) {
+  font-family: 'Underdog', cursive;
+}
+
+/* Optional alternatives for special CTA or stats (apply className={styles.altCta} where needed) */
+.altCta {
+  font-family: 'Funnel Display', sans-serif;
+}
+
+.altSerif {
+  font-family: 'Epunda Slab', serif;
+}
+
+

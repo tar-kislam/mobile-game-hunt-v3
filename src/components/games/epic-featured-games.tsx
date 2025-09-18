@@ -85,9 +85,6 @@ export function EpicFeaturedGames({ games, onGameClick }: EpicFeaturedGamesProps
         <h2 className="text-2xl font-bold flex items-center gap-2" style={{ fontFamily: '"Epunda Slab", serif', fontWeight: 600 }}>
           <ShinyText>Featured Games</ShinyText>
         </h2>
-        <Badge variant="secondary" className="hidden md:block text-sm px-3 py-1 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-          Editor&apos;s Choice
-        </Badge>
       </div>
 
       <EpicFeaturedLayout 

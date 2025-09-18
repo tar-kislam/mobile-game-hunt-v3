@@ -2,6 +2,24 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@keyframes fade-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease forwards;
+}
+
+@keyframes fadeOutDown {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(40px); }
+}
+
+.animate-fadeOutDown {
+  animation: fadeOutDown 0.6s ease forwards;
+}
+
 /* Epunda Slab font family for products page */
 .products-font {
   font-family: 'Epunda Slab', 'Underdog', serif, sans-serif;

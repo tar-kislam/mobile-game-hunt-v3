@@ -1,70 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile } from 'fs/promises'
-import { join } from 'path'
-import { existsSync, mkdirSync } from 'fs'
+import { promises as fs } from 'fs'
+import path from 'path'
+
+export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
-    const file = formData.get('file') as File
-    
+    const file = formData.get('file') as File | null
     if (!file) {
-      return NextResponse.json(
-        { error: 'No file uploaded' },
-        { status: 400 }
-      )
+      return NextResponse.json({ ok: false, error: 'No file provided' }, { status: 400 })
     }
 
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json(
-        { error: 'Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.' },
-        { status: 400 }
-      )
-    }
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
 
-    // Validate file size (5MB max)
-    const maxSize = 5 * 1024 * 1024 // 5MB
-    if (file.size > maxSize) {
-      return NextResponse.json(
-        { error: 'File too large. Maximum size is 5MB.' },
-        { status: 400 }
-      )
-    }
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'blog')
+    await fs.mkdir(uploadsDir, { recursive: true })
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'public', 'uploads')
-    if (!existsSync(uploadsDir)) {
-      mkdirSync(uploadsDir, { recursive: true })
-    }
+    const ext = path.extname(file.name) || '.png'
+    const base = path.basename(file.name, ext).replace(/[^a-zA-Z0-9-_]/g, '') || 'image'
+    const filename = `${Date.now()}-${base}${ext}`
+    const filePath = path.join(uploadsDir, filename)
 
-    // Generate unique filename
-    const timestamp = Date.now()
-    const randomString = Math.random().toString(36).substring(2, 15)
-    const extension = file.name.split('.').pop()
-    const filename = `${timestamp}-${randomString}.${extension}`
-    const filepath = join(uploadsDir, filename)
+    await fs.writeFile(filePath, buffer)
 
-    // Convert file to buffer and save
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    await writeFile(filepath, buffer)
-
-    // Return the public URL
-    const publicUrl = `/uploads/${filename}`
-
-    return NextResponse.json({
-      success: true,
-      url: publicUrl,
-      filename: filename
-    })
-
+    const url = `/uploads/blog/${filename}`
+    return NextResponse.json({ ok: true, url }, { status: 201 })
   } catch (error) {
-    console.error('Upload error:', error)
-    return NextResponse.json(
-      { error: 'Failed to upload file' },
-      { status: 500 }
-    )
+    console.error('POST /api/upload error:', error)
+    return NextResponse.json({ ok: false, error: 'Upload failed' }, { status: 500 })
   }
 }

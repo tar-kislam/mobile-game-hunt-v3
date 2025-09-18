@@ -56,9 +56,17 @@ export async function createProductAction(data: ProductFullInput) {
       tagsCount: data.tags?.length || 0
     })
 
+    // Generate slug from title
+    const slug = data.title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .trim()
+
     const product = await prisma.product.create({
       data: {
         title: data.title,
+        slug: slug,
         tagline: data.tagline,
         description: data.description,
         url: data.iosUrl || data.androidUrl || '', // Use one of the URLs as the primary URL
@@ -184,9 +192,17 @@ export async function saveDraftAction(data: ProductFullInput) {
       })
     }
 
+    // Generate slug from title
+    const slug = data.title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .trim()
+
     const product = await prisma.product.create({
       data: {
         title: data.title,
+        slug: slug,
         tagline: data.tagline,
         description: data.description,
         url: data.iosUrl || data.androidUrl || '', // Use one of the URLs as the primary URL
@@ -288,9 +304,17 @@ export async function scheduleLaunchAction(data: ProductFullInput, launchDate: s
       })
     }
 
+    // Generate slug from title
+    const slug = data.title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .trim()
+
     const product = await prisma.product.create({
       data: {
         title: data.title,
+        slug: slug,
         tagline: data.tagline,
         description: data.description,
         url: data.iosUrl || data.androidUrl || '', // Use one of the URLs as the primary URL
@@ -392,9 +416,17 @@ export async function submitApprovalAction(data: ProductFullInput) {
       })
     }
 
+    // Generate slug from title
+    const slug = data.title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .trim()
+
     const product = await prisma.product.create({
       data: {
         title: data.title,
+        slug: slug,
         tagline: data.tagline,
         description: data.description,
         url: data.iosUrl || data.androidUrl || '', // Use one of the URLs as the primary URL
