@@ -59,7 +59,6 @@ model User {
   accounts             Account[]
   adRequests           AdRequest[]
   advertiseCampaigns   AdvertiseCampaign[]
-  BlogPost             BlogPost[]
   commentVotes         CommentVote[]
   following            Follow[]            @relation("follower")
   followers            Follow[]            @relation("following")
@@ -492,25 +491,6 @@ model AdRequest {
   @@index([userId, createdAt])
 }
 
-model BlogPost {
-  id         String     @id
-  title      String
-  slug       String     @unique
-  excerpt    String?
-  content    Json
-  authorId   String
-  status     BlogStatus @default(DRAFT)
-  coverImage String?
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime
-  User       User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
-
-  @@index([authorId])
-  @@index([createdAt])
-  @@index([slug])
-  @@index([status])
-}
-
 enum UserRole {
   USER
   ADMIN
@@ -543,10 +523,4 @@ enum CampaignStatus {
   APPROVED
   ACTIVE
   REJECTED
-}
-
-enum BlogStatus {
-  DRAFT
-  PUBLISHED
-  ARCHIVED
 }
