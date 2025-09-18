@@ -1,12 +1,22 @@
 -- DropBlogTables
--- This migration drops all blog-related tables and enums
+-- This migration drops all blog-related tables, indexes, and enums
 -- WARNING: This will permanently delete all blog data!
 
--- Drop the BlogPost table
+-- Step 1: Drop foreign key constraints (if any exist)
+-- Note: Prisma handles foreign keys automatically, but we'll be explicit
+
+-- Step 2: Drop indexes on BlogPost table
+DROP INDEX IF EXISTS "BlogPost_authorId_idx" CASCADE;
+DROP INDEX IF EXISTS "BlogPost_createdAt_idx" CASCADE;
+DROP INDEX IF EXISTS "BlogPost_slug_idx" CASCADE;
+DROP INDEX IF EXISTS "BlogPost_status_idx" CASCADE;
+
+-- Step 3: Drop the BlogPost table
 DROP TABLE IF EXISTS "BlogPost" CASCADE;
 
--- Drop the BlogStatus enum
+-- Step 4: Drop the BlogStatus enum
 DROP TYPE IF EXISTS "BlogStatus" CASCADE;
 
--- Note: The blogPosts relation was already removed from the User model
--- in the previous schema changes, so no foreign key constraints need to be dropped
+-- Verification queries (commented out - uncomment to verify)
+-- SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'BlogPost';
+-- SELECT typname FROM pg_type WHERE typname = 'BlogStatus';
