@@ -10,8 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import ReleaseModal from '@/components/calendar/release-modal';
-import { useReleasesCache } from '@/hooks/useReleasesCache';
 import Link from 'next/link';
 
 interface CalendarProduct {
@@ -65,21 +63,14 @@ export default function CalendarPage() {
     categories: [] as Array<{ id: string; name: string }>,
     years: [] as number[]
   });
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>('');
-  const { preloadMonthReleases } = useReleasesCache();
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [selectedDayReleases, setSelectedDayReleases] = useState<CalendarProduct[]>([]);
+  const [loadingReleases, setLoadingReleases] = useState(false);
 
   useEffect(() => {
     fetchFilterOptions();
     fetchProducts();
   }, []);
-
-  useEffect(() => {
-    // Preload releases for the current month
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    preloadMonthReleases(year, month);
-  }, [currentDate, preloadMonthReleases]);
 
   useEffect(() => {
     fetchProducts();
@@ -251,10 +242,26 @@ export default function CalendarPage() {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   };
 
-  const handleDateClick = (date: Date) => {
-    const dateString = date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-    setSelectedDate(dateString);
-    setModalOpen(true);
+  const handleDateClick = async (date: Date) => {
+    setSelectedDay(date);
+    setLoadingReleases(true);
+    
+    try {
+      const dateString = date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+      const response = await fetch(`/api/releases?date=${dateString}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch releases');
+      }
+      
+      const data = await response.json();
+      setSelectedDayReleases(data.releases || []);
+    } catch (err) {
+      console.error('Error fetching releases:', err);
+      setSelectedDayReleases([]);
+    } finally {
+      setLoadingReleases(false);
+    }
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -264,8 +271,6 @@ export default function CalendarPage() {
     } else if (event.key === 'ArrowRight') {
       event.preventDefault();
       nextMonth();
-    } else if (event.key === 'Escape') {
-      setModalOpen(false);
     }
   };
 
@@ -574,7 +579,7 @@ export default function CalendarPage() {
                 </div>
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                Click on any day to see game releases • Use ← → arrow keys to navigate months • Press ESC to close modal
+                Click on any day to see game releases • Use ← → arrow keys to navigate months
               </p>
             </CardHeader>
             <CardContent>
@@ -662,6 +667,168 @@ export default function CalendarPage() {
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Selected Day Releases */}
+        {selectedDay && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Game Releases - {selectedDay.toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingReleases ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="flex items-start space-x-4">
+                        <div className="w-16 h-16 bg-gray-300 dark:bg-gray-700 rounded-lg"></div>
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
+                          <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div>
+                          <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded w-full"></div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : selectedDayReleases.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="text-6xl mb-4">🎮</div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    No releases on this day
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Check back later or explore other dates for upcoming game releases.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {selectedDayReleases.map((product) => (
+                    <Card key={product.id} className="hover:shadow-lg transition-shadow duration-200">
+                      <CardContent className="p-4 md:p-6">
+                        <div className="flex items-start space-x-3 md:space-x-4">
+                          {/* Product Image - Clickable on mobile */}
+                          <div className="flex-shrink-0">
+                            <Link href={`/product/${product.id}`} className="block">
+                              {product.thumbnail ? (
+                                <img
+                                  src={product.thumbnail}
+                                  alt={product.title}
+                                  className="w-16 h-16 md:w-20 md:h-20 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                                />
+                              ) : (
+                                <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
+                                  <span className="text-gray-500 dark:text-gray-400 text-xs md:text-sm">No Image</span>
+                                </div>
+                              )}
+                            </Link>
+                          </div>
+
+                          {/* Product Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <Link href={`/product/${product.id}`} className="flex-1 min-w-0">
+                                <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white truncate hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                                  {product.title}
+                                </h3>
+                              </Link>
+                              <Badge className={`${getStatusColor(product.releaseAt)} text-xs`}>
+                                {getTimeUntilRelease(product.releaseAt)}
+                              </Badge>
+                            </div>
+                            
+                            {product.tagline && (
+                              <p className="text-gray-600 dark:text-gray-400 text-sm mb-2 line-clamp-2">
+                                {product.tagline}
+                              </p>
+                            )}
+                            
+                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 line-clamp-2 hidden md:block">
+                              {product.description.length > 150 ? `${product.description.substring(0, 150)}...` : product.description}
+                            </p>
+
+                            {/* Release Date */}
+                            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-3">
+                              <Calendar className="w-3 h-3 md:w-4 md:h-4" />
+                              <span className="font-medium text-xs md:text-sm">{formatDate(product.releaseAt)}</span>
+                            </div>
+
+                            {/* Platforms & Countries - Smaller on mobile */}
+                            <div className="flex flex-wrap gap-1 md:gap-2 mb-2 md:mb-3">
+                              {product.platforms?.slice(0, 3).map((platform) => (
+                                <Badge key={platform} variant="outline" className="text-xs px-2 py-0.5">
+                                  <Smartphone className="w-2 h-2 md:w-3 md:h-3 mr-1" />
+                                  <span className="hidden sm:inline">{platform.toUpperCase()}</span>
+                                  <span className="sm:hidden">{platform.toUpperCase().slice(0, 2)}</span>
+                                </Badge>
+                              ))}
+                              {product.platforms?.length > 3 && (
+                                <Badge variant="outline" className="text-xs px-2 py-0.5">
+                                  +{product.platforms.length - 3}
+                                </Badge>
+                              )}
+                              {product.countries?.slice(0, 2).map((country) => (
+                                <Badge key={country} variant="outline" className="text-xs px-2 py-0.5">
+                                  <Globe className="w-2 h-2 md:w-3 md:h-3 mr-1" />
+                                  {country}
+                                </Badge>
+                              ))}
+                              {product.countries?.length > 2 && (
+                                <Badge variant="outline" className="text-xs px-2 py-0.5">
+                                  +{product.countries.length - 2}
+                                </Badge>
+                              )}
+                            </div>
+
+                            {/* Categories - Smaller on mobile */}
+                            {product.categories && product.categories.length > 0 && (
+                              <div className="flex flex-wrap gap-1 md:gap-2 mb-2 md:mb-3">
+                                {product.categories.slice(0, 2).map((cat) => (
+                                  <Badge key={cat.category.id} variant="outline" className="text-xs px-2 py-0.5">
+                                    {cat.category.name.length > 10 ? `${cat.category.name.slice(0, 10)}...` : cat.category.name}
+                                  </Badge>
+                                ))}
+                                {product.categories.length > 2 && (
+                                  <Badge variant="outline" className="text-xs px-2 py-0.5">
+                                    +{product.categories.length - 2}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+
+                            {/* User Info */}
+                            <div className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
+                              by <span className="font-medium text-gray-700 dark:text-gray-300">
+                                {product.user.name || 'Anonymous'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Desktop Action Button - Hidden on mobile */}
+                          <div className="hidden md:flex flex-shrink-0">
+                            <Button asChild variant="outline" size="sm">
+                              <Link href={`/product/${product.id}`}>
+                                <Eye className="w-4 h-4 mr-1" />
+                                View Details
+                              </Link>
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
@@ -808,13 +975,6 @@ export default function CalendarPage() {
             </p>
           </div>
         )}
-
-        {/* Release Modal */}
-        <ReleaseModal 
-          isOpen={modalOpen}
-          onClose={() => setModalOpen(false)}
-          selectedDate={selectedDate}
-        />
       </div>
     </div>
   );
