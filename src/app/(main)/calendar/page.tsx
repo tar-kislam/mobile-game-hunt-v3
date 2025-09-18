@@ -933,7 +933,7 @@ export default function CalendarPage() {
               </Card>
             ) : (
               products.map((product) => (
-                <Card key={product.id} className="hover:shadow-lg transition-shadow duration-200">
+                <Card key={product.id} className="transition-shadow duration-200">
                   <CardContent className="p-4 md:p-6">
                     <div className="flex items-start space-x-3 md:space-x-4">
                       {/* Product Image - Clickable on mobile */}
@@ -943,10 +943,10 @@ export default function CalendarPage() {
                             <img
                               src={product.thumbnail}
                               alt={product.title}
-                              className="w-16 h-16 md:w-20 md:h-20 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                              className="w-16 h-16 md:w-20 md:h-20 rounded-lg object-cover cursor-pointer"
                             />
                           ) : (
-                            <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
+                            <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center cursor-pointer">
                               <span className="text-gray-500 dark:text-gray-400 text-xs md:text-sm">No Image</span>
                             </div>
                           )}
@@ -957,7 +957,7 @@ export default function CalendarPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <Link href={`/product/${product.id}`} className="flex-1 min-w-0">
-                            <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white truncate hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                            <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white truncate">
                               {product.title}
                             </h3>
                           </Link>
