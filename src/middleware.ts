@@ -86,7 +86,6 @@ export default withAuth(
           pathname.startsWith('/api/calendar') ||   // Allow calendar API
           pathname.startsWith('/api/sidebar') ||   // Allow sidebar API
           pathname.startsWith('/api/newsletter') || // Allow newsletter API
-          pathname.startsWith('/api/blog') ||      // Allow blog API
           pathname.startsWith('/api/metrics') ||   // Allow metrics API for tracking
           pathname.startsWith('/api/featured-games') || // Allow featured games API
           pathname.startsWith('/api/games') ||     // Allow games search API

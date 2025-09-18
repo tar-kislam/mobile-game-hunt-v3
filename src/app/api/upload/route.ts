@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'blog')
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
     await fs.mkdir(uploadsDir, { recursive: true })
 
     const ext = path.extname(file.name) || '.png'
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     await fs.writeFile(filePath, buffer)
 
-    const url = `/uploads/blog/${filename}`
+    const url = `/uploads/${filename}`
     return NextResponse.json({ ok: true, url }, { status: 201 })
   } catch (error) {
     console.error('POST /api/upload error:', error)
