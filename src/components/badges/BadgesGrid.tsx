@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import useSWR from "swr"
 import { BadgeCard } from "./BadgeCard"
 import { toast } from "sonner"
@@ -44,6 +45,16 @@ export function BadgesGrid() {
     revalidateOnFocus: true,
     revalidateOnReconnect: true
   })
+
+  // Listen for badge updates from follow actions
+  useEffect(() => {
+    const handleBadgeUpdate = () => {
+      mutate() // Refresh badges data
+    }
+
+    window.addEventListener('badge-updated', handleBadgeUpdate)
+    return () => window.removeEventListener('badge-updated', handleBadgeUpdate)
+  }, [mutate])
 
   if (error) return <div className="text-red-500">Failed to load badges</div>
   if (!data) return <div className="text-white/60">Loading badges...</div>
@@ -124,6 +135,7 @@ export function BadgesGrid() {
             locked={badge.locked}
             claimable={badge.claimable}
             badgeCode={badge.code}
+            isCompleted={badge.isCompleted}
             onClaim={(code) => handleClaim(code, badge.title, badge.xp)}
           />
         )

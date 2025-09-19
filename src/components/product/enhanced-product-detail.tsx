@@ -13,7 +13,6 @@ import {
   Share2, 
   Play,
   Calendar,
-  User,
   MessageCircle,
   Eye,
   Download,
@@ -35,7 +34,6 @@ import {
   Building
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlatformIcons } from '@/components/ui/platform-icons';
 import { MediaCarousel } from './media-carousel';
 import { PlaytestClaim } from '@/components/playtest/playtest-claim';
@@ -48,6 +46,7 @@ import Link from 'next/link'
 import { LANGUAGES } from '@/lib/constants/languages'
 import { UserAvatarTooltip } from '@/components/ui/user-avatar-tooltip'
 import { ProductTags } from './product-tags'
+import { MeetTheTeamCard } from './meet-the-team-card';
 
 interface Product {
   id: string;
@@ -222,7 +221,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
 
   const checkFollowStatus = async () => {
     try {
-      const response = await fetch(`/api/follow?gameId=${product.id}`);
+      const response = await fetch(`/api/game-follow?gameId=${product.id}`);
       if (response.ok) {
         const data = await response.json();
         setIsFollowing(data.following);
@@ -239,7 +238,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
     }
 
     try {
-      const response = await fetch('/api/follow', {
+      const response = await fetch('/api/game-follow', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ gameId: product.id })
@@ -541,34 +540,6 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                         day: 'numeric' 
                       })}
                     </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Developer & Publisher */}
-              {product.makers && product.makers.length > 0 && (
-                <div className="flex items-start gap-3">
-                  <User className="w-5 h-5 text-green-400 mt-0.5" />
-                  <div className="flex-1">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Developer:</span>
-                    <div className="mt-1 flex flex-wrap gap-2">
-                      {product.makers.filter(maker => maker.role === 'MAKER' || maker.role === 'DEVELOPER').map((maker, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <Avatar className="w-6 h-6">
-                            <AvatarImage src={maker.user?.image || ''} />
-                            <AvatarFallback className="text-xs">
-                              {maker.user?.name?.charAt(0) || maker.email?.charAt(0) || 'D'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            {maker.user?.name || maker.email}
-                          </span>
-                          {maker.isCreator && (
-                            <Badge variant="secondary" className="text-xs">Creator</Badge>
-                          )}
-                        </div>
-                      ))}
-                    </div>
                   </div>
                 </div>
               )}
@@ -955,6 +926,9 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
             </CardContent>
           </Card>
 
+          {/* Meet the Team Card */}
+          <MeetTheTeamCard makers={product.makers || []} />
+
           {/* Stats Card */}
           <Card className="rounded-2xl shadow-soft">
             <CardHeader>
@@ -1047,12 +1021,12 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                 </div>
               )}
 
-              {/* Studio */}
+              {/* Studio Name */}
               {product.studioName && (
                 <div className="flex items-center gap-2">
-                  <Building className="w-4 h-4 text-purple-400" />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Studio:</span>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{product.studioName}</span>
+                  <Building className="w-4 h-4 text-green-400" />
+                  <span className="text-sm font-medium text-green-400 dark:text-green-300">Studio:</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{product.studioName}</span>
                 </div>
               )}
 
@@ -1340,87 +1314,6 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
               </CardContent>
             </Card>
           )}
-
-          {/* Team Info */}
-          <Card className="rounded-2xl shadow-soft">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">Team</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Studio/Publisher Name */}
-              {product.studioName && (
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Studio / Publisher</h4>
-                  <p className="text-base font-semibold text-gray-900 dark:text-white">
-                    {product.studioName}
-                  </p>
-                </div>
-              )}
-
-              {/* Team Members */}
-              <div>
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Team Members</h4>
-                {product.makers && product.makers.length > 0 ? (
-                  <div className="space-y-4">
-                    {product.makers.map((maker) => (
-                      <div key={maker.id} className="flex items-start gap-3">
-                        {maker.user ? (
-                          <UserAvatarTooltip
-                            userId={maker.user.id}
-                            userName={maker.user.name}
-                            userImage={maker.user.image || null}
-                            size="md"
-                          />
-                        ) : (
-                          <Avatar className="w-10 h-10">
-                            <AvatarFallback className="bg-gradient-to-br from-purple-400 to-blue-500 text-white">
-                              {maker.email ? maker.email.charAt(0).toUpperCase() : 'T'}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="font-medium text-gray-900 dark:text-white truncate">
-                              {maker.user?.name || maker.email || 'Team Member'}
-                            </p>
-                            {maker.isCreator && (
-                              <Badge variant="secondary" className="text-xs bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200">
-                                Creator
-                              </Badge>
-                            )}
-                          </div>
-                          <Badge variant="outline" className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-                            {maker.role === 'MAKER' ? 'Maker' :
-                             maker.role === 'DESIGNER' ? 'Designer' :
-                             maker.role === 'DEVELOPER' ? 'Developer' :
-                             maker.role === 'PUBLISHER' ? 'Publisher' :
-                             maker.role === 'HUNTER' ? 'Hunter' : maker.role}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <UserAvatarTooltip
-                      userId={product.user.id}
-                      userName={product.user.name}
-                      userImage={product.user.image || null}
-                      size="md"
-                    />
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {product.user.name || 'Anonymous'}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {formatDate(product.createdAt)}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Playtest Claim Card */}
           <PlaytestClaim gameId={product.id} gameTitle={product.title} />

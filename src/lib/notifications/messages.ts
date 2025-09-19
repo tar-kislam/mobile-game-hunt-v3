@@ -32,6 +32,9 @@ export function levelReached(level: number): string {
  * @returns Formatted message
  */
 export function badgeUnlocked(title: string): string {
+  if (title === 'First Launch') {
+    return `🏆 Congrats! You earned the First Launch badge by publishing your first game!`
+  }
   return `🎖️ ${title} badge unlocked! Click to claim your reward!`
 }
 

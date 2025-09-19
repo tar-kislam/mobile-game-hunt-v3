@@ -65,6 +65,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
           image: true,
         },
       },
+      makers: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+        },
+      },
       categories: {
         include: {
           category: {

@@ -100,7 +100,7 @@ export function GogSidebar({
       <CollapsibleTrigger asChild>
         <Button
           variant="ghost"
-          className="w-full justify-between p-0 h-auto font-semibold text-white hover:text-purple-400 text-sm"
+          className="w-full justify-between p-0 h-auto font-semibold text-white hover:text-purple-400 text-sm font-[Orbitron]"
         >
           <span>{title}</span>
           {expandedSections[sectionKey] ? (
@@ -127,11 +127,11 @@ export function GogSidebar({
             />
             <label
               htmlFor={`${sectionKey}-${option.value}`}
-              className="text-sm text-gray-300 cursor-pointer flex-1 flex items-center justify-between"
+              className="text-sm text-gray-300 cursor-pointer flex-1 flex items-center justify-between font-[Orbitron] font-semibold"
             >
               <span>{option.label}</span>
               {showCounts && option.count !== undefined && (
-                <Badge variant="outline" className="text-xs bg-gray-800/50 border-gray-600 text-gray-400">
+                <Badge variant="outline" className="text-xs bg-gray-800/50 border-gray-600 text-gray-400 font-[Orbitron] font-semibold">
                   {option.count}
                 </Badge>
               )}
@@ -157,7 +157,7 @@ export function GogSidebar({
       <Card className="bg-card/50 backdrop-blur-sm border-white/10">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg text-white flex items-center">
+            <CardTitle className="text-lg text-white flex items-center font-[Orbitron] font-semibold">
               <Filter className="w-5 h-5 mr-2" />
               Filters
             </CardTitle>

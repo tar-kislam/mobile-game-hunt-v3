@@ -20,7 +20,7 @@ import { Progress } from "@/components/ui/progress"
 import { NotificationBell } from "@/components/ui/notification-bell"
 import PillNav from "@/components/ui/pill-nav"
 import { UserBadges, LevelBadge } from "@/components/ui/user-badges"
-import { StarIcon } from "lucide-react"
+import { StarIcon, Activity } from "lucide-react"
 import { HiOutlineMenu } from "react-icons/hi"
 import useSWR from 'swr'
 
@@ -70,6 +70,7 @@ export function Header() {
   const baseNavItems = [
     { label: "Home", href: "/" },
     { label: "All Games", href: "/products" },
+    { label: "Leaderboard", href: "/leaderboard" },
     { label: "Community", href: "/community" },
     { label: "Advertise", href: "/advertise" },
     { label: "Calendar", href: "/calendar" }
@@ -169,6 +170,12 @@ export function Header() {
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/feed" className="flex items-center">
+                          <Activity className="mr-2 h-4 w-4" />
+                          Feed
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href={session?.user?.username ? `/@${session.user.username}` : '/profile'}>Profile</Link>
                       </DropdownMenuItem>
@@ -282,6 +289,12 @@ export function Header() {
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/feed" className="flex items-center">
+                          <Activity className="mr-2 h-4 w-4" />
+                          Feed
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href={session?.user?.username ? `/@${session.user.username}` : '/profile'}>Profile</Link>
                       </DropdownMenuItem>

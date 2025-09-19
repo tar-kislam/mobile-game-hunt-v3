@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { awardXP } from '@/lib/xpService'
+import { checkAndAwardBadges } from '@/lib/badgeService'
 
 const createCommentSchema = z.object({
   content: z.string().min(1, 'Comment cannot be empty').max(1000, 'Comment too long'),
@@ -109,6 +111,28 @@ export async function POST(
         // votes: true, // Include votes to count them
       },
     })
+
+    // Award XP for commenting
+    try {
+      const xpResult = await awardXP(user.id, 'comment')
+      console.log(`[XP] Awarded ${xpResult.xpAwarded} XP to user ${user.id} for commenting`)
+      
+      if (xpResult.levelUp) {
+        console.log(`[XP] User ${user.id} leveled up from ${xpResult.previousLevel} to ${xpResult.newLevel}!`)
+      }
+      
+      // Check for new badges after XP award
+      try {
+        const newBadges = await checkAndAwardBadges(user.id)
+        if (newBadges.length > 0) {
+          console.log(`[BADGES] User ${user.id} earned new badges:`, newBadges)
+        }
+      } catch (badgeError) {
+        console.error('[BADGES] Error checking badges:', badgeError)
+      }
+    } catch (xpError) {
+      console.error('[XP] Error awarding XP for comment:', xpError)
+    }
 
     // Transform comment to include vote count
     const commentWithCount = {

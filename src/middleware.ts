@@ -89,6 +89,7 @@ export default withAuth(
           pathname.startsWith('/api/metrics') ||   // Allow metrics API for tracking
           pathname.startsWith('/api/featured-games') || // Allow featured games API
           pathname.startsWith('/api/games') ||     // Allow games search API
+          pathname.startsWith('/api/leaderboard') || // Allow leaderboard API
           pathname.startsWith('/api/user') ||
           pathname.startsWith('/product') ||       // Added product detail pages
           pathname.startsWith('/user/') ||        // Allow username-based profile pages

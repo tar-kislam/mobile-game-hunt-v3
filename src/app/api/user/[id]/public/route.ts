@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { calculateLevelProgress } from '@/lib/xpCalculator'
 
 export async function GET(
   request: NextRequest,
@@ -121,10 +122,9 @@ export async function GET(
       }
     }) + 1
 
-    // Calculate XP to next level
-    const currentLevelXP = (user.level - 1) * 100
-    const nextLevelXP = user.level * 100
-    const xpToNextLevel = nextLevelXP - user.xp
+    // Calculate XP to next level using centralized calculation
+    const levelProgress = calculateLevelProgress(user.xp)
+    const xpToNextLevel = levelProgress.remainingXP
 
     const profileData = {
       user: {

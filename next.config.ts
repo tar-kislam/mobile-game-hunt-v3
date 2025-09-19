@@ -188,10 +188,10 @@ const nextConfig: NextConfig = {
   trailingSlash: false,
   generateEtags: false,
 
-  // Logging
+  // Logging - Reduce verbosity in development
   logging: {
     fetches: {
-      fullUrl: true,
+      fullUrl: false,
     },
   },
 };

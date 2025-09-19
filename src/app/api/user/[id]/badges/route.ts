@@ -1,35 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getUserBadges, getAllBadgeConfigs } from '@/lib/badgeService'
+import { resolveUserId } from '@/lib/userUtils'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
-    
-    if (!id) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
-    }
+    const { id: targetUserId } = await params
 
-    // Get user's earned badges
-    const earnedBadges = await getUserBadges(id)
-    
-    // Get all badge configurations
-    const allBadgeConfigs = getAllBadgeConfigs()
-    
     // Get user stats for progress calculation
     const userStats = await prisma.user.findUnique({
-      where: { id },
+      where: { id: targetUserId },
       select: {
-        createdAt: true,
         _count: {
           select: {
             products: true,
             votes: true,
             comments: true,
-            follows: true
+            following: true
           }
         }
       }
@@ -39,68 +30,193 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Get likes received on user's products
+    // Get follow counts for Explorer and Rising Star badges
+    const userFollows = await prisma.follow.count({
+      where: { followerId: targetUserId }
+    })
+
+    const followers = await prisma.follow.count({
+      where: { followingId: targetUserId }
+    })
+
+    // Count likes received on user's products
     const likesReceived = await prisma.vote.count({
       where: {
         product: {
-          userId: id
+          userId: targetUserId
         }
       }
     })
 
-    // Calculate progress for each badge
-    const badgeProgress = Object.values(allBadgeConfigs).map(badgeConfig => {
-      const isEarned = earnedBadges.includes(badgeConfig.type)
-      let progress = 0
-      let current = 0
-      let target = badgeConfig.requirementValue
-      let progressText = ''
+    // Check Pioneer badge eligibility
+    const isPioneerEligible = await prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { createdAt: true }
+    }).then(async (user) => {
+      if (!user) return false
+      const usersBeforeCount = await prisma.user.count({
+        where: {
+          createdAt: {
+            lt: user.createdAt
+          }
+        }
+      })
+      return usersBeforeCount < 1000
+    })
 
+    // Get user's earned badges from Redis
+    let earnedBadges: string[] = []
+    try {
+      const { getUserBadges } = await import('@/lib/badgeService')
+      earnedBadges = await getUserBadges(targetUserId)
+    } catch (error) {
+      console.warn('[USER BADGES API] Badge service not available, using fallback:', error)
+      earnedBadges = []
+    }
+
+    const BADGE_CONFIG = [
+      {
+        code: 'WISE_OWL',
+        title: 'Wise Owl',
+        emoji: '🦉',
+        description: 'Make 50 comments to earn this badge',
+        threshold: 50,
+        xp: 100,
+        type: 'comments'
+      },
+      {
+        code: 'FIRE_DRAGON',
+        title: 'Fire Dragon',
+        emoji: '🐉',
+        description: 'Submit 10 games to earn this badge',
+        threshold: 10,
+        xp: 200,
+        type: 'games'
+      },
+      {
+        code: 'CLEVER_FOX',
+        title: 'Clever Fox',
+        emoji: '🦊',
+        description: 'Cast 100 votes to earn this badge',
+        threshold: 100,
+        xp: 150,
+        type: 'votes'
+      },
+      {
+        code: 'GENTLE_PANDA',
+        title: 'Gentle Panda',
+        emoji: '🐼',
+        description: 'Receive 50 likes to earn this badge',
+        threshold: 50,
+        xp: 120,
+        type: 'likes'
+      },
+      {
+        code: 'SWIFT_PUMA',
+        title: 'Swift Puma',
+        emoji: '🐆',
+        description: 'Follow 25 games to earn this badge',
+        threshold: 25,
+        xp: 80,
+        type: 'follows'
+      },
+      {
+        code: 'EXPLORER',
+        title: 'Explorer',
+        emoji: '🧭',
+        description: 'Follow your first 10 users to earn this badge',
+        threshold: 10,
+        xp: 100,
+        type: 'user_follows'
+      },
+      {
+        code: 'RISING_STAR',
+        title: 'Rising Star',
+        emoji: '⭐',
+        description: 'Reach 100 followers to earn this badge',
+        threshold: 100,
+        xp: 300,
+        type: 'followers'
+      },
+      {
+        code: 'PIONEER',
+        title: 'Pioneer',
+        emoji: '🛡️',
+        description: 'One of the first 1000 users to join the platform',
+        threshold: 1000,
+        xp: 500,
+        type: 'registration_order'
+      }
+    ]
+
+    const badges = BADGE_CONFIG.map(badgeConfig => {
+      let current = 0
+      
+      // Calculate current progress based on badge type
       switch (badgeConfig.type) {
-        case 'WISE_OWL':
-          current = userStats._count.comments
-          progress = isEarned ? 100 : Math.min((current / target) * 100, 100)
-          progressText = isEarned ? 'Unlocked!' : `${current}/${target} comments`
+        case 'comments':
+          current = userStats?._count.comments || 0
           break
-          
-        case 'FIRE_DRAGON':
-          current = userStats._count.products
-          progress = isEarned ? 100 : Math.min((current / target) * 100, 100)
-          progressText = isEarned ? 'Unlocked!' : `${current}/${target} games`
+        case 'games':
+          current = userStats?._count.products || 0
           break
-          
-        case 'CLEVER_FOX':
-          current = userStats._count.votes
-          progress = isEarned ? 100 : Math.min((current / target) * 100, 100)
-          progressText = isEarned ? 'Unlocked!' : `${current}/${target} votes`
+        case 'votes':
+          current = userStats?._count.votes || 0
           break
-          
-        case 'GENTLE_PANDA':
+        case 'likes':
           current = likesReceived
-          progress = isEarned ? 100 : Math.min((current / target) * 100, 100)
-          progressText = isEarned ? 'Unlocked!' : `${current}/${target} likes`
           break
-          
-        case 'SWIFT_PUMA':
-          current = userStats._count.follows
-          progress = isEarned ? 100 : Math.min((current / target) * 100, 100)
-          progressText = isEarned ? 'Unlocked!' : `${current}/${target} follows`
+        case 'follows':
+          current = userStats?._count.following || 0
           break
+        case 'user_follows':
+          current = userFollows
+          break
+        case 'followers':
+          current = followers
+          break
+        case 'registration_order':
+          // Pioneer badge: 100% if eligible, 0% if not
+          current = isPioneerEligible ? badgeConfig.threshold : 0
+          break
+        default:
+          current = 0
+      }
+
+      const pct = Math.min((current / badgeConfig.threshold) * 100, 100)
+      
+      // Special handling for Pioneer badge - always unlocked if eligible
+      let isUnlocked = false
+      if (badgeConfig.code === 'PIONEER') {
+        isUnlocked = isPioneerEligible
+      } else {
+        isUnlocked = earnedBadges.includes(badgeConfig.code as any) || current >= badgeConfig.threshold
       }
 
       return {
-        ...badgeConfig,
-        isEarned,
-        progress: Math.round(progress),
-        current,
-        target,
-        progressText
+        code: badgeConfig.code,
+        title: badgeConfig.title,
+        emoji: badgeConfig.emoji,
+        description: badgeConfig.description,
+        threshold: badgeConfig.threshold,
+        progress: { 
+          current: Math.min(current, badgeConfig.threshold), 
+          threshold: badgeConfig.threshold, 
+          pct: Math.round(pct) 
+        },
+        xp: badgeConfig.xp,
+        locked: !isUnlocked,
+        claimable: false,
+        unlockedAt: isUnlocked ? new Date().toISOString() : null
       }
     })
 
-    return NextResponse.json({ badges: badgeProgress })
+    // Return only unlocked badges
+    const unlockedBadges = badges.filter(badge => !badge.locked)
+
+    return NextResponse.json(unlockedBadges)
   } catch (error) {
-    console.error('[BADGE PROGRESS] Error:', error)
+    console.error('[USER BADGES API] Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

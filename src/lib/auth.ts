@@ -132,8 +132,15 @@ export const authOptions: NextAuthOptions = {
     },
   },
   events: {
-    async createUser() {
-      // No-op: username management disabled in minimal schema mode
+    async createUser({ user }) {
+      // Check for Pioneer badge eligibility when user is created
+      try {
+        const { checkAndAwardBadges } = await import('@/lib/badgeService')
+        await checkAndAwardBadges(user.id)
+      } catch (error) {
+        console.error('Error checking badges on user creation:', error)
+        // Don't fail user creation if badge checking fails
+      }
     },
   },
   pages: {

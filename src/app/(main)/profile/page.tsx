@@ -27,6 +27,8 @@ import MagicBento from '@/components/ui/magic-bento'
 import { format } from "date-fns"
 import { Progress } from "@/components/ui/progress"
 import { BadgesGrid } from "@/components/badges/BadgesGrid"
+import { calculateLevelProgress } from "@/lib/xpCalculator"
+import { useCurrentUserXP } from "@/hooks/useXP"
 
 // Mock defaults, will be overridden by live data
 const userStats = {
@@ -164,22 +166,47 @@ export default function ProfilePage() {
     revalidateOnReconnect: true
   })
   const { data: userData } = useSWR(session?.user?.email ? `/api/user?email=${encodeURIComponent(session.user.email)}` : null, fetcher)
-  const { data: xpData, mutate: mutateXP } = useSWR(session?.user?.id ? `/api/user/${session.user.id}/xp` : null, fetcher, {
-    refreshInterval: 10000, // Refresh every 10 seconds
-    revalidateOnFocus: true,
-    revalidateOnReconnect: true,
-    dedupingInterval: 5000 // Prevent duplicate requests within 5 seconds
-  })
+  
+  // Use centralized XP hook for synchronized data
+  const { xpData, levelProgress, mutate: mutateXP } = useCurrentUserXP()
 
-  // Listen for XP updates from other components
+  // State for level-up animation
+  const [isLevelingUp, setIsLevelingUp] = useState(false)
+  const [previousLevel, setPreviousLevel] = useState<number | null>(null)
+  const [hasShownLevelUpToast, setHasShownLevelUpToast] = useState<Set<number>>(new Set())
+
+  // Level-up detection and animation
   useEffect(() => {
-    const handleXPUpdate = () => {
-      mutateXP()
+    if (levelProgress) {
+      const currentLevel = levelProgress.level
+      
+      // Initialize previousLevel on first load
+      if (previousLevel === null) {
+        setPreviousLevel(currentLevel)
+        return
+      }
+      
+      // Only trigger level up if we actually leveled up and haven't shown toast for this level
+      if (currentLevel > previousLevel && !hasShownLevelUpToast.has(currentLevel)) {
+        setIsLevelingUp(true)
+        setPreviousLevel(currentLevel)
+        setHasShownLevelUpToast(prev => new Set([...prev, currentLevel]))
+        
+        // Show level-up animation for 2 seconds
+        setTimeout(() => {
+          setIsLevelingUp(false)
+        }, 2000)
+        
+        // Show level-up toast only for actual level ups
+        toast.success(`🎉 Level Up! You reached Level ${currentLevel}!`, {
+          duration: 3000,
+        })
+      } else if (currentLevel !== previousLevel) {
+        // Update previousLevel if it changed but don't show toast
+        setPreviousLevel(currentLevel)
+      }
     }
-
-    window.addEventListener('xp-updated', handleXPUpdate)
-    return () => window.removeEventListener('xp-updated', handleXPUpdate)
-  }, [mutateXP])
+  }, [levelProgress?.level, previousLevel, hasShownLevelUpToast])
 
   // Format joined date
   const getJoinedDate = () => {
@@ -297,9 +324,9 @@ export default function ProfilePage() {
                             <div className="flex items-center gap-2 md:gap-3 flex-wrap">
                             <div className="text-base md:text-lg font-semibold truncate">{session?.user?.name}</div>
                               {/* Level Badge */}
-                              <Badge variant="secondary" className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-300 border-purple-500/30 rounded-full px-2 md:px-3 py-1 text-xs flex-shrink-0">
+                              <Badge variant="secondary" className={`bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-300 border-purple-500/30 rounded-full px-2 md:px-3 py-1 text-xs flex-shrink-0 transition-all duration-500 ${isLevelingUp ? 'ring-2 ring-yellow-400 ring-opacity-50 shadow-lg shadow-yellow-400/30' : ''}`}>
                                 <StarIcon className="h-3 w-3 mr-1" />
-                                Level {xpData?.level || 1}
+                                Level {levelProgress?.level || 1}
                               </Badge>
                             </div>
                             <div className="text-xs md:text-sm text-muted-foreground truncate">{session?.user?.email}</div>
@@ -313,24 +340,30 @@ export default function ProfilePage() {
                       </div>
 
                       {/* XP Progress Bar */}
-                      {xpData && (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-xs md:text-sm">
-                            <span className="text-gray-300">Experience Points</span>
-                            <span className="text-purple-300 font-medium">
-                              {xpData.xp} / {(xpData.level * 100)} XP
-                            </span>
+                      {levelProgress && (() => {
+                        const progressPercentage = Math.round((levelProgress.currentXP / levelProgress.requiredXP) * 100)
+                        
+                        return (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-xs md:text-sm">
+                              <span className="text-gray-300">Experience Points</span>
+                              <span className="text-purple-300 font-medium">
+                                {levelProgress.currentXP} / {levelProgress.requiredXP} XP
+                              </span>
+                            </div>
+                            <Progress 
+                              value={progressPercentage} 
+                              className="h-2 md:h-3 bg-gray-700 rounded-full overflow-hidden"
+                            />
+                            <div className="flex items-center justify-between text-xs text-gray-400">
+                              <span className={`transition-all duration-500 ${isLevelingUp ? 'text-yellow-400 font-bold animate-pulse' : ''}`}>
+                                Level {levelProgress.level}
+                              </span>
+                              <span className="truncate ml-2">{levelProgress.remainingXP} XP to Level {levelProgress.level + 1}</span>
+                            </div>
                           </div>
-                          <Progress 
-                            value={xpData.xpProgress} 
-                            className="h-2 md:h-3 bg-gray-700 rounded-full overflow-hidden"
-                          />
-                          <div className="flex items-center justify-between text-xs text-gray-400">
-                            <span>Level {xpData.level}</span>
-                            <span className="truncate ml-2">{xpData.xpToNextLevel} XP to Level {xpData.level + 1}</span>
-                          </div>
-                        </div>
-                      )}
+                        )
+                      })()}
 
                       {/* Mobile Stats as Text - Desktop Stats as Cards */}
                       {/* Mobile Text Stats */}

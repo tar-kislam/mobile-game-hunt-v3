@@ -58,7 +58,7 @@ export function GameSortBar({
         <h2 className="text-lg font-semibold text-white">
           Mobile Games
         </h2>
-        <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300 font-[Lexend]">
+        <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300 font-[Orbitron] font-semibold">
           {filteredGames === totalGames ? (
             `${totalGames} games`
           ) : (
@@ -72,7 +72,7 @@ export function GameSortBar({
         <span className="text-sm text-gray-400 hidden sm:block">Sort by:</span>
         
         {/* Desktop: Button Group */}
-        <div className="hidden sm:flex items-center space-x-1 bg-gray-800/50 rounded-lg p-1 font-[Lexend]">
+        <div className="hidden sm:flex items-center space-x-1 bg-gray-800/50 rounded-lg p-1">
           {SORT_OPTIONS.map((option) => {
             const Icon = option.icon
             const isSelected = option.value === sortBy
@@ -83,7 +83,7 @@ export function GameSortBar({
                 variant={isSelected ? "default" : "ghost"}
                 size="sm"
                 onClick={() => onSortChange(option.value)}
-                className={`px-3 py-1 text-sm transition-all duration-200 ${
+                className={`px-3 py-1 text-sm transition-all duration-200 font-[Orbitron] font-semibold ${
                   isSelected 
                     ? "bg-purple-600 hover:bg-purple-700 text-white shadow-lg" 
                     : "text-gray-300 hover:text-white hover:bg-gray-700/50"
@@ -98,7 +98,7 @@ export function GameSortBar({
 
         {/* Mobile: Dropdown */}
         <Select value={sortBy} onValueChange={onSortChange}>
-          <SelectTrigger className="w-[180px] bg-gray-800/50 border-gray-600 text-white sm:hidden font-[Lexend]">
+          <SelectTrigger className="w-[180px] bg-gray-800/50 border-gray-600 text-white sm:hidden font-[Orbitron] font-semibold">
             <SelectValue>
               <div className="flex items-center">
                 <ArrowUpDown className="w-4 h-4 mr-2" />
@@ -106,7 +106,7 @@ export function GameSortBar({
               </div>
             </SelectValue>
           </SelectTrigger>
-          <SelectContent className="bg-gray-800 border-gray-600 font-[Lexend]">
+          <SelectContent className="bg-gray-800 border-gray-600 font-[Orbitron] font-semibold">
             {SORT_OPTIONS.map((option) => {
               const Icon = option.icon
               return (

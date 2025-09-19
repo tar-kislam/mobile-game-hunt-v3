@@ -1,6 +1,20 @@
 import { prisma } from '@/lib/prisma'
 
-export type NotificationType = 'welcome' | 'milestone' | 'progress' | 'achievement' | 'reminder' | 'xp' | 'level_up' | 'badge_unlocked' | 'badge_claimed'
+export type NotificationType = 'welcome' | 'milestone' | 'progress' | 'achievement' | 'reminder' | 'xp' | 'level_up' | 'badge_unlocked' | 'badge_claimed' | 'badge' | 'follow' | 'vote' | 'system'
+
+export interface NotificationMetadata {
+  badgeId?: string
+  badgeName?: string
+  xpReward?: number
+  xpAmount?: number
+  oldLevel?: number
+  newLevel?: number
+  followerId?: string
+  followedId?: string
+  productId?: string
+  fromUserId?: string
+  [key: string]: any
+}
 
 /**
  * Notification Service - Handles user notifications
@@ -15,12 +29,20 @@ export type NotificationType = 'welcome' | 'milestone' | 'progress' | 'achieveme
  * @param userId - User ID to send notification to
  * @param message - Notification message
  * @param type - Type of notification
+ * @param metadata - Additional metadata for the notification
+ * @param title - Optional title for the notification
+ * @param link - Optional link for the notification
+ * @param icon - Optional icon for the notification
  * @returns Created notification or existing notification if duplicate
  */
 export async function notify(
   userId: string, 
   message: string, 
-  type: NotificationType
+  type: NotificationType,
+  metadata?: NotificationMetadata,
+  title?: string,
+  link?: string,
+  icon?: string
 ): Promise<{
   id: string
   userId: string
@@ -28,6 +50,10 @@ export async function notify(
   type: string
   read: boolean
   createdAt: Date
+  meta?: any
+  title?: string
+  link?: string
+  icon?: string
 }> {
   try {
     if (!(prisma as any).notification) {
@@ -56,16 +82,52 @@ export async function notify(
         userId,
         message,
         type,
+        title: title || null,
+        meta: metadata || null,
+        link: link || null,
+        icon: icon || null,
         read: false
       }
     })
 
     console.log(`[NOTIFICATION] Created ${type} notification for user ${userId}: ${message}`)
     
-    // Emit real-time event (placeholder for now - can be enhanced with WebSocket/Pusher)
+    // Emit real-time event for client-side updates
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('notification-created', {
-        detail: { userId, notification }
+        detail: { 
+          userId, 
+          notification: {
+            id: notification.id,
+            type,
+            message,
+            title,
+            meta,
+            link,
+            icon,
+            read: false,
+            createdAt: notification.createdAt
+          }
+        }
+      }))
+    }
+
+    // Also emit a more specific event for immediate UI updates
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('new-notification', {
+        detail: {
+          notification: {
+            id: notification.id,
+            type,
+            message,
+            title,
+            meta,
+            link,
+            icon,
+            read: false,
+            createdAt: notification.createdAt
+          }
+        }
       }))
     }
 
@@ -216,8 +278,159 @@ export function getNotificationIcon(type: NotificationType): string {
     xp: '⚡️',
     level_up: '🏆',
     badge_unlocked: '🎖️',
-    badge_claimed: '🎉'
+    badge_claimed: '🎉',
+    badge: '🎖️',
+    follow: '👥',
+    vote: '⭐',
+    system: '🔔'
   }
   
   return icons[type] || '🔔'
+}
+
+// ===== SPECIFIC NOTIFICATION HELPERS =====
+
+/**
+ * Create a badge notification when a user earns a badge
+ */
+export async function notifyBadgeEarned(
+  userId: string,
+  badgeName: string,
+  badgeId: string,
+  xpReward: number
+) {
+  const message = `🎖️ Congratulations! You earned the "${badgeName}" badge! +${xpReward} XP`
+  
+  return await notify(
+    userId,
+    message,
+    'badge',
+    {
+      badgeId,
+      badgeName,
+      xpReward
+    },
+    'Badge Earned!',
+    '/profile#badges',
+    '🎖️'
+  )
+}
+
+/**
+ * Create an XP progress notification when user gains XP
+ */
+export async function notifyXPProgress(
+  userId: string,
+  xpAmount: number,
+  source: string = 'activity'
+) {
+  const message = `⚡️ +${xpAmount} XP earned from ${source}!`
+  
+  return await notify(
+    userId,
+    message,
+    'xp',
+    {
+      xpAmount,
+      source
+    },
+    'XP Gained!',
+    '/profile',
+    '⚡️'
+  )
+}
+
+/**
+ * Create a level up notification when user reaches a new level
+ */
+export async function notifyLevelUp(
+  userId: string,
+  oldLevel: number,
+  newLevel: number
+) {
+  const message = `🏆 Level Up! You reached Level ${newLevel}! 🚀`
+  
+  return await notify(
+    userId,
+    message,
+    'level_up',
+    {
+      oldLevel,
+      newLevel
+    },
+    'Level Up!',
+    '/profile',
+    '🏆'
+  )
+}
+
+/**
+ * Create a follow notification when someone follows a user
+ */
+export async function notifyFollow(
+  followedUserId: string,
+  followerUserId: string,
+  followerName: string
+) {
+  const message = `${followerName} started following you! 🎮`
+  
+  return await notify(
+    followedUserId,
+    message,
+    'follow',
+    {
+      followerId: followerUserId,
+      followedId: followedUserId,
+      fromUserId: followerUserId
+    },
+    'New Follower!',
+    `/@${followerName}`,
+    '👥'
+  )
+}
+
+/**
+ * Create a vote notification when someone votes on a user's game
+ */
+export async function notifyVote(
+  gameOwnerUserId: string,
+  voterUserId: string,
+  voterName: string,
+  gameTitle: string,
+  gameId: string
+) {
+  const message = `${voterName} voted on your game "${gameTitle}"! ⭐`
+  
+  return await notify(
+    gameOwnerUserId,
+    message,
+    'vote',
+    {
+      productId: gameId,
+      fromUserId: voterUserId
+    },
+    'New Vote!',
+    `/product/${gameId}`,
+    '⭐'
+  )
+}
+
+/**
+ * Create a system notification for general announcements
+ */
+export async function notifySystem(
+  userId: string,
+  message: string,
+  title?: string,
+  link?: string
+) {
+  return await notify(
+    userId,
+    message,
+    'system',
+    {},
+    title || 'System Notification',
+    link,
+    '🔔'
+  )
 }

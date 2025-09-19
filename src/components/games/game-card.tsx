@@ -22,6 +22,18 @@ interface Game {
   url: string
   platforms?: string[]
   createdAt: string
+  releaseAt?: string | null
+  status?: string
+  monetization?: string | null
+  engine?: string | null
+  pricing?: string | null
+  categories?: Array<{
+    category: {
+      id: string
+      name: string
+    }
+  }>
+  tags?: string[]
   _count: {
     votes: number
     comments: number
@@ -129,6 +141,59 @@ export function GameCard({ game, onVote, showAuthor = true }: GameCardProps) {
         <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 leading-relaxed">
           {game.description}
         </p>
+
+        {/* Categories */}
+        {game.categories && game.categories.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {game.categories.slice(0, 3).map((cat) => (
+              <Badge key={cat.category.id} variant="secondary" className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                {cat.category.name}
+              </Badge>
+            ))}
+            {game.categories.length > 3 && (
+              <Badge variant="outline" className="text-xs text-gray-500">
+                +{game.categories.length - 3} more
+              </Badge>
+            )}
+          </div>
+        )}
+
+        {/* Tags */}
+        {game.tags && game.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {game.tags.slice(0, 2).map((tag, index) => (
+              <Badge key={index} variant="outline" className="text-xs bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                #{tag}
+              </Badge>
+            ))}
+            {game.tags.length > 2 && (
+              <Badge variant="outline" className="text-xs text-gray-500">
+                +{game.tags.length - 2} more
+              </Badge>
+            )}
+          </div>
+        )}
+
+        {/* Release Status */}
+        {game.status && (
+          <div className="flex items-center gap-2">
+            <Badge 
+              variant={game.status === 'PUBLISHED' ? 'default' : 'secondary'}
+              className={`text-xs ${
+                game.status === 'PUBLISHED' 
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+              }`}
+            >
+              {game.status === 'PUBLISHED' ? 'Published' : 'Draft'}
+            </Badge>
+            {game.releaseAt && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {new Date(game.releaseAt).toLocaleDateString()}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Author */}
         {showAuthor && (

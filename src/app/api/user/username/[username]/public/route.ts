@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { calculateLevelProgress } from '@/lib/xpCalculator'
 
 export async function GET(
   request: NextRequest,
@@ -115,12 +116,11 @@ export async function GET(
       })
     ])
 
-    // Calculate XP data
+    // Calculate XP data using centralized level calculation
     const currentXP = user.xp || 0
-    const currentLevel = user.level || 1
-    const xpForNextLevel = currentLevel * 100 // Simple XP calculation
-    const xpToNextLevel = Math.max(0, xpForNextLevel - currentXP)
-    const progress = xpForNextLevel > 0 ? (currentXP / xpForNextLevel) * 100 : 100
+    const levelProgress = calculateLevelProgress(currentXP)
+    const xpToNextLevel = levelProgress.remainingXP
+    const progress = Math.round((levelProgress.currentXP / levelProgress.requiredXP) * 100)
 
     // Get user rank (simplified - could be improved with actual ranking logic)
     const userCount = await prisma.user.count({
@@ -152,9 +152,13 @@ export async function GET(
       },
       xp: {
         current: currentXP,
-        nextLevelXP: xpForNextLevel,
+        nextLevelXP: levelProgress.requiredXP,
         xpToNextLevel,
         progress: Math.min(progress, 100),
+        level: levelProgress.level,
+        currentXP: levelProgress.currentXP,
+        requiredXP: levelProgress.requiredXP,
+        remainingXP: levelProgress.remainingXP
       }
     })
 

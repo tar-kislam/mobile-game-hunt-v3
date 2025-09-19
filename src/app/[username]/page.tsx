@@ -12,13 +12,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FollowButton } from "@/components/ui/follow-button"
 import { 
   CalendarIcon,
-  StarIcon
+  StarIcon,
+  UsersIcon,
+  UserPlusIcon
 } from "lucide-react"
 import MagicBento from "@/components/ui/magic-bento"
 import { ArrowUpIcon, MessageCircleIcon, ExternalLinkIcon, GamepadIcon, TrophyIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BadgesGrid } from "@/components/badges/BadgesGrid"
 import { Header } from "@/components/layout/header"
+import { UserRecommendations } from "@/components/social/UserRecommendations"
 
 interface UsernameProfileProps {
   params: Promise<{ username: string }>
@@ -28,6 +31,7 @@ export default function UsernameProfilePage({ params }: UsernameProfileProps) {
   const { username } = use(params)
   const [profileData, setProfileData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [followCounts, setFollowCounts] = useState<{followersCount: number, followingCount: number} | null>(null)
   const [error, setError] = useState<string | null>(null)
   const { data: session } = useSession()
   const router = useRouter()
@@ -51,6 +55,16 @@ export default function UsernameProfilePage({ params }: UsernameProfileProps) {
         }
         const data = await response.json()
         setProfileData(data)
+        
+        // Fetch follow counts
+        const followResponse = await fetch(`/api/follow-counts/${data.user.id}`)
+        if (followResponse.ok) {
+          const followData = await followResponse.json()
+          setFollowCounts({
+            followersCount: followData.followersCount,
+            followingCount: followData.followingCount
+          })
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred')
       } finally {
@@ -60,6 +74,16 @@ export default function UsernameProfilePage({ params }: UsernameProfileProps) {
 
     fetchProfileData()
   }, [username, session?.user?.username, router])
+
+  const handleFollowChange = (newFollowersCount: number) => {
+    setFollowCounts(prev => prev ? {
+      ...prev,
+      followersCount: newFollowersCount
+    } : {
+      followersCount: newFollowersCount,
+      followingCount: 0
+    })
+  }
 
   const getJoinedDate = () => {
     if (!profileData?.user?.createdAt) return 'Unknown'
@@ -125,7 +149,7 @@ export default function UsernameProfilePage({ params }: UsernameProfileProps) {
                               <div className="text-base md:text-lg font-semibold truncate">{user.name || 'Anonymous User'}</div>
                               <Badge variant="secondary" className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-300 border-purple-500/30 rounded-full px-2 md:px-3 py-1 text-xs flex-shrink-0">
                                 <StarIcon className="h-3 w-3 mr-1" />
-                                Level {user.level || 1}
+                                Level {xp.level || 1}
                               </Badge>
                             </div>
                             <div className="text-xs md:text-sm text-muted-foreground truncate">@{user.username}</div>
@@ -135,7 +159,12 @@ export default function UsernameProfilePage({ params }: UsernameProfileProps) {
                             </div>
                           </div>
                         </div>
-                        <FollowButton username={user.username} className="ml-2" />
+                        <FollowButton 
+                          username={user.username} 
+                          className="ml-2" 
+                          userDisplayName={user.name || user.username}
+                          onFollowChange={handleFollowChange}
+                        />
                       </div>
 
                       {/* XP Progress Bar */}
@@ -152,8 +181,8 @@ export default function UsernameProfilePage({ params }: UsernameProfileProps) {
                             className="h-2 md:h-3 bg-gray-700 rounded-full overflow-hidden"
                           />
                           <div className="flex items-center justify-between text-xs text-gray-400">
-                            <span>Level {user.level || 1}</span>
-                            <span className="truncate ml-2">{xp.xpToNextLevel} XP to Level {(user.level || 1) + 1}</span>
+                            <span>Level {xp.level || 1}</span>
+                            <span className="truncate ml-2">{xp.remainingXP} XP to Level {(xp.level || 1) + 1}</span>
                           </div>
                         </div>
                       )}
@@ -181,11 +210,21 @@ export default function UsernameProfilePage({ params }: UsernameProfileProps) {
                             <span className="text-muted-foreground">Ranking:</span>
                             <span className="font-semibold text-white">#{user?.rank || 0}</span>
                           </div>
+                          <div className="flex items-center gap-2">
+                            <UsersIcon className="h-4 w-4 text-purple-500 flex-shrink-0" />
+                            <span className="text-muted-foreground">Followers:</span>
+                            <span className="font-semibold text-white">{followCounts?.followersCount ?? 0}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <UserPlusIcon className="h-4 w-4 text-cyan-500 flex-shrink-0" />
+                            <span className="text-muted-foreground">Following:</span>
+                            <span className="font-semibold text-white">{followCounts?.followingCount ?? 0}</span>
+                          </div>
                         </div>
                       </div>
 
                       {/* Desktop Stats */}
-                      <div className="hidden md:grid grid-cols-2 gap-4 mt-8">
+                      <div className="hidden md:grid grid-cols-3 gap-4 mt-8">
                         <div className="rounded-xl border border-white/10 bg-gray-900/60 p-4 text-center shadow-inner">
                           <GamepadIcon className="h-5 w-5 mx-auto mb-1 text-primary" />
                           <div className="text-xl font-bold">{stats?.gamesSubmitted ?? 0}</div>
@@ -206,6 +245,16 @@ export default function UsernameProfilePage({ params }: UsernameProfileProps) {
                           <div className="text-xl font-bold">#{user?.rank || 0}</div>
                           <div className="text-xs text-muted-foreground">Ranking</div>
                         </div>
+                        <div className="rounded-xl border border-white/10 bg-gray-900/60 p-4 text-center shadow-inner">
+                          <UsersIcon className="h-5 w-5 mx-auto mb-1 text-purple-500" />
+                          <div className="text-xl font-bold">{followCounts?.followersCount ?? 0}</div>
+                          <div className="text-xs text-muted-foreground">Followers</div>
+                        </div>
+                        <div className="rounded-xl border border-white/10 bg-gray-900/60 p-4 text-center shadow-inner">
+                          <UserPlusIcon className="h-5 w-5 mx-auto mb-1 text-cyan-500" />
+                          <div className="text-xl font-bold">{followCounts?.followingCount ?? 0}</div>
+                          <div className="text-xs text-muted-foreground">Following</div>
+                        </div>
                       </div>
                     </div>
                   )
@@ -221,6 +270,11 @@ export default function UsernameProfilePage({ params }: UsernameProfileProps) {
               <p className="text-muted-foreground">Achievements and progress</p>
             </div>
             <BadgesGrid />
+          </div>
+
+          {/* User Recommendations */}
+          <div className="mb-8">
+            <UserRecommendations userId={user.id} />
           </div>
 
           {/* Tabs: Games | Activity | Badges */}

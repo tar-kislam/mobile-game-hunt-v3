@@ -3,13 +3,25 @@
 import { SessionProvider } from "next-auth/react"
 import { ThemeProvider } from "next-themes"
 import { Toaster } from "sonner"
-import { ReactNode } from "react"
+import { ReactNode, useEffect, useState } from "react"
 
 interface ProvidersProps {
   children: ReactNode
 }
 
 export function Providers({ children }: ProvidersProps) {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   return (
     <SessionProvider>
       <ThemeProvider
@@ -22,18 +34,25 @@ export function Providers({ children }: ProvidersProps) {
         {children}
         <Toaster 
           theme="dark"
-          position="bottom-right"
+          position="top-right"
+          offset={isMobile ? "60px" : "80px"}
           toastOptions={{
             style: {
-              background: 'hsl(var(--background))',
-              color: 'hsl(var(--foreground))',
-              border: '1px solid hsl(var(--border))',
-              borderRadius: '8px',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              background: 'rgba(15, 23, 42, 0.95)',
+              color: 'white',
+              border: '1px solid rgba(139, 92, 246, 0.3)',
+              borderRadius: '12px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              backdropFilter: 'blur(10px)',
             },
             className: 'toast-custom',
-            duration: 4000,
+            duration: 3500,
           }}
+          expand={true}
+          richColors={true}
+          closeButton={false}
+          visibleToasts={5}
+          gap={8}
         />
       </ThemeProvider>
     </SessionProvider>

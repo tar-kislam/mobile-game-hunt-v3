@@ -415,7 +415,7 @@ export default function ProductsPage() {
 
             {/* Status Badge */}
             <div className="mb-4 flex items-center gap-2">
-              <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300">
+              <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300 font-[Orbitron] font-semibold">
                 Showing {sortBy === 'newest' ? 'Newest' : 
                          sortBy === 'most-upvoted' ? 'Most Upvoted' :
                          sortBy === 'most-viewed' ? 'Most Viewed' :
@@ -423,7 +423,7 @@ export default function ProductsPage() {
                          sortBy === 'leaderboard' ? 'Leaderboard' : 'Newest'}
               </Badge>
               <span className="text-gray-400">•</span>
-              <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300">
+              <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300 font-[Orbitron] font-semibold">
                 {timeWindow === 'daily' ? 'Daily' :
                  timeWindow === 'weekly' ? 'Weekly' :
                  timeWindow === 'monthly' ? 'Monthly' :

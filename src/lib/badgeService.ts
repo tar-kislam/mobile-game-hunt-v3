@@ -1,9 +1,10 @@
 import { redisClient } from '@/lib/redis'
 import { prisma } from '@/lib/prisma'
-import { notify } from '@/lib/notificationService'
+import { notify, notifyBadgeEarned } from '@/lib/notificationService'
 import { badgeUnlocked, badgeClaimed } from '@/lib/notifications/messages'
+import { awardBadgeXP } from './xpService'
 
-type BadgeType = 'WISE_OWL' | 'FIRE_DRAGON' | 'CLEVER_FOX' | 'GENTLE_PANDA' | 'SWIFT_PUMA'
+type BadgeType = 'WISE_OWL' | 'FIRE_DRAGON' | 'CLEVER_FOX' | 'GENTLE_PANDA' | 'SWIFT_PUMA' | 'EXPLORER' | 'RISING_STAR' | 'PIONEER' | 'FIRST_LAUNCH'
 
 type UserBadges = {
   userId: string
@@ -19,7 +20,7 @@ interface BadgeInfo {
   emoji: string
   description: string
   story: string
-  requirementType: 'comments' | 'votes' | 'games' | 'likes' | 'follows'
+  requirementType: 'comments' | 'votes' | 'games' | 'likes' | 'follows' | 'user_follows' | 'followers' | 'first_game'
   requirementValue: number
   xpReward: number
   nextMilestone?: string
@@ -85,6 +86,54 @@ const BADGE_CONFIG: Record<BadgeType, BadgeInfo> = {
     requirementValue: 25,
     xpReward: 80,
     nextMilestone: 'Follow 50 games for the Thunder Puma badge'
+  },
+  EXPLORER: {
+    type: 'EXPLORER',
+    name: 'Explorer',
+    animal: 'Explorer',
+    emoji: '🧭',
+    description: 'Adventurer who discovers new connections',
+    story: 'The Explorer sets out on journeys to discover new friends and connections. With their compass always pointing toward new relationships, they build bridges across the community.',
+    requirementType: 'user_follows',
+    requirementValue: 10,
+    xpReward: 100,
+    nextMilestone: 'Follow 25 users for the Trailblazer badge'
+  },
+  RISING_STAR: {
+    type: 'RISING_STAR',
+    name: 'Rising Star',
+    animal: 'Star',
+    emoji: '⭐',
+    description: 'Shining beacon that attracts followers',
+    story: 'The Rising Star shines bright in the community sky, attracting followers with their engaging content and charismatic presence. They inspire others to join their journey.',
+    requirementType: 'followers',
+    requirementValue: 100,
+    xpReward: 300,
+    nextMilestone: 'Reach 500 followers for the Superstar badge'
+  },
+  PIONEER: {
+    type: 'PIONEER',
+    name: 'Pioneer',
+    animal: 'Pioneer',
+    emoji: '🛡️',
+    description: 'One of the first 1000 users to join the platform',
+    story: 'The Pioneer was among the first brave souls to venture into this new digital realm. Their early arrival helped shape the foundation of our community and paved the way for all who followed.',
+    requirementType: 'registration_order',
+    requirementValue: 1000,
+    xpReward: 500,
+    nextMilestone: 'Exclusive badge for platform pioneers'
+  },
+  FIRST_LAUNCH: {
+    type: 'FIRST_LAUNCH',
+    name: 'First Launch',
+    animal: 'Target',
+    emoji: '🎯',
+    description: 'Successfully published your first game',
+    story: 'The First Launch represents the moment when a creator takes their first step into the gaming world. This milestone marks the beginning of their journey as a game developer and showcases their courage to share their creation with the world.',
+    requirementType: 'first_game',
+    requirementValue: 1,
+    xpReward: 150,
+    nextMilestone: 'One-time achievement for your first game launch'
   }
 }
 
@@ -107,8 +156,18 @@ export async function getAllUserBadges(): Promise<UserBadges[]> {
 export async function getUserBadges(userId: string): Promise<BadgeType[]> {
   try {
     const allBadges = await getAllUserBadges()
-    const userBadges = allBadges.find(u => u.userId === userId)
-    return userBadges?.badges || []
+    const userBadges = allBadges.find(u => u.userId === userId)?.badges || []
+    
+    // Special handling for Pioneer badge - always include if eligible
+    const isPioneerEligible = await checkPioneerEligibility(userId)
+    if (isPioneerEligible && !userBadges.includes('PIONEER')) {
+      // Auto-award Pioneer badge if user is eligible but doesn't have it
+      console.log(`[BADGE SERVICE] Auto-awarding Pioneer badge to eligible user ${userId}`)
+      await awardBadge(userId, 'PIONEER')
+      return [...userBadges, 'PIONEER']
+    }
+    
+    return userBadges
   } catch (error) {
     console.error('[BADGE SERVICE] Error getting user badges:', error)
     return []
@@ -116,7 +175,7 @@ export async function getUserBadges(userId: string): Promise<BadgeType[]> {
 }
 
 /**
- * Award a badge to a user
+ * Award a badge to a user and grant XP
  */
 export async function awardBadge(userId: string, badgeType: BadgeType): Promise<boolean> {
   try {
@@ -135,9 +194,61 @@ export async function awardBadge(userId: string, badgeType: BadgeType): Promise<
     }
     
     await redisClient.set(BADGE_KEY, JSON.stringify(allBadges))
+    
+    // Grant XP reward using the XP service
+    const badgeInfo = BADGE_CONFIG[badgeType]
+    const xpAwarded = await awardBadgeXP(userId, badgeType, badgeInfo.xpReward)
+    
+    if (!xpAwarded) {
+      console.warn(`[BADGE SERVICE] Failed to award XP for badge ${badgeType}`)
+    }
+    
+    // Send notification about badge earned
+    try {
+      await notifyBadgeEarned(userId, badgeInfo.name, badgeType, badgeInfo.xpReward)
+      console.log(`[BADGE SERVICE] Notification sent for badge ${badgeType} to user ${userId}`)
+    } catch (error) {
+      console.error(`[BADGE SERVICE] Failed to send notification for badge ${badgeType}:`, error)
+    }
+    
+    // Special handling for Pioneer badge - mark as permanent
+    if (badgeType === 'PIONEER') {
+      console.log(`[BADGE SERVICE] Pioneer badge awarded to user ${userId} - marked as permanent`)
+    }
+    
     return true // Badge was newly awarded
   } catch (error) {
     console.error('[BADGE SERVICE] Error awarding badge:', error)
+    return false
+  }
+}
+
+/**
+ * Check if user is eligible for Pioneer badge based on registration order
+ */
+export async function checkPioneerEligibility(userId: string): Promise<boolean> {
+  try {
+    // Get user's registration order by counting users created before them
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { createdAt: true }
+    })
+
+    if (!user) return false
+
+    // Count users created before this user
+    const usersBeforeCount = await prisma.user.count({
+      where: {
+        createdAt: {
+          lt: user.createdAt
+        }
+      }
+    })
+
+    // User is eligible if they are within the first 1000 users
+    return usersBeforeCount < 1000
+  } catch (error) {
+    console.error('[BADGE SERVICE] Error checking Pioneer eligibility:', error)
     return false
   }
 }
@@ -161,7 +272,7 @@ export async function checkAndAwardBadges(userId: string): Promise<BadgeType[]> 
             products: true,
             votes: true,
             comments: true,
-            follows: true
+            following: true
           }
         }
       }
@@ -211,9 +322,54 @@ export async function checkAndAwardBadges(userId: string): Promise<BadgeType[]> 
     
     // Check Swift Puma badge (25+ follows)
     if (!currentBadges.includes('SWIFT_PUMA')) {
-      if (userStats._count.follows >= 25) {
+      if (userStats._count.following >= 25) {
         const awarded = await awardBadge(userId, 'SWIFT_PUMA')
         if (awarded) newlyAwardedBadges.push('SWIFT_PUMA')
+      }
+    }
+    
+    // Check Explorer badge (10+ user follows)
+    if (!currentBadges.includes('EXPLORER')) {
+      const userFollows = await prisma.follow.count({
+        where: { followerId: userId }
+      })
+      if (userFollows >= 10) {
+        const awarded = await awardBadge(userId, 'EXPLORER')
+        if (awarded) newlyAwardedBadges.push('EXPLORER')
+      }
+    }
+    
+    // Check Rising Star badge (100+ followers)
+    if (!currentBadges.includes('RISING_STAR')) {
+      const followers = await prisma.follow.count({
+        where: { followingId: userId }
+      })
+      if (followers >= 100) {
+        const awarded = await awardBadge(userId, 'RISING_STAR')
+        if (awarded) newlyAwardedBadges.push('RISING_STAR')
+      }
+    }
+    
+    // Check Pioneer badge (first 1000 users)
+    if (!currentBadges.includes('PIONEER')) {
+      const isEligible = await checkPioneerEligibility(userId)
+      if (isEligible) {
+        const awarded = await awardBadge(userId, 'PIONEER')
+        if (awarded) newlyAwardedBadges.push('PIONEER')
+      }
+    }
+    
+    // Check First Launch badge (first game published)
+    if (!currentBadges.includes('FIRST_LAUNCH')) {
+      const publishedGames = await prisma.product.count({
+        where: {
+          userId: userId,
+          status: 'PUBLISHED'
+        }
+      })
+      if (publishedGames >= 1) {
+        const awarded = await awardBadge(userId, 'FIRST_LAUNCH')
+        if (awarded) newlyAwardedBadges.push('FIRST_LAUNCH')
       }
     }
     

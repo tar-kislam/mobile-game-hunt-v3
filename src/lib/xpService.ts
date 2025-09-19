@@ -1,309 +1,242 @@
 import { prisma } from '@/lib/prisma'
-import { toast } from 'sonner'
-import { notify } from '@/lib/notificationService'
-import { xpGained, levelReached } from '@/lib/notifications/messages'
+import { calculateLevelProgress } from './xpCalculator'
+import { notifyXPProgress } from '@/lib/notificationService'
 
-/**
- * XP Service - Handles user experience points and level calculations
- * 
- * This service provides helper functions for managing user XP and levels
- * without modifying existing business logic. These functions can be called
- * inside existing flows to add XP and handle level progression.
- */
+export type XPAction = 'vote' | 'comment' | 'follow' | 'add_game' | 'badge'
 
-/**
- * Calculate level from XP amount
- * Formula: Math.floor(xp / 100) + 1
- * 
- * @param xp - Experience points
- * @returns Level number
- * 
- * @example
- * getLevelFromXP(0)    // Level 1
- * getLevelFromXP(150)  // Level 2
- * getLevelFromXP(350)  // Level 4
- */
-export function getLevelFromXP(xp: number): number {
-  return Math.floor(xp / 100) + 1
+export interface XPReward {
+  action: XPAction
+  amount: number
+  description: string
+}
+
+export const XP_REWARDS: Record<XPAction, XPReward> = {
+  vote: {
+    action: 'vote',
+    amount: 2,
+    description: 'Voted on a game'
+  },
+  comment: {
+    action: 'comment',
+    amount: 3,
+    description: 'Commented on a game'
+  },
+  follow: {
+    action: 'follow',
+    amount: 5,
+    description: 'Followed a user'
+  },
+  add_game: {
+    action: 'add_game',
+    amount: 10,
+    description: 'Added a new game'
+  },
+  badge: {
+    action: 'badge',
+    amount: 0, // Amount will be set dynamically based on badge
+    description: 'Earned a badge'
+  }
 }
 
 /**
- * Add XP to a user and handle level progression
- * 
- * This function:
- * 1. Increments user.xp by the specified amount
- * 2. Calculates new level based on new XP total
- * 3. Updates user.level if the new level is higher
- * 4. Returns the updated user object
- * 
- * @param userId - User ID to add XP to
- * @param amount - Amount of XP to add (must be positive)
- * @returns Updated user object with new XP and level
- * 
- * @throws Error if user not found or amount is invalid
+ * Create level-up notifications for each level gained
  */
-export async function addXP(userId: string, amount: number): Promise<{
-  id: string
-  name: string | null
-  email: string
-  xp: number
-  level: number
-}> {
-  // Validate input
-  if (amount <= 0) {
-    throw new Error('XP amount must be positive')
-  }
-
-  if (!userId || typeof userId !== 'string') {
-    throw new Error('Valid userId is required')
-  }
-
+async function createLevelUpNotifications(
+  userId: string, 
+  previousLevel: number, 
+  newLevel: number
+): Promise<void> {
   try {
-    // Get current user data
-    const currentUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        xp: true,
-        level: true
-      }
-    })
-
-    if (!currentUser) {
-      throw new Error('User not found')
-    }
-
-    // Calculate new XP and level
-    const newXP = currentUser.xp + amount
-    const newLevel = getLevelFromXP(newXP)
-
-    // Update user with new XP and level (if level increased)
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        xp: newXP,
-        level: newLevel > currentUser.level ? newLevel : currentUser.level
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        xp: true,
-        level: true
-      }
-    })
-
-    // Show toast notification for level up
-    if (newLevel > currentUser.level) {
-      console.log(`[XP SERVICE] User ${userId} leveled up from ${currentUser.level} to ${newLevel}`)
-      
-      // Show level up toast notification
-      toast.success(`🚀 You reached Level ${newLevel}!`, {
-        description: `Congratulations! You've gained ${amount} XP and leveled up!`,
-        duration: 5000,
+    // Create notifications for each level gained (handles multiple level jumps)
+    for (let level = previousLevel + 1; level <= newLevel; level++) {
+      // Check if notification already exists for this level (idempotency)
+      const existingNotification = await prisma.notification.findFirst({
+        where: {
+          userId,
+          type: 'LEVEL_UP',
+          meta: {
+            path: ['newLevel'],
+            equals: level
+          }
+        }
       })
 
-      // Send level up notification
-      try {
-        await notify(userId, levelReached(newLevel), 'level_up')
-      } catch (notificationError) {
-        console.error('[XP SERVICE] Error sending level up notification:', notificationError)
+      if (!existingNotification) {
+        await prisma.notification.create({
+          data: {
+            userId,
+            type: 'LEVEL_UP',
+            title: 'Level Up!',
+            message: `You reached Level ${level} 🚀`,
+            meta: {
+              newLevel: level,
+              previousLevel: level - 1
+            },
+            link: '/profile#badges',
+            icon: 'trophy',
+            read: false
+          }
+        })
+
+        console.log(`[XP SERVICE] Created level-up notification for user ${userId} - Level ${level}`)
       }
     }
-
-    // Send XP gained notification
-    try {
-      await notify(userId, xpGained(amount), 'xp')
-    } catch (notificationError) {
-      console.error('[XP SERVICE] Error sending XP notification:', notificationError)
-    }
-
-    return updatedUser
   } catch (error) {
-    console.error('[XP SERVICE] Error adding XP:', error)
-    throw error
+    console.error('[XP SERVICE] Error creating level-up notifications:', error)
+    // Don't fail XP award if notification creation fails
   }
 }
 
 /**
- * Add XP with first-time bonus logic
- * 
- * This function checks if it's the user's first time performing an action
- * and awards bonus XP accordingly.
- * 
- * @param userId - User ID to add XP to
- * @param baseAmount - Base XP amount to award
- * @param bonusAmount - Bonus XP for first-time action
- * @param actionType - Type of action ('vote', 'comment', 'submit')
- * @returns Updated user object with new XP and level
+ * Award XP to a user for a specific action
  */
-export async function addXPWithBonus(
+export async function awardXP(
   userId: string, 
-  baseAmount: number, 
-  bonusAmount: number, 
-  actionType: 'vote' | 'comment' | 'submit' | 'like' | 'follow'
+  action: XPAction, 
+  customAmount?: number
 ): Promise<{
-  id: string
-  name: string | null
-  email: string
-  xp: number
-  level: number
-  isFirstTime: boolean
+  success: boolean
+  xpAwarded: number
+  newTotalXP: number
+  levelUp: boolean
+  newLevel: number
+  previousLevel: number
 }> {
   try {
-    // Check if user has performed this action before
-    let isFirstTime = false
-    
-    switch (actionType) {
-      case 'vote':
-        const existingVote = await prisma.vote.findFirst({
-          where: { userId }
-        })
-        isFirstTime = !existingVote
-        break
-        
-      case 'comment':
-        const existingComment = await prisma.postComment.findFirst({
-          where: { userId }
-        })
-        isFirstTime = !existingComment
-        break
-        
-      case 'submit':
-        const existingProduct = await prisma.product.findFirst({
-          where: { userId }
-        })
-        isFirstTime = !existingProduct
-        break
-        
-      case 'like':
-        const existingLike = await prisma.vote.findFirst({
-          where: { userId }
-        })
-        isFirstTime = !existingLike
-        break
-        
-      case 'follow':
-        const existingFollow = await prisma.follow.findFirst({
-          where: { userId }
-        })
-        isFirstTime = !existingFollow
-        break
-        
-      default:
-        isFirstTime = false
-    }
-
-    // Calculate total XP amount
-    const totalAmount = baseAmount + (isFirstTime ? bonusAmount : 0)
-
-    // Add XP
-    const updatedUser = await addXP(userId, totalAmount)
-
-    // Log bonus if awarded
-    if (isFirstTime) {
-      console.log(`[XP SERVICE] First-time ${actionType} bonus: ${bonusAmount} XP awarded to user ${userId}`)
-    }
-
-    return {
-      ...updatedUser,
-      isFirstTime
-    }
-  } catch (error) {
-    console.error('[XP SERVICE] Error adding XP with bonus:', error)
-    throw error
-  }
-}
-
-/**
- * Get user's current XP and level information
- * 
- * @param userId - User ID to get XP info for
- * @returns User XP and level data
- */
-export async function getUserXPInfo(userId: string): Promise<{
-  id: string
-  name: string | null
-  email: string
-  xp: number
-  level: number
-  xpToNextLevel: number
-  xpProgress: number
-}> {
-  if (!userId || typeof userId !== 'string') {
-    throw new Error('Valid userId is required')
-  }
-
-  try {
+    // Get current user XP
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        xp: true,
-        level: true
-      }
+      select: { xp: true }
     })
 
     if (!user) {
       throw new Error('User not found')
     }
 
-    // Calculate XP progress to next level
-    const currentLevelXP = (user.level - 1) * 100
-    const nextLevelXP = user.level * 100
-    const xpToNextLevel = nextLevelXP - user.xp
-    const xpProgress = ((user.xp - currentLevelXP) / 100) * 100
+    const currentXP = user.xp
+    const previousLevelProgress = calculateLevelProgress(currentXP)
+    const previousLevel = previousLevelProgress.level
+
+    // Determine XP amount
+    let xpAmount: number
+    if (customAmount !== undefined) {
+      xpAmount = customAmount
+    } else {
+      xpAmount = XP_REWARDS[action].amount
+    }
+
+    // Update user's XP
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        xp: {
+          increment: xpAmount
+        }
+      },
+      select: { xp: true }
+    })
+
+    const newTotalXP = updatedUser.xp
+    const newLevelProgress = calculateLevelProgress(newTotalXP)
+    const newLevel = newLevelProgress.level
+    const levelUp = newLevel > previousLevel
+
+    // Create level-up notifications if user leveled up
+    if (levelUp) {
+      await createLevelUpNotifications(userId, previousLevel, newLevel)
+    }
+
+    // Send XP progress notification (for non-badge XP)
+    if (action !== 'badge') {
+      try {
+        await notifyXPProgress(userId, xpAmount, XP_REWARDS[action].description)
+        console.log(`[XP SERVICE] XP progress notification sent for user ${userId}: +${xpAmount} XP`)
+      } catch (error) {
+        console.error(`[XP SERVICE] Failed to send XP progress notification:`, error)
+      }
+    }
+
+    // Dispatch XP update event for UI refresh (client-side only)
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('xp-updated', {
+        detail: {
+          userId,
+          xpAwarded: xpAmount,
+          newTotalXP,
+          levelUp,
+          newLevel,
+          previousLevel,
+          action
+        }
+      }))
+    }
 
     return {
-      ...user,
-      xpToNextLevel: Math.max(0, xpToNextLevel),
-      xpProgress: Math.min(100, Math.max(0, xpProgress))
+      success: true,
+      xpAwarded: xpAmount,
+      newTotalXP,
+      levelUp,
+      newLevel,
+      previousLevel
     }
   } catch (error) {
-    console.error('[XP SERVICE] Error getting user XP info:', error)
-    throw error
+    console.error('[XP SERVICE] Error awarding XP:', error)
+    return {
+      success: false,
+      xpAwarded: 0,
+      newTotalXP: 0,
+      levelUp: false,
+      newLevel: 1,
+      previousLevel: 1
+    }
   }
 }
 
 /**
- * Get leaderboard of users by XP
- * 
- * @param limit - Number of users to return (default: 10)
- * @returns Array of users sorted by XP descending
+ * Award XP for badge earning (used by badge service)
  */
-export async function getXPLeaderboard(limit: number = 10): Promise<Array<{
-  id: string
-  name: string | null
-  email: string
-  xp: number
-  level: number
-  rank: number
-}>> {
+export async function awardBadgeXP(userId: string, badgeType: string, xpAmount: number): Promise<boolean> {
   try {
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        xp: true,
-        level: true
-      },
-      orderBy: {
-        xp: 'desc'
-      },
-      take: limit
+    const result = await awardXP(userId, 'badge', xpAmount)
+    return result.success
+  } catch (error) {
+    console.error('[XP SERVICE] Error awarding badge XP:', error)
+    return false
+  }
+}
+
+/**
+ * Get user's current XP and level information
+ */
+export async function getUserXPInfo(userId: string): Promise<{
+  totalXP: number
+  level: number
+  currentXP: number
+  requiredXP: number
+  remainingXP: number
+  progressPercentage: number
+} | null> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { xp: true }
     })
 
-    return users.map((user, index) => ({
-      ...user,
-      rank: index + 1
-    }))
+    if (!user) return null
+
+    const levelProgress = calculateLevelProgress(user.xp)
+    const progressPercentage = Math.round((levelProgress.currentXP / levelProgress.requiredXP) * 100)
+
+    return {
+      totalXP: user.xp,
+      level: levelProgress.level,
+      currentXP: levelProgress.currentXP,
+      requiredXP: levelProgress.requiredXP,
+      remainingXP: levelProgress.remainingXP,
+      progressPercentage
+    }
   } catch (error) {
-    console.error('[XP SERVICE] Error getting XP leaderboard:', error)
-    throw error
+    console.error('[XP SERVICE] Error getting user XP info:', error)
+    return null
   }
 }
