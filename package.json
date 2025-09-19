@@ -14,12 +14,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "db:seed": "prisma db seed",
-    "lighthouse:ci": "lhci autorun",
-    "lighthouse:mobile": "lhci autorun --config=lighthouserc.mobile.json",
-    "lighthouse:desktop": "lhci autorun --config=lighthouserc.desktop.json",
-    "analyze": "source-map-explorer 'out/static/chunks/*.js'",
-    "analyze:build": "npm run build && npm run analyze"
+    "db:seed": "prisma db seed"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

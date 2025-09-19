@@ -35,6 +35,7 @@ import {
 import { toast } from 'sonner'
 import { LazyShuffle } from '@/components/LazyComponents'
 import { useNotifications } from '@/hooks/useNotifications'
+import Head from 'next/head'
 
 // Function to get appropriate icon for notification type
 function getNotificationIcon(type: string, icon?: string) {
@@ -209,8 +210,15 @@ export default function NotificationsPage() {
   const readCount = totalNotifications - unreadCount
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+    <>
+      <Head>
+        <title>Notifications | Mobile Game Hunt</title>
+        <meta name="description" content="Stay updated with your latest notifications, badges, XP progress, and community activity on Mobile Game Hunt." />
+        <meta name="robots" content="noindex,nofollow" />
+        <link rel="canonical" href={`${process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'}/notifications`} />
+      </Head>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -249,14 +257,14 @@ export default function NotificationsPage() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="bg-card border-border hover:bg-accent hover:text-accent-foreground"
+                className="bg-card border hover:bg-accent hover:text-accent-foreground"
               >
                 <Filter className="h-4 w-4 mr-2" />
                 {getFilterLabel(filter)}
                 <ChevronDown className="h-4 w-4 ml-2" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-card border-border">
+            <DropdownMenuContent className="bg-card border">
               <DropdownMenuItem 
                 onClick={() => setFilter('all')}
                 className="text-card-foreground hover:bg-accent hover:text-accent-foreground"
@@ -517,5 +525,6 @@ export default function NotificationsPage() {
         </motion.div>
       </div>
     </div>
+    </>
   )
 }

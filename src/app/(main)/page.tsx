@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import Head from "next/head"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -278,9 +279,6 @@ function ProductCard({ product, rank }: { product: any, rank?: number }) {
             <img 
               src={product.image} 
               alt={product.title}
-              width={64}
-              height={64}
-              loading="lazy"
               className="w-full h-full object-cover"
             />
           </div>
@@ -463,8 +461,15 @@ export default function HomePage() {
   const featuredGame = Array.isArray(games) && games.length > 0 ? games[0] : null
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-full overflow-hidden">
+    <>
+      <Head>
+        <title>Mobile Game Hunt - Discover the Best Mobile Games</title>
+        <meta name="description" content="Discover and showcase the best mobile games and apps. Connect with developers, share your favorites, and stay updated with the latest releases in mobile gaming." />
+        <meta name="keywords" content="mobile games, app discovery, game reviews, mobile gaming, indie games, game developers" />
+        <link rel="canonical" href={process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'} />
+      </Head>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8 max-w-full overflow-hidden">
         {/* CTA Section - Main Hero */}
         <CTASection />
 
@@ -802,5 +807,6 @@ export default function HomePage() {
         onClose={() => setIsNewsletterModalOpen(false)} 
       />
     </div>
+    </>
   )
 }
