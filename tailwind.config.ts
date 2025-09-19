@@ -8,6 +8,36 @@ export default {
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
   ],
+  // Enable purging for production builds
+  purge: {
+    enabled: process.env.NODE_ENV === 'production',
+    content: [
+      './pages/**/*.{ts,tsx}',
+      './components/**/*.{ts,tsx}',
+      './app/**/*.{ts,tsx}',
+      './src/**/*.{ts,tsx}',
+    ],
+    // Safelist important classes that might be dynamically generated
+    safelist: [
+      'text-purple-400',
+      'text-purple-300',
+      'bg-purple-500',
+      'border-purple-500',
+      'shadow-purple-500',
+      'hover:shadow-purple-500',
+      'from-purple-600',
+      'to-purple-700',
+      'bg-gradient-to-r',
+      'animate-spin',
+      'animate-pulse',
+      'animate-bounce',
+    ],
+    // Remove unused CSS
+    options: {
+      keyframes: true,
+      fontFace: true,
+    },
+  },
   prefix: '',
   theme: {
     container: {

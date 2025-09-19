@@ -195,13 +195,26 @@ export default function DashboardPage() {
                           <div className="p-4 flex items-center gap-3">
                             <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-700 flex items-center justify-center transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 hover:ring-2 hover:ring-purple-400/50">
                               {g.thumbnail ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={g.thumbnail} alt={g.title} className="w-full h-full object-cover" />
+                                <img 
+                                  src={g.thumbnail} 
+                                  alt={g.title} 
+                                  width={64}
+                                  height={64}
+                                  loading="lazy"
+                                  className="w-full h-full object-cover" 
+                                />
                               ) : (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src="/logo/mgh.png" alt="Game placeholder" className="w-8 h-8 object-contain" onError={(e) => {
-                                  e.currentTarget.src = '/logo/moblogo.png';
-                                }} />
+                                <img 
+                                  src="/logo/mgh.png" 
+                                  alt="Game placeholder" 
+                                  width={32}
+                                  height={32}
+                                  loading="lazy"
+                                  className="w-8 h-8 object-contain" 
+                                  onError={(e) => {
+                                    e.currentTarget.src = '/logo/moblogo.png';
+                                  }} 
+                                />
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -395,13 +408,26 @@ export default function DashboardPage() {
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-700 flex items-center justify-center transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 hover:ring-2 hover:ring-purple-400/50">
                               {g.thumbnail ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={g.thumbnail} alt={g.title} className="w-full h-full object-cover" />
+                                <img 
+                                  src={g.thumbnail} 
+                                  alt={g.title} 
+                                  width={48}
+                                  height={48}
+                                  loading="lazy"
+                                  className="w-full h-full object-cover" 
+                                />
                               ) : (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src="/logo/mgh.png" alt="Game placeholder" className="w-6 h-6 object-contain" onError={(e) => {
-                                  e.currentTarget.src = '/logo/moblogo.png';
-                                }} />
+                                <img 
+                                  src="/logo/mgh.png" 
+                                  alt="Game placeholder" 
+                                  width={24}
+                                  height={24}
+                                  loading="lazy"
+                                  className="w-6 h-6 object-contain" 
+                                  onError={(e) => {
+                                    e.currentTarget.src = '/logo/moblogo.png';
+                                  }} 
+                                />
                               )}
                             </div>
                             <span className="text-white">{g.title}</span>

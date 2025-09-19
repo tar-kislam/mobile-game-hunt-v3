@@ -33,8 +33,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
-import Galaxy from '@/components/Galaxy'
-import Shuffle from '@/components/Shuffle'
+import { LazyShuffle } from '@/components/LazyComponents'
 import { useNotifications } from '@/hooks/useNotifications'
 
 // Function to get appropriate icon for notification type
@@ -220,7 +219,7 @@ export default function NotificationsPage() {
         >
           <div className="flex items-center justify-center mb-4">
             <BellRing className="h-8 w-8 text-purple-400 mr-3" />
-            <Shuffle
+            <LazyShuffle
               text="Notifications"
               shuffleDirection="right"
               duration={0.35}

@@ -278,6 +278,9 @@ function ProductCard({ product, rank }: { product: any, rank?: number }) {
             <img 
               src={product.image} 
               alt={product.title}
+              width={64}
+              height={64}
+              loading="lazy"
               className="w-full h-full object-cover"
             />
           </div>

@@ -6,8 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import Shuffle from '@/components/Shuffle';
-import Galaxy from '@/components/Galaxy';
+import { LazyGalaxy, LazyShuffle } from '@/components/LazyComponents';
 
 interface LeaderboardProduct {
   id: string;
@@ -237,7 +236,7 @@ export default function LeaderboardPage() {
   return (
     <div className="relative w-full min-h-screen overflow-hidden">
       {/* Galaxy Background */}
-      <Galaxy 
+      <LazyGalaxy 
         mouseRepulsion={true}
         mouseInteraction={true}
         density={1.8}
@@ -265,7 +264,7 @@ export default function LeaderboardPage() {
         >
           <div className="mb-6 flex items-end justify-center">
             <span className="text-6xl mr-4 mb-2">🏆</span>
-            <Shuffle
+            <LazyShuffle
               text="Leaderboard"
               shuffleDirection="right"
               duration={0.35}
@@ -276,11 +275,7 @@ export default function LeaderboardPage() {
               threshold={0.1}
               loop={true}
               loopDelay={1}
-              triggerOnce={false}
-              triggerOnHover={false}
-              respectReducedMotion={true}
               className="text-6xl font-bold text-white"
-              tag="h1"
             />
           </div>
           <p 
@@ -383,6 +378,9 @@ export default function LeaderboardPage() {
                               <img
                                 src={product.thumbnail}
                                 alt={product.title}
+                                width={96}
+                                height={96}
+                                loading="lazy"
                                 className="w-24 h-24 rounded-xl object-cover border-2 border-purple-500/30 group-hover:border-purple-400/60 transition-colors duration-300"
                               />
                             ) : (
