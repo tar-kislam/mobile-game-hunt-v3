@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { WebVitalsScript } from "@/components/WebVitalsScript";
 
 const dmMono = DM_Mono({
   variable: "--font-dm-mono",
@@ -40,6 +41,7 @@ export default function RootLayout({
       <body
         className={`${dmMono.variable} antialiased`}
       >
+        <WebVitalsScript />
         <Providers>
           {children}
         </Providers>

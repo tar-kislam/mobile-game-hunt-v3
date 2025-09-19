@@ -14,7 +14,12 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "lighthouse:ci": "lhci autorun",
+    "lighthouse:mobile": "lhci autorun --config=lighthouserc.mobile.json",
+    "lighthouse:desktop": "lhci autorun --config=lighthouserc.desktop.json",
+    "analyze": "source-map-explorer 'out/static/chunks/*.js'",
+    "analyze:build": "npm run build && npm run analyze"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -79,10 +84,12 @@
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.179.1",
+    "web-vitals": "^5.1.0",
     "zod": "^4.1.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@lhci/cli": "^0.15.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.15.5",
@@ -91,6 +98,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
     "prettier": "^3.6.2",
+    "source-map-explorer": "^2.5.3",
     "tailwindcss": "^4",
     "tsx": "^4.20.5",
     "tw-animate-css": "^1.3.7",

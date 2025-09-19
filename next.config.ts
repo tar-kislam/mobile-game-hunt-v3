@@ -19,6 +19,9 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   compress: true,
   poweredByHeader: false,
+  
+  // Enable source maps for bundle analysis
+  productionBrowserSourceMaps: true,
 
   // Image optimization
   images: {
