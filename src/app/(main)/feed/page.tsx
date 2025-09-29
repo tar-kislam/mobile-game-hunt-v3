@@ -7,15 +7,16 @@ import Shuffle from '@/components/Shuffle'
 export default function FeedPage() {
   return (
     <div className="relative w-full min-h-screen overflow-hidden">
-      <Galaxy
-        mouseRepulsion={true}
-        mouseInteraction={true}
-        density={1.8}
-        glowIntensity={0.7}
-        saturation={0.9}
-        hueShift={260}
-        className="absolute inset-0 z-0"
-      />
+      <div className="absolute inset-0 z-0">
+        <Galaxy
+          mouseRepulsion={true}
+          mouseInteraction={true}
+          density={1.8}
+          glowIntensity={0.7}
+          saturation={0.9}
+          hueShift={260}
+        />
+      </div>
       <div
         className="absolute inset-0 z-5"
         style={{
