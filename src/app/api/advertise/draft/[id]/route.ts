@@ -26,7 +26,7 @@ export async function PATCH(req: Request, context: any) {
       where: {
         id: params.id,
         userId: session.user.id,
-        status: CampaignStatus.PENDING
+        status: CampaignStatus.DRAFT
       }
     })
 
@@ -67,7 +67,7 @@ export async function POST(req: Request, context: any) {
       where: {
         id: params.id,
         userId: session.user.id,
-        status: CampaignStatus.PENDING
+        status: CampaignStatus.DRAFT
       }
     })
 
