@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Transform data to match expected format
-    const transformedGames = games.map(game => ({
+    const transformedGames = games.map((game: any) => ({
       id: game.id,
       title: game.title,
       upvotes: game._count.votes,
