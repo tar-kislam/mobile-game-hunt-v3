@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
       username: user.username,
       name: user.name,
       image: user.image,
-      followersCount: user._count.followUsers,
+      followersCount: user._count.followers,
       mutualConnections: mutualCounts[user.id],
       reason: `${mutualCounts[user.id]} mutual connection${mutualCounts[user.id] > 1 ? 's' : ''}`
     }));
