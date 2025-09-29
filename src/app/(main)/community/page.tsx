@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import { CommunityFeed } from '@/components/community/community-feed'
 import { CommunityFeedContainer } from '@/components/community/CommunityFeedContainer'
 import { TrendingTopicsWrapper } from '@/components/community/trending-topics-wrapper'
@@ -66,9 +67,7 @@ export default async function CommunityPage() {
         createdAt: {
           gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
         },
-        hashtags: {
-          not: null
-        }
+        hashtags: { not: Prisma.JsonNull }
       }
     })
 
@@ -76,7 +75,8 @@ export default async function CommunityPage() {
     const tagCounts: Record<string, number> = {}
     trendingTags.forEach(post => {
       if (post.hashtags && Array.isArray(post.hashtags)) {
-        post.hashtags.forEach((hashtag: string) => {
+        const tags = post.hashtags as unknown as Array<unknown>
+        tags.forEach((hashtag) => {
           if (typeof hashtag === 'string' && hashtag.trim()) {
             const cleanHashtag = hashtag.trim().toLowerCase()
             tagCounts[cleanHashtag] = (tagCounts[cleanHashtag] || 0) + 1
