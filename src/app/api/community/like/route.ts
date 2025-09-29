@@ -53,9 +53,9 @@ export async function POST(request: NextRequest) {
           data: {
             userId: post.userId,
             type: 'like',
-            postId: postId,
+            meta: { postId: postId },
             message: `${session.user.name || 'Someone'} unliked your post`,
-            isRead: false
+            read: false
           }
         })
       }
@@ -99,9 +99,9 @@ export async function POST(request: NextRequest) {
           data: {
             userId: post.userId,
             type: 'like',
-            postId: postId,
+            meta: { postId: postId },
             message: `${session.user.name || 'Someone'} liked your post`,
-            isRead: false
+            read: false
           }
         })
       }
