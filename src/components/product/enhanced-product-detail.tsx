@@ -193,19 +193,15 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
     trackProductView();
   }, [session, product.id]);
 
-
   useEffect(() => {
-    const likes = [product.title, product.tagline || '', ...(product.platforms || [])].join(',')
-    const load = async () => {
-      try {
-        const res = await fetch(`/api/recommend?likes=${encodeURIComponent(likes)}&take=5`)
-        if (!res.ok) return
-        const data = await res.json()
-        setRecommended(data.products || [])
-      } catch {}
+    if (product?.id) {
+      fetch('/api/metrics/click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gameId: product.id, type: 'INTERNAL' })
+      }).catch(() => {})
     }
-    load()
-  }, [product.id])
+  }, [product?.id])
 
   const checkPressKitStatus = async () => {
     try {

@@ -90,6 +90,8 @@ export default withAuth(
           pathname.startsWith('/api/featured-games') || // Allow featured games API
           pathname.startsWith('/api/games') ||     // Allow games search API
           pathname.startsWith('/api/leaderboard') || // Allow leaderboard API
+          pathname.startsWith('/api/community') || // Allow community APIs (routes enforce method-level auth)
+          pathname.startsWith('/api/playtest') || // Allow playtest API (route handles auth per method)
           pathname.startsWith('/api/user') ||
           pathname.startsWith('/product') ||       // Added product detail pages
           pathname.startsWith('/user/') ||        // Allow username-based profile pages

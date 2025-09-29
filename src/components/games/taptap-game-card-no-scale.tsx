@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ArrowUpIcon, MessageCircleIcon, ExternalLinkIcon } from "lucide-react"
+import { getAuthorLabel } from "@/lib/author"
 
 interface Game {
   id: string
@@ -14,6 +15,7 @@ interface Game {
   slug: string
   tagline?: string | null
   description: string
+  shortPitch?: string | null
   image?: string | null
   thumbnail?: string | null
   images?: string[]
@@ -147,10 +149,10 @@ export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTa
             {game.title}
           </h3>
 
-          {/* Tagline */}
-          {game.tagline && (
+          {/* Short Pitch or Tagline */}
+          {(game.shortPitch || game.tagline) && (
             <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-1 mb-2">
-              {game.tagline}
+              {game.shortPitch || game.tagline}
             </p>
           )}
 
@@ -193,7 +195,7 @@ export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTa
                 </AvatarFallback>
               </Avatar>
               <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                by {game.user.name || 'Anonymous'}
+                by {getAuthorLabel({ user: game.user as any })}
               </span>
             </div>
           )}

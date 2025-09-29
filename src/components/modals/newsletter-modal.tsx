@@ -147,12 +147,13 @@ export function NewsletterModal({ isOpen, onClose }: NewsletterModalProps) {
               
               {/* Content */}
               <div className="relative z-20">
-                {/* Close Button */}
+                {/* Close Button (pushed further to the corner) */}
                 <button
                   onClick={onClose}
-                  className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white transition-colors z-30"
+                  className="absolute -top-3 -right-3 p-2 rounded-full bg-black/60 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 transition-colors z-30"
+                  aria-label="Close"
                 >
-                  <XIcon className="h-5 w-5" />
+                  <XIcon className="h-4 w-4" />
                 </button>
 
               {/* Content - Hero Section Style */}

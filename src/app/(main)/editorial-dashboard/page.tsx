@@ -36,15 +36,22 @@ interface NewsletterSubscriber {
 
 type ActiveSection = 'games' | 'newsletter' | 'campaigns'
 
-interface AdRequest {
+interface Campaign {
   id: string
-  userEmail?: string | null
-  package: 'daily' | 'weekly' | 'monthly'
-  promotions: any
+  gameId: string
   gameName: string
-  totalPrice: number
-  status?: 'pending' | 'approved' | 'rejected'
-  createdAt: string
+  goal: string
+  placements: string[]
+  package: string
+  budget: number
+  submittedAt: string
+  user: {
+    id: string
+    name: string | null
+    email: string
+    username: string | null
+    image: string | null
+  }
 }
 
 export default function EditorialDashboard() {
@@ -53,7 +60,7 @@ export default function EditorialDashboard() {
   const [activeSection, setActiveSection] = useState<ActiveSection>('games')
   const [products, setProducts] = useState<Product[]>([])
   const [newsletterSubscribers, setNewsletterSubscribers] = useState<NewsletterSubscriber[]>([])
-  const [adRequests, setAdRequests] = useState<AdRequest[]>([])
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -86,10 +93,10 @@ export default function EditorialDashboard() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const [gamesRes, newsletterRes, adReqRes] = await Promise.all([
+        const [gamesRes, newsletterRes, campaignsRes] = await Promise.all([
           fetch('/api/admin/games'),
           fetch('/api/admin/newsletter'),
-          fetch('/api/ad-requests')
+          fetch('/api/campaigns')
         ])
 
         if (gamesRes.ok) {
@@ -106,11 +113,11 @@ export default function EditorialDashboard() {
           toast.error('Failed to load newsletter data')
         }
 
-        if (adReqRes.ok) {
-          const adReqJson = await adReqRes.json()
-          setAdRequests(adReqJson?.data || [])
+        if (campaignsRes.ok) {
+          const campaignsData = await campaignsRes.json()
+          setCampaigns(campaignsData.campaigns || [])
         } else {
-          toast.error('Failed to load ad requests')
+          toast.error('Failed to load campaigns')
         }
       } catch (error) {
         toast.error('Failed to load data')
@@ -199,23 +206,6 @@ export default function EditorialDashboard() {
     return null
   }
 
-  // Helpers
-  const prettyGoal = (promotions: any): string => {
-    if (promotions && typeof promotions === 'object' && 'goal' in promotions) {
-      return String((promotions as any).goal)
-    }
-    return '-'
-  }
-
-  const prettyPromotions = (promotions: any): string => {
-    if (Array.isArray(promotions)) return promotions.join(', ')
-    if (promotions && typeof promotions === 'object') {
-      // try common keys
-      const arr = (promotions as any).promotions || (promotions as any).placements || []
-      if (Array.isArray(arr)) return arr.join(', ')
-    }
-    return String(promotions ?? '-')
-  }
 
   return (
     <div className="min-h-screen w-full relative">
@@ -418,56 +408,70 @@ export default function EditorialDashboard() {
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <TrendingUp className="w-5 h-5" />
-                    Ad Requests
+                    Advertising Campaigns
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-gray-700">
-                          <TableHead className="text-gray-300">User Email</TableHead>
-                          <TableHead className="text-gray-300">Goal</TableHead>
-                          <TableHead className="text-gray-300">Package</TableHead>
-                          <TableHead className="text-gray-300">Promotions</TableHead>
-                          <TableHead className="text-gray-300">Game</TableHead>
-                          <TableHead className="text-gray-300">Total Price</TableHead>
-                          <TableHead className="text-gray-300">Status</TableHead>
-                          <TableHead className="text-gray-300">Created At</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {adRequests.map((r) => {
-                          const userEmail = r.userEmail || 'N/A'
-                          const goal = prettyGoal(r.promotions)
-                          const pkg = r.package
-                          const promos = prettyPromotions(r.promotions)
-                          const game = r.gameName || '-'
-                          const price = r.totalPrice ?? 0
-                          const status = r.status || 'pending'
-                          const created = r.createdAt
-                          return (
-                            <TableRow key={r.id} className="border-gray-700">
-                              <TableCell className="text-white">{userEmail}</TableCell>
-                              <TableCell className="text-gray-300">{goal}</TableCell>
-                              <TableCell className="text-gray-300">{pkg}</TableCell>
-                              <TableCell className="text-gray-300">{promos}</TableCell>
-                              <TableCell className="text-gray-300">{game}</TableCell>
-                              <TableCell className="text-gray-300">${price}</TableCell>
-                              <TableCell className="text-gray-300">{status}</TableCell>
-                              <TableCell className="text-gray-300">{created ? new Date(created).toLocaleString() : '-'}</TableCell>
-                            </TableRow>
-                          )
-                        })}
-                        {adRequests.length === 0 && (
-                          <TableRow className="border-gray-700">
-                            <TableCell colSpan={8} className="text-center text-gray-400 py-8">
-                              No ad requests yet
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                  <div className="grid gap-4">
+                    {campaigns.length > 0 ? (
+                      campaigns.map((campaign) => (
+                        <Card key={campaign.id} className="bg-zinc-800/40 backdrop-blur-md border border-white/5 hover:border-purple-500/30 transition-all duration-200">
+                          <CardContent className="p-6">
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex items-center gap-3">
+                                <Avatar className="w-10 h-10">
+                                  <AvatarImage src={campaign.user.image || '/logo/mgh.png'} />
+                                  <AvatarFallback>{campaign.user.name?.charAt(0) || campaign.user.email.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <h3 className="text-white font-semibold text-lg">{campaign.gameName}</h3>
+                                  <p className="text-gray-400 text-sm">
+                                    by {campaign.user.name || campaign.user.username || campaign.user.email}
+                                  </p>
+                                </div>
+                              </div>
+                              <Badge variant="secondary" className="bg-purple-600/20 text-purple-300 border-purple-500/30">
+                                ${campaign.budget}
+                              </Badge>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div>
+                                <p className="text-gray-400 text-sm mb-1">Goal</p>
+                                <p className="text-white font-medium">{campaign.goal}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-400 text-sm mb-1">Package</p>
+                                <p className="text-white font-medium capitalize">{campaign.package}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-400 text-sm mb-1">Submitted</p>
+                                <p className="text-white font-medium">
+                                  {new Date(campaign.submittedAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="mt-4">
+                              <p className="text-gray-400 text-sm mb-2">Placements</p>
+                              <div className="flex flex-wrap gap-2">
+                                {campaign.placements.map((placement, index) => (
+                                  <Badge key={index} variant="outline" className="border-gray-600 text-gray-300">
+                                    {placement.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    ) : (
+                      <div className="text-center py-12">
+                        <TrendingUp className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                        <h3 className="text-white text-lg font-semibold mb-2">No Campaigns Yet</h3>
+                        <p className="text-gray-400">Campaigns submitted through the advertise page will appear here.</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

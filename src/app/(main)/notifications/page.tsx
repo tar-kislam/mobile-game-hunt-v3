@@ -33,9 +33,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
-import { LazyShuffle } from '@/components/LazyComponents'
 import { useNotifications } from '@/hooks/useNotifications'
 import Head from 'next/head'
+import { ClientOnly } from '@/components/ui/client-only'
 
 // Function to get appropriate icon for notification type
 function getNotificationIcon(type: string, icon?: string) {
@@ -227,20 +227,8 @@ export default function NotificationsPage() {
         >
           <div className="flex items-center justify-center mb-4">
             <BellRing className="h-8 w-8 text-purple-400 mr-3" />
-            <LazyShuffle
-              text="Notifications"
-              shuffleDirection="right"
-              duration={0.35}
-              animationMode="evenodd"
-              shuffleTimes={1}
-              ease="power3.out"
-              stagger={0.03}
-              threshold={0.1}
-              loop={true}
-              loopDelay={3}
-              className="text-4xl font-bold text-foreground"
-            />
-      </div>
+            <h1 className="text-4xl font-bold text-foreground">Notifications</h1>
+          </div>
           <p className="text-lg text-muted-foreground">
             Stay updated with your latest activity
           </p>
@@ -253,50 +241,64 @@ export default function NotificationsPage() {
           transition={{ delay: 0.1 }}
           className="flex justify-center mb-6"
         >
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          <ClientOnly
+            fallback={
               <Button
                 variant="outline"
                 className="bg-card border hover:bg-accent hover:text-accent-foreground"
+                disabled
               >
                 <Filter className="h-4 w-4 mr-2" />
                 {getFilterLabel(filter)}
                 <ChevronDown className="h-4 w-4 ml-2" />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-card border">
-              <DropdownMenuItem 
-                onClick={() => setFilter('all')}
-                className="text-card-foreground hover:bg-accent hover:text-accent-foreground"
-              >
-                All
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => setFilter('unread')}
-                className="text-card-foreground hover:bg-accent hover:text-accent-foreground"
-              >
-                Unread
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => setFilter('badge')}
-                className="text-card-foreground hover:bg-accent hover:text-accent-foreground"
-              >
-                Badges
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => setFilter('follow')}
-                className="text-card-foreground hover:bg-accent hover:text-accent-foreground"
-              >
-                Follows
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => setFilter('xp')}
-                className="text-card-foreground hover:bg-accent hover:text-accent-foreground"
-              >
-                XP
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            }
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="bg-card border hover:bg-accent hover:text-accent-foreground"
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  {getFilterLabel(filter)}
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-card border">
+                <DropdownMenuItem 
+                  onClick={() => setFilter('all')}
+                  className="text-card-foreground hover:bg-accent hover:text-accent-foreground"
+                >
+                  All
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setFilter('unread')}
+                  className="text-card-foreground hover:bg-accent hover:text-accent-foreground"
+                >
+                  Unread
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setFilter('badge')}
+                  className="text-card-foreground hover:bg-accent hover:text-accent-foreground"
+                >
+                  Badges
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setFilter('follow')}
+                  className="text-card-foreground hover:bg-accent hover:text-accent-foreground"
+                >
+                  Follows
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setFilter('xp')}
+                  className="text-card-foreground hover:bg-accent hover:text-accent-foreground"
+                >
+                  XP
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </ClientOnly>
         </motion.div>
 
         {/* Bento Grid - Top Row with 3 Small Cards */}

@@ -27,7 +27,7 @@ import MagicBento from '@/components/ui/magic-bento'
 import { format } from "date-fns"
 import { Progress } from "@/components/ui/progress"
 import { BadgesGrid } from "@/components/badges/BadgesGrid"
-import { calculateLevelProgress } from "@/lib/xpCalculator"
+import { calculateXpProgress, formatXpProgress, formatXpToNextLevel } from "@/lib/xp"
 import { useCurrentUserXP } from "@/hooks/useXP"
 
 // Mock defaults, will be overridden by live data
@@ -38,72 +38,10 @@ const userStats = {
   joinDate: "January 2024"
 }
 
-const userGames = [
-  {
-    id: "1",
-    title: "Clash of Clans",
-    description: "A popular strategy mobile game where you build and defend your village.",
-    image: "https://images.unsplash.com/photo-1556438064-2d7646166914?w=400&h=300&fit=crop",
-    votes: 152,
-    comments: 23,
-    url: "https://clashofclans.com",
-    platforms: ["ios", "android"],
-    maker: {
-      name: "Supercell",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
-    }
-  },
-  {
-    id: "2",
-    title: "Pokemon GO",
-    description: "Augmented reality mobile game that lets you catch Pokemon in the real world.",
-    image: "https://images.unsplash.com/photo-1606503153255-59d8b8b91448?w=300&h=200&fit=crop",
-    votes: 89,
-    comments: 15,
-    platforms: ["ios", "android"],
-    maker: { name: "Niantic", avatar: "" }
-  },
-  {
-    id: "3",
-    title: "Genshin Impact",
-    description: "Open-world action RPG with gacha mechanics and stunning visuals.",
-    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=300&h=200&fit=crop",
-    votes: 134,
-    comments: 28,
-    platforms: ["ios", "android", "web"],
-    maker: { name: "miHoYo", avatar: "" }
-  }
-]
+// Example placeholder removed – real data comes from backend
+const userGames: any[] = []
 
-const userVotes = [
-  {
-    id: "1",
-    game: {
-      title: "Clash of Clans",
-      platforms: ["ios", "android"],
-      votes: 152,
-      comments: 23,
-      url: "https://clashofclans.com",
-      maker: {
-        name: "Supercell",
-        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
-      }
-    },
-    votedAt: "2024-01-15T10:30:00Z"
-  },
-  {
-    id: "2",
-    game: {
-      title: "Pokemon GO",
-      platforms: ["ios", "android"],
-      votes: 89,
-      comments: 15,
-      url: "https://pokemongo.com",
-      maker: { name: "Niantic", avatar: "" }
-    },
-    votedAt: "2024-01-14T15:45:00Z"
-  }
-]
+const userVotes: any[] = []
 
 const userComments = [
   {
@@ -348,7 +286,7 @@ export default function ProfilePage() {
                             <div className="flex items-center justify-between text-xs md:text-sm">
                               <span className="text-gray-300">Experience Points</span>
                               <span className="text-purple-300 font-medium">
-                                {levelProgress.currentXP} / {levelProgress.requiredXP} XP
+                                {formatXpProgress(xpData?.xp || 0)}
                               </span>
                             </div>
                             <Progress 
@@ -359,7 +297,7 @@ export default function ProfilePage() {
                               <span className={`transition-all duration-500 ${isLevelingUp ? 'text-yellow-400 font-bold animate-pulse' : ''}`}>
                                 Level {levelProgress.level}
                               </span>
-                              <span className="truncate ml-2">{levelProgress.remainingXP} XP to Level {levelProgress.level + 1}</span>
+                              <span className="truncate ml-2">{formatXpToNextLevel(xpData?.xp || 0)}</span>
                             </div>
                           </div>
                         )

@@ -7,6 +7,7 @@ import { ArrowUpRight, Heart, MessageCircle, ExternalLink } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { PlatformIcons } from "@/components/ui/platform-icons"
+import { getAuthorLabel } from "@/lib/author"
 // import { formatDistanceToNow } from "date-fns" // Temporarily commented
 
 interface Game {
@@ -14,6 +15,7 @@ interface Game {
   title: string
   tagline?: string | null
   description: string
+  shortPitch?: string | null
   image?: string | null
   thumbnail?: string | null
   images?: string[]
@@ -137,9 +139,9 @@ export function GameCard({ game, onVote, showAuthor = true }: GameCardProps) {
           )}
         </div>
 
-        {/* Description */}
+        {/* Short Pitch (fallback to description) */}
         <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 leading-relaxed">
-          {game.description}
+          {game.shortPitch || game.description}
         </p>
 
         {/* Categories */}
@@ -202,7 +204,7 @@ export function GameCard({ game, onVote, showAuthor = true }: GameCardProps) {
               {game.user.name?.[0]?.toUpperCase() || 'U'}
             </div>
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              by {game.user.name || 'Anonymous'}
+              by {getAuthorLabel({ user: game.user as any })}
             </span>
           </div>
         )}

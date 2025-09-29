@@ -7,12 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import Shuffle from '@/components/Shuffle';
-import Galaxy from '@/components/Galaxy';
 
 interface LeaderboardProduct {
   id: string;
   title: string;
   description: string;
+  shortPitch?: string | null;
   thumbnail: string | null;
   url: string;
   platforms: string[];
@@ -44,6 +44,16 @@ export default function LeaderboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sharingProduct, setSharingProduct] = useState<LeaderboardProduct | null>(null);
+  const [topUsers, setTopUsers] = useState<Array<{id:string;name:string|null;image:string|null;username:string|null;rank:number;score:number}>|null>(null)
+  useEffect(() => { (async () => {
+    try {
+      const res = await fetch('/api/leaderboard/users?take=5', { cache: 'no-store' })
+      if (res.ok) {
+        const data = await res.json()
+        setTopUsers(data.users)
+      }
+    } catch {}
+  })() }, [])
 
   const fetchLeaderboard = async (window: string) => {
     try {
@@ -202,27 +212,8 @@ export default function LeaderboardPage() {
 
   if (loading && !leaderboardData) {
     return (
-      <div className="relative w-full h-screen overflow-hidden">
-        {/* Galaxy Background */}
-        <Galaxy 
-          mouseRepulsion={true}
-          mouseInteraction={true}
-          density={1.8}
-          glowIntensity={0.9}
-          saturation={0.0}
-          hueShift={0}
-          className="absolute inset-0 z-0"
-        />
-        
-        {/* Dark overlay for readability */}
-        <div 
-          className="absolute inset-0 z-5"
-          style={{
-            background: 'linear-gradient(to bottom, rgba(10,10,15,0.8), rgba(10,10,15,0.95))'
-          }}
-        />
-        
-        <div className="container mx-auto px-4 py-8 relative z-10">
+      <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]">
+        <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 animate-spin">
               <Sparkles className="w-8 h-8 text-white" />
@@ -235,27 +226,8 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <div className="relative w-full min-h-screen overflow-hidden">
-      {/* Galaxy Background */}
-      <Galaxy 
-        mouseRepulsion={true}
-        mouseInteraction={true}
-        density={1.8}
-        glowIntensity={0.9}
-        saturation={0.0}
-        hueShift={0}
-        className="absolute inset-0 z-0"
-      />
-      
-      {/* Dark overlay for readability */}
-      <div 
-        className="absolute inset-0 z-5"
-        style={{
-          background: 'linear-gradient(to bottom, rgba(10,10,15,0.8), rgba(10,10,15,0.95))'
-        }}
-      />
-
-      <div className="container mx-auto px-4 py-8 relative z-10">
+    <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]">
+      <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
@@ -334,7 +306,7 @@ export default function LeaderboardPage() {
           </motion.div>
         )}
 
-        {/* Leaderboard */}
+        {/* Dual Leaderboards */}
         {leaderboardData && (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -350,7 +322,81 @@ export default function LeaderboardPage() {
                 </p>
             </div>
 
-            {/* Products */}
+            {/* Two-column layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+              {/* Left: User Leaderboard (25%) */}
+              <div className="lg:col-span-1">
+                <Card className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/30 hover:shadow-purple-500/10 hover:shadow-lg transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-bold text-white flex items-center gap-2">🎭 Top Contributors</h3>
+                      <span className="text-xs text-purple-300">Last 30 days</span>
+                    </div>
+                    <div className="space-y-2">
+                      {(topUsers || []).map(u => (
+                        <a key={u.id} href={u.username ? `/user/${u.username}` : `/user/${u.id}`} className="group block">
+                        <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-purple-400/50 hover:bg-white/10 transition-all duration-200 relative">
+                          <div className="relative">
+                            <img src={u.image || '/logo/mgh.png'} alt={u.name || 'User'} className={`w-9 h-9 rounded-full object-cover ring-2 ${u.rank<=3 ? 'ring-yellow-400/60 animate-pulse' : 'ring-purple-500/30'} group-hover:ring-purple-400/60 transition`} />
+                            <div className="absolute -top-1 -right-1 text-xs select-none">
+                              {u.rank === 1 ? '🥇' : u.rank === 2 ? '🥈' : u.rank === 3 ? '🥉' : ''}
+                            </div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between">
+                              <div className="text-sm text-white truncate">{u.name || 'Anonymous'}</div>
+                              <div className="text-[11px] text-purple-300">#{u.rank}</div>
+                            </div>
+                            <div className="relative w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                              <div className="h-full bg-gradient-to-r from-purple-500 to-cyan-400 animate-[grow_1s_ease-out]" style={{ width: `${Math.min(100, (u.score / ((topUsers?.[0]?.score||1))) * 100)}%` }} />
+                              <span className="absolute inset-0 flex items-center justify-end pr-1 text-[10px] text-purple-200 transition opacity-100 group-hover:opacity-0">
+                                {Math.round(Math.min(100, (u.score / ((topUsers?.[0]?.score||1))) * 100))}%
+                              </span>
+                              <span className="absolute inset-0 flex items-center justify-end pr-1 text-[10px] text-purple-200 opacity-0 group-hover:opacity-100 transition">
+                                {u.score} pts
+                              </span>
+                            </div>
+                          </div>
+                          {/* Hover Mini Profile Card */}
+                          <div className="absolute left-0 top-full mt-2 w-56 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-10">
+                            <div className="rounded-xl bg-slate-900/90 backdrop-blur border border-purple-500/30 p-3 shadow-2xl shadow-purple-500/20">
+                              <div className="flex items-center gap-2 mb-2">
+                                <img src={u.image || '/logo/mgh.png'} alt={u.name || 'User'} className="w-8 h-8 rounded-full" />
+                                <div className="text-sm text-white truncate">{u.name || 'Anonymous'}</div>
+                              </div>
+                              <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden mb-2">
+                                <div className="h-full bg-gradient-to-r from-purple-500 to-cyan-400" style={{ width: `${Math.min(100, (u.score / ((topUsers?.[0]?.score||1))) * 100)}%` }} />
+                              </div>
+                              <div className="text-[11px] text-purple-200 mb-2">Badges: 🔥 🎤 ⚡</div>
+                              <button
+                                type="button"
+                                className="text-xs text-purple-300 hover:text-purple-200 underline"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  window.location.href = u.username ? `/user/${u.username}` : `/user/${u.id}`
+                                }}
+                              >
+                                View Profile
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        </a>
+                      ))}
+                      {(!topUsers || topUsers.length === 0) && (
+                        <div className="text-sm text-purple-300 text-center py-6">No user data yet</div>
+                      )}
+                    </div>
+                    <div className="mt-3 text-right">
+                      <a href="/community" className="text-xs text-purple-300 hover:text-purple-200 underline">View All Users</a>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Right: Game Leaderboard (75%) */}
+              <div className="lg:col-span-3">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
@@ -404,7 +450,7 @@ export default function LeaderboardPage() {
                             </div>
                             
                             <p className="text-purple-200 text-sm mb-3 line-clamp-2">
-                              {product.description}
+                              {product.shortPitch || product.description}
                             </p>
 
                             {/* Platforms */}
@@ -509,6 +555,8 @@ export default function LeaderboardPage() {
                 ))}
               </motion.div>
             </AnimatePresence>
+              </div>
+            </div>
           </motion.div>
         )}
 
