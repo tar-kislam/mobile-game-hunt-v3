@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { createCommentSchema } from '@/lib/validations/community'
 import { notify } from '@/lib/notificationService'
+import { awardXPWithBonus } from '@/lib/xpService'
 
 export async function POST(request: NextRequest) {
   try {
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     // Award XP for commenting with first-time bonus
     try {
-      const xpResult = await addXPWithBonus(session.user.id, 5, 10, 'comment')
+      const xpResult = await awardXPWithBonus(session.user.id, 5, 10, 'comment')
       console.log(`[XP] Awarded ${xpResult.isFirstTime ? '15' : '5'} XP to user ${session.user.id} for commenting${xpResult.isFirstTime ? ' (first-time bonus!)' : ''}`)
       
       // Check for new badges after XP award
