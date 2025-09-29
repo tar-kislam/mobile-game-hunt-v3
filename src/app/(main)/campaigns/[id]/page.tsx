@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -23,15 +23,11 @@ interface Campaign {
   createdAt: string
 }
 
-interface CampaignPageProps {
-  params: {
-    id: string
-  }
-}
-
-export default function CampaignPage({ params }: CampaignPageProps) {
+export default function CampaignPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const routeParams = useParams() as { id?: string | string[] }
+  const campaignId = Array.isArray(routeParams.id) ? routeParams.id[0] : routeParams.id
   const [campaign, setCampaign] = useState<Campaign | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -40,11 +36,12 @@ export default function CampaignPage({ params }: CampaignPageProps) {
     if (status !== 'loading') {
       fetchCampaign()
     }
-  }, [status, params.id])
+  }, [status, campaignId])
 
   const fetchCampaign = async () => {
     try {
-      const response = await fetch(`/api/advertise/${params.id}`)
+      if (!campaignId) return
+      const response = await fetch(`/api/advertise/${campaignId}`)
       if (response.ok) {
         const data = await response.json()
         setCampaign(data.campaign)
