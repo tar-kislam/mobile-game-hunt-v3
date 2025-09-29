@@ -40,7 +40,7 @@ export async function GET(
     if (game.title === 'Puzzle Master') {
       const today = new Date()
       const makeSeries = (key: 'votes' | 'followers') => {
-        const arr: Array<{ date: string; [k: string]: number }> = []
+        const arr: Array<{ date: string; [k: string]: number | string }> = []
         for (let i = 29; i >= 0; i--) {
           const d = new Date(today)
           d.setDate(today.getDate() - i)
