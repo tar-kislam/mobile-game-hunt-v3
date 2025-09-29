@@ -1,9 +1,8 @@
 import { MetadataRoute } from 'next'
 
-export default function robots(): MetadataRoute.Robots {
+export function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'
-
-  return {
+  const robots = {
     rules: [
       {
         userAgent: '*',
@@ -20,4 +19,7 @@ export default function robots(): MetadataRoute.Robots {
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
   }
+  return new Response(JSON.stringify(robots), {
+    headers: { 'Content-Type': 'application/json' },
+  })
 }
