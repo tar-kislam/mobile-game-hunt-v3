@@ -49,7 +49,7 @@ export async function DELETE(
       })
 
       // Delete comments
-      await tx.comment.deleteMany({
+      await tx.productComment.deleteMany({
         where: { productId: id }
       })
 
