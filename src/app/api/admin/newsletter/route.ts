@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Transform data to match expected format
-    const transformedSubscribers = subscribers.map(subscriber => ({
+    const transformedSubscribers = subscribers.map((subscriber: any) => ({
       id: subscriber.id,
       email: subscriber.email,
       createdAt: subscriber.createdAt.toISOString()
