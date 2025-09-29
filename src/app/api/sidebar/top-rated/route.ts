@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     // Sort by vote count manually
     const sortedProducts = allProducts.sort((a: any, b: any) => (b._count?.votes || 0) - (a._count?.votes || 0))
 
-    const result = sortedProducts.map((product, index) => ({
+    const result = sortedProducts.map((product: any, index) => ({
       id: product.id,
       title: product.title,
       platforms: product.platforms || [],
