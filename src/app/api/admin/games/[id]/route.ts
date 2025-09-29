@@ -48,7 +48,7 @@ export async function PATCH(
     })
   } catch (error) {
     console.error('Error updating game:', error)
-    if (error.code === 'P2025') {
+    if (error instanceof Error && 'code' in error && error.code === 'P2025') {
       return NextResponse.json({ error: 'Game not found' }, { status: 404 })
     }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
