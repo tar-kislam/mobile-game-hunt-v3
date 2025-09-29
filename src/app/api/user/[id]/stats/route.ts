@@ -36,16 +36,18 @@ export async function GET(
         where: { userId: id }
       }),
       // Calculate ranking based on XP
-      prisma.user.count({
-        where: {
-          xp: {
-            gt: await prisma.user.findUnique({
-              where: { id },
-              select: { xp: true }
-            }).then(user => user?.xp || 0)
+      prisma.user.findUnique({
+        where: { id },
+        select: { xp: true }
+      }).then(user => 
+        prisma.user.count({
+          where: {
+            xp: {
+              gt: user?.xp || 0
+            }
           }
-        }
-      }) + 1
+        }).then(count => count + 1)
+      )
     ])
 
     return NextResponse.json({
