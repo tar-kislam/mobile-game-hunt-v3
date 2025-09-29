@@ -194,7 +194,7 @@ export default function EditorialDashboard() {
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center relative">
-        <DarkVeil className="min-h-screen w-full" />
+        <DarkVeil />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-white">Loading...</div>
         </div>
