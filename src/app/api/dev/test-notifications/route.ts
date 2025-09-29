@@ -70,9 +70,9 @@ export async function POST(req: NextRequest) {
           ...result,
           message: `Added ${xpNeeded} XP to trigger level up`,
           xpBefore: user.xp,
-          xpAfter: levelResult.xp,
+          xpAfter: levelResult.newTotalXP,
           levelBefore: levelProgress.level,
-          levelAfter: calculateLevelProgress(levelResult.xp).level
+          levelAfter: levelResult.newLevel
         }
         break
       }
