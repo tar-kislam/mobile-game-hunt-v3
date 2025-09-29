@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     
     posts.forEach(post => {
       if (post.hashtags && Array.isArray(post.hashtags)) {
-        post.hashtags.forEach((hashtag: string) => {
+        post.hashtags.forEach((hashtag) => {
           if (typeof hashtag === 'string' && hashtag.trim()) {
             const cleanHashtag = hashtag.trim().toLowerCase()
             hashtagCounts[cleanHashtag] = (hashtagCounts[cleanHashtag] || 0) + 1
