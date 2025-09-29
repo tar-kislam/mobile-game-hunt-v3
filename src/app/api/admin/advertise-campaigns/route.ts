@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { CampaignStatus } from '@prisma/client'
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions)
@@ -39,7 +40,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
   const body = await req.json()
-  const { id, status } = body as { id: string; status: 'PENDING' | 'APPROVED' | 'ACTIVE' | 'REJECTED' }
+  const { id, status } = body as { id: string; status: CampaignStatus }
   if (!id || !status) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
   await prisma.advertiseCampaign.update({ where: { id }, data: { status } })
   return NextResponse.json({ ok: true })
