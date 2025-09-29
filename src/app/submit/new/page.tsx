@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -13,7 +14,7 @@ import { Label } from '@/components/ui/label'
 import { productMainInfoSchema, productMediaSchema, productExtrasSchema, productChecklistSchema, productLaunchDetailsSchema, productFullSchema } from '@/lib/schemas/product'
 import { createProductAction, saveDraftAction, scheduleLaunchAction, submitApprovalAction } from '@/lib/actions/products'
 import { toast } from 'sonner'
-import { Info, ExternalLink, Globe, MessageCircle, Twitter, Youtube, X, Plus, Check, X as XIcon, Instagram } from 'lucide-react'
+import { Info, ExternalLink, Globe, MessageCircle, Twitter, Youtube, X, Plus, Check, X as XIcon, Instagram, ChevronDown, ChevronUp } from 'lucide-react'
 import { CategoryMultiSelect } from '@/components/ui/category-multi-select'
 import { MultiSelect } from '@/components/ui/multi-select'
 import { PLATFORMS } from '@/components/ui/platform-icons'
@@ -35,10 +36,15 @@ export default function NewSubmitPage() {
   const [step, setStep] = useState<Step>(1)
   const [autosave, setAutosave] = useState(false)
   const [additionalLinks, setAdditionalLinks] = useState<Array<{ type: string; url: string }>>([])
+  const [isAdditionalLinksExpanded, setIsAdditionalLinksExpanded] = useState(false)
   const [xPrefix] = useState('x.com/')
   const [savedStudios, setSavedStudios] = useState<Array<{ id: string; name: string }>>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false)
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false)
+  const [isDragOverThumbnail, setIsDragOverThumbnail] = useState(false)
+  const [isDragOverGallery, setIsDragOverGallery] = useState(false)
 
   const form = useForm<any>({
     resolver: zodResolver(productFullSchema),
@@ -98,11 +104,15 @@ export default function NewSubmitPage() {
     if (validateStep(step)) {
       setCompletedSteps(prev => [...prev.filter(s => s !== step), step])
     }
+    // Scroll to top when transitioning to next step
+    window.scrollTo({ top: 0, behavior: "smooth" })
   }
   
   const prev = () => {
     const prevStep = Math.max(1, (step - 1)) as Step
     setStep(prevStep)
+    // Scroll to top when transitioning to previous step
+    window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
   const handleStepClick = (stepIndex: number) => {
@@ -110,6 +120,8 @@ export default function NewSubmitPage() {
     // Allow navigation to completed steps or next step if current step is valid
     if (completedSteps.includes(step) || validateStep(step) || stepIndex < step) {
       setStep(targetStep)
+      // Scroll to top when transitioning to clicked step
+      window.scrollTo({ top: 0, behavior: "smooth" })
     }
   }
 
@@ -142,6 +154,13 @@ export default function NewSubmitPage() {
       termsAccepted: values.termsAccepted,
       confirmImagesOwned: values.confirmImagesOwned
     })
+
+    // Trigger validation for all fields before submission
+    const isValid = await form.trigger()
+    if (!isValid) {
+      toast.error('Please complete all required fields before submitting')
+      return
+    }
 
     setIsSubmitting(true)
     try {
@@ -321,22 +340,11 @@ export default function NewSubmitPage() {
   return (
     <TooltipProvider>
       <div className="container mx-auto px-4 py-8">
-        {/* Auto-save toggle */}
-        <div className="flex items-center justify-end mb-6">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Auto-save</span>
-            <input 
-              aria-label="Auto-save drafts" 
-              type="checkbox" 
-              checked={autosave} 
-              onChange={(e) => setAutosave(e.target.checked)}
-              className="rounded"
-            />
-          </div>
-        </div>
 
-        {/* Unified Container with Stepper and Form */}
-        <div className="max-w-4xl mx-auto">
+        {/* Main Content Container */}
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
+          {/* Main Form Card */}
+          <div className="flex-1 max-w-4xl">
           <Card className="rounded-xl shadow-lg bg-gradient-to-br from-gray-900/80 via-gray-800/90 to-gray-900/80 backdrop-blur-sm border border-purple-500/20">
             {/* Stepper Section */}
             <div className="pt-6 pb-4">
@@ -386,6 +394,7 @@ export default function NewSubmitPage() {
                             placeholder="Enter your game title" 
                             {...form.register('title')} 
                             className="h-12" 
+                            onBlur={() => form.trigger('title')}
                           />
                           <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
                             {nameLen}/40
@@ -417,6 +426,7 @@ export default function NewSubmitPage() {
                             placeholder="A concise, compelling description of your game" 
                             {...form.register('tagline')} 
                             className="h-12" 
+                            onBlur={() => form.trigger('tagline')}
                           />
                           <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
                             {taglineLen}/60
@@ -438,6 +448,7 @@ export default function NewSubmitPage() {
                             placeholder="Tell us about your game. What makes it unique? What's the gameplay like? What inspired you to create it?" 
                             {...form.register('description')} 
                             className="min-h-[120px]" 
+                            onBlur={() => form.trigger('description')}
                           />
                           <span className="absolute right-2 bottom-2 text-xs text-muted-foreground">
                             {descLen}/500
@@ -462,6 +473,7 @@ export default function NewSubmitPage() {
                             placeholder="https://apps.apple.com/app/your-game" 
                             {...form.register('iosUrl')} 
                             className="h-12" 
+                            onBlur={() => form.trigger(['iosUrl', 'androidUrl'])}
                           />
                           {form.formState.errors.iosUrl && (
                             <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.iosUrl.message)}</p>
@@ -477,6 +489,7 @@ export default function NewSubmitPage() {
                             placeholder="https://play.google.com/store/apps/details?id=your.game" 
                             {...form.register('androidUrl')} 
                             className="h-12" 
+                            onBlur={() => form.trigger(['iosUrl', 'androidUrl'])}
                           />
                           {form.formState.errors.androidUrl && (
                             <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.androidUrl.message)}</p>
@@ -485,12 +498,44 @@ export default function NewSubmitPage() {
                         </div>
                       </div>
 
-                      {/* Additional Links Section */}
+                      {/* Additional Links Section - Collapsible Dropdown */}
                       <div className="space-y-4">
-                        <h3 className="font-medium text-lg">Additional Links</h3>
-                        <p className="text-sm text-muted-foreground">Optional links to help users discover and engage with your game</p>
+                        <div 
+                          className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-gray-900/80 via-gray-800/90 to-gray-900/80 backdrop-blur-sm border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300 cursor-pointer group"
+                          onClick={() => setIsAdditionalLinksExpanded(!isAdditionalLinksExpanded)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
+                              <ExternalLink className="w-4 h-4 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-lg text-white group-hover:text-purple-300 transition-colors">
+                                Additional Links
+                              </h3>
+                              <p className="text-sm text-gray-400">Optional links to help users discover and engage with your game</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="px-2 py-1 rounded-full bg-purple-500/20 border border-purple-500/30">
+                              <span className="text-xs text-purple-300 font-semibold">Optional</span>
+                            </div>
+                            {isAdditionalLinksExpanded ? (
+                              <ChevronUp className="w-5 h-5 text-gray-400 group-hover:text-purple-300 transition-colors" />
+                            ) : (
+                              <ChevronDown className="w-5 h-5 text-gray-400 group-hover:text-purple-300 transition-colors" />
+                            )}
+                          </div>
+                        </div>
                         
-                        <div className="space-y-4">
+                        {isAdditionalLinksExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                            className="overflow-hidden"
+                          >
+                            <div className="p-4 rounded-xl bg-gray-800/50 border border-gray-700/50 space-y-4">
                           <div>
                             <Label htmlFor="website" className="text-sm font-medium">Website</Label>
                             <div className="relative">
@@ -597,6 +642,8 @@ export default function NewSubmitPage() {
 
 
                         </div>
+                          </motion.div>
+                        )}
                       </div>
 
                       {/* Open Source Checkbox */}
@@ -679,20 +726,6 @@ export default function NewSubmitPage() {
                         <p className="text-xs text-muted-foreground mt-1">{(form.watch('tags')||[]).length}/3 selected</p>
                       </div>
 
-                      {/* Validation Summary */}
-                      <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm rounded-xl p-4 space-y-2 shadow-lg shadow-amber-500/10">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-                          <span className="font-medium">Required Fields</span>
-                        </div>
-                        {(form.watch('title')||'').length===0 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Game title is required</div>}
-                        {(form.watch('tagline')||'').length===0 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Tagline is required</div>}
-                        {(form.watch('description')||'').length < 260 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Description must be at least 260 characters</div>}
-                        {((form.watch('tags')||[]).length)===0 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Launch tag is required</div>}
-                        {((form.watch('categories')||[]).length)===0 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Category is required</div>}
-                        {((form.watch('platforms')||[]).length)===0 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Platform is required</div>}
-                        {!form.watch('iosUrl') && !form.watch('androidUrl') && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> At least one app store URL is required</div>}
-                      </div>
                     </div>
                   )}
                   {step===2 && (
@@ -703,39 +736,135 @@ export default function NewSubmitPage() {
                         <p className="text-sm text-muted-foreground mb-4">Upload a square thumbnail image (240x240px recommended)</p>
                         <div className="space-y-4">
                           <div className="flex gap-2">
+                            <div 
+                              className={`flex-1 border-2 border-dashed rounded-lg p-4 transition-colors ${
+                                isDragOverThumbnail 
+                                  ? 'border-purple-500 bg-purple-500/10' 
+                                  : 'border-gray-300 hover:border-purple-400'
+                              }`}
+                              onDragOver={(e) => {
+                                e.preventDefault()
+                                setIsDragOverThumbnail(true)
+                              }}
+                              onDragLeave={() => setIsDragOverThumbnail(false)}
+                              onDrop={async (e) => {
+                                e.preventDefault()
+                                setIsDragOverThumbnail(false)
+                                
+                                const files = Array.from(e.dataTransfer.files)
+                                const imageFile = files.find(file => file.type.startsWith('image/'))
+                                
+                                if (!imageFile) {
+                                  toast.error('Please drop a valid image file')
+                                  return
+                                }
+                                
+                                if (imageFile.size > 5 * 1024 * 1024) {
+                                  toast.error('File size must be less than 5MB')
+                                  return
+                                }
+                                
+                                setIsUploadingThumbnail(true)
+                                const formData = new FormData()
+                                formData.append('file', imageFile)
+                                
+                                try {
+                                  console.log('📤 Uploading thumbnail via drag-drop:', imageFile.name)
+                                  const response = await fetch('/api/upload', { 
+                                    method: 'POST', 
+                                    body: formData 
+                                  })
+                                  
+                                  const result = await response.json()
+                                  
+                                  if (result.ok) {
+                                    form.setValue('thumbnail', result.url)
+                                    toast.success('Thumbnail uploaded successfully!')
+                                    console.log('✅ Thumbnail uploaded:', result.url)
+                                  } else {
+                                    toast.error(result.error || 'Failed to upload thumbnail')
+                                    console.error('❌ Upload failed:', result.error)
+                                  }
+                                } catch (error) {
+                                  console.error('❌ Upload error:', error)
+                                  toast.error('Failed to upload thumbnail. Please try again.')
+                                } finally {
+                                  setIsUploadingThumbnail(false)
+                                }
+                              }}
+                            >
                             <Input 
-                              placeholder="Paste thumbnail URL here..." 
+                                placeholder="Paste thumbnail URL here or drag & drop image..." 
                               {...form.register('thumbnail')} 
-                              className="flex-1"
+                                className="border-0 focus:ring-0"
+                                onBlur={() => form.trigger('thumbnail')}
                             />
+                            </div>
                             <Button 
                               type="button" 
                               variant="outline"
-                              onClick={() => {
+                              disabled={isUploadingThumbnail}
+                              onClick={async () => {
                                 const input = document.createElement('input')
                                 input.type = 'file'
                                 input.accept = 'image/*'
                                 input.onchange = async (e) => {
                                   const file = (e.target as HTMLInputElement).files?.[0]
-                                  if (file) {
+                                  if (!file) return
+                                  
+                                  // Validate file type
+                                  if (!file.type.startsWith('image/')) {
+                                    toast.error('Please select a valid image file')
+                                    return
+                                  }
+                                  
+                                  // Validate file size (5MB limit)
+                                  if (file.size > 5 * 1024 * 1024) {
+                                    toast.error('File size must be less than 5MB')
+                                    return
+                                  }
+                                  
+                                  setIsUploadingThumbnail(true)
                                     const formData = new FormData()
                                     formData.append('file', file)
-                                    try {
-                                      const response = await fetch('/api/upload', { method: 'POST', body: formData })
+                                  
+                                  try {
+                                    console.log('📤 Uploading thumbnail:', file.name, file.size, 'bytes')
+                                    const response = await fetch('/api/upload', { 
+                                      method: 'POST', 
+                                      body: formData 
+                                    })
+                                    
+                                    console.log('📥 Upload response status:', response.status)
                                       const result = await response.json()
-                                      if (result.success) {
+                                    console.log('📥 Upload response data:', result)
+                                    
+                                    if (result.ok) {
                                         form.setValue('thumbnail', result.url)
-                                        toast.success('Thumbnail uploaded successfully')
+                                      toast.success('Thumbnail uploaded successfully!')
+                                      console.log('✅ Thumbnail uploaded:', result.url)
+                                    } else {
+                                      toast.error(result.error || 'Failed to upload thumbnail')
+                                      console.error('❌ Upload failed:', result.error)
                                       }
                                     } catch (error) {
-                                      toast.error('Failed to upload thumbnail')
-                                    }
+                                    console.error('❌ Upload error:', error)
+                                    toast.error('Failed to upload thumbnail. Please try again.')
+                                  } finally {
+                                    setIsUploadingThumbnail(false)
                                   }
                                 }
                                 input.click()
                               }}
                             >
-                              Upload
+                              {isUploadingThumbnail ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                  Uploading...
+                                </>
+                              ) : (
+                                'Upload'
+                              )}
                             </Button>
                           </div>
                           {form.watch('thumbnail') && (
@@ -766,7 +895,80 @@ export default function NewSubmitPage() {
                         <p className="text-sm text-muted-foreground mb-4">The first image will be used as the social preview when your link is shared online. We recommend at least 3 or more images.</p>
                         
                         {/* Main Upload Area */}
-                        <div className="border-2 border-dashed border-muted-foreground/25 rounded-xl p-8 text-center mb-6 hover:border-primary/50 transition-colors">
+                        <div 
+                          className={`border-2 border-dashed rounded-xl p-8 text-center mb-6 transition-colors ${
+                            isDragOverGallery 
+                              ? 'border-purple-500 bg-purple-500/10' 
+                              : 'border-muted-foreground/25 hover:border-primary/50'
+                          }`}
+                          onDragOver={(e) => {
+                            e.preventDefault()
+                            setIsDragOverGallery(true)
+                          }}
+                          onDragLeave={() => setIsDragOverGallery(false)}
+                          onDrop={async (e) => {
+                            e.preventDefault()
+                            setIsDragOverGallery(false)
+                            
+                            const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'))
+                            
+                            if (files.length === 0) {
+                              toast.error('Please drop valid image files')
+                              return
+                            }
+                            
+                            // Validate files
+                            for (const file of files) {
+                              if (file.size > 5 * 1024 * 1024) {
+                                toast.error(`File ${file.name} is too large (max 5MB)`)
+                                return
+                              }
+                            }
+                            
+                            setIsUploadingGallery(true)
+                            const currentGallery = form.watch('gallery') || []
+                            let successCount = 0
+                            
+                            try {
+                              for (const file of files) {
+                                console.log('📤 Uploading gallery image via drag-drop:', file.name)
+                                const formData = new FormData()
+                                formData.append('file', file)
+                                
+                                try {
+                                  const response = await fetch('/api/upload', { 
+                                    method: 'POST', 
+                                    body: formData 
+                                  })
+                                  
+                                  const result = await response.json()
+                                  
+                                  if (result.ok) {
+                                    currentGallery.push(result.url)
+                                    successCount++
+                                    console.log('✅ Gallery image uploaded:', result.url)
+                                  } else {
+                                    console.error('❌ Gallery upload failed:', result.error)
+                                  }
+                                } catch (error) {
+                                  console.error('❌ Gallery upload error:', error)
+                                }
+                              }
+                              
+                              form.setValue('gallery', currentGallery)
+                              
+                              if (successCount === files.length) {
+                                toast.success(`${successCount} images uploaded successfully!`)
+                              } else if (successCount > 0) {
+                                toast.warning(`${successCount}/${files.length} images uploaded successfully`)
+                              } else {
+                                toast.error('Failed to upload images. Please try again.')
+                              }
+                            } finally {
+                              setIsUploadingGallery(false)
+                            }
+                          }}
+                        >
                           <div className="flex flex-col items-center justify-center space-y-4">
                             <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center">
                               <svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -777,37 +979,84 @@ export default function NewSubmitPage() {
                               <div className="flex items-center justify-center space-x-2">
                                 <button
                                   type="button"
-                                  onClick={() => {
+                                  disabled={isUploadingGallery}
+                                  onClick={async () => {
                                     const input = document.createElement('input')
                                     input.type = 'file'
                                     input.multiple = true
                                     input.accept = 'image/*'
                                     input.onchange = async (e) => {
                                       const files = Array.from((e.target as HTMLInputElement).files || [])
-                                      const currentGallery = form.watch('gallery') || []
+                                      if (files.length === 0) return
                                       
+                                      // Validate files
                                       for (const file of files) {
+                                        if (!file.type.startsWith('image/')) {
+                                          toast.error(`Please select valid image files only`)
+                                          return
+                                        }
+                                        if (file.size > 5 * 1024 * 1024) {
+                                          toast.error(`File ${file.name} is too large (max 5MB)`)
+                                          return
+                                        }
+                                      }
+                                      
+                                      setIsUploadingGallery(true)
+                                      const currentGallery = form.watch('gallery') || []
+                                      let successCount = 0
+                                      
+                                      try {
+                                      for (const file of files) {
+                                          console.log('📤 Uploading gallery image:', file.name, file.size, 'bytes')
                                         const formData = new FormData()
                                         formData.append('file', file)
-                                        try {
-                                          const response = await fetch('/api/upload', { method: 'POST', body: formData })
+                                          
+                                          try {
+                                            const response = await fetch('/api/upload', { 
+                                              method: 'POST', 
+                                              body: formData 
+                                            })
+                                            
                                           const result = await response.json()
-                                          if (result.success) {
+                                            console.log('📥 Gallery upload response:', result)
+                                            
+                                            if (result.ok) {
                                             currentGallery.push(result.url)
+                                              successCount++
+                                              console.log('✅ Gallery image uploaded:', result.url)
+                                            } else {
+                                              console.error('❌ Gallery upload failed:', result.error)
                                           }
                                         } catch (error) {
-                                          toast.error('Failed to upload image')
+                                            console.error('❌ Gallery upload error:', error)
                                         }
                                       }
                                       
                                       form.setValue('gallery', currentGallery)
-                                      toast.success(`${files.length} image(s) uploaded successfully`)
+                                        
+                                        if (successCount === files.length) {
+                                          toast.success(`${successCount} images uploaded successfully!`)
+                                        } else if (successCount > 0) {
+                                          toast.warning(`${successCount}/${files.length} images uploaded successfully`)
+                                        } else {
+                                          toast.error('Failed to upload images. Please try again.')
+                                        }
+                                      } finally {
+                                        setIsUploadingGallery(false)
+                                      }
                                     }
                                     input.click()
                                   }}
                                   className="text-primary hover:text-primary/80 font-medium"
                                 >
-                                  Browse for files
+                                  {isUploadingGallery ? (
+                                    <>
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                      Uploading...
+                                    </>
+                                  ) : (
+                                    'Upload Multiple'
+                                  )}
                                 </button>
                                 <span className="text-muted-foreground">or</span>
                                 <button
@@ -1056,15 +1305,6 @@ export default function NewSubmitPage() {
                         )}
                       </div>
 
-                      {/* Validation Summary */}
-                      <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm rounded-xl p-4 space-y-2 shadow-lg shadow-amber-500/10">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-                          <span className="font-medium">Required Fields</span>
-                        </div>
-                        {!form.watch('thumbnail') && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Thumbnail is required</div>}
-                        {(form.watch('gallery') || []).length < 1 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> At least one gallery image is required</div>}
-                      </div>
                     </div>
                   )}
                   {step===3 && (
@@ -1197,16 +1437,6 @@ export default function NewSubmitPage() {
                       </div>
 
 
-                      {/* Validation Summary */}
-                      <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm rounded-xl p-4 space-y-2 shadow-lg shadow-amber-500/10">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-                          <span className="font-medium">Required Fields</span>
-                        </div>
-                        {(form.watch('makers') || []).length === 0 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> At least one maker is required</div>}
-                        {(form.watch('makers') || []).length > 5 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Maximum 5 makers allowed</div>}
-                        {form.formState.errors.makers && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> {String(form.formState.errors.makers.message)}</div>}
-                      </div>
                     </div>
                   )}
                   {step===4 && (
@@ -1252,6 +1482,7 @@ export default function NewSubmitPage() {
                           type="date"
                           {...form.register('launchDate')}
                           className="mt-2"
+                          onBlur={() => form.trigger('launchDate')}
                         />
                         {form.formState.errors.launchDate && (
                           <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.launchDate.message)}</p>
@@ -1336,18 +1567,6 @@ export default function NewSubmitPage() {
                       </div>
 
 
-                      {/* Validation Summary */}
-                      <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm rounded-xl p-4 space-y-2 shadow-lg shadow-amber-500/10">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-                          <span className="font-medium">Required Fields</span>
-                        </div>
-                        {!form.watch('launchType') && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Launch type is required</div>}
-                        {!form.watch('launchDate') && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Launch date is required</div>}
-                        {form.watch('launchType') === 'SOFT_LAUNCH' && (!form.watch('softLaunchCountries') || form.watch('softLaunchCountries').length === 0) && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Soft launch countries are required</div>}
-                        {!form.watch('monetization') && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Monetization model is required</div>}
-                        {!form.watch('engine') && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Engine used is required</div>}
-                      </div>
                     </div>
                   )}
                   {step===5 && (
@@ -1520,57 +1739,10 @@ export default function NewSubmitPage() {
                         )}
                       </div>
 
-                      {/* Validation Summary */}
-                      <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm rounded-xl p-4 space-y-2 shadow-lg shadow-amber-500/10">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-                          <span className="font-medium">Validation Warnings</span>
-                        </div>
-                        {(form.watch('playtestQuota') && form.watch('playtestQuota') > 1000) || 
-                         (form.watch('sponsorNote') && (form.watch('sponsorNote') || '').length > 500) || 
-                         (form.watch('gamificationTags') && (form.watch('gamificationTags') || []).length > 5) || 
-                         (!form.watch('gamificationTags') || form.watch('gamificationTags').length === 0) ? (
-                          <>
-                            {form.watch('playtestQuota') && form.watch('playtestQuota') > 1000 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Playtest quota cannot exceed 1000</div>}
-                            {form.watch('sponsorNote') && (form.watch('sponsorNote') || '').length > 500 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Sponsor note must be 500 characters or less</div>}
-                            {form.watch('gamificationTags') && (form.watch('gamificationTags') || []).length > 5 && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> Maximum 5 gamification tags allowed</div>}
-                            {(!form.watch('gamificationTags') || form.watch('gamificationTags').length === 0) && <div className="flex items-center gap-2"><span className="text-amber-500">•</span> At least 1 gamification tag is required (max 5)</div>}
-                          </>
-                        ) : (
-                          <div className="text-green-600 dark:text-green-400">All validations passed!</div>
-                        )}
-                      </div>
                     </div>
                   )}
                   {step===6 && (
                     <div className="space-y-8">
-                      {/* Required Fields Completion Check */}
-                      <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-semibold">Required Fields</h3>
-                          <span className="text-sm text-muted-foreground">{completionPercentage}% Complete</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-4">Check that you've completed all of the required information.</p>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {Object.entries(checklistValidation).map(([field, isValid]) => (
-                            <div key={field} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
-                              {isValid ? (
-                                <Check className="w-5 h-5 text-green-500" />
-                              ) : (
-                                <XIcon className="w-5 h-5 text-red-500" />
-                              )}
-                              <span className="text-sm font-medium capitalize">
-                                {field === 'launchType' ? 'Launch Type' :
-                                 field === 'launchDate' ? 'Launch Date' :
-                                 field === 'termsAccepted' ? 'Terms Accepted' :
-                                 field === 'confirmImagesOwned' ? 'Image Rights Confirmed' :
-                                 field}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
 
                       {/* Terms and Conditions */}
                       <div>
@@ -1702,6 +1874,94 @@ export default function NewSubmitPage() {
               </form>
             </div>
           </Card>
+          </div>
+
+          {/* Required Fields Card - Outside main card */}
+          <div className="hidden lg:block w-80 flex-shrink-0">
+            {(() => {
+              // Calculate missing fields based on current step
+              const getMissingFields = () => {
+                switch (step) {
+                  case 1:
+                    const step1Fields = []
+                    if ((form.watch('title')||'').length===0) step1Fields.push('Title')
+                    if ((form.watch('tagline')||'').length===0) step1Fields.push('Tagline')
+                    if ((form.watch('description')||'').length < 260) step1Fields.push('Description')
+                    if (((form.watch('tags')||[]).length)===0) step1Fields.push('Tags')
+                    if (((form.watch('categories')||[]).length)===0) step1Fields.push('Categories')
+                    if (((form.watch('platforms')||[]).length)===0) step1Fields.push('Platforms')
+                    if (!form.watch('iosUrl') && !form.watch('androidUrl')) step1Fields.push('App URLs')
+                    return step1Fields
+                  case 2:
+                    const step2Fields = []
+                    if (!form.watch('thumbnail')) step2Fields.push('Thumbnail')
+                    if ((form.watch('gallery') || []).length < 1) step2Fields.push('Gallery')
+                    return step2Fields
+                  case 3:
+                    const step3Fields = []
+                    if ((form.watch('makers') || []).length === 0) step3Fields.push('Makers')
+                    return step3Fields
+                  case 4:
+                    const step4Fields = []
+                    if (!form.watch('launchType')) step4Fields.push('Launch Type')
+                    if (!form.watch('launchDate')) step4Fields.push('Launch Date')
+                    if (form.watch('launchType') === 'SOFT_LAUNCH' && (!form.watch('softLaunchCountries') || form.watch('softLaunchCountries').length === 0)) step4Fields.push('Countries')
+                    if (!form.watch('monetization')) step4Fields.push('Monetization')
+                    if (!form.watch('engine')) step4Fields.push('Engine')
+                    return step4Fields
+                  case 5:
+                    const step5Fields = []
+                    if (!form.watch('gamificationTags') || form.watch('gamificationTags').length === 0) step5Fields.push('Gamification Tags')
+                    return step5Fields
+                  default:
+                    return []
+                }
+              }
+
+              const missingFields = getMissingFields()
+              const totalFields = missingFields.length
+
+              // Don't render card if no missing fields
+              if (totalFields === 0) {
+                return null
+              }
+
+              return (
+                <div className="sticky top-6">
+                  <div className="relative p-4 rounded-lg border border-transparent bg-gradient-to-r from-purple-500/8 via-blue-500/8 to-cyan-500/8 backdrop-blur-md bg-white/3 shadow-md shadow-purple-500/10 hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-300">
+                    {/* Gradient Border Effect */}
+                    <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-purple-500/15 via-blue-500/15 to-cyan-500/15 p-[1px]">
+                      <div className="w-full h-full rounded-lg bg-black/5 backdrop-blur-md"></div>
+                    </div>
+                              
+                    {/* Content */}
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-400 to-cyan-400 shadow-sm shadow-purple-400/50"></div>
+                        <span className="font-medium text-sm text-white/80">Required Fields</span>
+                        <div className="px-2 py-1 rounded-full bg-[#ff6b6b]/20 border border-[#ff6b6b]/30">
+                          <span className="text-xs text-[#ff6b6b] font-semibold">{totalFields}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        {missingFields.slice(0, 3).map((field, index) => (
+                          <div key={index} className="flex items-start gap-2 text-sm">
+                            <span className="text-[#ff6b6b] text-sm mt-0.5 flex-shrink-0">•</span>
+                            <span className="text-[#ff6b6b] font-medium leading-relaxed">{field}</span>
+                          </div>
+                        ))}
+                        {missingFields.length > 3 && (
+                          <div className="text-sm text-[#ff6b6b]/70 font-medium hover:text-[#ff6b6b] cursor-pointer transition-colors pt-1">
+                            +{missingFields.length - 3} more...
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+          </div>
         </div>
       </div>
     </TooltipProvider>

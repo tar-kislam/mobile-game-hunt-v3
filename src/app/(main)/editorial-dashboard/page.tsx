@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Download, GamepadIcon, Mail, Star, MessageCircle, TrendingUp } from 'lucide-react'
 import { toast } from 'sonner'
 import DarkVeil from '@/components/DarkVeil'
@@ -33,7 +34,25 @@ interface NewsletterSubscriber {
   createdAt: string
 }
 
-type ActiveSection = 'games' | 'newsletter'
+type ActiveSection = 'games' | 'newsletter' | 'campaigns'
+
+interface Campaign {
+  id: string
+  gameId: string
+  gameName: string
+  goal: string
+  placements: string[]
+  package: string
+  budget: number
+  submittedAt: string
+  user: {
+    id: string
+    name: string | null
+    email: string
+    username: string | null
+    image: string | null
+  }
+}
 
 export default function EditorialDashboard() {
   const { data: session, status } = useSession()
@@ -41,9 +60,11 @@ export default function EditorialDashboard() {
   const [activeSection, setActiveSection] = useState<ActiveSection>('games')
   const [products, setProducts] = useState<Product[]>([])
   const [newsletterSubscribers, setNewsletterSubscribers] = useState<NewsletterSubscriber[]>([])
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [campaignPlacement, setCampaignPlacement] = useState<'ALL' | string>('ALL')
 
   // Filter products based on search term
   const filteredProducts = products.filter(product =>
@@ -72,9 +93,10 @@ export default function EditorialDashboard() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const [gamesRes, newsletterRes] = await Promise.all([
+        const [gamesRes, newsletterRes, campaignsRes] = await Promise.all([
           fetch('/api/admin/games'),
-          fetch('/api/admin/newsletter')
+          fetch('/api/admin/newsletter'),
+          fetch('/api/campaigns')
         ])
 
         if (gamesRes.ok) {
@@ -89,6 +111,13 @@ export default function EditorialDashboard() {
           setNewsletterSubscribers(newsletterData)
         } else {
           toast.error('Failed to load newsletter data')
+        }
+
+        if (campaignsRes.ok) {
+          const campaignsData = await campaignsRes.json()
+          setCampaigns(campaignsData.campaigns || [])
+        } else {
+          toast.error('Failed to load campaigns')
         }
       } catch (error) {
         toast.error('Failed to load data')
@@ -173,9 +202,10 @@ export default function EditorialDashboard() {
     )
   }
 
-  if (session?.user?.role !== 'ADMIN') {
+  if (!(session?.user?.role === 'ADMIN' || session?.user?.role === 'EDITOR')) {
     return null
   }
+
 
   return (
     <div className="min-h-screen w-full relative">
@@ -183,7 +213,7 @@ export default function EditorialDashboard() {
       <div className="absolute inset-0 max-w-7xl mx-auto p-6">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Editorial Dashboard</h1>
-          <p className="text-gray-300">Manage featured games and newsletter subscribers</p>
+          <p className="text-gray-300">Manage featured games, newsletter subscribers, and ad requests</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -217,6 +247,18 @@ export default function EditorialDashboard() {
                 >
                   <Mail className="w-4 h-4 mr-2" />
                   Newsletter Subscribers
+                </Button>
+                <Button
+                  variant={activeSection === 'campaigns' ? 'default' : 'ghost'}
+                  className={`w-full justify-start ${
+                    activeSection === 'campaigns' 
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700' 
+                      : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  }`}
+                  onClick={() => setActiveSection('campaigns')}
+                >
+                  <TrendingUp className="w-4 h-4 mr-2" />
+                  Advertising Campaigns
                 </Button>
               </CardContent>
             </Card>
@@ -262,7 +304,7 @@ export default function EditorialDashboard() {
                                 {product.title}
                               </TableCell>
                               <TableCell className="text-gray-300">
-                                <div className="flex items-center gap-1">
+                                <div className="flex items:center gap-1">
                                   <TrendingUp className="w-4 h-4" />
                                   {product.upvotes || 0}
                                 </div>
@@ -360,6 +402,81 @@ export default function EditorialDashboard() {
                 </CardContent>
               </Card>
             )}
+
+            {activeSection === 'campaigns' && (
+              <Card className="bg-zinc-900/40 backdrop-blur-md border border-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5" />
+                    Advertising Campaigns
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4">
+                    {campaigns.length > 0 ? (
+                      campaigns.map((campaign) => (
+                        <Card key={campaign.id} className="bg-zinc-800/40 backdrop-blur-md border border-white/5 hover:border-purple-500/30 transition-all duration-200">
+                          <CardContent className="p-6">
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex items-center gap-3">
+                                <Avatar className="w-10 h-10">
+                                  <AvatarImage src={campaign.user.image || '/logo/mgh.png'} />
+                                  <AvatarFallback>{campaign.user.name?.charAt(0) || campaign.user.email.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <h3 className="text-white font-semibold text-lg">{campaign.gameName}</h3>
+                                  <p className="text-gray-400 text-sm">
+                                    by {campaign.user.name || campaign.user.username || campaign.user.email}
+                                  </p>
+                                </div>
+                              </div>
+                              <Badge variant="secondary" className="bg-purple-600/20 text-purple-300 border-purple-500/30">
+                                ${campaign.budget}
+                              </Badge>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div>
+                                <p className="text-gray-400 text-sm mb-1">Goal</p>
+                                <p className="text-white font-medium">{campaign.goal}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-400 text-sm mb-1">Package</p>
+                                <p className="text-white font-medium capitalize">{campaign.package}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-400 text-sm mb-1">Submitted</p>
+                                <p className="text-white font-medium">
+                                  {new Date(campaign.submittedAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="mt-4">
+                              <p className="text-gray-400 text-sm mb-2">Placements</p>
+                              <div className="flex flex-wrap gap-2">
+                                {campaign.placements.map((placement, index) => (
+                                  <Badge key={index} variant="outline" className="border-gray-600 text-gray-300">
+                                    {placement.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    ) : (
+                      <div className="text-center py-12">
+                        <TrendingUp className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                        <h3 className="text-white text-lg font-semibold mb-2">No Campaigns Yet</h3>
+                        <p className="text-gray-400">Campaigns submitted through the advertise page will appear here.</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
           </div>
         </div>
       </div>

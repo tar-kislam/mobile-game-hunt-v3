@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { CacheService } from "@/lib/redis"
 import { RateLimiter, RATE_LIMITS } from "@/lib/rate-limiter"
 import { notify } from '@/lib/notificationService'
-import { addXPWithBonus } from "@/lib/xpService"
+import { awardXP } from "@/lib/xpService"
 import { checkAndAwardBadges } from "@/lib/badgeService"
 import { notifyFollowersOfGameSubmission } from '@/lib/followNotifications'
 import { generateSlug, generateUniqueSlug } from '@/lib/slug'
@@ -177,22 +177,27 @@ export async function GET(request: NextRequest) {
     // Get time-window aggregated counts for all products
     const whereWindow = windowStart ? { createdAt: { gte: windowStart } } : {}
     
+    // Guard against missing models
+    if (!(prisma as any).vote || !(prisma as any).gameFollow || !(prisma as any).metric) {
+      return NextResponse.json({ products: [], totalCount: 0, page, limit, totalPages: 0 })
+    }
+    
     // Aggregate votes in time window
-    const votesInWindow = await prisma.vote.groupBy({
+    const votesInWindow = await (prisma as any).vote.groupBy({
       by: ['productId'],
       where: whereWindow,
       _count: { id: true }
     })
     
     // Aggregate follows in time window
-    const followsInWindow = await prisma.gameFollow.groupBy({
+    const followsInWindow = await (prisma as any).gameFollow.groupBy({
       by: ['gameId'],
       where: whereWindow,
       _count: { id: true }
     })
     
     // Aggregate clicks/views in time window (using Metric table)
-    const clicksInWindow = await prisma.metric.groupBy({
+    const clicksInWindow = await (prisma as any).metric.groupBy({
       by: ['gameId'],
       where: {
         timestamp: windowStart ? { gte: windowStart } : undefined,
@@ -202,9 +207,9 @@ export async function GET(request: NextRequest) {
     })
 
     // Create maps for quick lookup
-    const votesMap = new Map(votesInWindow.map(v => [v.productId, v._count.id]))
-    const followsMap = new Map(followsInWindow.map(f => [f.gameId, f._count.id]))
-    const clicksMap = new Map(clicksInWindow.map(c => [c.gameId, c._count.id]))
+    const votesMap = new Map(votesInWindow.map((v: any) => [v.productId, v._count.id]))
+    const followsMap = new Map(followsInWindow.map((f: any) => [f.gameId, f._count.id]))
+    const clicksMap = new Map(clicksInWindow.map((c: any) => [c.gameId, c._count.id]))
 
     // Fetch products with basic info
     const products = await prisma.product.findMany({
@@ -242,6 +247,7 @@ export async function GET(request: NextRequest) {
             }
           }
         },
+        tags: true,
         _count: {
           select: {
             votes: true,
@@ -264,7 +270,7 @@ export async function GET(request: NextRequest) {
       const ageHours = (now.getTime() - product.createdAt.getTime()) / (1000 * 60 * 60)
       
       // Calculate leaderboard score
-      const baseScore = Math.log1p(votesInWindowCount) + 0.6 * Math.log1p(followsInWindowCount) + 0.4 * Math.log1p(clicksInWindowCount)
+      const baseScore = Math.log1p(Number(votesInWindowCount)) + 0.6 * Math.log1p(Number(followsInWindowCount)) + 0.4 * Math.log1p(Number(clicksInWindowCount))
       const decay = Math.exp(-ageHours / 36)
       const score = baseScore * decay
 
@@ -282,10 +288,10 @@ export async function GET(request: NextRequest) {
     let sortedProducts = productsWithScores
     switch (sortBy) {
       case 'most-upvoted':
-        sortedProducts = productsWithScores.sort((a, b) => b.votesInWindow - a.votesInWindow)
+        sortedProducts = productsWithScores.sort((a, b) => Number(b.votesInWindow) - Number(a.votesInWindow))
         break
       case 'most-viewed':
-        sortedProducts = productsWithScores.sort((a, b) => b.viewsInWindow - a.viewsInWindow)
+        sortedProducts = productsWithScores.sort((a, b) => Number(b.viewsInWindow) - Number(a.viewsInWindow))
         break
       case 'leaderboard':
         // Sort by calculated leaderboard score
@@ -399,10 +405,14 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Award XP for game submission with first-time bonus
+    // Award XP for game submission
     try {
-      const xpResult = await addXPWithBonus(user.id, 20, 10, 'submit')
-      console.log(`[XP] Awarded ${xpResult.isFirstTime ? '30' : '20'} XP to user ${user.id} for game submission${xpResult.isFirstTime ? ' (first-time bonus!)' : ''}`)
+      const xpResult = await awardXP(user.id, 'add_game')
+      console.log(`[XP] Awarded ${xpResult.xpAwarded} XP to user ${user.id} for game submission`)
+      
+      if (xpResult.levelUp) {
+        console.log(`[XP] User ${user.id} leveled up from ${xpResult.previousLevel} to ${xpResult.newLevel}!`)
+      }
       
       // Check for new badges after XP award
       try {

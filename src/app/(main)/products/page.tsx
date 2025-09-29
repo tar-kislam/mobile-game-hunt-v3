@@ -13,9 +13,12 @@ import { TimeWindowControl } from "@/components/games/time-window-control"
 import Link from "next/link"
 import Image from "next/image"
 import { PLATFORMS } from "@/components/ui/platform-icons"
+import Head from 'next/head'
+import styles from './products.module.css'
 
 interface Game {
   id: string
+  slug: string
   title: string
   tagline?: string | null
   description: string
@@ -331,7 +334,12 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)] products-font">
+    <div className={`min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)] ${styles.productsPage}`}>
+      <Head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Epunda+Slab:ital,wght@0,300..900;1,300..900&family=Funnel+Display:wght@300..800&family=Lexend:wght@100..900&family=Orbitron:wght@400..900&family=Quantico:ital,wght@0,400;0,700;1,400;1,700&family=Sansation:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Underdog&display=swap" rel="stylesheet" />
+      </Head>
       <div className="container mx-auto px-4 py-8">
         {/* Search Bar - GOG Style */}
         <div className="mb-6">
@@ -407,7 +415,7 @@ export default function ProductsPage() {
 
             {/* Status Badge */}
             <div className="mb-4 flex items-center gap-2">
-              <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300">
+              <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300 font-[Orbitron] font-semibold">
                 Showing {sortBy === 'newest' ? 'Newest' : 
                          sortBy === 'most-upvoted' ? 'Most Upvoted' :
                          sortBy === 'most-viewed' ? 'Most Viewed' :
@@ -415,7 +423,7 @@ export default function ProductsPage() {
                          sortBy === 'leaderboard' ? 'Leaderboard' : 'Newest'}
               </Badge>
               <span className="text-gray-400">•</span>
-              <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300">
+              <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300 font-[Orbitron] font-semibold">
                 {timeWindow === 'daily' ? 'Daily' :
                  timeWindow === 'weekly' ? 'Weekly' :
                  timeWindow === 'monthly' ? 'Monthly' :

@@ -8,33 +8,15 @@ import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
 import { notify } from "@/lib/notificationService"
 
-// Function to generate a unique username
-async function generateUniqueUsername(baseUsername: string): Promise<string> {
+// Function to generate a pseudo-unique username without DB dependency
+function generateUniqueUsername(baseUsername: string): string {
   let username = baseUsername.toLowerCase().replace(/[^a-z0-9]/g, '')
-  
-  // Ensure username is not empty and starts with a letter
   if (!username || !/^[a-z]/.test(username)) {
-    username = 'user' + Math.random().toString(36).substring(2, 8)
+    username = 'user'
   }
-  
-  let finalUsername = username
-  let counter = 1
-  
-  // Check if username exists and generate unique one
-  while (true) {
-    const existingUser = await prisma.user.findUnique({
-      where: { username: finalUsername }
-    })
-    
-    if (!existingUser) {
-      break
-    }
-    
-    finalUsername = `${username}-${counter}`
-    counter++
-  }
-  
-  return finalUsername
+  // Append short random suffix to avoid collisions without querying DB
+  const suffix = Math.random().toString(36).substring(2, 6)
+  return `${username}-${suffix}`
 }
 
 // Build providers conditionally to avoid 500s when env vars are missing
@@ -130,34 +112,8 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
-      // Handle OAuth providers for existing users
-      if ((account?.provider === "google" || account?.provider === "github") && user.email) {
-        try {
-          // Check if user exists
-          const existingUser = await prisma.user.findUnique({
-            where: { email: user.email }
-          })
-          
-          // If user exists and has no username, generate one
-          if (existingUser && !existingUser.username) {
-            const baseUsername = user.email.split('@')[0]
-            const uniqueUsername = await generateUniqueUsername(baseUsername)
-            
-            // Update existing user with username only (don't touch passwordHash)
-            await prisma.user.update({
-              where: { id: existingUser.id },
-              data: { username: uniqueUsername }
-            })
-            
-            console.log(`Generated username for existing ${account.provider} user ${user.email}: ${uniqueUsername}`)
-          }
-        } catch (error) {
-          console.error('Error generating username for existing user:', error)
-          // Don't block sign-in if username generation fails
-        }
-      }
-      
+    async signIn() {
+      // Keep sign-in permissive; username handling is disabled due to minimal User model
       return true
     },
     async jwt({ token, user }) {
@@ -171,77 +127,19 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         (session.user as any).id = token.id as string || token.sub as string
         (session.user as any).role = token.role as string
-        
-        // Fetch username from database
-        try {
-          const user = await prisma.user.findUnique({
-            where: { id: token.id as string || token.sub as string },
-            select: { username: true }
-          })
-          
-          if (user) {
-            (session.user as any).username = user.username
-          }
-        } catch (error) {
-          console.error('Error fetching username for session:', error)
-          // Don't block session creation if username fetch fails
-        }
       }
       return session
     },
   },
   events: {
-    async createUser({ user, account, profile }: any) {
+    async createUser({ user }) {
+      // Check for Pioneer badge eligibility when user is created
       try {
-        // Handle different authentication methods
-        if (account?.provider === "google" && user.email && profile?.email) {
-          // Google OAuth: Generate username, skip passwordHash
-          const baseUsername = profile.email.split('@')[0]
-          const uniqueUsername = await generateUniqueUsername(baseUsername)
-          
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { 
-              username: uniqueUsername,
-              // Don't set passwordHash for OAuth users
-            }
-          })
-          
-          console.log(`Generated username for new Google user ${user.email}: ${uniqueUsername}`)
-        } else if (account?.provider === "github" && user.email) {
-          // GitHub OAuth: Generate username, skip passwordHash
-          const baseUsername = user.email.split('@')[0]
-          const uniqueUsername = await generateUniqueUsername(baseUsername)
-          
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { 
-              username: uniqueUsername,
-              // Don't set passwordHash for OAuth users
-            }
-          })
-          
-          console.log(`Generated username for new GitHub user ${user.email}: ${uniqueUsername}`)
-        } else if (account?.provider === "email" && user.email) {
-          // Email/Magic Link: Generate username, skip passwordHash
-          const baseUsername = user.email.split('@')[0]
-          const uniqueUsername = await generateUniqueUsername(baseUsername)
-          
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { 
-              username: uniqueUsername,
-              // Don't set passwordHash for magic link users
-            }
-          })
-          
-          console.log(`Generated username for new Email user ${user.email}: ${uniqueUsername}`)
-        }
-        // Note: Credentials provider users are handled by the custom signup API route
-        // which already handles password hashing with bcrypt salt of 12
+        const { checkAndAwardBadges } = await import('@/lib/badgeService')
+        await checkAndAwardBadges(user.id)
       } catch (error) {
-        console.error('Error in createUser event:', error)
-        // Don't block user creation if username generation fails
+        console.error('Error checking badges on user creation:', error)
+        // Don't fail user creation if badge checking fails
       }
     },
   },

@@ -1,0 +1,255 @@
+/* Toast Notification Custom Styles */
+.toast-custom {
+  /* Custom toast styling */
+  backdrop-filter: blur(10px);
+  background: rgba(15, 23, 42, 0.95) !important;
+  border: 1px solid rgba(139, 92, 246, 0.3) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+  border-radius: 12px !important;
+}
+
+/* Hide close button completely - multiple selectors for maximum coverage */
+[data-sonner-toast] [data-close-button],
+[data-sonner-toast] [data-close],
+.toast-close,
+[data-close-button],
+button[data-close],
+[data-sonner-toast] button[aria-label*="close"],
+[data-sonner-toast] button[aria-label*="Close"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: none !important;
+}
+
+/* Toast container positioning - handled by Sonner props */
+[data-sonner-toaster] {
+  z-index: 9999 !important;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  [data-sonner-toaster] {
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+  }
+  
+  [data-sonner-toast] {
+    width: 100% !important;
+    max-width: none !important;
+  }
+}
+
+/* Toast animations */
+[data-sonner-toast] {
+  /* Slide in from right with fade */
+  animation: slideInFromRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+[data-sonner-toast][data-removed="true"] {
+  /* Slide out to right with fade - more noticeable */
+  animation: slideOutToRight 0.3s cubic-bezier(0.4, 0, 1, 1) !important;
+}
+
+/* Custom animations */
+@keyframes slideInFromRight {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToRight {
+  0% {
+    transform: translateX(0) translateY(0) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(50%) translateY(-5px) scale(0.95);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateX(100%) translateY(-10px) scale(0.9);
+    opacity: 0;
+  }
+}
+
+/* Toast content styling */
+[data-sonner-toast] [data-content] {
+  color: white !important;
+  font-weight: 500;
+}
+
+/* Toast title styling */
+[data-sonner-toast] [data-title] {
+  color: white !important;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Toast description styling */
+[data-sonner-toast] [data-description] {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 13px;
+}
+
+/* Success toast styling */
+[data-sonner-toast][data-type="success"] {
+  border-left: 4px solid #10b981 !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-icon] {
+  color: #10b981 !important;
+}
+
+/* Error toast styling */
+[data-sonner-toast][data-type="error"] {
+  border-left: 4px solid #ef4444 !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-icon] {
+  color: #ef4444 !important;
+}
+
+/* Info toast styling */
+[data-sonner-toast][data-type="info"] {
+  border-left: 4px solid #3b82f6 !important;
+}
+
+[data-sonner-toast][data-type="info"] [data-icon] {
+  color: #3b82f6 !important;
+}
+
+/* Warning toast styling */
+[data-sonner-toast][data-type="warning"] {
+  border-left: 4px solid #f59e0b !important;
+}
+
+[data-sonner-toast][data-type="warning"] [data-icon] {
+  color: #f59e0b !important;
+}
+
+/* Toast progress bar - more visible */
+[data-sonner-toast] [data-progress] {
+  background: rgba(139, 92, 246, 0.2) !important;
+  height: 3px !important;
+  border-radius: 2px !important;
+}
+
+[data-sonner-toast] [data-progress]::before {
+  background: linear-gradient(90deg, #8b5cf6, #06b6d4) !important;
+  height: 100% !important;
+  border-radius: 2px !important;
+  transition: width 0.1s linear !important;
+}
+
+/* Hover effects */
+[data-sonner-toast]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* Toast gap between multiple toasts */
+[data-sonner-toast] + [data-sonner-toast] {
+  margin-top: 8px !important;
+}
+
+/* Toast content styling */
+[data-sonner-toast] [data-content] {
+  color: white !important;
+  font-weight: 500;
+}
+
+/* Toast title styling */
+[data-sonner-toast] [data-title] {
+  color: white !important;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Toast description styling */
+[data-sonner-toast] [data-description] {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 13px;
+}
+
+/* Close button styling */
+[data-sonner-toast] [data-close-button] {
+  color: rgba(255, 255, 255, 0.6) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  color: white !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Success toast styling */
+[data-sonner-toast][data-type="success"] {
+  border-left: 4px solid #10b981 !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-icon] {
+  color: #10b981 !important;
+}
+
+/* Error toast styling */
+[data-sonner-toast][data-type="error"] {
+  border-left: 4px solid #ef4444 !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-icon] {
+  color: #ef4444 !important;
+}
+
+/* Info toast styling */
+[data-sonner-toast][data-type="info"] {
+  border-left: 4px solid #3b82f6 !important;
+}
+
+[data-sonner-toast][data-type="info"] [data-icon] {
+  color: #3b82f6 !important;
+}
+
+/* Warning toast styling */
+[data-sonner-toast][data-type="warning"] {
+  border-left: 4px solid #f59e0b !important;
+}
+
+[data-sonner-toast][data-type="warning"] [data-icon] {
+  color: #f59e0b !important;
+}
+
+/* Toast progress bar - more visible */
+[data-sonner-toast] [data-progress] {
+  background: rgba(139, 92, 246, 0.2) !important;
+  height: 3px !important;
+  border-radius: 2px !important;
+}
+
+[data-sonner-toast] [data-progress]::before {
+  background: linear-gradient(90deg, #8b5cf6, #06b6d4) !important;
+  height: 100% !important;
+  border-radius: 2px !important;
+  transition: width 0.1s linear !important;
+}
+
+/* Hover effects */
+[data-sonner-toast]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.3s ease !important;
+}

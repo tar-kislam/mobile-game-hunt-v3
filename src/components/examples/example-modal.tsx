@@ -38,7 +38,7 @@ export function ExampleModal() {
               </AvatarFallback>
             </Avatar>
             <div>
-              <DialogTitle className="text-xl">Clash of Clans</DialogTitle>
+              <DialogTitle className="text-xl">Game Title</DialogTitle>
               <DialogDescription>
                 Strategy game • 4.5 ⭐ • 152 votes
               </DialogDescription>
@@ -61,8 +61,7 @@ export function ExampleModal() {
             <div>
               <h4 className="font-semibold mb-2">Description</h4>
               <p className="text-sm text-muted-foreground">
-                A popular strategy mobile game where you build and defend your village. 
-                Create your army, fight epic Clan Wars, and rise to the top of the leaderboards.
+                Example description goes here.
               </p>
             </div>
             
@@ -88,7 +87,7 @@ export function ExampleModal() {
                       <span className="font-medium text-sm">User {i}</span>
                       <span className="text-xs text-muted-foreground">2 hours ago</span>
                     </div>
-                    <p className="text-sm mt-1">Great game! Really enjoying the strategy elements.</p>
+                    <p className="text-sm mt-1">Great game! Really enjoying it.</p>
                   </div>
                 </div>
               ))}
@@ -99,19 +98,19 @@ export function ExampleModal() {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="font-medium">Developer:</span>
-                <span className="ml-2 text-muted-foreground">Supercell</span>
+                <span className="ml-2 text-muted-foreground">Studio</span>
               </div>
               <div>
                 <span className="font-medium">Release Date:</span>
-                <span className="ml-2 text-muted-foreground">August 2012</span>
+                <span className="ml-2 text-muted-foreground">—</span>
               </div>
               <div>
                 <span className="font-medium">Platform:</span>
-                <span className="ml-2 text-muted-foreground">iOS, Android</span>
+                <span className="ml-2 text-muted-foreground">—</span>
               </div>
               <div>
                 <span className="font-medium">Genre:</span>
-                <span className="ml-2 text-muted-foreground">Strategy, MMO</span>
+                <span className="ml-2 text-muted-foreground">—</span>
               </div>
             </div>
           </TabsContent>

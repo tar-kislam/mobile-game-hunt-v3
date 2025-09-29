@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { redisClient } from '@/lib/redis';
+import { getScoringWeights, calculateFinalScore, DEFAULT_LEADERBOARD_CONFIG } from '@/lib/leaderboardConfig';
 
 // Cache keys and TTL constants
 const LEADERBOARD_KEYS = {
@@ -11,24 +12,35 @@ const LEADERBOARD_KEYS = {
   ALL: 'leaderboard:all'
 };
 
-const CACHE_TTL = {
-  DAILY: 300, // 5 minutes
-  WEEKLY: 900, // 15 minutes
-  MONTHLY: 1800, // 30 minutes
-  YEARLY: 3600, // 1 hour
-  ALL: 3600 // 1 hour
-};
+const CACHE_TTL = DEFAULT_LEADERBOARD_CONFIG.cacheTTL;
 
-// Score calculation with decay formula
-// score = (log1p(votes) + 0.6 * log1p(follows) + 0.4 * log1p(clicks)) * e^(-ageHours/36)
-function calculateScore(votes: number, follows: number, clicks: number, createdAt: Date): number {
-  const now = new Date();
-  const ageHours = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+// Get scoring weights (configurable via environment variables)
+const scoringWeights = getScoringWeights();
+
+// Ranking function with tiebreakers
+function compareProducts(a: any, b: any): number {
+  // Primary sort: by final score (descending)
+  if (b.finalScore !== a.finalScore) {
+    return b.finalScore - a.finalScore;
+  }
   
-  const baseScore = Math.log1p(votes) + 0.6 * Math.log1p(follows) + 0.4 * Math.log1p(clicks);
-  const decay = Math.exp(-ageHours / 36);
+  // Tiebreaker 1: votes (descending)
+  if (b.votes !== a.votes) {
+    return b.votes - a.votes;
+  }
   
-  return baseScore * decay;
+  // Tiebreaker 2: comments (descending)
+  if (b.comments !== a.comments) {
+    return b.comments - a.comments;
+  }
+  
+  // Tiebreaker 3: follows (descending)
+  if (b.follows !== a.follows) {
+    return b.follows - a.follows;
+  }
+  
+  // Tiebreaker 4: views (descending)
+  return b.views - a.views;
 }
 
 export async function GET(request: NextRequest) {
@@ -38,9 +50,9 @@ export async function GET(request: NextRequest) {
     const take = parseInt(searchParams.get('take') || '50');
     
     // Validate window parameter
-    if (!['daily', 'weekly', 'all'].includes(window)) {
+    if (!['daily', 'weekly', 'monthly'].includes(window)) {
       return NextResponse.json(
-        { error: 'Invalid window parameter. Use: daily, weekly, or all' },
+        { error: 'Invalid window parameter. Use: daily, weekly, or monthly' },
         { status: 400 }
       );
     }
@@ -66,19 +78,31 @@ export async function GET(request: NextRequest) {
       startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     } else if (window === 'weekly') {
       startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    } else if (window === 'monthly') {
+      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     }
 
-    // Build where clause
-    const whereClause: any = {};
+    // Guard against missing Product model
+    if (!(prisma as any).product) {
+      return NextResponse.json({ products: [], cached: false })
+    }
+
+    // Build base where clause for products
+    const productWhereClause: any = {
+      status: 'PUBLISHED' // Only show published products
+    };
+
+    // Build date filters for interactions
+    const interactionWhereClause: any = {};
     if (startDate) {
-      whereClause.createdAt = {
+      interactionWhereClause.createdAt = {
         gte: startDate
       };
     }
 
-    // Fetch products with votes count and user info
-    const products = await prisma.product.findMany({
-      where: whereClause,
+    // Fetch products with their interaction counts filtered by timeframe
+    const products = await (prisma as any).product.findMany({
+      where: productWhereClause,
       select: {
         id: true,
         title: true,
@@ -90,6 +114,7 @@ export async function GET(request: NextRequest) {
         platforms: true,
         status: true,
         createdAt: true,
+        clicks: true, // This is the views metric
         user: {
           select: {
             id: true,
@@ -97,10 +122,22 @@ export async function GET(request: NextRequest) {
             image: true
           }
         },
-        _count: {
+        votes: {
+          where: interactionWhereClause,
           select: {
-            votes: true,
-            comments: true
+            id: true
+          }
+        },
+        comments: {
+          where: interactionWhereClause,
+          select: {
+            id: true
+          }
+        },
+        followUsers: {
+          where: interactionWhereClause,
+          select: {
+            id: true
           }
         }
       },
@@ -110,18 +147,15 @@ export async function GET(request: NextRequest) {
     });
 
     // Calculate scores and add rank
-    const productsWithScores = products.map(product => {
-      // For now, we'll use votes as follows and comments as clicks
-      // In a real app, you'd have separate follows and clicks tracking
-      const follows = product._count.comments; // Placeholder
-      const clicks = Math.floor(Math.random() * 100); // Placeholder - replace with real tracking
+    const productsWithScores = products.map((product: any) => {
+      // Extract counts from the filtered interactions
+      const votes = product.votes.length;
+      const comments = product.comments.length;
+      const follows = product.followUsers.length;
+      const views = product.clicks || 0; // Use the clicks field as views
       
-      const score = calculateScore(
-        product._count.votes,
-        follows,
-        clicks,
-        product.createdAt
-      );
+      // Calculate final score using weighted metrics
+      const finalScore = calculateFinalScore(votes, comments, follows, views, scoringWeights);
 
       return {
         id: product.id,
@@ -131,22 +165,21 @@ export async function GET(request: NextRequest) {
         thumbnail: product.thumbnail ?? product.image ?? null,
         url: product.url,
         platforms: product.platforms,
-        // countries may not exist on schema; omit to avoid P2022
         status: product.status,
         createdAt: product.createdAt,
         user: product.user,
-        votes: product._count.votes,
-        comments: product._count.comments,
+        votes,
+        comments,
         follows,
-        clicks,
-        score: parseFloat(score.toFixed(4))
+        views,
+        finalScore
       };
     });
 
-    // Sort by score (descending) and add rank
+    // Sort by final score with tiebreakers and add rank
     const sortedProducts = productsWithScores
-      .sort((a, b) => b.score - a.score)
-      .map((product, index) => ({
+      .sort(compareProducts)
+      .map((product: any, index: number) => ({
         ...product,
         rank: index + 1
       }));

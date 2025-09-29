@@ -3,8 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { rateLimit } from '@/lib/rate-limit'
-import { notify } from '@/lib/notificationService'
-import { addXPWithBonus } from '@/lib/xpService'
+import { notify, notifyVote } from '@/lib/notificationService'
+import { awardXP } from '@/lib/xpService'
 import { checkAndAwardBadges } from '@/lib/badgeService'
 import { z } from 'zod'
 
@@ -121,10 +121,14 @@ export async function POST(
             },
           })
 
-          // Award XP for voting with first-time bonus
+          // Award XP for voting
           try {
-            const xpResult = await addXPWithBonus(userId, 3, 5, 'vote')
-            console.log(`[XP] Awarded ${xpResult.isFirstTime ? '8' : '3'} XP to user ${userId} for voting${xpResult.isFirstTime ? ' (first-time bonus!)' : ''}`)
+            const xpResult = await awardXP(userId, 'vote')
+            console.log(`[XP] Awarded ${xpResult.xpAwarded} XP to user ${userId} for voting`)
+            
+            if (xpResult.levelUp) {
+              console.log(`[XP] User ${userId} leveled up from ${xpResult.previousLevel} to ${xpResult.newLevel}!`)
+            }
             
             // Check for new badges after XP award
             try {
@@ -148,6 +152,24 @@ export async function POST(
               }
             } catch (notificationError) {
               console.error('[NOTIFICATION] Error sending vote notification:', notificationError)
+            }
+
+            // Send vote notification to game owner (if not voting on own game)
+            try {
+              if (product.userId !== userId) {
+                const voter = await prisma.user.findUnique({
+                  where: { id: userId },
+                  select: { username: true, name: true }
+                })
+
+                if (voter) {
+                  const voterName = voter.name || voter.username || 'Someone'
+                  await notifyVote(product.userId, userId, voterName, product.title, productId)
+                  console.log(`[VOTE] Notification sent to game owner ${product.userId} about vote from ${voterName}`)
+                }
+              }
+            } catch (voteNotificationError) {
+              console.error('[VOTE NOTIFICATION] Error sending vote notification to game owner:', voteNotificationError)
             }
           } catch (xpError) {
             console.error('[XP] Error awarding XP for voting:', xpError)

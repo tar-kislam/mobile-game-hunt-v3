@@ -42,24 +42,27 @@ model VerificationToken {
 }
 
 model User {
-  id                   String           @id @default(cuid())
+  id                   String              @id @default(cuid())
   name                 String?
-  email                String           @unique
+  email                String              @unique
   emailVerified        DateTime?
   image                String?
-  role                 UserRole         @default(USER)
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
-  marketingOptIn       Boolean          @default(false)
-  notificationsEnabled Boolean          @default(true)
-  username             String?          @unique
-  level                Int              @default(1)
-  xp                   Int              @default(0)
-  passwordHash         String?          @db.VarChar(255)
+  role                 UserRole            @default(USER)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  marketingOptIn       Boolean             @default(false)
+  notificationsEnabled Boolean             @default(true)
+  username             String?             @unique
+  level                Int                 @default(1)
+  xp                   Int                 @default(0)
+  passwordHash         String?             @db.VarChar(255)
   accounts             Account[]
+  adRequests           AdRequest[]
+  advertiseCampaigns   AdvertiseCampaign[]
+  campaignPayments     CampaignPayment[]
   commentVotes         CommentVote[]
-  following            Follow[]         @relation("follower")
-  followers            Follow[]         @relation("following")
+  following            Follow[]            @relation("follower")
+  followers            Follow[]            @relation("following")
   gameFollows          GameFollow[]
   likes                Like[]
   metrics              Metric[]
@@ -74,6 +77,7 @@ model User {
   sessions             Session[]
   studios              Studio[]
   votes                Vote[]
+  campaigns            Campaign[]
 }
 
 model Product {
@@ -225,8 +229,15 @@ model Notification {
   createdAt DateTime @default(now())
   message   String
   type      String
+  title     String?
+  meta      Json?
+  link      String?
+  icon      String?
   read      Boolean  @default(false)
   user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([userId, read])
 }
 
 model PressKit {
@@ -442,6 +453,84 @@ model NewsletterSubscription {
   @@index([createdAt])
 }
 
+model AdvertiseCampaign {
+  id                  String         @id @default(cuid())
+  userId              String?
+  goal                String         // Brand Awareness, Game Launch, Community Growth
+  budget              Int            @default(0)
+  startDate           DateTime?
+  endDate             DateTime?
+  audience            Json?          // { countries: string[], ageRange: string[], interests: string[] }
+  media               Json?          // { files: string[], thumbnail: string }
+  status              CampaignStatus @default(DRAFT)
+  notes               String?
+  metadata            Json?          // { placements: string[], packageType: string, gameName: string }
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  user                User?          @relation(fields: [userId], references: [id])
+
+  // Legacy fields for backward compatibility
+  placements          String[]       @default([])
+  durationType        String         @default("monthly")
+  totalPrice          Int            @default(0)
+  priceBreakdown      Json?
+  gameId              String?
+  budgetDaily         Int            @default(0)
+  budgetTotal         Int            @default(0)
+  duration            String         @default("")
+  countries           String[]       @default([])
+  platforms           String[]       @default([])
+  ageGroups           String[]       @default([])
+  promotionFocus      String[]       @default([])
+  bannerPlacement     String         @default("")
+  featuredSlot        String         @default("")
+  newsletterHighlight String         @default("")
+  strategySuggestion  String?
+  contactEmail        String?
+  campaignTagline     String?
+  creativeUrl         String?
+  payments            CampaignPayment[]
+
+  @@index([userId, createdAt])
+  @@index([userId, status])
+}
+
+model CampaignPayment {
+  id          String            @id @default(cuid())
+  campaignId  String
+  userId      String
+  amount      Int               // Amount in cents
+  currency    String            @default("USD")
+  status      PaymentStatus     @default(PENDING)
+  paymentMethod String?         // stripe, paypal, etc.
+  transactionId String?         // External payment processor transaction ID
+  metadata    Json?             // Additional payment data
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  campaign    AdvertiseCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([userId])
+  @@index([status])
+}
+
+model AdRequest {
+  id            String        @id @default(cuid())
+  userId        String
+  gameId        String
+  gameName      String
+  promotionType String
+  package       String
+  duration      String
+  price         Int
+  status        RequestStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
 enum UserRole {
   USER
   ADMIN
@@ -467,4 +556,41 @@ enum MakerRole {
   DEVELOPER
   PUBLISHER
   HUNTER
+}
+
+enum CampaignStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  ACTIVE
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  userId      String
+  gameId      String
+  gameName    String
+  goal        String
+  placements  String[]
+  package     String
+  budget      Int
+  submittedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([submittedAt])
 }

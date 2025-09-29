@@ -43,6 +43,12 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'ui-avatars.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'www.shutterstock.com',
         port: '',
         pathname: '/**',
@@ -151,6 +157,17 @@ const nextConfig: NextConfig = {
         destination: '/:username',
         permanent: true,
       },
+      // Permanent 301 redirects for blog routes (keep active for 90+ days)
+      {
+        source: '/blog',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/blog/:slug*',
+        destination: '/',
+        permanent: true,
+      },
     ]
   },
 
@@ -171,10 +188,10 @@ const nextConfig: NextConfig = {
   trailingSlash: false,
   generateEtags: false,
 
-  // Logging
+  // Logging - Reduce verbosity in development
   logging: {
     fetches: {
-      fullUrl: true,
+      fullUrl: false,
     },
   },
 };

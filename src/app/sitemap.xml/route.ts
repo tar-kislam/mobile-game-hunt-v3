@@ -1,14 +1,88 @@
-import { NextResponse } from 'next/server'
+import { MetadataRoute } from 'next'
+import { prisma } from '@/lib/prisma'
 
-export function GET() {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-  const urls = ['/', '/products', '/leaderboard', '/calendar', '/trends', '/community', '/soft-launch']
-  const lastmod = new Date().toISOString()
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map(u => `<url><loc>${base}${u}</loc><lastmod>${lastmod}</lastmod></url>`).join('\n')}
-</urlset>`
-  return new NextResponse(xml, { status: 200, headers: { 'Content-Type': 'application/xml' } })
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'
+
+  // Static pages
+  const staticPages = [
+    {
+      url: baseUrl,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 1,
+    },
+    {
+      url: `${baseUrl}/products`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/leaderboard`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/community`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/calendar`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/submit`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.5,
+    },
+  ]
+
+  // Dynamic product pages
+  const products = await prisma.product.findMany({
+    where: {
+      status: 'published'
+    },
+    select: {
+      slug: true,
+      updatedAt: true,
+    },
+    take: 1000, // Limit to prevent timeout
+  })
+
+  const productPages = products.map((product) => ({
+    url: `${baseUrl}/product/${product.slug}`,
+    lastModified: product.updatedAt,
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  }))
+
+  // User profile pages
+  const users = await prisma.user.findMany({
+    where: {
+      username: {
+        not: null
+      }
+    },
+    select: {
+      username: true,
+      updatedAt: true,
+    },
+    take: 1000,
+  })
+
+  const userPages = users.map((user) => ({
+    url: `${baseUrl}/${user.username}`,
+    lastModified: user.updatedAt,
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }))
+
+  return [...staticPages, ...productPages, ...userPages]
 }
-
-

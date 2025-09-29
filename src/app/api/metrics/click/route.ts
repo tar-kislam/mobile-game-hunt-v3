@@ -78,6 +78,18 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Treat 'view' and 'INTERNAL' as a view for total views aggregation
+    if (type === 'view' || type === 'INTERNAL') {
+      await prisma.product.update({
+        where: { id: gameId },
+        data: {
+          clicks: {
+            increment: 0
+          }
+        }
+      })
+    }
+
     return NextResponse.json({ 
       success: true, 
       metricId: metric.id,

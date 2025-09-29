@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { addXP } from '@/lib/xpService'
 import { checkAndAwardBadges, getUserBadges } from '@/lib/badgeService'
 import { prisma } from '@/lib/prisma'
+import { calculateLevelProgress } from '@/lib/xpCalculator'
 import { z } from 'zod'
 
 // Only allow in development
@@ -59,10 +60,9 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'User not found' }, { status: 404 })
         }
 
-        // Calculate XP needed to reach next level
-        const currentLevelXP = (user.level - 1) * 100
-        const nextLevelXP = user.level * 100
-        const xpNeeded = nextLevelXP - user.xp + 1 // Add 1 to ensure level up
+        // Calculate XP needed to reach next level using centralized calculation
+        const levelProgress = calculateLevelProgress(user.xp)
+        const xpNeeded = levelProgress.remainingXP + 1 // Add 1 to ensure level up
 
         // Add XP to trigger level up
         const levelResult = await addXP(userId, xpNeeded)
@@ -71,8 +71,8 @@ export async function POST(req: NextRequest) {
           message: `Added ${xpNeeded} XP to trigger level up`,
           xpBefore: user.xp,
           xpAfter: levelResult.xp,
-          levelBefore: user.level,
-          levelAfter: levelResult.level
+          levelBefore: levelProgress.level,
+          levelAfter: calculateLevelProgress(levelResult.xp).level
         }
         break
       }

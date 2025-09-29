@@ -411,7 +411,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
             <TabsContent value="votes" className="space-y-4">
               <h2 className="text-xl font-semibold">Games {(userData.name || userData.username)} Voted For</h2>
               
-              {(!votesData || votesData.votes?.length === 0) ? (
+              {(!votesData || !Array.isArray(votesData.votes) || votesData.votes.length === 0) ? (
                 <Card className="rounded-2xl shadow-soft"><CardContent className="p-6 text-center text-muted-foreground">No votes yet.</CardContent></Card>
               ) : (
                 <MagicBento

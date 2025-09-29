@@ -86,6 +86,9 @@ export async function GET(request: NextRequest) {
     const country = searchParams.get('country');
     const categoryId = searchParams.get('categoryId');
     const year = searchParams.get('year');
+    const date = searchParams.get('date');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
 
     // Build where clause
     const whereClause: any = {
@@ -109,7 +112,37 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    if (year) {
+    // Handle specific date filtering
+    if (date) {
+      // Single date filter (for Today button)
+      const targetDate = new Date(date);
+      if (!isNaN(targetDate.getTime())) {
+        const startOfDay = new Date(targetDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(targetDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        
+        whereClause.releaseAt = {
+          gte: startOfDay,
+          lte: endOfDay
+        };
+      }
+    } else if (startDate && endDate) {
+      // Date range filter (for Upcoming 7 days button)
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        
+        whereClause.releaseAt = {
+          gte: start,
+          lte: end
+        };
+      }
+    } else if (year) {
+      // Year filter (for general calendar)
       const yearInt = parseInt(year);
       if (!isNaN(yearInt)) {
         whereClause.releaseAt = {

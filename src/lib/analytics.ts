@@ -1,87 +1,98 @@
-// Analytics and monitoring utilities for production
+// Google Analytics utility functions
 
-// Web Vitals reporting
-export function reportWebVitals(metric: any) {
-  if (process.env.NODE_ENV === 'production') {
-    // Send to analytics service (Google Analytics, Vercel Analytics, etc.)
-    
-    // Example: Google Analytics 4
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', metric.name, {
-        event_category: 'Web Vitals',
-        event_label: metric.id,
-        value: Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
-        non_interaction: true,
-      })
-    }
-
-    // Example: Send to custom analytics endpoint
-    if (typeof window !== 'undefined') {
-      fetch('/api/analytics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: metric.name,
-          value: metric.value,
-          id: metric.id,
-          delta: metric.delta,
-          url: window.location.href,
-          timestamp: Date.now(),
-        }),
-      }).catch((error) => {
-        console.warn('Failed to send analytics:', error)
-      })
-    }
+declare global {
+  interface Window {
+    gtag: (
+      command: 'config' | 'event' | 'js' | 'set',
+      targetId: string | Date,
+      config?: Record<string, any>
+    ) => void
   }
 }
 
-// Error reporting
-export function reportError(error: Error, context?: any) {
-  if (process.env.NODE_ENV === 'production') {
-    // Send to error reporting service (Sentry, LogRocket, etc.)
-    console.error('Application error:', error, context)
-    
-    // Example: Send to error endpoint
-    if (typeof window !== 'undefined') {
-      fetch('/api/errors', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: error.message,
-          stack: error.stack,
-          context,
-          url: window.location.href,
-          userAgent: navigator.userAgent,
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {
-        // Silently fail to prevent error loops
-      })
-    }
+export const GA_TRACKING_ID = 'G-WDPGB7PHH5'
+
+// Track page views
+export const pageview = (url: string) => {
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('config', GA_TRACKING_ID, {
+      page_path: url,
+    })
   }
 }
 
-// Performance monitoring
-export function trackPageView(url: string) {
-  if (process.env.NODE_ENV === 'production') {
-    // Track page views
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('config', process.env.NEXT_PUBLIC_GA_ID, {
-        page_path: url,
-      })
-    }
+// Track custom events
+export const event = ({
+  action,
+  category,
+  label,
+  value,
+}: {
+  action: string
+  category: string
+  label?: string
+  value?: number
+}) => {
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', action, {
+      event_category: category,
+      event_label: label,
+      value: value,
+    })
   }
 }
 
-// User interaction tracking
-export function trackEvent(action: string, category: string, label?: string, value?: number) {
-  if (process.env.NODE_ENV === 'production') {
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', action, {
-        event_category: category,
-        event_label: label,
-        value: value,
-      })
-    }
-  }
+// Common event tracking functions
+export const trackGameVote = (gameId: string, gameTitle: string) => {
+  event({
+    action: 'vote',
+    category: 'game_interaction',
+    label: gameTitle,
+  })
+}
+
+export const trackGameView = (gameId: string, gameTitle: string) => {
+  event({
+    action: 'view',
+    category: 'game_interaction',
+    label: gameTitle,
+  })
+}
+
+export const trackGameFollow = (gameId: string, gameTitle: string) => {
+  event({
+    action: 'follow',
+    category: 'game_interaction',
+    label: gameTitle,
+  })
+}
+
+export const trackGameComment = (gameId: string, gameTitle: string) => {
+  event({
+    action: 'comment',
+    category: 'game_interaction',
+    label: gameTitle,
+  })
+}
+
+export const trackGameSubmission = (gameTitle: string) => {
+  event({
+    action: 'submit',
+    category: 'game_submission',
+    label: gameTitle,
+  })
+}
+
+export const trackUserRegistration = () => {
+  event({
+    action: 'register',
+    category: 'user_engagement',
+  })
+}
+
+export const trackUserLogin = () => {
+  event({
+    action: 'login',
+    category: 'user_engagement',
+  })
 }

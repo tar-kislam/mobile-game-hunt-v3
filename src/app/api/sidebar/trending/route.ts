@@ -11,7 +11,10 @@ export async function GET(req: NextRequest) {
     weekStart.setDate(now.getDate() - now.getDay() + 1) // Monday
     weekStart.setHours(0, 0, 0, 0)
     
-    const trendingThisWeek = await prisma.product.findMany({
+    if (!(prisma as any).product) {
+      return NextResponse.json({ games: [] })
+    }
+    const trendingThisWeek = await (prisma as any).product.findMany({
       where: { 
         createdAt: { 
           gte: weekStart 
@@ -28,13 +31,13 @@ export async function GET(req: NextRequest) {
     })
 
     // Sort by vote count manually
-    const sortedTrending = trendingThisWeek.sort((a, b) => b._count.votes - a._count.votes)
+    const sortedTrending = trendingThisWeek.sort((a: any, b: any) => (b._count?.votes || 0) - (a._count?.votes || 0))
 
     const result = sortedTrending.map((product) => ({
       id: product.id,
       title: product.title,
       platforms: product.platforms || [],
-      votes: product._count.votes
+      votes: product._count?.votes || 0
     }))
 
     return NextResponse.json({ games: result })

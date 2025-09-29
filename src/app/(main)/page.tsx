@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import Head from "next/head"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogTrigger, DialogClose, DialogTitle } from "@/components/ui/dialog"
 import { ArrowUpIcon, MessageCircleIcon, ExternalLinkIcon, TrendingUpIcon, ChevronDownIcon } from "lucide-react"
 import {
   Carousel,
@@ -33,6 +35,7 @@ import { NewsletterModal } from "@/components/modals/newsletter-modal"
 import { toast } from "sonner"
 import useSWR from 'swr'
 import ShinyText from "@/components/ShinyText"
+import { ClientOnly } from "@/components/ui/client-only"
 
 // Fetcher function for SWR
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
@@ -295,7 +298,7 @@ function ProductCard({ product, rank }: { product: any, rank?: number }) {
                   <Badge variant="secondary" className="rounded-2xl text-xs">
                     {product.platforms?.map((p: string) => p.toUpperCase()).join(', ') || 'No platforms listed'}
                   </Badge>
-                  <span className="text-xs text-muted-foreground">by {product.maker.name}</span>
+                  <span className="text-xs text-muted-foreground">by {/* author label handled in card components now */}</span>
                 </div>
               </div>
               
@@ -363,6 +366,13 @@ export default function HomePage() {
   const [isLoadingPreview, setIsLoadingPreview] = useState(false)
   const [isNewsletterModalOpen, setIsNewsletterModalOpen] = useState(false)
 
+  // Allow external open from Hero CTA via custom event
+  useEffect(() => {
+    const handler = () => setIsNewsletterModalOpen(true)
+    window.addEventListener('newsletter:open', handler as any)
+    return () => window.removeEventListener('newsletter:open', handler as any)
+  }, [])
+
   // Fetch sidebar data using SWR
   const { data: topRatedData, error: topRatedError } = useSWR('/api/sidebar/top-rated', fetcher)
   const { data: trendingData, error: trendingError } = useSWR('/api/sidebar/trending', fetcher)
@@ -418,13 +428,16 @@ export default function HomePage() {
   }
 
   const getDisplayGames = () => {
+    if (!Array.isArray(games)) {
+      return []
+    }
     if (showAll) {
       return games
     }
     return games.slice(0, 8)
   }
 
-  const hasMoreGames = games.length > 8
+  const hasMoreGames = Array.isArray(games) && games.length > 8
 
   const fetchLeaderboardPreview = async () => {
     try {
@@ -447,11 +460,70 @@ export default function HomePage() {
     }
   }
 
-  const featuredGame = games[0]
+  const featuredGame = Array.isArray(games) && games.length > 0 ? games[0] : null
+
+  function ConnectModalTrigger() {
+    const rotating = [
+      'Stay Connected ✨',
+      'Join MobileGameHunt Community 🚀',
+      'Follow Us Everywhere 🌍',
+    ]
+    const [phraseIndex, setPhraseIndex] = useState(0)
+    useEffect(() => {
+      const id = setInterval(() => setPhraseIndex((p) => (p + 1) % rotating.length), 2200)
+      return () => clearInterval(id)
+    }, [])
+
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <h3 className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold text-lg mb-4 cursor-pointer">Connect with Us</h3>
+        </DialogTrigger>
+        <DialogContent showCloseButton={false} className="w-[96vw] sm:w-auto sm:max-w-2xl rounded-none sm:rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 shadow-[0_0_36px_rgba(168,85,247,0.45)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95">
+          <DialogTitle className="sr-only">Connect with Us</DialogTitle>
+          {/* Close button */}
+          <DialogClose asChild>
+            <button aria-label="Close" className="absolute right-3 top-3 h-7 w-7 grid place-items-center rounded-full bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition">
+              ×
+            </button>
+          </DialogClose>
+          {/* Rotating header (ReactBits-like) */}
+          <div className="w-full text-center mb-4 select-none">
+            <span className="inline-block text-base sm:text-lg font-semibold bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent transition-all duration-500 will-change-transform" style={{transform: 'translateY(0)'}}>
+              {rotating[phraseIndex]}
+            </span>
+          </div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 py-2">
+            <a href="https://twitter.com/mobilegamehunt" target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-3 rounded-full px-5 py-2 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-all duration-200 hover:shadow-[0_0_18px_rgba(168,85,247,0.25)] hover:scale-[1.02] w-full">
+              <svg viewBox="0 0 24 24" className="h-4 w-4 text-sky-400 group-hover:text-sky-300" fill="currentColor" aria-hidden="true">
+                <path d="M18.244 2H21.5l-7.5 8.59L22.5 22h-6.765l-5.317-6.18L4.756 22H1.5l7.905-9.063L1.5 2h6.873l4.957 5.76L18.244 2zm-1.184 18h2.054L8.21 4H6.123l10.937 16z"/>
+              </svg>
+              <span className="text-sm">X</span>
+            </a>
+            <a href="https://discord.gg/mobilegamehunt" target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-3 rounded-full px-5 py-2 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-all duration-200 hover:shadow-[0_0_18px_rgba(99,102,241,0.25)] hover:scale-[1.02] w-full">
+              <svg viewBox="0 0 24 24" className="h-4 w-4 text-indigo-400 group-hover:text-indigo-300" fill="currentColor" aria-hidden="true"><path d="M20.317 4.369A19.79 19.79 0 0016.558 3c-.2.358-.433.84-.59 1.227a18.27 18.27 0 00-4-.002A8.258 8.258 0 0011.377 3c-1.444.242-2.77.66-3.759 1.37C4.14 7.205 3.26 10.01 3.5 12.77c1.54 1.153 3.03 1.857 4.497 2.322.364-.5.69-1.04.97-1.616-.536-.205-1.05-.462-1.536-.765.13-.097.257-.199.382-.304 2.95 1.38 6.15 1.38 9.09 0 .126.105.253.207.383.304-.486.303-1 .56-1.537.765.28.576.607 1.116.97 1.616 1.47-.465 2.96-1.17 4.5-2.322.296-3.377-.72-6.14-2.422-8.401zM9.75 12.5c-.66 0-1.2-.66-1.2-1.475 0-.814.54-1.475 1.2-1.475s1.2.661 1.2 1.475c0 .815-.54 1.475-1.2 1.475zm4.5 0c-.66 0-1.2-.66-1.2-1.475 0-.814.54-1.475 1.2-1.475s1.2.661 1.2 1.475c0 .815-.54 1.475-1.2 1.475z"/></svg>
+              <span className="text-sm">Discord</span>
+            </a>
+            <a href="https://instagram.com/mobilegamehunt" target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-3 rounded-full px-5 py-2 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-all duration-200 hover:shadow-[0_0_18px_rgba(236,72,153,0.25)] hover:scale-[1.02] w-full">
+              <svg viewBox="0 0 24 24" className="h-4 w-4 text-pink-400 group-hover:text-pink-300" fill="currentColor" aria-hidden="true"><path d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm5 5a5 5 0 100 10 5 5 0 000-10zm6.5.9a1.1 1.1 0 11-2.2 0 1.1 1.1 0 012.2 0z"/></svg>
+              <span className="text-sm">Instagram</span>
+            </a>
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-full overflow-hidden">
+    <>
+      <Head>
+        <title>Mobile Game Hunt - Discover the Best Mobile Games</title>
+        <meta name="description" content="Discover and showcase the best mobile games and apps. Connect with developers, share your favorites, and stay updated with the latest releases in mobile gaming." />
+        <meta name="keywords" content="mobile games, app discovery, game reviews, mobile gaming, indie games, game developers" />
+        <link rel="canonical" href={process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'} />
+      </Head>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8 max-w-full overflow-hidden">
         {/* CTA Section - Main Hero */}
         <CTASection />
 
@@ -461,7 +533,7 @@ export default function HomePage() {
             {/* Featured Games Carousel */}
             {!isLoading && games.length > 0 && (
               <EpicFeaturedGames 
-                games={games} 
+                games={games as any} 
                 onGameClick={(gameId) => {
                   // Navigate to game detail page (handled by Link in component)
                   console.log('Featured game clicked:', gameId)
@@ -478,34 +550,55 @@ export default function HomePage() {
                 
                 {/* Desktop Filter Tabs - Magic Bento Style */}
                 <div className="hidden md:block">
-                <Tabs value={sortBy} onValueChange={(value) => setSortBy(value as any)} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-gray-900/80 backdrop-blur-sm border border-white/10 rounded-xl p-1 shadow-lg shadow-purple-500/10">
-                    <TabsTrigger 
-                      value="newest" 
-                        className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
-                    >
-                      Newest
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="most-upvoted" 
-                        className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
-                    >
-                      Most Upvoted
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="most-viewed" 
-                        className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
-                    >
-                      Most Viewed
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="editors-choice" 
-                        className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
-                    >
-                      Editor's Choice
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                  <ClientOnly 
+                    fallback={
+                      <div className="w-full">
+                        <div className="grid w-full grid-cols-2 lg:grid-cols-4 bg-gray-900/80 backdrop-blur-sm border border-white/10 rounded-xl p-1 shadow-lg shadow-purple-500/10">
+                          <div className="inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 text-gray-300">
+                            Newest
+                          </div>
+                          <div className="inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 text-gray-300">
+                            Most Upvoted
+                          </div>
+                          <div className="inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 text-gray-300">
+                            Most Viewed
+                          </div>
+                          <div className="inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 text-gray-300">
+                            Editor's Choice
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  >
+                    <Tabs value={sortBy} onValueChange={(value) => setSortBy(value as any)} className="w-full">
+                      <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-gray-900/80 backdrop-blur-sm border border-white/10 rounded-xl p-1 shadow-lg shadow-purple-500/10">
+                        <TabsTrigger 
+                          value="newest" 
+                          className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
+                        >
+                          Newest
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="most-upvoted" 
+                          className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
+                        >
+                          Most Upvoted
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="most-viewed" 
+                          className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
+                        >
+                          Most Viewed
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="editors-choice" 
+                          className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
+                        >
+                          Editor's Choice
+                        </TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </ClientOnly>
                 </div>
 
                 {/* Mobile Filter Dropdown */}
@@ -548,7 +641,7 @@ export default function HomePage() {
                       <TiltedGameCard key={`tilted-${game.id}`} className="h-full">
                         <TapTapGameCardNoScale 
                           key={game.id} 
-                          game={game} 
+                          game={game as any} 
                           onVote={handleVote}
                           showAuthor={true}
                         />
@@ -581,208 +674,158 @@ export default function HomePage() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Top Rated Games */}
-            <Card className="rounded-2xl shadow-lg border-white/10">
-              <CardHeader className="p-4 pb-2">
-                <CardTitle className="flex items-center justify-between">
-                  <span>Top Rated Games</span>
-                  <Button variant="ghost" size="sm" asChild className="h-auto py-0 px-2 text-xs">
-                    <Link href="/products?filter=top-rated">View all</Link>
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                {!topRatedData ? (
-                  <div className="space-y-3">
-                    {[1,2,3,4,5].map(i => (
-                      <div key={i} className="flex items-center justify-between animate-pulse">
-                        <div className="flex items-center gap-3">
-                          <div className="w-6 h-6 rounded bg-muted" />
-                          <div className="h-3 w-40 bg-muted rounded" />
-                        </div>
-                        <div className="h-3 w-10 bg-muted rounded" />
-                      </div>
-                    ))}
-                  </div>
-                ) : topRatedData.games?.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">No data yet</div>
-                ) : (
-                  <div className="space-y-3">
-                    {topRatedData.games?.map((game: any) => (
-                      <div key={game.id} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-6 h-6 rounded-lg bg-muted text-muted-foreground flex items-center justify-center text-xs font-semibold">
-                            {game.rank}
+          <div className="space-y-6 lg:pt-16">
+            {/* Unified Right Sidebar Card */}
+            <div className="border border-transparent bg-gradient-to-r from-purple-500/40 to-indigo-500/40 p-[1px] rounded-2xl shadow-[0_0_20px_rgba(139,92,246,0.5)]">
+              <Card className="bg-black/90 rounded-2xl">
+                <CardContent className="p-6 space-y-8">
+                  {/* Top Rated Games Section */}
+                  <section className="pb-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold text-lg">Top Rated Games</h3>
+                      <Button variant="ghost" size="sm" asChild className="h-auto py-0 px-2 text-xs">
+                        <Link href="/products?filter=top-rated">View all</Link>
+                      </Button>
+                    </div>
+                    {!topRatedData ? (
+                      <div className="space-y-3">
+                        {[1,2,3,4,5].map(i => (
+                          <div key={i} className="flex items-center justify-between animate-pulse">
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-6 rounded bg-muted" />
+                              <div className="h-3 w-40 bg-muted rounded" />
+                            </div>
+                            <div className="h-3 w-10 bg-muted rounded" />
                           </div>
-                          <div className="min-w-0">
-                            <Link href={`/product/${game.id}`} className="truncate hover:underline text-sm font-medium block">
-                              {game.title}
-                            </Link>
-                            <div className="text-xs text-muted-foreground">
-                              {game.platforms?.map((p: string) => p.toUpperCase()).join(', ') || 'No platforms listed'}
+                        ))}
+                      </div>
+                    ) : topRatedData.games?.length === 0 ? (
+                      <div className="text-sm text-muted-foreground">No data yet</div>
+                    ) : (
+                      <div className="space-y-3">
+                        {topRatedData.games?.map((game: any) => (
+                          <div key={game.id} className="flex items-center justify-between">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-6 h-6 rounded-lg bg-muted text-muted-foreground flex items-center justify-center text-xs font-semibold">
+                                {game.rank}
+                              </div>
+                              <div className="min-w-0">
+                                <Link href={`/product/${game.id}`} className="truncate hover:underline text-sm font-medium block text-neutral-200">
+                                  {game.title}
+                                </Link>
+                                <div className="text-xs text-neutral-400">
+                                  {game.platforms?.map((p: string) => p.toUpperCase()).join(', ') || 'No platforms listed'}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-neutral-400">
+                              <ArrowUpIcon className="h-3 w-3" />
+                              {game.votes}
                             </div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <ArrowUpIcon className="h-3 w-3" />
-                          {game.votes}
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            {/* Trending This Week */}
-            <Card className="rounded-2xl shadow-lg border-white/10">
-              <CardHeader className="p-4">
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUpIcon className="h-5 w-5" />
-                  Trending This Week
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                {!trendingData ? (
-                  <div className="space-y-3">
-                    {[1,2,3,4,5].map(i => (
-                      <div key={i} className="flex items-center justify-between animate-pulse">
-                        <div className="flex items-center gap-3">
-                          <div className="w-6 h-6 rounded bg-muted" />
-                          <div className="h-3 w-40 bg-muted rounded" />
-                        </div>
-                        <div className="h-3 w-10 bg-muted rounded" />
-                      </div>
-                    ))}
-                  </div>
-                ) : trendingData.games?.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">No data yet</div>
-                ) : (
-                  <div className="space-y-3">
-                    {trendingData.games?.map((game: any) => (
-                      <div key={game.id} className="flex items-center justify-between">
-                        <div className="min-w-0">
-                          <Link href={`/product/${game.id}`} className="font-medium text-sm hover:underline block">
-                            {game.title}
-                          </Link>
-                          <div className="text-xs text-muted-foreground">
-                            {game.platforms?.map((p: string) => p.toUpperCase()).join(', ') || 'No platforms listed'}
+                    )}
+                  </section>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-700 opacity-50 my-8" />
+
+                  {/* Trending This Week Section */}
+                  <section className="pb-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <TrendingUpIcon className="h-5 w-5" />
+                      <h3 className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold text-lg">Trending This Week</h3>
+                    </div>
+                    {!trendingData ? (
+                      <div className="space-y-3">
+                        {[1,2,3,4,5].map(i => (
+                          <div key={i} className="flex items-center justify-between animate-pulse">
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-6 rounded bg-muted" />
+                              <div className="h-3 w-40 bg-muted rounded" />
+                            </div>
+                            <div className="h-3 w-10 bg-muted rounded" />
                           </div>
-                        </div>
-                        <div className="text-xs font-medium text-muted-foreground">
-                          {game.votes} votes
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                    ) : trendingData.games?.length === 0 ? (
+                      <div className="text-sm text-muted-foreground">No data yet</div>
+                    ) : (
+                      <div className="space-y-3">
+                        {trendingData.games?.map((game: any) => (
+                          <div key={game.id} className="flex items-center justify-between">
+                            <div className="min-w-0">
+                              <Link href={`/product/${game.id}`} className="font-medium text-sm hover:underline block text-neutral-200">
+                                {game.title}
+                              </Link>
+                              <div className="text-xs text-neutral-400">
+                                {game.platforms?.map((p: string) => p.toUpperCase()).join(', ') || 'No platforms listed'}
+                              </div>
+                            </div>
+                            <div className="text-xs font-medium text-neutral-400">
+                              {game.votes} votes
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </section>
 
-            {/* Connect with Us card moved under Stay Updated */}
+                  {/* Divider */}
+                  <div className="border-t border-gray-700 opacity-50 my-8" />
 
-            {/* Newsletter Signup */}
-            <Card className="rounded-2xl shadow-lg border-white/10">
-              <CardHeader className="p-4">
-                <CardTitle>Level Up Your Inbox</CardTitle>
-                <CardDescription>
-                  Join our early community and get insider news, trending releases, and hidden gems—straight to your inbox.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <Button 
-                  variant="outline" 
-                  className="w-full rounded-2xl"
-                  onClick={() => setIsNewsletterModalOpen(true)}
-                >
-                  Subscribe to Newsletter
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Connect with Us */}
-            <Card className="rounded-2xl shadow-lg border-white/10">
-              <CardHeader className="p-4 pb-2">
-                <CardTitle>Connect with Us</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                  <a
-                    href="https://twitter.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group inline-flex items-center gap-2 rounded-xl px-3 py-2 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-colors hover:shadow-[0_0_18px_rgba(168,85,247,0.25)]"
-                  >
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-sky-400 group-hover:text-sky-300" fill="currentColor" aria-hidden="true">
-                      <path d="M19.633 7.997c.013.18.013.36.013.54 0 5.51-4.193 11.86-11.86 11.86-2.36 0-4.55-.69-6.392-1.88.33.04.65.053.99.053 1.954 0 3.753-.66 5.183-1.78a4.18 4.18 0 01-3.9-2.9c.26.04.52.066.8.066.38 0 .76-.053 1.12-.146a4.176 4.176 0 01-3.35-4.1v-.053c.56.31 1.21.5 1.9.52a4.17 4.17 0 01-1.86-3.48c0-.77.21-1.47.58-2.08a11.85 11.85 0 008.6 4.37 4.707 4.707 0 01-.1-.96 4.17 4.17 0 017.22-2.85 8.2 8.2 0 002.64-1 4.18 4.18 0 01-1.83 2.3 8.35 8.35 0 002.4-.65 8.94 8.94 0 01-2.09 2.17z"/>
-                    </svg>
-                    <span className="text-sm">Twitter / X</span>
-                  </a>
-                  <a
-                    href="https://discord.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group inline-flex items-center gap-2 rounded-xl px-3 py-2 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-colors hover:shadow-[0_0_18px_rgba(99,102,241,0.25)]"
-                  >
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-indigo-400 group-hover:text-indigo-300" fill="currentColor" aria-hidden="true">
-                      <path d="M20.317 4.369A19.79 19.79 0 0016.558 3c-.2.358-.433.84-.59 1.227a18.27 18.27 0 00-4-.002A8.258 8.258 0 0011.377 3c-1.444.242-2.77.66-3.759 1.37C4.14 7.205 3.26 10.01 3.5 12.77c1.54 1.153 3.03 1.857 4.497 2.322.364-.5.69-1.04.97-1.616-.536-.205-1.05-.462-1.536-.765.13-.097.257-.199.382-.304 2.95 1.38 6.15 1.38 9.09 0 .126.105.253.207.383.304-.486.303-1 .56-1.537.765.28.576.607 1.116.97 1.616 1.47-.465 2.96-1.17 4.5-2.322.296-3.377-.72-6.14-2.422-8.401zM9.75 12.5c-.66 0-1.2-.66-1.2-1.475 0-.814.54-1.475 1.2-1.475s1.2.661 1.2 1.475c0 .815-.54 1.475-1.2 1.475zm4.5 0c-.66 0-1.2-.66-1.2-1.475 0-.814.54-1.475 1.2-1.475s1.2.661 1.2 1.475c0 .815-.54 1.475-1.2 1.475z"/>
-                    </svg>
-                    <span className="text-sm">Discord</span>
-                  </a>
-                  <a
-                    href="https://github.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group inline-flex items-center gap-2 rounded-xl px-3 py-2 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-colors hover:shadow-[0_0_18px_rgba(34,197,94,0.25)]"
-                  >
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-emerald-400 group-hover:text-emerald-300" fill="currentColor" aria-hidden="true">
-                      <path fillRule="evenodd" clipRule="evenodd" d="M12 .5a11.5 11.5 0 00-3.637 22.414c.575.105.785-.25.785-.556 0-.274-.01-1-.016-1.962-3.194.695-3.87-1.54-3.87-1.54-.523-1.33-1.28-1.684-1.28-1.684-1.046-.715.08-.701.08-.701 1.157.082 1.766 1.188 1.766 1.188 1.028 1.763 2.695 1.253 3.35.958.104-.757.402-1.254.731-1.542-2.551-.29-5.236-1.275-5.236-5.672 0-1.253.45-2.277 1.187-3.08-.119-.291-.514-1.462.112-3.046 0 0 .966-.31 3.166 1.176a10.98 10.98 0 012.883-.388c.978.005 1.963.132 2.883.388 2.2-1.486 3.165-1.176 3.165-1.176.627 1.584.233 2.755.114 3.046.74.803 1.186 1.827 1.186 3.08 0 4.41-2.69 5.378-5.253 5.663.412.354.78 1.05.78 2.117 0 1.528-.014 2.76-.014 3.135 0 .31.207.67.79.555A11.5 11.5 0 0012 .5z"/>
-                    </svg>
-                    <span className="text-sm">GitHub</span>
-                  </a>
-                  <a
-                    href="https://instagram.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group inline-flex items-center gap-2 rounded-xl px-3 py-2 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-colors hover:shadow-[0_0_18px_rgba(236,72,153,0.25)]"
-                  >
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-pink-400 group-hover:text-pink-300" fill="currentColor" aria-hidden="true">
-                      <path d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm5 5a5 5 0 100 10 5 5 0 000-10zm6.5.9a1.1 1.1 0 11-2.2 0 1.1 1.1 0 012.2 0z"/>
-                    </svg>
-                    <span className="text-sm">Instagram</span>
-                  </a>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Legal */}
-            <Card className="rounded-2xl shadow-lg border-white/10">
-              <CardHeader className="p-4 pb-3">
-                <CardTitle className="text-lg font-semibold">Legal</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
-                  <Link href="/terms" className="flex-1 min-w-0">
+                  {/* Newsletter Section */}
+                  <section className="pb-4">
+                    <h3 className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold text-lg mb-2">Level Up Your Inbox</h3>
+                    <p className="text-neutral-400 text-sm mb-4">Be the first to know. Get exclusive game drops, hidden gems, and insider news delivered to your inbox.</p>
                     <Button 
                       variant="outline" 
-                      className="w-full text-purple-400 hover:text-white border-purple-400/30 hover:border-purple-400 hover:shadow-[0_0_18px_rgba(168,85,247,0.25)] transition-all duration-200 hover:bg-purple-400/10 text-xs px-2 py-2"
+                      className="w-full rounded-2xl transition-transform duration-300 ease-out hover:scale-105 active:scale-95 hover:bg-gradient-to-r hover:from-[#7928CA] hover:to-[#FF0080] hover:text-white hover:shadow-[0_0_20px_rgba(255,0,128,0.45)]"
+                      onClick={() => setIsNewsletterModalOpen(true)}
                     >
-                      <span className="mr-1">📜</span>
-                      <span className="truncate">Terms and Conditions</span>
+                      Subscribe to Newsletter
                     </Button>
-                  </Link>
-                  <Link href="/privacy" className="flex-1 min-w-0">
-                    <Button 
-                      variant="outline" 
-                      className="w-full text-purple-400 hover:text-white border-purple-400/30 hover:border-purple-400 hover:shadow-[0_0_18px_rgba(168,85,247,0.25)] transition-all duration-200 hover:bg-purple-400/10 text-xs px-2 py-2"
-                    >
-                      <span className="mr-1">🔒</span>
-                      <span className="truncate">Privacy Policy</span>
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
+                  </section>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-700 opacity-50 my-8" />
+
+                  {/* Connect with Us Section */}
+                  <section className="pb-4">
+                    <ConnectModalTrigger />
+                  </section>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-700 opacity-50 my-8" />
+
+                  {/* Legal Section */}
+                  <section className="pb-4">
+                    <h3 className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold text-lg mb-4">Legal</h3>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
+                      <Link href="/terms" className="flex-1 min-w-0">
+                        <Button 
+                          variant="outline" 
+                          className="w-full text-purple-400 hover:text-white border-purple-400/30 hover:border-purple-400 hover:shadow-[0_0_18px_rgba(168,85,247,0.25)] transition-all duration-200 hover:bg-purple-400/10 text-xs px-2 py-2"
+                        >
+                          <span className="mr-1">📜</span>
+                          <span className="truncate">Terms and Conditions</span>
+                        </Button>
+                      </Link>
+                      <Link href="/privacy" className="flex-1 min-w-0">
+                        <Button 
+                          variant="outline" 
+                          className="w-full text-purple-400 hover:text-white border-purple-400/30 hover:border-purple-400 hover:shadow-[0_0_18px_rgba(168,85,247,0.25)] transition-all duration-200 hover:bg-purple-400/10 text-xs px-2 py-2"
+                        >
+                          <span className="mr-1">🔒</span>
+                          <span className="truncate">Privacy Policy</span>
+                        </Button>
+                      </Link>
+                    </div>
+                  </section>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
@@ -793,5 +836,6 @@ export default function HomePage() {
         onClose={() => setIsNewsletterModalOpen(false)} 
       />
     </div>
+    </>
   )
 }

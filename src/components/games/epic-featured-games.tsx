@@ -8,7 +8,9 @@ import { Heart, Play } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { getAuthorLabel } from "@/lib/author"
 import ShinyText from "@/components/ShinyText"
+import { calculateFinalScore, getScoringWeights } from "@/lib/leaderboardConfig"
 
 interface FeaturedGame {
   id: string
@@ -33,6 +35,8 @@ interface FeaturedGame {
     votes: number
     comments: number
   }
+  follows?: number
+  clicks?: number
   appStoreUrl?: string | null
   playStoreUrl?: string | null
 }
@@ -61,15 +65,26 @@ function getMainDisplayImage(game: FeaturedGame): string | null {
 }
 
 export function EpicFeaturedGames({ games, onGameClick }: EpicFeaturedGamesProps) {
-  // Get top-rated games for featured section (prioritize editor's choice)
-  const featuredGames = games
-    .sort((a, b) => {
-      // Prioritize games with higher votes and recent releases
-      const scoreA = a._count.votes + (a.releaseAt ? 10 : 0)
-      const scoreB = b._count.votes + (b.releaseAt ? 10 : 0)
-      return scoreB - scoreA
-    })
-    .slice(0, 6)
+  // Apply leaderboard scoring logic: votes > comments > follows > views(clicks)
+  const weights = getScoringWeights()
+
+  const scored = [...games].map((g) => {
+    const votes = g._count?.votes || 0
+    const comments = g._count?.comments || 0
+    const follows = g.follows || 0
+    const views = g.clicks || 0
+    const finalScore = calculateFinalScore(votes, comments, follows, views, weights)
+    return { game: g, finalScore, votes, comments, follows, views }
+  })
+  .sort((a, b) => {
+    if (b.finalScore !== a.finalScore) return b.finalScore - a.finalScore
+    if (b.votes !== a.votes) return b.votes - a.votes
+    if (b.comments !== a.comments) return b.comments - a.comments
+    if (b.follows !== a.follows) return b.follows - a.follows
+    return b.views - a.views
+  })
+
+  const featuredGames = scored.map(s => s.game).slice(0, 6)
 
   if (featuredGames.length === 0) {
     return null
@@ -85,9 +100,11 @@ export function EpicFeaturedGames({ games, onGameClick }: EpicFeaturedGamesProps
         <h2 className="text-2xl font-bold flex items-center gap-2" style={{ fontFamily: '"Epunda Slab", serif', fontWeight: 600 }}>
           <ShinyText>Featured Games</ShinyText>
         </h2>
-        <Badge variant="secondary" className="hidden md:block text-sm px-3 py-1 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-          Editor&apos;s Choice
-        </Badge>
+        {games.length > 6 && (
+          <Link href="/leaderboard" className="text-sm text-purple-300 hover:text-purple-200 underline">
+            View all
+          </Link>
+        )}
       </div>
 
       <EpicFeaturedLayout 
@@ -163,18 +180,19 @@ function EpicFeaturedLayout({ games, onGameClick }: EpicFeaturedLayoutProps) {
         </div>
         
         {/* Vertical Thumbnail List - Right Column (~20%) */}
-        <div>
-          <div className="space-y-3 h-full">
-            {games.map((game) => (
-              <EpicSideCard 
-                key={game.id}
-                game={game} 
-                onClick={() => {
-                  onGameClick(game.id)
-                  setSelectedGame(game)
-                }}
-                isSelected={selectedGame.id === game.id}
-              />
+        <div className="h-[500px]">
+          <div className="grid grid-rows-5 gap-3 h-full">
+            {games.slice(0, 5).map((game) => (
+              <div key={game.id} className="min-h-0">
+                <EpicSideCard 
+                  game={game} 
+                  onClick={() => {
+                    onGameClick(game.id)
+                    setSelectedGame(game)
+                  }}
+                  isSelected={selectedGame.id === game.id}
+                />
+              </div>
             ))}
           </div>
         </div>
@@ -271,43 +289,20 @@ function EpicHeroCard({ game, isMobile = false }: EpicHeroCardProps) {
             </Badge>
           </div>
           
-          {/* Stats */}
-          <div className="mb-4 md:mb-6 flex items-center gap-4 text-sm text-gray-300">
-            <span className="flex items-center gap-1">
-              <span className="text-green-400 font-semibold">Free</span>
-            </span>
-            <span>•</span>
-            <span>{game._count.votes} votes</span>
-            <span>•</span>
-            <span>{game._count.comments} comments</span>
-          </div>
+          {/* Stats removed per request to keep hero clean */}
           
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <Button 
-              className="bg-white text-black hover:bg-gray-100 hover:shadow-[0_0_20px_rgba(168,85,247,0.8)] px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
-              onClick={(e) => {
-                e.preventDefault()
-                if (game.url) {
-                  window.open(game.url, '_blank', 'noopener,noreferrer')
-                }
-              }}
+          {/* Action */}
+          <div className="flex items-center gap-3">
+            <Button
+              className="px-6 py-3 rounded-xl font-semibold transition-all duration-300 bg-white/10 backdrop-blur border border-white/15 text-white hover:bg-white/15 hover:shadow-[0_0_24px_rgba(168,85,247,0.35)] hover:translate-y-[-1px]"
             >
-              <Play className="w-4 h-4 mr-2" />
-              Play Now
+              Learn More
             </Button>
-            
-            <Button 
-              variant="outline"
-              className="border-2 border-white/30 px-5 py-3 rounded-lg hover:border-white hover:bg-white/10 hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] text-white transition-all duration-300 hover:scale-105"
-              onClick={(e) => {
-                e.preventDefault()
-                // TODO: Implement wishlist functionality
-              }}
-            >
-              <Heart className="w-4 h-4 mr-2" />
-              Add to Wishlist
-            </Button>
+
+            {/* Author */}
+            <div className="text-sm text-gray-300 dark:text-gray-400">
+              by {getAuthorLabel({ user: game.user as any })}
+            </div>
           </div>
         </CardContent>
       </Card>

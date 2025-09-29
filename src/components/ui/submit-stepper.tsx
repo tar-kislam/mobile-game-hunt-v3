@@ -12,12 +12,12 @@ interface SubmitStepperProps {
 }
 
 const stepConfig = [
-  { id: 'main-info', label: 'Main Info', description: 'Basic details' },
-  { id: 'images-media', label: 'Images & Media', description: 'Upload assets' },
-  { id: 'makers', label: 'Makers', description: 'Team members' },
-  { id: 'launch-details', label: 'Launch Details', description: 'Launch config' },
-  { id: 'community-extras', label: 'Community & Extras', description: 'Community features' },
-  { id: 'final-checklist', label: 'Final Checklist', description: 'Review & submit' }
+  { id: 'main-info', label: 'Main Info' },
+  { id: 'images-media', label: 'Images & Media' },
+  { id: 'makers', label: 'Makers' },
+  { id: 'launch-details', label: 'Launch Details' },
+  { id: 'community-extras', label: 'Community & Extras' },
+  { id: 'final-checklist', label: 'Final Checklist' }
 ]
 
 export function SubmitStepper({ activeStep, completedSteps, onStepClick }: SubmitStepperProps) {
@@ -83,9 +83,6 @@ export function SubmitStepper({ activeStep, completedSteps, onStepClick }: Submi
             }
           `}>
             {stepData.label}
-          </div>
-          <div className="text-xs text-gray-500 mt-1 hidden md:block">
-            {stepData.description}
           </div>
         </div>
       </motion.div>
@@ -182,9 +179,6 @@ export function MobileSubmitStepper({ activeStep, completedSteps, onStepClick }:
                       }
                     `}>
                       {stepData.label}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {stepData.description}
                     </div>
                   </div>
                 </motion.button>

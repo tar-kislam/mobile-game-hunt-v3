@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { Eye, TrendingUp, BarChart3, PieChart } from 'lucide-react';
 import { DonutWithText, BarCompare, LineOverTime } from '@/components/dashboard/charts';
 import useSWR from 'swr';
+import Head from 'next/head';
 
 // Fetcher function for SWR
 const fetcher = (url: string) => fetch(url, { credentials: 'include' }).then((res) => {
@@ -92,11 +93,11 @@ export default function DashboardPage() {
     return {
       game: { id: selectedGameId, title: games.find(g => g.id === selectedGameId)?.title || 'Unknown Game' },
       overview: {
-        totalViews: 0, // Not provided by current API
-        totalVotes: analyticsData.votesVsFollows?.reduce((sum: number, item: any) => sum + item.votes, 0) || 0,
-        totalFollows: analyticsData.votesVsFollows?.reduce((sum: number, item: any) => sum + item.follows, 0) || 0,
-        totalClicks: analyticsData.clicksByPlatform?.reduce((sum: number, item: any) => sum + item.value, 0) || 0,
-        engagementRate: 0 // Calculate if needed
+        totalViews: analyticsData.overviewTotals?.totalViews ?? 0,
+        totalVotes: analyticsData.overviewTotals?.totalVotes ?? 0,
+        totalFollows: analyticsData.overviewTotals?.totalFollows ?? 0,
+        totalClicks: analyticsData.overviewTotals?.totalClicks ?? 0,
+        engagementRate: analyticsData.overviewTotals?.engagementRate ?? 0
       },
       charts: {
         votesOverTime: [], // Not provided by current API
@@ -151,8 +152,15 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]">
-      <div className="container mx-auto px-4 py-8">
+    <>
+      <Head>
+        <title>Dashboard | Mobile Game Hunt</title>
+        <meta name="description" content="Manage your mobile games, track analytics, and monitor performance on Mobile Game Hunt dashboard." />
+        <meta name="robots" content="noindex,nofollow" />
+        <link rel="canonical" href={`${process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'}/dashboard`} />
+      </Head>
+      <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]">
+        <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
@@ -343,27 +351,48 @@ export default function DashboardPage() {
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-white mb-6">Audience Insights</h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Top Countries - ranked list with skeleton/empty state */}
                 <Card className="bg-gray-800/50 border-purple-500/20">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2"><BarChart3 className="w-5 h-5 text-blue-400" />Top Countries</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center text-gray-400 py-8">
-                      <p className="text-sm">Geographic data not available</p>
-                    </div>
+                    {analyticsLoading ? (
+                      <div className="space-y-3">
+                        {[...Array(5)].map((_, i) => (
+                          <Skeleton key={i} className="h-6 w-full bg-gray-700" />
+                        ))}
+                      </div>
+                    ) : (analytics?.charts.geoStats && (analytics.charts.geoStats as Array<{ country: string; count: number }>).length > 0) ? (
+                      <div className="space-y-3">
+                        {(analytics.charts.geoStats as Array<{ country: string; count: number }>).slice(0,5).map((row, idx) => (
+                          <div key={idx} className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <span className="text-sm text-gray-300">{idx + 1}.</span>
+                              <span className="text-sm text-white">{row.country}</span>
+                            </div>
+                            <span className="text-sm text-purple-300">{row.count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center text-gray-400 py-8 animate-pulse">
+                        <p className="text-sm">No country data yet</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gray-800/50 border-purple-500/20">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2"><PieChart className="w-5 h-5 text-yellow-400" />Language Preferences</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center text-gray-400 py-8">
-                      <p className="text-sm">Language data not available</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Language Preferences - donut chart using DonutWithText */}
+                <DonutWithText
+                  title="Language Preferences"
+                  data={(analytics?.charts.languagePreferences || []).slice(0,5).map((l: any) => ({ name: l.name || l.type, value: l.value }))}
+                  totalLabel="Users"
+                  isLoading={analyticsLoading}
+                  error={analyticsError ? 'Failed to load data' : undefined}
+                  trendingText="Top languages by audience"
+                  className="bg-gray-800/50 border-purple-500/20"
+                />
               </div>
             </div>
           </div>
@@ -418,5 +447,6 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

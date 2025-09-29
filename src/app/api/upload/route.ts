@@ -1,70 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile } from 'fs/promises'
-import { join } from 'path'
-import { existsSync, mkdirSync } from 'fs'
+import { promises as fs } from 'fs'
+import path from 'path'
+
+export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('📤 Upload API called')
     const formData = await request.formData()
-    const file = formData.get('file') as File
+    const file = formData.get('file') as File | null
     
     if (!file) {
-      return NextResponse.json(
-        { error: 'No file uploaded' },
-        { status: 400 }
-      )
+      console.log('❌ No file provided')
+      return NextResponse.json({ ok: false, error: 'No file provided' }, { status: 400 })
     }
+
+    console.log('📁 File received:', file.name, file.size, 'bytes', file.type)
 
     // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json(
-        { error: 'Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.' },
-        { status: 400 }
-      )
+    if (!file.type.startsWith('image/')) {
+      console.log('❌ Invalid file type:', file.type)
+      return NextResponse.json({ ok: false, error: 'Only image files are allowed' }, { status: 400 })
     }
 
-    // Validate file size (5MB max)
-    const maxSize = 5 * 1024 * 1024 // 5MB
-    if (file.size > maxSize) {
-      return NextResponse.json(
-        { error: 'File too large. Maximum size is 5MB.' },
-        { status: 400 }
-      )
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      console.log('❌ File too large:', file.size, 'bytes')
+      return NextResponse.json({ ok: false, error: 'File size must be less than 5MB' }, { status: 400 })
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'public', 'uploads')
-    if (!existsSync(uploadsDir)) {
-      mkdirSync(uploadsDir, { recursive: true })
-    }
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
 
-    // Generate unique filename
-    const timestamp = Date.now()
-    const randomString = Math.random().toString(36).substring(2, 15)
-    const extension = file.name.split('.').pop()
-    const filename = `${timestamp}-${randomString}.${extension}`
-    const filepath = join(uploadsDir, filename)
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
+    await fs.mkdir(uploadsDir, { recursive: true })
 
-    // Convert file to buffer and save
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    await writeFile(filepath, buffer)
+    const ext = path.extname(file.name) || '.png'
+    const base = path.basename(file.name, ext).replace(/[^a-zA-Z0-9-_]/g, '') || 'image'
+    const filename = `${Date.now()}-${base}${ext}`
+    const filePath = path.join(uploadsDir, filename)
 
-    // Return the public URL
-    const publicUrl = `/uploads/${filename}`
+    await fs.writeFile(filePath, buffer)
 
-    return NextResponse.json({
-      success: true,
-      url: publicUrl,
-      filename: filename
-    })
-
+    const url = `/uploads/${filename}`
+    console.log('✅ File uploaded successfully:', url)
+    
+    return NextResponse.json({ 
+      ok: true, 
+      success: true, // For backward compatibility
+      url 
+    }, { status: 201 })
   } catch (error) {
-    console.error('Upload error:', error)
-    return NextResponse.json(
-      { error: 'Failed to upload file' },
-      { status: 500 }
-    )
+    console.error('❌ POST /api/upload error:', error)
+    return NextResponse.json({ 
+      ok: false, 
+      success: false, // For backward compatibility
+      error: 'Upload failed' 
+    }, { status: 500 })
   }
 }

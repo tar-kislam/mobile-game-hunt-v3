@@ -20,8 +20,10 @@ import { Progress } from "@/components/ui/progress"
 import { NotificationBell } from "@/components/ui/notification-bell"
 import PillNav from "@/components/ui/pill-nav"
 import { UserBadges, LevelBadge } from "@/components/ui/user-badges"
-import { StarIcon } from "lucide-react"
+import { StarIcon, Activity } from "lucide-react"
 import { HiOutlineMenu } from "react-icons/hi"
+import { calculateXpProgress, formatXpProgress, formatXpToNextLevel } from "@/lib/xp"
+import { useCurrentUserXP } from "@/hooks/useXP"
 import useSWR from 'swr'
 
 export function Header() {
@@ -33,17 +35,8 @@ export function Header() {
   // Check if we're on the editorial dashboard page
   const isEditorialDashboard = pathname === '/editorial-dashboard'
   
-  // Fetch XP data
-  const { data: xpData, mutate: mutateXP } = useSWR(
-    session?.user?.id ? `/api/user/${session.user.id}/xp` : null, 
-    fetcher,
-    {
-      refreshInterval: 10000,
-      revalidateOnFocus: true,
-      revalidateOnReconnect: true,
-      dedupingInterval: 5000
-    }
-  )
+  // Use unified XP hook for synchronized data
+  const { xpData, levelProgress, mutate: mutateXP } = useCurrentUserXP()
   
   // Fetch badges data
   const { data: badgesData, mutate: mutateBadges } = useSWR('/api/badges', fetcher, {
@@ -70,9 +63,10 @@ export function Header() {
   const baseNavItems = [
     { label: "Home", href: "/" },
     { label: "All Games", href: "/products" },
+    { label: "Leaderboard", href: "/leaderboard" },
     { label: "Community", href: "/community" },
-    { label: "Advertise", href: "/advertise" },
-    { label: "Calendar", href: "/calendar" }
+    { label: "Calendar", href: "/calendar" },
+    { label: "Advertise", href: "/advertise" }
   ]
 
   const navItems = session ? [
@@ -128,27 +122,27 @@ export function Header() {
                         <div className="flex flex-col space-y-2">
                           <div className="flex items-center justify-between">
                             <p className="text-sm font-medium leading-none">{session.user?.name}</p>
-                            {xpData && <LevelBadge level={xpData.level} />}
+                            {levelProgress && <LevelBadge level={levelProgress.level} />}
                           </div>
                           <p className="text-xs leading-none text-muted-foreground">
                             {session.user?.email}
                           </p>
                           
                           {/* XP Progress Bar */}
-                          {xpData && (
+                          {levelProgress && (
                             <div className="space-y-1">
                               <div className="flex items-center justify-between text-xs">
                                 <span className="text-gray-300">XP Progress</span>
                                 <span className="text-purple-300 font-medium">
-                                  {xpData.xp} / {(xpData.level * 100)} XP
+                                  {formatXpProgress(xpData?.xp || 0)}
                                 </span>
                               </div>
                               <Progress 
-                                value={xpData.xpProgress} 
+                                value={Math.round((levelProgress.currentXP / levelProgress.requiredXP) * 100)} 
                                 className="h-2 bg-gray-700 rounded-full"
                               />
                               <div className="text-xs text-gray-400 text-center">
-                                {xpData.xpToNextLevel} XP to Level {xpData.level + 1}
+                                {formatXpToNextLevel(xpData?.xp || 0)}
                               </div>
                             </div>
                           )}
@@ -169,6 +163,12 @@ export function Header() {
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/feed" className="flex items-center">
+                          <Activity className="mr-2 h-4 w-4" />
+                          Feed
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href={session?.user?.username ? `/@${session.user.username}` : '/profile'}>Profile</Link>
                       </DropdownMenuItem>
@@ -241,27 +241,27 @@ export function Header() {
                         <div className="flex flex-col space-y-2">
                           <div className="flex items-center justify-between">
                             <p className="text-sm font-medium leading-none">{session.user?.name}</p>
-                            {xpData && <LevelBadge level={xpData.level} />}
+                            {levelProgress && <LevelBadge level={levelProgress.level} />}
                           </div>
                           <p className="text-xs leading-none text-muted-foreground">
                             {session.user?.email}
                           </p>
                           
                           {/* XP Progress Bar */}
-                          {xpData && (
+                          {levelProgress && (
                             <div className="space-y-1">
                               <div className="flex items-center justify-between text-xs">
                                 <span className="text-gray-300">XP Progress</span>
                                 <span className="text-purple-300 font-medium">
-                                  {xpData.xp} / {(xpData.level * 100)} XP
+                                  {formatXpProgress(xpData?.xp || 0)}
                                 </span>
                               </div>
                               <Progress 
-                                value={xpData.xpProgress} 
+                                value={Math.round((levelProgress.currentXP / levelProgress.requiredXP) * 100)} 
                                 className="h-2 bg-gray-700 rounded-full"
                               />
                               <div className="text-xs text-gray-400 text-center">
-                                {xpData.xpToNextLevel} XP to Level {xpData.level + 1}
+                                {formatXpToNextLevel(xpData?.xp || 0)}
                               </div>
                             </div>
                           )}
@@ -282,6 +282,12 @@ export function Header() {
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/feed" className="flex items-center">
+                          <Activity className="mr-2 h-4 w-4" />
+                          Feed
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href={session?.user?.username ? `/@${session.user.username}` : '/profile'}>Profile</Link>
                       </DropdownMenuItem>

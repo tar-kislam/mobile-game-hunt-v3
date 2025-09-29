@@ -52,13 +52,13 @@ export function GameSortBar({
   const currentSort = SORT_OPTIONS.find(option => option.value === sortBy) || SORT_OPTIONS[0]
 
   return (
-    <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 products-font ${className}`}>
+    <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 products-font` + ` ${className}`}>
       {/* Results Count */}
       <div className="flex items-center space-x-2">
         <h2 className="text-lg font-semibold text-white">
           Mobile Games
         </h2>
-        <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300">
+        <Badge variant="outline" className="bg-gray-800/50 border-gray-600 text-gray-300 font-[Orbitron] font-semibold">
           {filteredGames === totalGames ? (
             `${totalGames} games`
           ) : (
@@ -83,7 +83,7 @@ export function GameSortBar({
                 variant={isSelected ? "default" : "ghost"}
                 size="sm"
                 onClick={() => onSortChange(option.value)}
-                className={`px-3 py-1 text-sm transition-all duration-200 ${
+                className={`px-3 py-1 text-sm transition-all duration-200 font-[Orbitron] font-semibold ${
                   isSelected 
                     ? "bg-purple-600 hover:bg-purple-700 text-white shadow-lg" 
                     : "text-gray-300 hover:text-white hover:bg-gray-700/50"
@@ -98,7 +98,7 @@ export function GameSortBar({
 
         {/* Mobile: Dropdown */}
         <Select value={sortBy} onValueChange={onSortChange}>
-          <SelectTrigger className="w-[180px] bg-gray-800/50 border-gray-600 text-white sm:hidden">
+          <SelectTrigger className="w-[180px] bg-gray-800/50 border-gray-600 text-white sm:hidden font-[Orbitron] font-semibold">
             <SelectValue>
               <div className="flex items-center">
                 <ArrowUpDown className="w-4 h-4 mr-2" />
@@ -106,7 +106,7 @@ export function GameSortBar({
               </div>
             </SelectValue>
           </SelectTrigger>
-          <SelectContent className="bg-gray-800 border-gray-600">
+          <SelectContent className="bg-gray-800 border-gray-600 font-[Orbitron] font-semibold">
             {SORT_OPTIONS.map((option) => {
               const Icon = option.icon
               return (

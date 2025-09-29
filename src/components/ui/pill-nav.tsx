@@ -267,7 +267,7 @@ const PillNav = ({
           >
             <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-neutral-900 p-0.5 drop-shadow-lg">
               <img
-                src="/logo.png"
+                src="/mgh-main.png"
                 alt="Mobile Game Hunt Logo"
                 className="w-full h-full object-contain rounded-md"
               />
@@ -364,7 +364,7 @@ const PillNav = ({
         >
           <div ref={logoImgRef} className="w-7 h-7 rounded-lg flex items-center justify-center bg-neutral-900 p-0.5 drop-shadow-lg">
             <img
-              src="/logo.png"
+              src="/mgh-main.png"
               alt="Mobile Game Hunt Logo"
               className="w-full h-full object-contain rounded-md"
             />

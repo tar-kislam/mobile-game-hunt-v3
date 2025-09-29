@@ -14,9 +14,24 @@ interface Game {
   title: string
   description: string
   image?: string | null
+  thumbnail?: string | null
+  images?: string[]
+  gallery?: string[]
   url: string
   platforms?: string[]
   createdAt: string
+  releaseAt?: string | null
+  status?: string
+  monetization?: string | null
+  engine?: string | null
+  pricing?: string | null
+  categories?: Array<{
+    category: {
+      id: string
+      name: string
+    }
+  }>
+  tags?: string[]
   _count: {
     votes: number
     comments: number

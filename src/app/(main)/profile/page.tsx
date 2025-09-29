@@ -27,6 +27,8 @@ import MagicBento from '@/components/ui/magic-bento'
 import { format } from "date-fns"
 import { Progress } from "@/components/ui/progress"
 import { BadgesGrid } from "@/components/badges/BadgesGrid"
+import { calculateXpProgress, formatXpProgress, formatXpToNextLevel } from "@/lib/xp"
+import { useCurrentUserXP } from "@/hooks/useXP"
 
 // Mock defaults, will be overridden by live data
 const userStats = {
@@ -36,72 +38,10 @@ const userStats = {
   joinDate: "January 2024"
 }
 
-const userGames = [
-  {
-    id: "1",
-    title: "Clash of Clans",
-    description: "A popular strategy mobile game where you build and defend your village.",
-    image: "https://images.unsplash.com/photo-1556438064-2d7646166914?w=400&h=300&fit=crop",
-    votes: 152,
-    comments: 23,
-    url: "https://clashofclans.com",
-    platforms: ["ios", "android"],
-    maker: {
-      name: "Supercell",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
-    }
-  },
-  {
-    id: "2",
-    title: "Pokemon GO",
-    description: "Augmented reality mobile game that lets you catch Pokemon in the real world.",
-    image: "https://images.unsplash.com/photo-1606503153255-59d8b8b91448?w=300&h=200&fit=crop",
-    votes: 89,
-    comments: 15,
-    platforms: ["ios", "android"],
-    maker: { name: "Niantic", avatar: "" }
-  },
-  {
-    id: "3",
-    title: "Genshin Impact",
-    description: "Open-world action RPG with gacha mechanics and stunning visuals.",
-    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=300&h=200&fit=crop",
-    votes: 134,
-    comments: 28,
-    platforms: ["ios", "android", "web"],
-    maker: { name: "miHoYo", avatar: "" }
-  }
-]
+// Example placeholder removed – real data comes from backend
+const userGames: any[] = []
 
-const userVotes = [
-  {
-    id: "1",
-    game: {
-      title: "Clash of Clans",
-      platforms: ["ios", "android"],
-      votes: 152,
-      comments: 23,
-      url: "https://clashofclans.com",
-      maker: {
-        name: "Supercell",
-        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
-      }
-    },
-    votedAt: "2024-01-15T10:30:00Z"
-  },
-  {
-    id: "2",
-    game: {
-      title: "Pokemon GO",
-      platforms: ["ios", "android"],
-      votes: 89,
-      comments: 15,
-      url: "https://pokemongo.com",
-      maker: { name: "Niantic", avatar: "" }
-    },
-    votedAt: "2024-01-14T15:45:00Z"
-  }
-]
+const userVotes: any[] = []
 
 const userComments = [
   {
@@ -164,22 +104,47 @@ export default function ProfilePage() {
     revalidateOnReconnect: true
   })
   const { data: userData } = useSWR(session?.user?.email ? `/api/user?email=${encodeURIComponent(session.user.email)}` : null, fetcher)
-  const { data: xpData, mutate: mutateXP } = useSWR(session?.user?.id ? `/api/user/${session.user.id}/xp` : null, fetcher, {
-    refreshInterval: 10000, // Refresh every 10 seconds
-    revalidateOnFocus: true,
-    revalidateOnReconnect: true,
-    dedupingInterval: 5000 // Prevent duplicate requests within 5 seconds
-  })
+  
+  // Use centralized XP hook for synchronized data
+  const { xpData, levelProgress, mutate: mutateXP } = useCurrentUserXP()
 
-  // Listen for XP updates from other components
+  // State for level-up animation
+  const [isLevelingUp, setIsLevelingUp] = useState(false)
+  const [previousLevel, setPreviousLevel] = useState<number | null>(null)
+  const [hasShownLevelUpToast, setHasShownLevelUpToast] = useState<Set<number>>(new Set())
+
+  // Level-up detection and animation
   useEffect(() => {
-    const handleXPUpdate = () => {
-      mutateXP()
+    if (levelProgress) {
+      const currentLevel = levelProgress.level
+      
+      // Initialize previousLevel on first load
+      if (previousLevel === null) {
+        setPreviousLevel(currentLevel)
+        return
+      }
+      
+      // Only trigger level up if we actually leveled up and haven't shown toast for this level
+      if (currentLevel > previousLevel && !hasShownLevelUpToast.has(currentLevel)) {
+        setIsLevelingUp(true)
+        setPreviousLevel(currentLevel)
+        setHasShownLevelUpToast(prev => new Set([...prev, currentLevel]))
+        
+        // Show level-up animation for 2 seconds
+        setTimeout(() => {
+          setIsLevelingUp(false)
+        }, 2000)
+        
+        // Show level-up toast only for actual level ups
+        toast.success(`🎉 Level Up! You reached Level ${currentLevel}!`, {
+          duration: 3000,
+        })
+      } else if (currentLevel !== previousLevel) {
+        // Update previousLevel if it changed but don't show toast
+        setPreviousLevel(currentLevel)
+      }
     }
-
-    window.addEventListener('xp-updated', handleXPUpdate)
-    return () => window.removeEventListener('xp-updated', handleXPUpdate)
-  }, [mutateXP])
+  }, [levelProgress?.level, previousLevel, hasShownLevelUpToast])
 
   // Format joined date
   const getJoinedDate = () => {
@@ -297,9 +262,9 @@ export default function ProfilePage() {
                             <div className="flex items-center gap-2 md:gap-3 flex-wrap">
                             <div className="text-base md:text-lg font-semibold truncate">{session?.user?.name}</div>
                               {/* Level Badge */}
-                              <Badge variant="secondary" className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-300 border-purple-500/30 rounded-full px-2 md:px-3 py-1 text-xs flex-shrink-0">
+                              <Badge variant="secondary" className={`bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-300 border-purple-500/30 rounded-full px-2 md:px-3 py-1 text-xs flex-shrink-0 transition-all duration-500 ${isLevelingUp ? 'ring-2 ring-yellow-400 ring-opacity-50 shadow-lg shadow-yellow-400/30' : ''}`}>
                                 <StarIcon className="h-3 w-3 mr-1" />
-                                Level {xpData?.level || 1}
+                                Level {levelProgress?.level || 1}
                               </Badge>
                             </div>
                             <div className="text-xs md:text-sm text-muted-foreground truncate">{session?.user?.email}</div>
@@ -313,24 +278,30 @@ export default function ProfilePage() {
                       </div>
 
                       {/* XP Progress Bar */}
-                      {xpData && (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-xs md:text-sm">
-                            <span className="text-gray-300">Experience Points</span>
-                            <span className="text-purple-300 font-medium">
-                              {xpData.xp} / {(xpData.level * 100)} XP
-                            </span>
+                      {levelProgress && (() => {
+                        const progressPercentage = Math.round((levelProgress.currentXP / levelProgress.requiredXP) * 100)
+                        
+                        return (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-xs md:text-sm">
+                              <span className="text-gray-300">Experience Points</span>
+                              <span className="text-purple-300 font-medium">
+                                {formatXpProgress(xpData?.xp || 0)}
+                              </span>
+                            </div>
+                            <Progress 
+                              value={progressPercentage} 
+                              className="h-2 md:h-3 bg-gray-700 rounded-full overflow-hidden"
+                            />
+                            <div className="flex items-center justify-between text-xs text-gray-400">
+                              <span className={`transition-all duration-500 ${isLevelingUp ? 'text-yellow-400 font-bold animate-pulse' : ''}`}>
+                                Level {levelProgress.level}
+                              </span>
+                              <span className="truncate ml-2">{formatXpToNextLevel(xpData?.xp || 0)}</span>
+                            </div>
                           </div>
-                          <Progress 
-                            value={xpData.xpProgress} 
-                            className="h-2 md:h-3 bg-gray-700 rounded-full overflow-hidden"
-                          />
-                          <div className="flex items-center justify-between text-xs text-gray-400">
-                            <span>Level {xpData.level}</span>
-                            <span className="truncate ml-2">{xpData.xpToNextLevel} XP to Level {xpData.level + 1}</span>
-                          </div>
-                        </div>
-                      )}
+                        )
+                      })()}
 
                       {/* Mobile Stats as Text - Desktop Stats as Cards */}
                       {/* Mobile Text Stats */}

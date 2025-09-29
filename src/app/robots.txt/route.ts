@@ -1,13 +1,23 @@
-import { NextResponse } from 'next/server'
+import { MetadataRoute } from 'next'
 
-export function GET() {
-  const body = `User-agent: *
-Allow: /
-Sitemap: ${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/sitemap.xml`
-  return new NextResponse(body, {
-    status: 200,
-    headers: { 'Content-Type': 'text/plain' }
-  })
+export default function robots(): MetadataRoute.Robots {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'
+
+  return {
+    rules: [
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: [
+          '/dashboard',
+          '/notifications',
+          '/api/',
+          '/admin/',
+          '/_next/',
+          '/submit/new',
+        ],
+      },
+    ],
+    sitemap: `${baseUrl}/sitemap.xml`,
+  }
 }
-
-
