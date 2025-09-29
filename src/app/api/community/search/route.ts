@@ -134,7 +134,7 @@ export async function GET(request: NextRequest) {
       },
       where: {
         hashtags: {
-          not: null
+          not: Prisma.JsonNull
         }
       }
     })
