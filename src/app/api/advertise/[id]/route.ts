@@ -5,7 +5,8 @@ import { prisma } from '@/lib/prisma'
 
 
 // GET /api/advertise/[id] - Get specific campaign
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(_req: Request, context: any) {
+  const params = context?.params as { id: string }
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -31,7 +32,8 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 }
 
 // PATCH /api/advertise/[id] - Update campaign
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, context: any) {
+  const params = (context?.params || {}) as { id: string }
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
