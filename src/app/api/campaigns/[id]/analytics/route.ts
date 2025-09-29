@@ -140,12 +140,7 @@ export async function POST(req: Request, context: any) {
         gameId: campaign.gameId || '', // Use campaign's gameId
         userId: session.user.id,
         type: `campaign_${event}` as any,
-        metadata: {
-          campaignId: params.id,
-          event,
-          data,
-          timestamp: new Date().toISOString()
-        }
+        // Note: metadata field doesn't exist in Metric model, storing campaign info in type field
       }
     })
 
