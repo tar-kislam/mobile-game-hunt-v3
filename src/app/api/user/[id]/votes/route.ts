@@ -23,7 +23,7 @@ export async function GET(
     const votes = await prisma.vote.findMany({
       where: { userId: id },
       select: {
-        gameId: true,
+        productId: true,
         createdAt: true,
         product: {
           select: {
