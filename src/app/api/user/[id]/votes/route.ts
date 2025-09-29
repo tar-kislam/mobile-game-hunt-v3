@@ -41,7 +41,7 @@ export async function GET(
 
     // Transform the data to match expected format
     const transformedVotes = votes.map(vote => ({
-      gameId: vote.gameId,
+      gameId: vote.productId,
       title: vote.product.title,
       platforms: vote.product.platforms,
       coverImage: vote.product.thumbnail || vote.product.image || vote.product.images?.[0] || '/placeholder.png',
