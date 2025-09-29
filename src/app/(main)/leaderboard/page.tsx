@@ -133,7 +133,7 @@ export default function LeaderboardPage() {
     ctx.fillText('🏆 Mobile Game Hunt Leaderboard', canvas.width / 2, 100);
 
     // Rank
-    ctx.fillStyle = rank === 1 ? '#fbbf24' : rank === 2 ? '#9ca3af' : rank === 3 ? '#d97706' : '#9333ea';
+    ctx.fillStyle = product.rank === 1 ? '#fbbf24' : product.rank === 2 ? '#9ca3af' : product.rank === 3 ? '#d97706' : '#9333ea';
     ctx.font = 'bold 72px Arial';
     ctx.fillText(`#${product.rank}`, canvas.width / 2, 200);
 
