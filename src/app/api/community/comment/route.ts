@@ -58,9 +58,9 @@ export async function POST(request: NextRequest) {
         data: {
           userId: post.userId,
           type: 'comment',
-          postId: postId,
           message: `${session.user.name || 'Someone'} commented on your post`,
-          isRead: false
+          meta: { postId: postId },
+          read: false
         }
       })
     }
