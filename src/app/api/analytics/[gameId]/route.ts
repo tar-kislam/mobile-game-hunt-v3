@@ -125,7 +125,7 @@ export async function GET(
           trafficTimeline: trafficTimelineArray,
         },
         insights: {
-          topClickedLink: topClickedLink ? { type: topClickedLink.name, count: topClickedLink.value } : null,
+          topClickedLink: topClickedLink ? { type: topClickedLink.type, count: topClickedLink.value } : null,
           topCountry: geoStatsArray[0] || null,
           peakTrafficHour,
         },
