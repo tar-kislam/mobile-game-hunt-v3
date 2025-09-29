@@ -3,14 +3,11 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-interface RouteParams {
-  params: {
-    id: string
-  }
-}
+// Normalize Next 15 route context typing
 
 // POST /api/campaigns/[id]/payments - Create payment for campaign
-export async function POST(req: Request, { params }: RouteParams) {
+export async function POST(req: Request, context: any) {
+  const params = (context?.params || {}) as { id: string }
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -81,7 +78,8 @@ export async function POST(req: Request, { params }: RouteParams) {
 }
 
 // GET /api/campaigns/[id]/payments - Get payments for campaign
-export async function GET(req: Request, { params }: RouteParams) {
+export async function GET(req: Request, context: any) {
+  const params = (context?.params || {}) as { id: string }
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
