@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma'
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'
 
   // Static pages
@@ -84,5 +84,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
-  return [...staticPages, ...productPages, ...userPages]
+  const sitemap = [...staticPages, ...productPages, ...userPages]
+  
+  return new Response(JSON.stringify(sitemap), {
+    headers: { 'Content-Type': 'application/json' },
+  })
 }
