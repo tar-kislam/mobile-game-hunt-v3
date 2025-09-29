@@ -263,7 +263,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen w-full relative">
-      <DarkVeil className="min-h-screen w-full" />
+      <DarkVeil />
       <div className="absolute inset-0">
         <Header />
         <div className="container mx-auto px-4 py-6">

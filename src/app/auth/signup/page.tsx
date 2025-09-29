@@ -108,7 +108,7 @@ export default function SignUpPage() {
 
   return (
     <div className="min-h-screen w-full relative">
-      <DarkVeil className="min-h-screen w-full" />
+      <DarkVeil />
       {/* Back Button - top-left, outside the card */}
       <div className="absolute top-4 left-4">
         <Button variant="outline" size="sm" asChild className="rounded-2xl">
