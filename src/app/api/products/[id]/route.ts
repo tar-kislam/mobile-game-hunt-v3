@@ -93,7 +93,8 @@ export async function DELETE(
   }
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, context: any) {
+  const params = (context?.params || {}) as { id: string }
   try {
     const id = params.id
     const schema = z.object({ releaseAt: z.string().datetime().nullable() })
@@ -121,8 +122,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: any
 ) {
+  const params = (context?.params || {}) as Promise<{ id: string }>
   try {
     const { id } = await params
     const product = await prisma.product.findUnique({

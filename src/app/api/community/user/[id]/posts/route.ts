@@ -4,8 +4,9 @@ import { userPostsQuerySchema } from '@/lib/validations/community'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: any
 ) {
+  const params = (context?.params || {}) as { id: string }
   try {
     const { searchParams } = new URL(request.url)
     const validatedQuery = userPostsQuerySchema.parse({
