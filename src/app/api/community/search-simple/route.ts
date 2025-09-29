@@ -170,9 +170,11 @@ export async function GET(request: NextRequest) {
     // Filter posts by hashtags manually
     const hashtagFilteredPosts = hashtagPosts.filter(post => {
       if (!post.hashtags || !Array.isArray(post.hashtags)) return false
-      return post.hashtags.some((hashtag: string) => 
-        hashtag.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        hashtag.toLowerCase().includes(`#${searchTerm.toLowerCase()}`)
+      return post.hashtags.some((hashtag) => 
+        typeof hashtag === 'string' && (
+          hashtag.toLowerCase().includes(searchTerm.toLowerCase()) || 
+          hashtag.toLowerCase().includes(`#${searchTerm.toLowerCase()}`)
+        )
       )
     })
 
