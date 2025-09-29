@@ -15,7 +15,7 @@ export function PerformanceMonitor() {
             // You can integrate with services like Google Analytics, Sentry, etc.
             console.log('Performance metric:', {
               name: entry.name,
-              value: entry.value || entry.duration,
+              value: (entry as any).value || entry.duration,
               type: entry.entryType,
             })
           }

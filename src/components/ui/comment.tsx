@@ -74,7 +74,7 @@ export function Comment({
         <UserAvatarTooltip 
           userId={comment.user.id}
           userName={comment.user.name}
-          userImage={comment.user.image}
+          userImage={comment.user.image || null}
           size="sm"
         />
         

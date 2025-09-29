@@ -8,9 +8,6 @@ import { calculateLevelProgress } from '@/lib/xpCalculator'
 import { z } from 'zod'
 
 // Only allow in development
-if (process.env.NODE_ENV !== 'development') {
-  throw new Error('Test notifications endpoint is only available in development')
-}
 
 const testNotificationSchema = z.object({
   kind: z.enum(['xp', 'level', 'badge_unlock', 'badge_claim'])

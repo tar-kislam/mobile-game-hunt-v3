@@ -39,6 +39,7 @@ export default async function TagPage({ params }: TagPageProps) {
                   id: true,
                   name: true,
                   image: true,
+                  role: true,
                 },
               },
               _count: {

@@ -5,13 +5,13 @@ import { PostCard } from './post-card'
 interface Post {
   id: string
   content: string
-  images?: string[] | null
-  hashtags?: string[] | null
-  createdAt: string | Date
+  images?: string[]
+  hashtags?: string[]
+  createdAt: string
   user: {
     id: string
-    name: string | null
-    image: string | null
+    name: string
+    image?: string
   }
   _count: {
     likes: number

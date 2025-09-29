@@ -20,7 +20,7 @@ interface BadgeInfo {
   emoji: string
   description: string
   story: string
-  requirementType: 'comments' | 'votes' | 'games' | 'likes' | 'follows' | 'user_follows' | 'followers' | 'first_game'
+  requirementType: 'comments' | 'votes' | 'games' | 'likes' | 'follows' | 'user_follows' | 'followers' | 'first_game' | 'registration_order'
   requirementValue: number
   xpReward: number
   nextMilestone?: string

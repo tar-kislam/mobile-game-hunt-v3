@@ -80,8 +80,8 @@
     "swr": "^2.3.6",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
-    "tw-animate-css": "^1.3.7",
     "three": "^0.179.1",
+    "tw-animate-css": "^1.3.7",
     "web-vitals": "^5.1.0",
     "zod": "^4.1.5"
   },
@@ -92,13 +92,13 @@
     "@types/pg": "^8.15.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.180.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
     "prettier": "^3.6.2",
     "source-map-explorer": "^2.5.3",
     "tailwindcss": "^4",
     "tsx": "^4.20.5",
-    
     "typescript": "^5"
   }
 }

@@ -26,7 +26,6 @@ export function SparkOnClick({
     <ClickSpark
       className={className}
       sparkColor={sparkColor}
-      sparkColors={["#ffffff", "#a78bfa", "#60a5fa"]}
       sparkSize={sparkSize}
       sparkRadius={sparkRadius}
       sparkCount={sparkCount}

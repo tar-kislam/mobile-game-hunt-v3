@@ -681,7 +681,7 @@ export async function getDashboardAnalyticsAction() {
       }
     })
 
-    const followsByGame = await prisma.follow.groupBy({
+    const followsByGame = await prisma.gameFollow.groupBy({
       by: ['gameId'],
       where: {
         gameId: { in: productIds }

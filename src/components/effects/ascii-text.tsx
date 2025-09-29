@@ -90,6 +90,7 @@ class AsciiFilter {
     this.fontFamily = fontFamily ?? "'Courier New', monospace";
     this.charset = charset ?? ' .\'`^",:;Il!i~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$';
 
+    // @ts-ignore
     this.context.webkitImageSmoothingEnabled = false;
     // @ts-ignore
     this.context.mozImageSmoothingEnabled = false;
@@ -263,13 +264,13 @@ class CanvAscii {
   private camera: THREE.PerspectiveCamera;
   private scene: THREE.Scene;
   private mouse: { x: number; y: number };
-  private textCanvas: CanvasTxt;
-  private texture: THREE.CanvasTexture;
-  private geometry: THREE.PlaneGeometry;
-  private material: THREE.ShaderMaterial;
-  private mesh: THREE.Mesh;
-  private renderer: THREE.WebGLRenderer;
-  private filter: AsciiFilter;
+  private textCanvas!: CanvasTxt;
+  private texture!: THREE.CanvasTexture;
+  private geometry!: THREE.PlaneGeometry;
+  private material!: THREE.ShaderMaterial;
+  private mesh!: THREE.Mesh;
+  private renderer!: THREE.WebGLRenderer;
+  private filter!: AsciiFilter;
   private center: { x: number; y: number } = { x: 0, y: 0 };
   private animationFrameId?: number;
 
@@ -391,7 +392,7 @@ class CanvAscii {
     this.textCanvas.render();
     this.texture.needsUpdate = true;
 
-    this.mesh.material.uniforms.uTime.value = Math.sin(time);
+    (this.mesh.material as THREE.ShaderMaterial).uniforms.uTime.value = Math.sin(time);
 
     this.updateRotation();
     this.filter.render(this.scene, this.camera);

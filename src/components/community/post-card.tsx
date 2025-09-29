@@ -136,7 +136,7 @@ export function PostCard({ post, onDelete }: PostCardProps) {
               <UserAvatarTooltip
                 userId={post.user.id}
                 userName={post.user.name}
-                userImage={post.user.image}
+                userImage={post.user.image || null}
                 size="md"
               />
               <div>

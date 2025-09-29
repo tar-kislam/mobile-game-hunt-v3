@@ -28,7 +28,7 @@ export function generateMetadata(config: SEOConfig): Metadata {
     openGraph: {
       title: `${title} | Mobile Game Hunt`,
       description: description.slice(0, 160),
-      type: ogType,
+      type: ogType === 'product' ? 'website' : ogType,
       images: ogImage ? [
         {
           url: ogImage,

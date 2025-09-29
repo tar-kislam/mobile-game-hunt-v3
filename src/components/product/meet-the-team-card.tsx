@@ -132,7 +132,7 @@ export function MeetTheTeamCard({ makers }: MeetTheTeamCardProps) {
                         <UserAvatarTooltip
                           userId={maker.user.id}
                           userName={maker.user.name}
-                          userImage={maker.user.image}
+                          userImage={maker.user.image || null}
                           userUsername={maker.user.username}
                           size="md"
                           className="border-2 border-purple-500/30 hover:border-purple-400/60 transition-all duration-200"

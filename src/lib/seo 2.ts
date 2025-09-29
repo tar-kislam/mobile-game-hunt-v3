@@ -15,7 +15,7 @@ export function generateMetadata({
   description: string;
   image?: string;
   url: string;
-  type?: 'website' | 'article' | 'product';
+  type?: 'website' | 'article' | 'product' | 'profile';
   keywords?: string[];
   noindex?: boolean;
   canonical?: string;
@@ -44,7 +44,7 @@ export function generateMetadata({
         },
       ],
       locale: 'en_US',
-      type: type,
+      type: type === 'product' || type === 'profile' ? 'website' : type,
     },
     twitter: {
       card: 'summary_large_image',

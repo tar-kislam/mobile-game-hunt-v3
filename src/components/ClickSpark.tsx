@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 
 interface ClickSparkProps {
+  className?: string;
   sparkColor?: string;
   sparkSize?: number;
   sparkRadius?: number;
@@ -21,6 +22,7 @@ interface Spark {
 }
 
 const ClickSpark: React.FC<ClickSparkProps> = ({
+  className,
   sparkColor = '#fff',
   sparkSize = 10,
   sparkRadius = 15,
@@ -153,7 +155,7 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
   };
 
   return (
-    <div className="relative w-full h-full" onClick={handleClick}>
+    <div className={`relative w-full h-full ${className || ''}`} onClick={handleClick}>
       <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
       {children}
     </div>

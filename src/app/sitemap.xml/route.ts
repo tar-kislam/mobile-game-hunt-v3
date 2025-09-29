@@ -47,7 +47,7 @@ export async function GET() {
   // Dynamic product pages
   const products = await prisma.product.findMany({
     where: {
-      status: 'published'
+      status: 'PUBLISHED'
     },
     select: {
       slug: true,
