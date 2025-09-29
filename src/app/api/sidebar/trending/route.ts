@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     // Sort by vote count manually
     const sortedTrending = trendingThisWeek.sort((a: any, b: any) => (b._count?.votes || 0) - (a._count?.votes || 0))
 
-    const result = sortedTrending.map((product) => ({
+    const result = sortedTrending.map((product: any) => ({
       id: product.id,
       title: product.title,
       platforms: product.platforms || [],
