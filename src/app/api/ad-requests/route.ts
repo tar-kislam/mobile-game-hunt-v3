@@ -73,15 +73,12 @@ export async function POST(request: NextRequest) {
 
     const adRequest = await prisma.adRequest.create({
       data: {
-        campaignName,
-        budget: parseFloat(budget) || 0,
+        gameId: campaignName, // Map campaignName to gameId
+        gameName: campaignName,
+        promotionType: promotions || 'FEATURED',
+        package: duration,
         duration: String(parseInt(duration) || 0),
-        targetAudience,
-        objectives,
-        notes,
-        promotions,
-        totalPrice: parseFloat(totalPrice) || 0,
-        userEmail,
+        price: parseFloat(budget) || 0,
         userId: session.user.id,
         status: 'PENDING'
       }
