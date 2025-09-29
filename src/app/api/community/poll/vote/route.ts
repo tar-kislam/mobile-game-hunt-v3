@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { rateLimit } from '@/lib/rate-limit'
-import { addXPWithBonus } from '@/lib/xpService'
+import { awardXP } from '@/lib/xpService'
 import { checkAndAwardBadges } from '@/lib/badgeService'
 import { z } from 'zod'
 
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
 
       // Award XP for poll voting with first-time bonus
       try {
-        const xpResult = await addXPWithBonus(userId, 3, 5, 'vote')
+        const xpResult = await awardXP(userId, 'vote', 3)
         console.log(`[XP] Awarded ${xpResult.isFirstTime ? '8' : '3'} XP to user ${userId} for poll voting${xpResult.isFirstTime ? ' (first-time bonus!)' : ''}`)
         
         // Check for new badges after XP award

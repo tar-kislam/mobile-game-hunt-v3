@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { awardBadge } from '@/lib/badgeService'
-import { addXP } from '@/lib/xpService'
+import { awardBadgeXP } from '@/lib/xpService'
 import { notify } from '@/lib/notificationService'
 import { badgeClaimed } from '@/lib/notifications/messages'
 import { getBadgeInfo } from '@/lib/badgeService'
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       }
       
       const xpReward = xpRewards[badgeCode] || 100
-      await addXP(session.user.id, xpReward)
+      await awardBadgeXP(session.user.id, 'badge', xpReward)
       
       // Send badge claimed notification
       try {

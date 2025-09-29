@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { addXP } from '@/lib/xpService'
+import { awardXP } from '@/lib/xpService'
 import { checkAndAwardBadges, getUserBadges } from '@/lib/badgeService'
 import { prisma } from '@/lib/prisma'
 import { calculateLevelProgress } from '@/lib/xpCalculator'
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     switch (kind) {
       case 'xp': {
         // Add 25 XP to trigger XP notification
-        const xpResult = await addXP(userId, 25)
+        const xpResult = await awardXP(userId, 'vote', 25)
         result = {
           ...result,
           message: 'Added 25 XP',
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
         const xpNeeded = levelProgress.remainingXP + 1 // Add 1 to ensure level up
 
         // Add XP to trigger level up
-        const levelResult = await addXP(userId, xpNeeded)
+        const levelResult = await awardXP(userId, 'vote', xpNeeded)
         result = {
           ...result,
           message: `Added ${xpNeeded} XP to trigger level up`,

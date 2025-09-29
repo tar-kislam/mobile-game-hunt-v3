@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { toggleLikeSchema } from '@/lib/validations/community'
-import { addXP } from '@/lib/xpService'
+import { awardXP } from '@/lib/xpService'
 
 export async function POST(request: NextRequest) {
   try {
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 
       // Award XP for liking
       try {
-        await addXP(session.user.id, 2)
+        await awardXP(session.user.id, 'vote', 2)
         console.log(`[XP] Awarded 2 XP to user ${session.user.id} for liking`)
       } catch (xpError) {
         console.error('[XP] Error awarding XP for liking:', xpError)
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       // Award XP to post author for receiving a like (if not the same user)
       if (post.userId !== session.user.id) {
         try {
-          await addXP(post.userId, 2)
+          await awardXP(post.userId, 'vote', 2)
           console.log(`[XP] Awarded 2 XP to user ${post.userId} for receiving a like`)
         } catch (xpError) {
           console.error('[XP] Error awarding XP for receiving like:', xpError)
