@@ -131,7 +131,7 @@ export async function GET(
     const rank = userCount + 1
 
     // Fetch user badges (simplified - you might want to implement proper badge logic)
-    const badges = []
+    const badges: any[] = []
 
     return NextResponse.json({
       user: {
