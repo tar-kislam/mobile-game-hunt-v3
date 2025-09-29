@@ -151,7 +151,7 @@ export async function GET(
     })
 
     // Get follows for this game
-    const follows = await prisma.follow.findMany({
+    const follows = await prisma.gameFollow.findMany({
       where: { gameId },
       select: { createdAt: true }
     })
