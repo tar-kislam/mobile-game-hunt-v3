@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { createCommentSchema } from '@/lib/validations/community'
 import { notify } from '@/lib/notificationService'
 import { awardXP } from '@/lib/xpService'
+import { checkAndAwardBadges } from '@/lib/badgeService'
 
 export async function POST(request: NextRequest) {
   try {
