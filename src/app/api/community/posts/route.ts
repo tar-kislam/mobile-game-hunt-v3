@@ -160,11 +160,13 @@ export async function POST(request: NextRequest) {
       }
     } catch (prismaError) {
       console.error('[COMMUNITY][CREATE] Prisma error:', prismaError)
-      console.error('[COMMUNITY][CREATE] Error details:', {
-        message: prismaError.message,
-        code: prismaError.code,
-        meta: prismaError.meta
-      })
+      if (prismaError instanceof Error) {
+        console.error('[COMMUNITY][CREATE] Error details:', {
+          message: prismaError.message,
+          code: 'code' in prismaError ? prismaError.code : undefined,
+          meta: 'meta' in prismaError ? prismaError.meta : undefined
+        })
+      }
       throw prismaError
     }
 
