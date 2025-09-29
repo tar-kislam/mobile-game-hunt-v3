@@ -137,7 +137,7 @@ export async function POST(req: Request, context: any) {
     // Track event in database (placeholder - would integrate with GA4)
     const metric = await prisma.metric.create({
       data: {
-        productId: '', // Campaign tracking would need a separate metric type
+        gameId: campaign.gameId || '', // Use campaign's gameId
         userId: session.user.id,
         type: `campaign_${event}` as any,
         metadata: {
