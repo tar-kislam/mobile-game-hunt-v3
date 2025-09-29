@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       // Award XP for poll voting with first-time bonus
       try {
         const xpResult = await awardXP(userId, 'vote', 3)
-        console.log(`[XP] Awarded ${xpResult.isFirstTime ? '8' : '3'} XP to user ${userId} for poll voting${xpResult.isFirstTime ? ' (first-time bonus!)' : ''}`)
+        console.log(`[XP] Awarded ${xpResult.xpAwarded} XP to user ${userId} for poll voting${xpResult.levelUp ? ' (level up!)' : ''}`)
         
         // Check for new badges after XP award
         try {
