@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
   // Enable experimental features
@@ -185,6 +186,9 @@ const nextConfig: NextConfig = {
       fullUrl: false,
     },
   },
+
+  // Silence workspace root inference in local nested workspaces/monorepos
+  outputFileTracingRoot: path.join(__dirname),
 };
 
 export default nextConfig;
