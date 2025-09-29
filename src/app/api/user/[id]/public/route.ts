@@ -125,8 +125,8 @@ export async function GET(
     // Calculate XP to next level using centralized calculation
     const levelProgress = calculateLevelProgress(user.xp)
     const xpToNextLevel = levelProgress.remainingXP
-    const currentLevelXP = levelProgress.currentLevelXP
-    const nextLevelXP = levelProgress.nextLevelXP
+    const currentLevelXP = levelProgress.currentXP
+    const nextLevelXP = levelProgress.requiredXP
 
     const profileData = {
       user: {
