@@ -39,7 +39,7 @@ export async function DELETE(
       })
 
       // Delete follows
-      await tx.follow.deleteMany({
+      await tx.gameFollow.deleteMany({
         where: { gameId: id }
       })
 
