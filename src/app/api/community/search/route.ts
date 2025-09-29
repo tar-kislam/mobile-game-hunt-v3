@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
     const hashtagCounts: Record<string, number> = {}
     allPostsForHashtags.forEach(post => {
       if (post.hashtags && Array.isArray(post.hashtags)) {
-        post.hashtags.forEach((hashtag: string) => {
+        post.hashtags.forEach((hashtag) => {
           if (typeof hashtag === 'string' && hashtag.trim()) {
             const cleanHashtag = hashtag.trim().toLowerCase()
             if (cleanHashtag.includes(searchTerm.toLowerCase()) || cleanHashtag.includes(`#${searchTerm.toLowerCase()}`)) {
