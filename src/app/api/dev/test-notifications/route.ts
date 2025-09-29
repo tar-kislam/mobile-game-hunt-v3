@@ -42,9 +42,9 @@ export async function POST(req: NextRequest) {
         result = {
           ...result,
           message: 'Added 25 XP',
-          xpBefore: xpResult.xp - 25,
-          xpAfter: xpResult.xp,
-          level: xpResult.level
+          xpBefore: xpResult.newTotalXP - xpResult.xpAwarded,
+          xpAfter: xpResult.newTotalXP,
+          level: xpResult.newLevel
         }
         break
       }
