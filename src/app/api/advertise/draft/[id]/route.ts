@@ -4,13 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { CampaignStatus } from '@prisma/client'
 
-interface RouteParams {
-  params: {
-    id: string
-  }
-}
-
-export async function PATCH(req: Request, { params }: RouteParams) {
+export async function PATCH(req: Request, context: any) {
+  const params = (context?.params || {}) as { id: string }
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -59,7 +54,8 @@ export async function PATCH(req: Request, { params }: RouteParams) {
   }
 }
 
-export async function POST(req: Request, { params }: RouteParams) {
+export async function POST(req: Request, context: any) {
+  const params = (context?.params || {}) as { id: string }
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
