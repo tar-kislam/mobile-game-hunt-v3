@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       data: {
         campaignName,
         budget: parseFloat(budget) || 0,
-        duration: parseInt(duration) || 0,
+        duration: String(parseInt(duration) || 0),
         targetAudience,
         objectives,
         notes,
