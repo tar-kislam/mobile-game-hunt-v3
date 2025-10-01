@@ -46,6 +46,87 @@ export default function NewSubmitPage() {
   const [isDragOverThumbnail, setIsDragOverThumbnail] = useState(false)
   const [isDragOverGallery, setIsDragOverGallery] = useState(false)
 
+  // Simple, reliable upload function with absolute URL
+  const uploadFile = async (file: File): Promise<{ ok: boolean; url?: string; error?: string }> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    
+    try {
+      console.log(`📤 Uploading: ${file.name} (${file.size} bytes)`)
+      
+      // Use absolute URL to avoid routing issues
+      const uploadUrl = `${window.location.origin}/api/upload`
+      
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        body: formData,
+      })
+      
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`)
+      }
+      
+      const result = await response.json()
+      console.log(`✅ Uploaded: ${file.name}`)
+      
+      return result
+    } catch (error) {
+      console.error(`❌ Upload failed: ${file.name}`, error)
+      return { 
+        ok: false, 
+        error: error instanceof Error ? error.message : 'Upload failed' 
+      }
+    }
+  }
+  
+  // Gallery upload handler - sequential, simple, reliable
+  const handleGalleryUpload = async (selectedFiles: File[]) => {
+    setIsUploadingGallery(true)
+    const gallery = [...(form.watch('gallery') || [])]
+    let successCount = 0
+    
+    try {
+      console.log(`📤 Preparing ${selectedFiles.length} files for upload...`)
+      
+      // Sequential upload - one by one
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i]
+        console.log(`📤 Uploading file ${i + 1}/${selectedFiles.length}: ${file.name}`)
+        
+        const result = await uploadFile(file)
+        
+        if (result.ok && result.url) {
+          gallery.push(result.url)
+          form.setValue('gallery', [...gallery])
+          successCount++
+          console.log(`✅ Upload ${i + 1}/${selectedFiles.length} successful`)
+        } else {
+          console.error(`❌ Upload ${i + 1}/${selectedFiles.length} failed:`, result.error)
+          toast.error(`Failed to upload ${file.name}`)
+        }
+        
+        // Small delay between uploads to prevent server overload
+        if (i < selectedFiles.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 300))
+        }
+      }
+      
+      // Show final result
+      if (successCount === selectedFiles.length) {
+        toast.success(`🎉 All ${successCount} images uploaded successfully!`)
+      } else if (successCount > 0) {
+        toast.warning(`${successCount}/${selectedFiles.length} images uploaded`)
+      } else {
+        toast.error('Failed to upload images')
+      }
+    } catch (error) {
+      console.error('Gallery upload error:', error)
+      toast.error('Upload failed')
+    } finally {
+      setIsUploadingGallery(false)
+    }
+  }
+
   const form = useForm<any>({
     resolver: zodResolver(productFullSchema),
     defaultValues: {
@@ -765,29 +846,19 @@ export default function NewSubmitPage() {
                                 }
                                 
                                 setIsUploadingThumbnail(true)
-                                const formData = new FormData()
-                                formData.append('file', imageFile)
                                 
                                 try {
-                                  console.log('📤 Uploading thumbnail via drag-drop:', imageFile.name)
-                                  const response = await fetch('/api/upload', { 
-                                    method: 'POST', 
-                                    body: formData 
-                                  })
+                                  const result = await uploadFile(imageFile)
                                   
-                                  const result = await response.json()
-                                  
-                                  if (result.ok) {
+                                  if (result.ok && result.url) {
                                     form.setValue('thumbnail', result.url)
-                                    toast.success('Thumbnail uploaded successfully!')
-                                    console.log('✅ Thumbnail uploaded:', result.url)
+                                    toast.success('Thumbnail uploaded!')
                                   } else {
-                                    toast.error(result.error || 'Failed to upload thumbnail')
-                                    console.error('❌ Upload failed:', result.error)
+                                    toast.error(result.error || 'Upload failed')
                                   }
                                 } catch (error) {
-                                  console.error('❌ Upload error:', error)
-                                  toast.error('Failed to upload thumbnail. Please try again.')
+                                  console.error('Upload error:', error)
+                                  toast.error('Upload failed')
                                 } finally {
                                   setIsUploadingThumbnail(false)
                                 }
@@ -809,7 +880,12 @@ export default function NewSubmitPage() {
                                 input.type = 'file'
                                 input.accept = 'image/*'
                                 input.onchange = async (e) => {
-                                  const file = (e.target as HTMLInputElement).files?.[0]
+                                  const inputEl = e.target as HTMLInputElement
+                                  const file = inputEl.files?.[0]
+                                  
+                                  // Reset input value to allow re-selecting same file
+                                  inputEl.value = ''
+                                  
                                   if (!file) return
                                   
                                   // Validate file type
@@ -825,31 +901,19 @@ export default function NewSubmitPage() {
                                   }
                                   
                                   setIsUploadingThumbnail(true)
-                                    const formData = new FormData()
-                                    formData.append('file', file)
                                   
                                   try {
-                                    console.log('📤 Uploading thumbnail:', file.name, file.size, 'bytes')
-                                    const response = await fetch('/api/upload', { 
-                                      method: 'POST', 
-                                      body: formData 
-                                    })
+                                    const result = await uploadFile(file)
                                     
-                                    console.log('📥 Upload response status:', response.status)
-                                      const result = await response.json()
-                                    console.log('📥 Upload response data:', result)
-                                    
-                                    if (result.ok) {
+                                    if (result.ok && result.url) {
                                         form.setValue('thumbnail', result.url)
-                                      toast.success('Thumbnail uploaded successfully!')
-                                      console.log('✅ Thumbnail uploaded:', result.url)
+                                      toast.success('Thumbnail uploaded!')
                                     } else {
-                                      toast.error(result.error || 'Failed to upload thumbnail')
-                                      console.error('❌ Upload failed:', result.error)
+                                      toast.error(result.error || 'Upload failed')
                                       }
                                     } catch (error) {
-                                    console.error('❌ Upload error:', error)
-                                    toast.error('Failed to upload thumbnail. Please try again.')
+                                    console.error('Upload error:', error)
+                                    toast.error('Upload failed')
                                   } finally {
                                     setIsUploadingThumbnail(false)
                                   }
@@ -910,63 +974,30 @@ export default function NewSubmitPage() {
                             e.preventDefault()
                             setIsDragOverGallery(false)
                             
-                            const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'))
+                            const originalFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
                             
-                            if (files.length === 0) {
+                            if (originalFiles.length === 0) {
                               toast.error('Please drop valid image files')
                               return
                             }
                             
-                            // Validate files
-                            for (const file of files) {
-                              if (file.size > 5 * 1024 * 1024) {
-                                toast.error(`File ${file.name} is too large (max 5MB)`)
+                            // Validate file sizes
+                            for (const f of originalFiles) {
+                              if (f.size > 5 * 1024 * 1024) {
+                                toast.error(`${f.name} is too large (max 5MB)`)
                                 return
                               }
                             }
                             
-                            setIsUploadingGallery(true)
-                            const currentGallery = form.watch('gallery') || []
-                            let successCount = 0
+                            // CRITICAL: Clone files using slice() to detach from drag event
+                            const clonedFiles = originalFiles.map(f => {
+                              const blob = f.slice(0, f.size, f.type)
+                              return new File([blob], f.name, { type: f.type, lastModified: f.lastModified })
+                            })
                             
-                            try {
-                              for (const file of files) {
-                                console.log('📤 Uploading gallery image via drag-drop:', file.name)
-                                const formData = new FormData()
-                                formData.append('file', file)
-                                
-                                try {
-                                  const response = await fetch('/api/upload', { 
-                                    method: 'POST', 
-                                    body: formData 
-                                  })
-                                  
-                                  const result = await response.json()
-                                  
-                                  if (result.ok) {
-                                    currentGallery.push(result.url)
-                                    successCount++
-                                    console.log('✅ Gallery image uploaded:', result.url)
-                                  } else {
-                                    console.error('❌ Gallery upload failed:', result.error)
-                                  }
-                                } catch (error) {
-                                  console.error('❌ Gallery upload error:', error)
-                                }
-                              }
-                              
-                              form.setValue('gallery', currentGallery)
-                              
-                              if (successCount === files.length) {
-                                toast.success(`${successCount} images uploaded successfully!`)
-                              } else if (successCount > 0) {
-                                toast.warning(`${successCount}/${files.length} images uploaded successfully`)
-                              } else {
-                                toast.error('Failed to upload images. Please try again.')
-                              }
-                            } finally {
-                              setIsUploadingGallery(false)
-                            }
+                            console.log(`✅ ${clonedFiles.length} files cloned from drag-drop`)
+                            
+                            await handleGalleryUpload(clonedFiles)
                           }}
                         >
                           <div className="flex flex-col items-center justify-center space-y-4">
@@ -980,70 +1011,43 @@ export default function NewSubmitPage() {
                                 <button
                                   type="button"
                                   disabled={isUploadingGallery}
-                                  onClick={async () => {
+                                  onClick={() => {
                                     const input = document.createElement('input')
                                     input.type = 'file'
                                     input.multiple = true
                                     input.accept = 'image/*'
                                     input.onchange = async (e) => {
-                                      const files = Array.from((e.target as HTMLInputElement).files || [])
-                                      if (files.length === 0) return
+                                      const inputEl = e.target as HTMLInputElement
+                                      const originalFiles = Array.from(inputEl.files || [])
                                       
-                                      // Validate files
-                                      for (const file of files) {
-                                        if (!file.type.startsWith('image/')) {
-                                          toast.error(`Please select valid image files only`)
+                                      if (originalFiles.length === 0) return
+                                      
+                                      // Validate files first
+                                      for (const f of originalFiles) {
+                                        if (!f.type.startsWith('image/')) {
+                                          toast.error('Please select valid image files only')
+                                          inputEl.value = ''
                                           return
                                         }
-                                        if (file.size > 5 * 1024 * 1024) {
-                                          toast.error(`File ${file.name} is too large (max 5MB)`)
+                                        if (f.size > 5 * 1024 * 1024) {
+                                          toast.error(`${f.name} is too large (max 5MB)`)
+                                          inputEl.value = ''
                                           return
                                         }
                                       }
                                       
-                                      setIsUploadingGallery(true)
-                                      const currentGallery = form.watch('gallery') || []
-                                      let successCount = 0
+                                      // CRITICAL: Clone files using slice() to detach from input element
+                                      const clonedFiles = originalFiles.map(f => {
+                                        const blob = f.slice(0, f.size, f.type)
+                                        return new File([blob], f.name, { type: f.type, lastModified: f.lastModified })
+                                      })
                                       
-                                      try {
-                                      for (const file of files) {
-                                          console.log('📤 Uploading gallery image:', file.name, file.size, 'bytes')
-                                        const formData = new FormData()
-                                        formData.append('file', file)
-                                          
-                                          try {
-                                            const response = await fetch('/api/upload', { 
-                                              method: 'POST', 
-                                              body: formData 
-                                            })
-                                            
-                                          const result = await response.json()
-                                            console.log('📥 Gallery upload response:', result)
-                                            
-                                            if (result.ok) {
-                                            currentGallery.push(result.url)
-                                              successCount++
-                                              console.log('✅ Gallery image uploaded:', result.url)
-                                            } else {
-                                              console.error('❌ Gallery upload failed:', result.error)
-                                          }
-                                        } catch (error) {
-                                            console.error('❌ Gallery upload error:', error)
-                                        }
-                                      }
+                                      // Reset input AFTER cloning
+                                      inputEl.value = ''
                                       
-                                      form.setValue('gallery', currentGallery)
-                                        
-                                        if (successCount === files.length) {
-                                          toast.success(`${successCount} images uploaded successfully!`)
-                                        } else if (successCount > 0) {
-                                          toast.warning(`${successCount}/${files.length} images uploaded successfully`)
-                                        } else {
-                                          toast.error('Failed to upload images. Please try again.')
-                                        }
-                                      } finally {
-                                        setIsUploadingGallery(false)
-                                      }
+                                      console.log(`✅ ${clonedFiles.length} files cloned successfully`)
+                                      
+                                      await handleGalleryUpload(clonedFiles)
                                     }
                                     input.click()
                                   }}
@@ -1097,36 +1101,49 @@ export default function NewSubmitPage() {
                           <Button 
                             type="button" 
                             variant="outline"
+                            disabled={isUploadingGallery}
                             onClick={() => {
                               const input = document.createElement('input')
                               input.type = 'file'
                               input.multiple = true
                               input.accept = 'image/*'
                               input.onchange = async (e) => {
-                                const files = Array.from((e.target as HTMLInputElement).files || [])
-                                const currentGallery = form.watch('gallery') || []
+                                const inputEl = e.target as HTMLInputElement
+                                const originalFiles = Array.from(inputEl.files || [])
                                 
-                                for (const file of files) {
-                                  const formData = new FormData()
-                                  formData.append('file', file)
-                                  try {
-                                    const response = await fetch('/api/upload', { method: 'POST', body: formData })
-                                    const result = await response.json()
-                                    if (result.success) {
-                                      currentGallery.push(result.url)
-                                    }
-                                  } catch (error) {
-                                    toast.error('Failed to upload image')
+                                if (originalFiles.length === 0) return
+                                
+                                // Validate files first
+                                for (const f of originalFiles) {
+                                  if (!f.type.startsWith('image/')) {
+                                    toast.error('Please select valid image files only')
+                                    inputEl.value = ''
+                                    return
+                                  }
+                                  if (f.size > 5 * 1024 * 1024) {
+                                    toast.error(`${f.name} is too large (max 5MB)`)
+                                    inputEl.value = ''
+                                    return
                                   }
                                 }
                                 
-                                form.setValue('gallery', currentGallery)
-                                toast.success(`${files.length} image(s) uploaded successfully`)
+                                // CRITICAL: Clone files using slice() to detach from input element
+                                const clonedFiles = originalFiles.map(f => {
+                                  const blob = f.slice(0, f.size, f.type)
+                                  return new File([blob], f.name, { type: f.type, lastModified: f.lastModified })
+                                })
+                                
+                                // Reset input AFTER cloning
+                                inputEl.value = ''
+                                
+                                console.log(`✅ ${clonedFiles.length} files cloned successfully`)
+                                
+                                await handleGalleryUpload(clonedFiles)
                               }
                               input.click()
                             }}
                           >
-                            Upload Multiple
+                            {isUploadingGallery ? 'Uploading...' : 'Upload Multiple'}
                           </Button>
                         </div>
                         
@@ -1248,19 +1265,24 @@ export default function NewSubmitPage() {
                                 input.type = 'file'
                                 input.accept = 'image/gif'
                                 input.onchange = async (e) => {
-                                  const file = (e.target as HTMLInputElement).files?.[0]
+                                  const inputEl = e.target as HTMLInputElement
+                                  const file = inputEl.files?.[0]
+                                  
+                                  // Reset input value to allow re-selecting same file
+                                  inputEl.value = ''
+                                  
                                   if (file) {
-                                    const formData = new FormData()
-                                    formData.append('file', file)
                                     try {
-                                      const response = await fetch('/api/upload', { method: 'POST', body: formData })
-                                      const result = await response.json()
-                                      if (result.success) {
+                                      const result = await uploadFile(file)
+                                      if (result.ok && result.url) {
                                         form.setValue('gameplayGifUrl', result.url)
-                                        toast.success('GIF uploaded successfully')
+                                        toast.success('GIF uploaded!')
+                                      } else {
+                                        toast.error(result.error || 'Upload failed')
                                       }
                                     } catch (error) {
-                                      toast.error('Failed to upload GIF')
+                                      console.error('Upload error:', error)
+                                      toast.error('Upload failed')
                                     }
                                   }
                                 }

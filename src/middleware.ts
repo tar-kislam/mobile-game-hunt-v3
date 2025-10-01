@@ -81,6 +81,7 @@ export default withAuth(
           pathname.startsWith('/auth') ||
           pathname.startsWith('/api/auth') ||
           pathname.startsWith('/api/health') ||
+          pathname.startsWith('/api/upload') ||   // Allow file upload API (auth handled in route)
           pathname.startsWith('/api/categories') ||
           pathname.startsWith('/api/products') ||
           pathname.startsWith('/api/calendar') ||   // Allow calendar API
