@@ -1,0 +1,65 @@
+name: Auto Semantic Release Tag
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  bump-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "latest_tag=$TAG" >> $GITHUB_ENV
+          echo "📦 Latest tag: $TAG"
+
+      - name: Bump patch version
+        id: bump_version
+        run: |
+          IFS='.' read -r major minor patch <<<"${latest_tag#v}"
+          patch=$((patch+1))
+          NEW_TAG="v$major.$minor.$patch"
+          echo "new_tag=$NEW_TAG" >> $GITHUB_ENV
+          echo "🚀 New tag: $NEW_TAG"
+
+      - name: Create and push new tag
+        run: |
+          git tag $new_tag
+          git push origin $new_tag
+          echo "✅ Tag $new_tag created and pushed successfully!"
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.new_tag }}
+          release_name: Release ${{ env.new_tag }}
+          body: |
+            ## 🎉 Release ${{ env.new_tag }}
+            
+            **Automatic release created by GitHub Actions**
+            
+            ### Changes
+            - See commit history for details
+            
+            ---
+            *Generated on: ${{ github.event.head_commit.timestamp }}*
+          draft: false
+          prerelease: false
+
