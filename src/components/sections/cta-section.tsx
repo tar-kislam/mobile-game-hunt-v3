@@ -5,15 +5,13 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import PixelBlast from '@/components/effects/pixel-blast'
 import FuzzyText from '@/components/effects/fuzzy-text'
-import { useTheme } from 'next-themes'
 import Link from 'next/link'
 import { LuGamepad2 } from 'react-icons/lu'
 import { IoPeople } from 'react-icons/io5'
 import { HiOutlineChat } from 'react-icons/hi'
 
 export function CTASection() {
-  const { resolvedTheme } = useTheme()
-  const brandColor = resolvedTheme === 'dark' ? '#ffffff' : '#000000'
+  const brandColor = '#ffffff'
 
   return (
     <section className="relative w-full h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden mb-12">

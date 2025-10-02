@@ -52,17 +52,11 @@
 }
 
 @keyframes badge-shine {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
-.badge-shine {
-  animation: badge-shine 2s ease-in-out infinite;
-}
+.badge-shine { animation: badge-shine 2s ease-in-out infinite; }
 
 @custom-variant dark (&:is(.dark *));
 
@@ -104,52 +98,16 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  
-  /* Custom design tokens */
   --shadow-soft: 0 2px 8px -2px rgb(0 0 0 / 0.1), 0 4px 16px -4px rgb(0 0 0 / 0.06);
   --shadow-medium: 0 4px 16px -4px rgb(0 0 0 / 0.15), 0 8px 32px -8px rgb(0 0 0 / 0.1);
   --shadow-large: 0 8px 32px -8px rgb(0 0 0 / 0.2), 0 16px 64px -16px rgb(0 0 0 / 0.15);
 }
 
-:root {
-  --radius: 1rem; /* rounded-2xl equivalent */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(0.11 0 0); /* Dark card background #1C1C1E */
-  --card-foreground: oklch(0.965 0 0); /* Light text #F5F5F7 */
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.636 0 0); /* Lighter muted text #A1A1AA */
-  --accent: oklch(0.69 0.15 230); /* Blue accent #4A90E2 */
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
+/* Remove light :root overrides; keep dark only */
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.125 0 0); /* Slightly lighter in dark mode */
+  --card: oklch(0.125 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
@@ -159,7 +117,7 @@
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.75 0.15 230); /* Lighter blue accent in dark mode */
+  --accent: oklch(0.75 0.15 230);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
@@ -181,72 +139,17 @@
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground; }
 }
 
-/* Custom scrollbar styles for Featured Games */
-.featured-games-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: #d1d5db #f3f4f6;
-}
-
-.dark .featured-games-scroll {
-  scrollbar-color: #4b5563 #374151;
-}
-
-.featured-games-scroll::-webkit-scrollbar {
-  width: 6px;
-}
-
-.featured-games-scroll::-webkit-scrollbar-track {
-  background: #f3f4f6;
-  border-radius: 3px;
-}
-
-.dark .featured-games-scroll::-webkit-scrollbar-track {
-  background: #374151;
-}
-
-.featured-games-scroll::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
-  transition: background-color 0.2s ease;
-}
-
-/* ShinyText theme-adaptive styles */
-.shiny-text-light {
-  color: white;
-  background-image: linear-gradient(120deg, rgba(255, 255, 255, 0.8) 40%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0.8) 60%);
-}
-
-.shiny-text-dark {
-  color: white;
-  background-image: linear-gradient(120deg, rgba(255, 255, 255, 0.8) 40%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0.8) 60%);
-}
-
-.dark .featured-games-scroll::-webkit-scrollbar-thumb {
-  background: #4b5563;
-}
-
-.featured-games-scroll::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
-
-.dark .featured-games-scroll::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
-}
+/* Scrollbar styles (dark-only adjustments retained) */
+.featured-games-scroll { scrollbar-width: thin; scrollbar-color: #4b5563 #374151; }
+.featured-games-scroll::-webkit-scrollbar { width: 6px; }
+.featured-games-scroll::-webkit-scrollbar-track { background: #374151; border-radius: 3px; }
+.featured-games-scroll::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; transition: background-color 0.2s ease; }
+.featured-games-scroll::-webkit-scrollbar-thumb:hover { background: #6b7280; }
 
 /* Hide scrollbar utility */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }

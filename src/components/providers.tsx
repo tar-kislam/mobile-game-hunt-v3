@@ -26,8 +26,9 @@ export function Providers({ children }: ProvidersProps) {
     <SessionProvider>
       <ThemeProvider
         attribute="class"
-        defaultTheme="system"
-        enableSystem
+        defaultTheme="dark"
+        enableSystem={false}
+        themes={["dark"]}
         disableTransitionOnChange
         storageKey="mobile-game-hunt-theme"
       >

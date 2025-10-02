@@ -79,7 +79,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${dmMono.variable} antialiased`}
+        className={`${dmMono.variable} antialiased dark`}
       >
         <Providers>
           {children}

@@ -7,7 +7,6 @@ import { XIcon } from 'lucide-react'
 import ShinyText from '@/components/ui/shiny-text'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useTheme } from 'next-themes'
 import PixelBlast from '@/components/effects/pixel-blast'
 
 interface NewsletterModalProps {
@@ -16,10 +15,9 @@ interface NewsletterModalProps {
 }
 
 export function NewsletterModal({ isOpen, onClose }: NewsletterModalProps) {
-  const { resolvedTheme } = useTheme()
   const [email, setEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const brandColor = resolvedTheme === 'dark' ? '#ffffff' : '#000000'
+  const brandColor = '#ffffff'
 
   // Handle ESC key press
   useEffect(() => {
