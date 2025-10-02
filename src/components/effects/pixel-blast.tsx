@@ -389,11 +389,18 @@ const PixelBlast = ({
         threeRef.current = null;
       }
       const canvas = document.createElement('canvas');
-      const gl = canvas.getContext('webgl2', { antialias, alpha: true });
+      let gl: WebGL2RenderingContext | WebGLRenderingContext | null = null;
+      // Prefer WebGL2, but gracefully fallback to WebGL1 where WebGL2 is unavailable
+      gl = canvas.getContext('webgl2', { antialias, alpha: true }) as WebGL2RenderingContext | null;
+      if (!gl) {
+        gl = (canvas.getContext('webgl', { antialias, alpha: true }) ||
+              canvas.getContext('experimental-webgl', { antialias, alpha: true })) as WebGLRenderingContext | null;
+      }
       if (!gl) return;
       const renderer = new THREE.WebGLRenderer({
         canvas,
-        context: gl,
+        // Three.js accepts both WebGL1 and WebGL2 contexts
+        context: gl as any,
         antialias,
         alpha: true
       });
