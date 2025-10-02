@@ -9,6 +9,9 @@ import { ChevronLeftIcon } from 'lucide-react'
 import Link from 'next/link'
 import { generateProductJsonLd, generateBreadcrumbJsonLd } from '@/lib/seo'
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface ProductPageProps {
   params: Promise<{ slug: string }>
 }
