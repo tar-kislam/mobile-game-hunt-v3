@@ -44,7 +44,7 @@ export default function LeaderboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sharingProduct, setSharingProduct] = useState<LeaderboardProduct | null>(null);
-  const [topUsers, setTopUsers] = useState<Array<{id:string;name:string|null;image:string|null;username:string|null;rank:number;score:number}>|null>(null)
+  const [topUsers, setTopUsers] = useState<Array<{id:string;name:string|null;image:string|null;username:string|null;rank:number;score:number;badges?:Array<{id:string;name:string;icon:string;description:string|null}>}>|null>(null)
   useEffect(() => { (async () => {
     try {
       const res = await fetch('/api/leaderboard/users?take=5', { cache: 'no-store' })
@@ -273,7 +273,7 @@ export default function LeaderboardPage() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="flex justify-center mb-12"
         >
-            <div className="bg-slate-900/40 backdrop-blur-xl rounded-2xl p-2 border border-slate-700/30 shadow-2xl shadow-purple-500/10">
+            <div className="bg-slate-900/40 backdrop-blur-xl rounded-full p-2 border-2 border-slate-700/30 shadow-2xl shadow-purple-500/10">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -281,7 +281,7 @@ export default function LeaderboardPage() {
                   key={tab.id}
                   variant="ghost"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`mx-1 px-6 py-3 rounded-xl transition-all duration-300 ${
+                  className={`mx-1 px-6 py-3 rounded-full transition-all duration-300 ${
                     activeTab === tab.id
                       ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-500/50 transform scale-105'
                       : 'text-indigo-200 hover:text-white hover:bg-purple-500/20'
@@ -361,13 +361,23 @@ export default function LeaderboardPage() {
                           <div className="absolute left-0 top-full mt-2 w-56 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-10">
                             <div className="rounded-xl bg-slate-900/90 backdrop-blur border border-purple-500/30 p-3 shadow-2xl shadow-purple-500/20">
                               <div className="flex items-center gap-2 mb-2">
-                                <img src={u.image || '/logo/mgh.png'} alt={u.name || 'User'} className="w-8 h-8 rounded-full" />
+                                <img src={u.image || '/logo/mgh.png'} alt={u.name || 'User'} className="w-8 h-8 rounded-full object-cover" />
                                 <div className="text-sm text-white truncate">{u.name || 'Anonymous'}</div>
                               </div>
                               <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden mb-2">
                                 <div className="h-full bg-gradient-to-r from-purple-500 to-cyan-400" style={{ width: `${Math.min(100, (u.score / ((topUsers?.[0]?.score||1))) * 100)}%` }} />
                               </div>
-                              <div className="text-[11px] text-purple-200 mb-2">Badges: 🔥 🎤 ⚡</div>
+                              {u.badges && u.badges.length > 0 ? (
+                                <div className="text-[11px] text-purple-200 mb-2 flex items-center gap-1 flex-wrap">
+                                  <span>Badges:</span>
+                                  {u.badges.slice(0, 5).map(badge => (
+                                    <span key={badge.id} title={badge.description || badge.name}>{badge.icon}</span>
+                                  ))}
+                                  {u.badges.length > 5 && <span className="text-purple-300">+{u.badges.length - 5}</span>}
+                                </div>
+                              ) : (
+                                <div className="text-[11px] text-purple-200/50 mb-2">No badges yet</div>
+                              )}
                               <button
                                 type="button"
                                 className="text-xs text-purple-300 hover:text-purple-200 underline"

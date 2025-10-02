@@ -183,7 +183,7 @@ export function ShareModal({ product, currentUrl, children }: ShareModalProps) {
                 onClick={handleCopyUrl}
                 variant={copied ? "default" : "outline"}
                 size="sm"
-                className="min-w-[80px]"
+                className="min-w-[80px] rounded-full border-2 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
               >
                 {copied ? (
                   <>
@@ -211,7 +211,7 @@ export function ShareModal({ product, currentUrl, children }: ShareModalProps) {
                   key={platform.name}
                   variant="outline"
                   size="sm"
-                  className={`justify-start ${platform.color} transition-all duration-200`}
+                  className={`justify-start rounded-full border-2 ${platform.color} transition-all duration-300 hover:scale-105`}
                   onClick={() => handleSocialShare(platform.name, platform.shareUrl)}
                 >
                   <platform.icon className="w-4 h-4 mr-2" />
@@ -233,7 +233,7 @@ export function ShareModal({ product, currentUrl, children }: ShareModalProps) {
                     key={link.name}
                     variant="outline"
                     size="sm"
-                    className={`justify-start ${link.color} transition-all duration-200`}
+                    className={`justify-start rounded-full border-2 ${link.color} transition-all duration-300 hover:scale-105`}
                     onClick={() => window.open(link.url, '_blank', 'noopener,noreferrer')}
                   >
                     <link.icon className="w-4 h-4 mr-2" />

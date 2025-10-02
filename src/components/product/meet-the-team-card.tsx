@@ -78,9 +78,9 @@ export function MeetTheTeamCard({ makers }: MeetTheTeamCardProps) {
   };
 
   return (
-    <Card className="rounded-xl shadow-lg bg-gradient-to-br from-gray-900/80 via-gray-800/90 to-gray-900/80 backdrop-blur-sm border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300">
+    <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-gray-900/80 via-gray-800/90 to-gray-900/80 backdrop-blur-sm border-2 border-purple-500/20 hover:border-purple-500/40 transition-all duration-300">
       <CardHeader 
-        className="cursor-pointer hover:bg-gray-800/50 transition-colors duration-200 rounded-t-xl"
+        className="cursor-pointer hover:bg-gray-800/50 transition-colors duration-200 rounded-t-3xl"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center justify-between">
@@ -93,7 +93,7 @@ export function MeetTheTeamCard({ makers }: MeetTheTeamCardProps) {
             </CardTitle>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-xs">
+            <Badge variant="secondary" className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-xs rounded-full px-3 py-1">
               {makers.length} member{makers.length !== 1 ? 's' : ''}
             </Badge>
             {isExpanded ? (
@@ -122,7 +122,7 @@ export function MeetTheTeamCard({ makers }: MeetTheTeamCardProps) {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1, duration: 0.3 }}
-                    className="flex items-start gap-3 p-3 rounded-lg bg-gray-800/50 border border-gray-700/50 transition-colors duration-200"
+                    className="flex items-start gap-3 p-3 rounded-2xl bg-gray-800/50 border-2 border-gray-700/50 hover:border-purple-500/30 transition-all duration-300"
                   >
                     {/* Avatar and Name - Interactive Area */}
                     <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -189,13 +189,13 @@ export function MeetTheTeamCard({ makers }: MeetTheTeamCardProps) {
                             </h4>
                           )}
                           {maker.isCreator && (
-                            <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30 text-xs">
+                            <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30 text-xs rounded-full px-2 py-0.5">
                               Creator
                             </Badge>
                           )}
                         </div>
                         
-                        <Badge variant="outline" className="text-xs bg-gray-700/50 text-gray-300 border-gray-600 mb-2">
+                        <Badge variant="outline" className="text-xs bg-gray-700/50 text-gray-300 border-gray-600 mb-2 rounded-full px-3 py-1">
                           {getRoleDisplayName(maker.role)}
                         </Badge>
 
@@ -205,7 +205,7 @@ export function MeetTheTeamCard({ makers }: MeetTheTeamCardProps) {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 hover:bg-purple-500/20 hover:text-purple-300 transition-colors"
+                            className="h-8 w-8 p-0 rounded-full hover:bg-purple-500/20 hover:text-purple-300 transition-all duration-300 hover:scale-110"
                             disabled
                           >
                             <Twitter className="w-3 h-3" />
@@ -213,7 +213,7 @@ export function MeetTheTeamCard({ makers }: MeetTheTeamCardProps) {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 hover:bg-purple-500/20 hover:text-purple-300 transition-colors"
+                            className="h-8 w-8 p-0 rounded-full hover:bg-purple-500/20 hover:text-purple-300 transition-all duration-300 hover:scale-110"
                             disabled
                           >
                             <Github className="w-3 h-3" />
@@ -221,7 +221,7 @@ export function MeetTheTeamCard({ makers }: MeetTheTeamCardProps) {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 hover:bg-purple-500/20 hover:text-purple-300 transition-colors"
+                            className="h-8 w-8 p-0 rounded-full hover:bg-purple-500/20 hover:text-purple-300 transition-all duration-300 hover:scale-110"
                             disabled
                           >
                             <Linkedin className="w-3 h-3" />

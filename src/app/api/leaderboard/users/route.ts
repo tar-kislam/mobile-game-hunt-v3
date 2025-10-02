@@ -43,24 +43,45 @@ export async function GET(req: NextRequest) {
     const userIds = users.map(u => u.userId)
     const userInfos = await prisma.user.findMany({
       where: { id: { in: userIds } },
-      select: { id: true, name: true, image: true, username: true }
+      select: { 
+        id: true, 
+        name: true, 
+        image: true, 
+        username: true,
+        badges: {
+          select: {
+            badge: {
+              select: {
+                id: true,
+                name: true,
+                icon: true,
+                description: true
+              }
+            }
+          }
+        }
+      }
     })
     const infoMap = new Map(userInfos.map(u => [u.id, u]))
 
     return NextResponse.json({
-      users: users.map((u, i) => ({
-        rank: i + 1,
-        id: u.userId,
-        name: infoMap.get(u.userId)?.name || 'Anonymous',
-        image: infoMap.get(u.userId)?.image || null,
-        username: infoMap.get(u.userId)?.username || null,
-        score: u.score,
-        votes: u.votes,
-        comments: u.comments,
-        follows: u.follows,
-        posts: u.posts,
-        submits: u.submits,
-      }))
+      users: users.map((u, i) => {
+        const userInfo = infoMap.get(u.userId);
+        return {
+          rank: i + 1,
+          id: u.userId,
+          name: userInfo?.name || 'Anonymous',
+          image: userInfo?.image || null,
+          username: userInfo?.username || null,
+          score: u.score,
+          votes: u.votes,
+          comments: u.comments,
+          follows: u.follows,
+          posts: u.posts,
+          submits: u.submits,
+          badges: userInfo?.badges?.map(ub => ub.badge) || []
+        };
+      })
     })
   } catch (e) {
     console.error('user leaderboard error', e)

@@ -142,7 +142,6 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
   const [isNotifying, setIsNotifying] = useState(false);
   const [followCount, setFollowCount] = useState(product.follows);
   const [clickCount, setClickCount] = useState(product.clicks);
-  const [hasPressKit, setHasPressKit] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [comments, setComments] = useState<any[]>([]);
   const [productVotes, setProductVotes] = useState(product._count.votes);
@@ -185,12 +184,11 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
     }
   };
 
-  // Check follow status and press kit on mount
+  // Check follow status on mount
   useEffect(() => {
     if (session?.user?.id) {
       checkFollowStatus();
     }
-    checkPressKitStatus();
     fetchComments();
     // Set current URL on client side
     setCurrentUrl(window.location.href);
@@ -209,17 +207,6 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
     }
   }, [product?.id])
 
-  const checkPressKitStatus = async () => {
-    try {
-      const response = await fetch(`/api/presskit?gameId=${product.id}`);
-      if (response.ok) {
-        setHasPressKit(true);
-      }
-    } catch (error) {
-      // Press kit doesn't exist or error occurred
-      setHasPressKit(false);
-    }
-  };
 
   const checkFollowStatus = async () => {
     try {
@@ -309,25 +296,6 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
     }
   };
 
-  const handleDownloadPressKit = async () => {
-    try {
-      // For now, we'll open the press kit in a new tab
-      // Later this can be enhanced to download as ZIP
-      const response = await fetch(`/api/presskit?gameId=${product.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        // For now, just show the press kit data
-        // In the future, this could generate a PDF or ZIP file
-        toast.success('Press kit available! (Download feature coming soon)');
-        console.log('Press Kit Data:', data.pressKit);
-      } else {
-        toast.error('Press kit not found');
-      }
-    } catch (error) {
-      console.error('Error fetching press kit:', error);
-      toast.error('Failed to load press kit');
-    }
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -449,6 +417,11 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
   const handleProductVote = async (newVoteCount: number, isUpvoted: boolean) => {
     if (!session) {
       toast.error('Please sign in to vote');
+      // Revert after 1 second to show the animation
+      setTimeout(() => {
+        setProductVotes(product._count.votes);
+        setIsProductUpvoted(hasVoted);
+      }, 1000);
       return;
     }
 
@@ -465,10 +438,20 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
         toast.success(isUpvoted ? 'Upvoted!' : 'Removed upvote');
       } else {
         toast.error('Failed to update vote');
+        // Revert on error after 1 second
+        setTimeout(() => {
+          setProductVotes(product._count.votes);
+          setIsProductUpvoted(hasVoted);
+        }, 1000);
       }
     } catch (error) {
       console.error('Error updating vote:', error);
       toast.error('Failed to update vote');
+      // Revert on error after 1 second
+      setTimeout(() => {
+        setProductVotes(product._count.votes);
+        setIsProductUpvoted(hasVoted);
+      }, 1000);
     }
   };
 
@@ -522,7 +505,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
           />
           
           {/* Game Overview Block - Steam Style */}
-          <Card className="rounded-2xl shadow-soft mt-6 border border-gray-200 dark:border-gray-700">
+          <Card className="rounded-3xl shadow-soft border-2 mt-6 border border-gray-200 dark:border-gray-700">
             <CardHeader className="pb-4">
               <CardTitle className="text-xl font-semibold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
                 Game Overview
@@ -565,7 +548,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Categories:</span>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {product.categories.map((cat, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
+                        <Badge key={index} variant="outline" className="text-xs rounded-full px-3 py-1">
                           {cat.category.name}
                         </Badge>
                       ))}
@@ -587,7 +570,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Regions:</span>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {product.countries.map((country, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
+                        <Badge key={index} variant="outline" className="text-xs rounded-full px-3 py-1">
                           {country}
                         </Badge>
                       ))}
@@ -602,7 +585,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
           
           {/* About This Game Section */}
           {product.description && (
-            <Card className="rounded-2xl shadow-soft mt-6">
+            <Card className="rounded-3xl shadow-soft border-2 mt-6">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold">About This Game</CardTitle>
               </CardHeader>
@@ -615,7 +598,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
           )}
 
           {/* Comments Section - Right below About This Game */}
-          <Card className="rounded-2xl shadow-soft mt-6">
+          <Card className="rounded-3xl shadow-soft border-2 mt-6">
             <CardHeader>
               <CardTitle className="text-xl font-semibold">
                 Comments ({product._count.comments})
@@ -632,16 +615,16 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                     className="rounded-xl border-border focus:ring-2 focus:ring-ring min-h-[100px]"
                   />
                   <div className="flex justify-end">
-                    <Button onClick={handleCommentSubmit} className="rounded-xl">
-                      <Send className="w-4 h-4 mr-2" />
-                      Post Comment
-                    </Button>
+                  <Button onClick={handleCommentSubmit} className="rounded-full px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                    <Send className="w-4 h-4 mr-2" />
+                    Post Comment
+                  </Button>
                   </div>
                 </div>
               ) : (
                 <div className="p-4 border border-dashed border-muted-foreground/30 rounded-xl text-center">
                   <p className="text-muted-foreground mb-2">Join the conversation</p>
-                  <Button className="rounded-xl">Sign in to comment</Button>
+                  <Button className="rounded-full px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">Sign in to comment</Button>
                 </div>
               )}
 
@@ -671,7 +654,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
         {/* Right Column - Info & Actions */}
         <div className="space-y-6">
           {/* Game Info Card */}
-          <Card className="rounded-2xl shadow-soft">
+          <Card className="rounded-3xl shadow-soft border-2">
             <CardHeader className="pb-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -680,7 +663,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                     {product.title}
                   </CardTitle>
                     {product.sponsorRequest && (
-                      <Badge variant="secondary" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-1">
+                      <Badge variant="secondary" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-3 py-1 rounded-full">
                         Sponsored
                       </Badge>
                     )}
@@ -702,7 +685,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                   {product.tags && product.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {product.tags.map((tagItem) => (
-                        <Badge key={tagItem.tag.id} variant="secondary" className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                        <Badge key={tagItem.tag.id} variant="secondary" className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full px-3 py-1">
                           {tagItem.tag.name}
                         </Badge>
                       ))}
@@ -794,7 +777,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                       <Button
                         onClick={handleRedeemPromo}
                         size="sm"
-                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                        className="w-full rounded-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                       >
                         Redeem
                       </Button>
@@ -808,7 +791,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <Calendar className="w-4 h-4" />
                   <span>{formatDate(product.releaseAt)}</span>
-                  <Badge variant="outline" className="ml-2">
+                  <Badge variant="outline" className="ml-2 rounded-full px-3 py-1">
                     {getTimeUntilRelease(product.releaseAt)}
                   </Badge>
                 </div>
@@ -818,7 +801,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
               <div className="space-y-3">
                 <Button 
                   onClick={handlePlayNow}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-xl"
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105"
                 >
                   <Play className="w-5 h-5 mr-2" />
                   Play Now
@@ -828,7 +811,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                 {(product.iosUrl || product.androidUrl) && (
                   <div className="flex flex-wrap gap-2">
                     {product.iosUrl && (
-                      <Button asChild variant="outline" size="sm" className="flex-1">
+                      <Button asChild variant="outline" size="sm" className="flex-1 rounded-full border-2 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 hover:shadow-lg transition-all duration-300 hover:scale-105">
                         <a 
                           href={product.iosUrl} 
                           target="_blank" 
@@ -859,7 +842,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                       </Button>
                     )}
                     {product.androidUrl && (
-                      <Button asChild variant="outline" size="sm" className="flex-1">
+                      <Button asChild variant="outline" size="sm" className="flex-1 rounded-full border-2 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 hover:shadow-lg transition-all duration-300 hover:scale-105">
                         <a 
                           href={product.androidUrl} 
                           target="_blank" 
@@ -896,7 +879,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                   <Button
                     onClick={handleFollow}
                     variant={isFollowing ? "default" : "outline"}
-                    className="flex-1"
+                    className="flex-1 rounded-full border-2 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
                   >
                     <Heart className={`w-4 h-4 mr-2 ${isFollowing ? 'fill-current' : ''}`} />
                     {isFollowing ? 'Following' : 'Follow'}
@@ -905,7 +888,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                   <Button
                     onClick={handleNotify}
                     variant={isNotifying ? "default" : "outline"}
-                    className="flex-1"
+                    className="flex-1 rounded-full border-2 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
                   >
                     <Bell className={`w-4 h-4 mr-2 ${isNotifying ? 'fill-current' : ''}`} />
                     Notify
@@ -918,7 +901,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                 >
                   <Button
                     variant="outline"
-                    className="w-full"
+                    className="w-full rounded-full border-2 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
                   >
                     <Share2 className="w-4 h-4 mr-2" />
                     Share
@@ -932,7 +915,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
           <MeetTheTeamCard makers={product.makers || []} />
 
           {/* Stats Card */}
-          <Card className="rounded-2xl shadow-soft">
+          <Card className="rounded-3xl shadow-soft border-2">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">Game Stats</CardTitle>
             </CardHeader>
@@ -969,7 +952,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                       <div className="flex items-center gap-2">
                         <Calendar className="w-3 h-3 text-blue-400" />
                         <span className="text-xs text-gray-600 dark:text-gray-400">Type:</span>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs rounded-full px-3 py-1">
                           {product.launchType === 'SOFT_LAUNCH' ? 'Soft Launch' : 'Global Launch'}
                         </Badge>
                       </div>
@@ -978,7 +961,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                       <div className="flex items-center gap-2">
                         <Star className="w-3 h-3 text-yellow-400" />
                         <span className="text-xs text-gray-600 dark:text-gray-400">Model:</span>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs rounded-full px-3 py-1">
                           {product.monetization.replace('_', ' ')}
                         </Badge>
                       </div>
@@ -987,7 +970,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                       <div className="flex items-center gap-2">
                         <Play className="w-3 h-3 text-purple-400" />
                         <span className="text-xs text-gray-600 dark:text-gray-400">Engine:</span>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs rounded-full px-3 py-1">
                           {product.engine === 'UNREAL' ? 'Unreal Engine' : 
                            product.engine === 'UNITY' ? 'Unity' : 
                            product.engine === 'GODOT' ? 'Godot' : 'Custom'}
@@ -1001,7 +984,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
           </Card>
 
           {/* Details Card - Right below Game Stats */}
-          <Card className="rounded-2xl shadow-soft">
+          <Card className="rounded-3xl shadow-soft border-2">
             <CardHeader>
               <CardTitle className="text-lg font-semibold bg-gradient-to-r from-green-500 to-blue-600 bg-clip-text text-transparent">
                 Details
@@ -1045,7 +1028,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                         </Badge>
                       ))}
                       {product.tags.length > 5 && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs rounded-full px-3 py-1">
                           +{product.tags.length - 5} more
                         </Badge>
                       )}
@@ -1078,7 +1061,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
             product.socialLinks.linkedin || 
             product.socialLinks.youtube
           ) && (
-            <Card className="rounded-2xl shadow-soft">
+            <Card className="rounded-3xl shadow-soft border-2">
               <CardHeader>
                 <CardTitle className="text-lg font-semibold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
                   Connect With Us
@@ -1087,7 +1070,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {product.socialLinks.website && (
-                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-blue-500 hover:text-white hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-200 h-10 w-full">
+                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-blue-500 hover:text-white hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 h-10 w-full rounded-full border-2 hover:scale-105">
                       <a href={product.socialLinks.website} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
                         <Globe className="w-4 h-4 mr-2 flex-shrink-0" />
                         <span className="whitespace-nowrap">Website</span>
@@ -1095,7 +1078,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                     </Button>
                   )}
                   {product.socialLinks.discord && (
-                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-indigo-500 hover:text-white hover:shadow-lg hover:shadow-indigo-500/25 transition-all duration-200 h-10 w-full">
+                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-indigo-500 hover:text-white hover:shadow-lg hover:shadow-indigo-500/25 transition-all duration-300 h-10 w-full rounded-full border-2 hover:scale-105">
                       <a href={product.socialLinks.discord} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
                         <MessageSquare className="w-4 h-4 mr-2 flex-shrink-0" />
                         <span className="whitespace-nowrap">Discord</span>
@@ -1103,7 +1086,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                     </Button>
                   )}
                   {product.socialLinks.twitter && (
-                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-blue-500 hover:text-white hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-200 h-10 w-full">
+                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-blue-500 hover:text-white hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 h-10 w-full rounded-full border-2 hover:scale-105">
                       <a href={product.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
                         <Twitter className="w-4 h-4 mr-2 flex-shrink-0" />
                         <span className="whitespace-nowrap">Twitter/X</span>
@@ -1111,7 +1094,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                     </Button>
                   )}
                   {product.socialLinks.tiktok && (
-                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-black hover:text-white hover:shadow-lg hover:shadow-black/25 transition-all duration-200 h-10 w-full">
+                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-black hover:text-white hover:shadow-lg hover:shadow-black/25 transition-all duration-300 h-10 w-full rounded-full border-2 hover:scale-105">
                       <a href={product.socialLinks.tiktok} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
                         <Music className="w-4 h-4 mr-2 flex-shrink-0" />
                         <span className="whitespace-nowrap">TikTok</span>
@@ -1119,7 +1102,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                     </Button>
                   )}
                   {product.socialLinks.instagram && (
-                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-pink-500 hover:text-white hover:shadow-lg hover:shadow-pink-500/25 transition-all duration-200 h-10 w-full">
+                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-pink-500 hover:text-white hover:shadow-lg hover:shadow-pink-500/25 transition-all duration-300 h-10 w-full rounded-full border-2 hover:scale-105">
                       <a href={product.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
                         <Instagram className="w-4 h-4 mr-2 flex-shrink-0" />
                         <span className="whitespace-nowrap">Instagram</span>
@@ -1127,7 +1110,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                     </Button>
                   )}
                   {product.socialLinks.reddit && (
-                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-orange-500 hover:text-white hover:shadow-lg hover:shadow-orange-500/25 transition-all duration-200 h-10 w-full">
+                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-orange-500 hover:text-white hover:shadow-lg hover:shadow-orange-500/25 transition-all duration-300 h-10 w-full rounded-full border-2 hover:scale-105">
                       <a href={product.socialLinks.reddit} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
                         <ExternalLink className="w-4 h-4 mr-2 flex-shrink-0" />
                         <span className="whitespace-nowrap">Reddit</span>
@@ -1135,7 +1118,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                     </Button>
                   )}
                   {product.socialLinks.facebook && (
-                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-blue-600 hover:text-white hover:shadow-lg hover:shadow-blue-600/25 transition-all duration-200 h-10 w-full">
+                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-blue-600 hover:text-white hover:shadow-lg hover:shadow-blue-600/25 transition-all duration-300 h-10 w-full rounded-full border-2 hover:scale-105">
                       <a href={product.socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
                         <Facebook className="w-4 h-4 mr-2 flex-shrink-0" />
                         <span className="whitespace-nowrap">Facebook</span>
@@ -1143,7 +1126,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                     </Button>
                   )}
                   {product.socialLinks.linkedin && (
-                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-blue-700 hover:text-white hover:shadow-lg hover:shadow-blue-700/25 transition-all duration-200 h-10 w-full">
+                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-blue-700 hover:text-white hover:shadow-lg hover:shadow-blue-700/25 transition-all duration-300 h-10 w-full rounded-full border-2 hover:scale-105">
                       <a href={product.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
                         <Linkedin className="w-4 h-4 mr-2 flex-shrink-0" />
                         <span className="whitespace-nowrap">LinkedIn</span>
@@ -1151,7 +1134,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                     </Button>
                   )}
                   {product.socialLinks.youtube && (
-                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-red-500 hover:text-white hover:shadow-lg hover:shadow-red-500/25 transition-all duration-200 h-10 w-full">
+                    <Button asChild variant="outline" size="sm" className="justify-start hover:bg-red-500 hover:text-white hover:shadow-lg hover:shadow-red-500/25 transition-all duration-300 h-10 w-full rounded-full border-2 hover:scale-105">
                       <a href={product.socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
                         <Youtube className="w-4 h-4 mr-2 flex-shrink-0" />
                         <span className="whitespace-nowrap">YouTube</span>
@@ -1165,7 +1148,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
 
           {/* Supported Languages Card */}
           {product.languages && product.languages.length > 0 && (
-      <Card className="rounded-2xl shadow-soft">
+            <Card className="rounded-3xl shadow-soft border-2">
         <CardHeader>
                 <CardTitle className="text-xl font-semibold">Supported Languages</CardTitle>
         </CardHeader>
@@ -1222,30 +1205,9 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
           )}
 
 
-          {/* Press Kit Card */}
-          {hasPressKit && (
-            <Card className="rounded-2xl shadow-soft">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold">Press Kit</CardTitle>
-          </CardHeader>
-          <CardContent>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Download official press materials, screenshots, and game information.
-                </p>
-                <Button
-                  onClick={handleDownloadPressKit}
-                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
-                >
-                    <Download className="w-4 h-4 mr-2" />
-                  Download Press Kit
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Playtest Keys Card - Right below Press Kit */}
+          {/* Playtest Keys Card */}
           {product.playtestQuota && product.playtestQuota > 0 && (
-            <Card className="rounded-2xl shadow-soft">
+            <Card className="rounded-3xl shadow-soft border-2">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold">Playtest Access</CardTitle>
               </CardHeader>
@@ -1263,7 +1225,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                     // This would trigger the playtest claim flow
                     toast.info('Playtest claim functionality coming soon!');
                   }}
-                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                  className="w-full rounded-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                 >
                   <Play className="w-4 h-4 mr-2" />
                   Request Playtest Key
@@ -1280,7 +1242,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
 
           {/* Gamification Tags Card */}
           {product.gamificationTags && product.gamificationTags.length > 0 && (
-            <Card className="rounded-2xl shadow-soft">
+            <Card className="rounded-3xl shadow-soft border-2">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold">Game Features</CardTitle>
               </CardHeader>
@@ -1300,7 +1262,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
 
           {/* Recommended Card - Right below Playtest Keys */}
           {recommended.length > 0 && (
-            <Card className="rounded-2xl shadow-soft">
+            <Card className="rounded-3xl shadow-soft border-2">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold">Recommended for you</CardTitle>
               </CardHeader>

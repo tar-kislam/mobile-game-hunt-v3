@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { FaAngleUp, FaAngleDoubleUp } from 'react-icons/fa';
 import { toast } from 'sonner';
@@ -28,37 +28,45 @@ export function UpvoteButton({
   const [isUpvoted, setIsUpvoted] = useState(initialIsUpvoted);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Sync with parent props when they change (for error revert)
+  useEffect(() => {
+    setVotes(initialVotes);
+    setIsUpvoted(initialIsUpvoted);
+  }, [initialVotes, initialIsUpvoted]);
+
   const handleUpvote = async () => {
     if (isLoading) return;
     
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
       const newIsUpvoted = !isUpvoted;
       const newVoteCount = newIsUpvoted ? votes + 1 : votes - 1;
       
+      // Optimistic update
       setVotes(newVoteCount);
       setIsUpvoted(newIsUpvoted);
       
+      // Call parent callback
       if (onVoteChange) {
-        onVoteChange(newVoteCount, newIsUpvoted);
+        await onVoteChange(newVoteCount, newIsUpvoted);
       }
       
-      toast.success(newIsUpvoted ? 'Upvoted!' : 'Removed upvote');
+      // Don't show toast here - parent component will handle it
     } catch (error) {
       toast.error('Failed to update vote');
+      // Revert on error
+      setVotes(initialVotes);
+      setIsUpvoted(initialIsUpvoted);
     } finally {
       setIsLoading(false);
     }
   };
 
   const sizeClasses = {
-    sm: showText ? 'h-10 px-4 w-full rounded-xl' : 'h-8 w-8 p-0',
-    default: showText ? 'h-12 px-5 w-full rounded-xl' : 'h-10 w-10 p-0',
-    lg: showText ? 'h-14 px-6 w-full rounded-xl' : 'h-12 w-12 p-0'
+    sm: showText ? 'h-10 px-4 w-full rounded-full' : 'h-8 w-8 p-0 rounded-full',
+    default: showText ? 'h-12 px-5 w-full rounded-full' : 'h-10 w-10 p-0 rounded-full',
+    lg: showText ? 'h-14 px-6 w-full rounded-full' : 'h-12 w-12 p-0 rounded-full'
   };
 
   const iconPx = {
@@ -81,7 +89,7 @@ export function UpvoteButton({
         disabled={isLoading}
       >
         {/* Glow effect */}
-        <div className={`absolute inset-0 rounded-xl transition-opacity duration-300 ${
+        <div className={`absolute inset-0 rounded-full transition-opacity duration-300 ${
           isUpvoted 
             ? 'bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-pink-500/20 blur-sm opacity-100' 
             : 'bg-cyan-400/10 blur-sm opacity-0 group-hover:opacity-100'
@@ -133,7 +141,7 @@ export function UpvoteButton({
         disabled={isLoading}
       >
         {/* Glow effect */}
-        <div className={`absolute inset-0 rounded-xl transition-opacity duration-300 ${
+        <div className={`absolute inset-0 rounded-full transition-opacity duration-300 ${
           isUpvoted 
             ? 'bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-pink-500/20 blur-sm opacity-100' 
             : 'bg-cyan-400/10 blur-sm opacity-0 group-hover:opacity-100'
