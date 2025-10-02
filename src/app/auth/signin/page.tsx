@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { signIn, getSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -12,15 +12,64 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { ArrowLeftIcon, GithubIcon, MailIcon } from "lucide-react"
 import DarkVeil from "@/components/DarkVeil"
+import { toast } from "sonner"
 
 export default function SignInPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   })
   const [error, setError] = useState("")
+
+  // Handle OAuth errors from URL params
+  useEffect(() => {
+    const error = searchParams.get('error')
+    if (error) {
+      let errorMessage = "Authentication failed. Please try again."
+      
+      switch (error) {
+        case 'OAuthSignin':
+          errorMessage = "Error constructing OAuth signin URL. Please try again."
+          break
+        case 'OAuthCallback':
+          errorMessage = "Error handling OAuth callback. Please try again."
+          break
+        case 'OAuthCreateAccount':
+          errorMessage = "Could not create account. Please try again or use a different method."
+          break
+        case 'EmailCreateAccount':
+          errorMessage = "Could not create account with this email. Please try again."
+          break
+        case 'Callback':
+          errorMessage = "Authentication callback error. Please try again."
+          break
+        case 'OAuthAccountNotLinked':
+          errorMessage = "This email is already registered with a different sign-in method. Please use your original sign-in method."
+          break
+        case 'EmailSignin':
+          errorMessage = "Error sending verification email. Please try again."
+          break
+        case 'CredentialsSignin':
+          errorMessage = "Invalid email or password."
+          break
+        case 'SessionRequired':
+          errorMessage = "Please sign in to access this page."
+          break
+        default:
+          errorMessage = `Authentication error: ${error}`
+      }
+      
+      toast.error(errorMessage)
+      
+      // Clean up URL without refreshing the page
+      const url = new URL(window.location.href)
+      url.searchParams.delete('error')
+      window.history.replaceState({}, '', url.toString())
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -190,19 +239,6 @@ export default function SignInPage() {
               >
                 Sign up
               </Link>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Test Accounts Info */}
-        <Card className="rounded-2xl shadow-soft">
-          <CardHeader className="p-4">
-            <CardTitle className="text-sm">Test Accounts</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <div className="space-y-2 text-xs text-muted-foreground">
-              <div><strong>User:</strong> john@example.com / password123</div>
-              <div><strong>Admin:</strong> admin@example.com / password123</div>
             </div>
           </CardContent>
         </Card>

@@ -153,3 +153,81 @@
 /* Hide scrollbar utility */
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* ========================================
+   PERFORMANCE OPTIMIZATIONS
+   ======================================== */
+
+/* GPU Acceleration for Canvas Elements */
+canvas {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  /* Safari/WebKit specific fixes */
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Optimize animations with hardware acceleration */
+.motion-safe\:animate-fade-in,
+.motion-safe\:animate-fadeOutDown,
+[data-framer-motion] {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+
+/* GPU Acceleration for animated logo */
+img[alt*="Fox mascot"],
+img[src*="/logo/mgh.png"] {
+  will-change: transform, filter;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  canvas {
+    will-change: auto;
+  }
+}
+
+/* Optimize font rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
+}
+
+/* Optimize images and media */
+img, video {
+  content-visibility: auto;
+}
+
+/* Contain layout shifts */
+.hero-section,
+.cta-section {
+  contain: layout style paint;
+}
+
+/* Optimize scroll performance */
+* {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto;
+  }
+}

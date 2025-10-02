@@ -428,7 +428,7 @@ const PillNav = ({
                   {isActive && (
                     <span
                       className="absolute left-1/2 -bottom-[6px] -translate-x-1/2 w-3 h-3 rounded-full z-[4] border border-white/20"
-                      style={{ background: 'var(--base)' }}
+                      style={{ background: '#d14c15' }}
                       aria-hidden="true"
                     />
                   )}

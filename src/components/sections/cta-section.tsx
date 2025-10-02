@@ -1,9 +1,9 @@
 "use client"
 
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import PixelBlast from '@/components/effects/pixel-blast'
+import Particles from '@/components/effects/Particles'
 import FuzzyText from '@/components/effects/fuzzy-text'
 import Link from 'next/link'
 import { LuGamepad2 } from 'react-icons/lu'
@@ -12,28 +12,23 @@ import { HiOutlineChat } from 'react-icons/hi'
 
 export function CTASection() {
   const brandColor = '#ffffff'
+  
+  // Performance: Respect user's motion preferences
+  const shouldReduceMotion = useReducedMotion()
 
   return (
     <section className="relative w-full h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden mb-12">
-      {/* Pixel Blast Background */}
+      {/* Particles Background */}
       <div className="absolute inset-0 z-0">
-        <PixelBlast
-          variant="square"
-          pixelSize={4}
-          color="#8B5CF6"
-          patternScale={1.5}
-          patternDensity={0.8}
-          enableRipples={true}
-          rippleIntensityScale={2.0}
-          rippleThickness={0.2}
-          rippleSpeed={0.6}
-          speed={0.3}
-          transparent={true}
-          edgeFade={0.3}
-          liquid={true}
-          liquidStrength={0.05}
-          liquidRadius={1.5}
-          className="w-full h-full"
+        <Particles
+          particleColors={['#8B5CF6', '#A78BFA', '#C4B5FD']}
+          particleCount={200}
+          particleSpread={10}
+          speed={0.1}
+          particleBaseSize={100}
+          moveParticlesOnHover={true}
+          alphaParticles={false}
+          disableRotation={false}
         />
       </div>
       
@@ -47,15 +42,43 @@ export function CTASection() {
           <div className="block md:hidden w-full max-w-sm mx-auto px-6">
             {/* Fox Avatar - Mobile first */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
+              initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.8, y: shouldReduceMotion ? 0 : -20 }}
+              animate={{ 
+                opacity: 1, 
+                scale: 1,
+                y: shouldReduceMotion ? 0 : [0, -10, 0],
+              }}
+              transition={{ 
+                duration: shouldReduceMotion ? 0.01 : 0.8, 
+                delay: shouldReduceMotion ? 0 : 0.3, 
+                ease: 'easeOut',
+                y: {
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: 'easeInOut'
+                }
+              }}
               className="text-center"
             >
-              <img 
+              <motion.img 
                 src="/logo/mgh.png" 
                 alt="Fox mascot of Mobile Game Hunt" 
-                className="object-contain mt-4 mb-2 mx-auto hover:scale-105 transition-all duration-300 max-h-[80px] sm:max-h-[100px] w-auto"
+                className="object-contain mt-4 mb-2 mx-auto max-h-[80px] sm:max-h-[100px] w-auto"
+                style={{
+                  filter: 'drop-shadow(0 0 20px rgba(139, 92, 246, 0.5))',
+                }}
+                whileHover={shouldReduceMotion ? {} : { 
+                  scale: 1.1,
+                  rotate: [0, -5, 5, -5, 0],
+                  filter: 'drop-shadow(0 0 30px rgba(139, 92, 246, 0.8))',
+                  transition: { 
+                    duration: 0.6,
+                    rotate: {
+                      duration: 0.5,
+                      ease: 'easeInOut'
+                    }
+                  }
+                }}
                 onError={(e) => {
                   e.currentTarget.src = '/logo/moblogo.png';
                 }}
@@ -64,14 +87,14 @@ export function CTASection() {
 
             {/* Title - Mobile: Two clean lines */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
+              initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
+              transition={{ duration: shouldReduceMotion ? 0.01 : 0.8, delay: shouldReduceMotion ? 0 : 0.3, ease: 'easeOut' }}
               className="mb-6 text-center w-full flex justify-center px-4"
             >
               <h1 className="text-center w-full flex flex-col items-center">
                 <FuzzyText
-                  fontSize="2.5rem"
+                  fontSize={40}
                   fontWeight={900}
                   color={brandColor}
                   enableHover={true}
@@ -81,7 +104,7 @@ export function CTASection() {
                   Mobile Game
                 </FuzzyText>
                 <FuzzyText
-                  fontSize="2.5rem"
+                  fontSize={40}
                   fontWeight={900}
                   color={brandColor}
                   enableHover={true}
@@ -186,12 +209,12 @@ export function CTASection() {
               <div className="flex-1 text-left mb-8 lg:mb-0">
                 <div className="flex flex-col">
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
+                    initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.8, delay: 0.3 }}
+                    transition={{ duration: shouldReduceMotion ? 0.01 : 0.8, delay: shouldReduceMotion ? 0 : 0.3, ease: 'easeOut' }}
                   >
                     <FuzzyText
-                      fontSize="clamp(2rem, 8vw, 6rem)"
+                      fontSize={80}
                       fontWeight={900}
                       color={brandColor}
                       enableHover={true}
@@ -204,12 +227,12 @@ export function CTASection() {
                   <div className="flex justify-end">
                     <div className="mr-0">
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
+                        initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.8, delay: 0.3 }}
+                        transition={{ duration: shouldReduceMotion ? 0.01 : 0.8, delay: shouldReduceMotion ? 0 : 0.3, ease: 'easeOut' }}
                       >
               <FuzzyText
-                fontSize="clamp(2rem, 8vw, 6rem)"
+                fontSize={80}
                 fontWeight={900}
                 color={brandColor}
                 enableHover={true}
@@ -226,15 +249,43 @@ export function CTASection() {
 
               {/* Right side - Clean Avatar (no circular background) */}
               <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.3 }}
+                initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.8, y: shouldReduceMotion ? 0 : -20 }}
+                animate={{ 
+                  opacity: 1, 
+                  scale: 1,
+                  y: shouldReduceMotion ? 0 : [0, -15, 0],
+                }}
+                transition={{ 
+                  duration: shouldReduceMotion ? 0.01 : 0.8, 
+                  delay: shouldReduceMotion ? 0 : 0.3,
+                  ease: 'easeOut',
+                  y: {
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: 'easeInOut'
+                  }
+                }}
                 className="flex-shrink-0 lg:-ml-8 xl:-ml-12"
               >
-                <img 
+                <motion.img 
                   src="/logo/mgh.png" 
                   alt="Fox mascot of Mobile Game Hunt" 
-                  className="w-36 h-36 md:w-44 md:h-44 lg:w-52 lg:h-52 object-contain hover:scale-105 transition-all duration-300"
+                  className="w-36 h-36 md:w-44 md:h-44 lg:w-52 lg:h-52 object-contain"
+                  style={{
+                    filter: 'drop-shadow(0 0 25px rgba(139, 92, 246, 0.6))',
+                  }}
+                  whileHover={shouldReduceMotion ? {} : { 
+                    scale: 1.15,
+                    rotate: [0, -8, 8, -8, 0],
+                    filter: 'drop-shadow(0 0 40px rgba(139, 92, 246, 1))',
+                    transition: { 
+                      duration: 0.8,
+                      rotate: {
+                        duration: 0.6,
+                        ease: 'easeInOut'
+                      }
+                    }
+                  }}
                   onError={(e) => {
                     e.currentTarget.src = '/logo/moblogo.png';
                   }}

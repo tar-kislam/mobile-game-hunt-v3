@@ -4,6 +4,7 @@ import { SessionProvider } from "next-auth/react"
 import { ThemeProvider } from "next-themes"
 import { Toaster } from "sonner"
 import { ReactNode, useEffect, useState } from "react"
+import { PageTracking } from "@/components/analytics/PageTracking"
 
 interface ProvidersProps {
   children: ReactNode
@@ -32,6 +33,7 @@ export function Providers({ children }: ProvidersProps) {
         disableTransitionOnChange
         storageKey="mobile-game-hunt-theme"
       >
+        <PageTracking />
         {children}
         <Toaster 
           theme="dark"

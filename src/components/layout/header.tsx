@@ -178,7 +178,7 @@ export function Header() {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
                         className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
-                        onClick={() => signOut()}
+                        onClick={() => signOut({ callbackUrl: "/" })}
                       >
                         Sign out
                       </DropdownMenuItem>
@@ -187,7 +187,7 @@ export function Header() {
                 </>
               ) : (
                 <div className="flex items-center space-x-2">
-                  <Button variant="ghost" asChild className="rounded-2xl">
+                  <Button variant="ghost" asChild className="rounded-2xl hover:bg-orange-500/20">
                     <Link href="/auth/signin">Sign In</Link>
                   </Button>
                   <Button asChild className="rounded-2xl shadow-soft">
@@ -297,7 +297,7 @@ export function Header() {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
                         className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
-                        onClick={() => signOut()}
+                        onClick={() => signOut({ callbackUrl: "/" })}
                       >
                         Sign out
                       </DropdownMenuItem>
@@ -306,7 +306,7 @@ export function Header() {
                 </div>
               ) : (
                 <div className="flex items-center space-x-2">
-                  <Button variant="ghost" asChild className="rounded-2xl">
+                  <Button variant="ghost" asChild className="rounded-2xl hover:bg-orange-500/20">
                     <Link href="/auth/signin">Sign In</Link>
                   </Button>
                   <Button asChild className="rounded-2xl shadow-soft">

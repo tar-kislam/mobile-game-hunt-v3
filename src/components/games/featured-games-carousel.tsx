@@ -126,7 +126,7 @@ function HeroGameCard({ game, onClick }: HeroGameCardProps) {
 
   return (
     <Link href={`/product/${game.slug}`} className="block group h-full">
-      <Card className="overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 hover:shadow-2xl transition-all duration-300 border-0 shadow-lg rounded-2xl group-hover:scale-[1.02] h-full relative">
+      <Card className="overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 hover:shadow-2xl transition-all duration-300 border-0 shadow-lg rounded-3xl group-hover:scale-[1.02] h-full relative">
         {/* Background Image */}
         <div className="absolute inset-0">
           {game.thumbnail || game.image ? (
@@ -220,10 +220,10 @@ function SideGameCard({ game, onClick, onHover, isSelected, compact = false }: S
     <Link
       href={`/product/${game.slug}`}
       onMouseEnter={onHover}
-      className="w-full h-[84px] lg:h-[92px] rounded-2xl bg-[hsla(0,0%,12%,0.7)] hover:bg-[hsla(0,0%,12%,0.9)] transition shadow-[0_0_0_1px_hsla(0,0%,100%,0.06)_inset] flex items-center gap-3 px-3"
+      className="w-full h-[84px] lg:h-[92px] rounded-3xl bg-[hsla(0,0%,12%,0.7)] hover:bg-[hsla(0,0%,12%,0.9)] transition shadow-[0_0_0_1px_hsla(0,0%,100%,0.06)_inset] flex items-center gap-3 px-3"
     >
       {/* Thumbnail */}
-      <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-muted">
+      <div className="relative w-12 h-12 rounded-2xl overflow-hidden flex-shrink-0 bg-muted">
         {game.thumbnail || game.image ? (
           <Image
             src={game.thumbnail || (game.image as string)}

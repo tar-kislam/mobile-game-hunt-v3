@@ -3,6 +3,7 @@ import { DM_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { generateOrganizationJsonLd } from "@/lib/seo";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 
 const dmMono = DM_Mono({
   variable: "--font-dm-mono",
@@ -65,8 +66,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Performance: Preconnect to Google Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        
+        {/* Performance: Async font loading */}
         <link 
           href="https://fonts.googleapis.com/css2?family=Epunda+Slab:ital,wght@0,300..900;1,300..900&family=Orbitron:wght@400..900&family=Quantico:ital,wght@0,400;0,700;1,400;1,700&family=Sansation:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Underdog&display=swap" 
           rel="stylesheet" 
@@ -81,6 +85,7 @@ export default function RootLayout({
       <body
         className={`${dmMono.variable} antialiased dark`}
       >
+        <GoogleAnalytics />
         <Providers>
           {children}
         </Providers>

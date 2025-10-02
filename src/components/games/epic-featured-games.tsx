@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils"
 import { getAuthorLabel } from "@/lib/author"
 import ShinyText from "@/components/ShinyText"
 import { calculateFinalScore, getScoringWeights } from "@/lib/leaderboardConfig"
+import { PlatformIcons } from "@/components/ui/platform-icons"
 
 interface FeaturedGame {
   id: string
@@ -226,7 +227,7 @@ function EpicHeroCard({ game, isMobile = false }: EpicHeroCardProps) {
   return (
     <Link href={`/product/${game.slug}`} className="block group h-full">
       <Card className={cn(
-        "overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 hover:shadow-2xl hover:shadow-[0_0_30px_8px_rgba(168,85,247,0.4)] transition-all duration-500 border-0 shadow-lg rounded-xl group-hover:scale-[1.02] relative",
+        "overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 hover:shadow-2xl hover:shadow-[0_0_30px_8px_rgba(168,85,247,0.4)] transition-all duration-500 border-0 shadow-lg rounded-3xl group-hover:scale-[1.02] relative",
         isMobile ? "h-[400px]" : "h-[500px]"
       )}>
         {/* Background Image */}
@@ -259,28 +260,17 @@ function EpicHeroCard({ game, isMobile = false }: EpicHeroCardProps) {
           </div>
 
           {/* Game Title - Large Bold */}
-          <h2 className="text-2xl md:text-4xl font-bold leading-tight mb-3 md:mb-4 text-shadow-lg">
+          <h2 className="text-2xl md:text-4xl font-bold leading-tight mb-4 md:mb-6 text-shadow-lg">
             {game.title}
           </h2>
           
-          {/* Description - Multi-line */}
-          {game.tagline && (
-            <p className="text-sm md:text-base text-gray-200 leading-relaxed mb-4 md:mb-6 max-w-2xl line-clamp-2 md:line-clamp-3">
-              {game.tagline}
-            </p>
-          )}
-          
-          {/* Tags */}
-          <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
-            {game.platforms && game.platforms.slice(0, 2).map((platform) => (
-              <Badge 
-                key={platform} 
-                variant="secondary" 
-                className="bg-purple-900/50 text-purple-200 border border-purple-500/30 text-xs"
-              >
-                {platform}
-              </Badge>
-            ))}
+          {/* Platform Icons */}
+          <div className="flex items-center gap-3 mb-4 md:mb-6">
+            <PlatformIcons 
+              platforms={game.platforms || []} 
+              size="lg"
+              showLabels={false}
+            />
             <Badge 
               variant="secondary" 
               className="bg-green-900/50 text-green-200 border border-green-500/30 text-xs"
@@ -289,20 +279,13 @@ function EpicHeroCard({ game, isMobile = false }: EpicHeroCardProps) {
             </Badge>
           </div>
           
-          {/* Stats removed per request to keep hero clean */}
-          
           {/* Action */}
           <div className="flex items-center gap-3">
             <Button
-              className="px-6 py-3 rounded-xl font-semibold transition-all duration-300 bg-white/10 backdrop-blur border border-white/15 text-white hover:bg-white/15 hover:shadow-[0_0_24px_rgba(168,85,247,0.35)] hover:translate-y-[-1px]"
+              className="px-6 py-3 rounded-full font-semibold transition-all duration-300 bg-white/10 backdrop-blur border border-white/15 text-white hover:bg-white/15 hover:shadow-[0_0_24px_rgba(168,85,247,0.35)] hover:translate-y-[-1px]"
             >
               Learn More
             </Button>
-
-            {/* Author */}
-            <div className="text-sm text-gray-300 dark:text-gray-400">
-              by {getAuthorLabel({ user: game.user as any })}
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -321,7 +304,7 @@ function EpicSideCard({ game, onClick, isSelected }: EpicSideCardProps) {
   return (
     <button 
       className={cn(
-        "w-full flex items-center gap-4 p-4 rounded-lg transition-all duration-300 cursor-pointer text-left group",
+        "w-full flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 cursor-pointer text-left group",
         isSelected 
           ? "bg-gradient-to-r from-purple-900/30 to-blue-900/30 border-l-4 border-purple-500 shadow-lg shadow-purple-500/20" 
           : "bg-gray-800/50 hover:bg-gray-700/70 hover:shadow-lg hover:shadow-purple-500/10"
@@ -329,7 +312,7 @@ function EpicSideCard({ game, onClick, isSelected }: EpicSideCardProps) {
       onClick={onClick}
     >
       {/* Game Thumbnail - Square */}
-      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100 flex-shrink-0">
+      <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100 flex-shrink-0">
         {game.thumbnail ? (
           <Image
             src={game.thumbnail}
@@ -347,30 +330,19 @@ function EpicSideCard({ game, onClick, isSelected }: EpicSideCardProps) {
       </div>
 
       {/* Game Info */}
-      <div className="flex-1 min-w-0 flex flex-col justify-center">
+      <div className="flex-1 min-w-0 flex items-center">
         <h3 className={cn(
-          "font-semibold text-sm transition-colors line-clamp-2",
+          "font-bold text-base transition-colors line-clamp-2",
+          "tracking-wide",
           isSelected 
             ? "text-white" 
             : "text-gray-200 group-hover:text-white"
-        )}>
+        )}
+        style={{ fontFamily: '"Sansation", sans-serif' }}
+        >
           {game.title}
         </h3>
-        <div className="flex items-center gap-2 mt-1">
-          <Badge 
-            variant="secondary" 
-            className="bg-green-900/50 text-green-200 border border-green-500/30 text-xs px-1 py-0"
-          >
-            Free
-          </Badge>
-          <span className="text-xs text-gray-400">{game._count.votes} votes</span>
-        </div>
       </div>
-
-      {/* Selection Indicator */}
-      {isSelected && (
-        <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0 animate-pulse" />
-      )}
     </button>
   )
 }

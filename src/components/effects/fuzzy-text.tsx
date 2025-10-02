@@ -31,6 +31,12 @@ const FuzzyText = ({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // Performance: Check if user prefers reduced motion
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    
+    // Browser Compatibility: Detect Safari/WebKit
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
     const init = async () => {
       if (document.fonts?.ready) {
         await document.fonts.ready;
@@ -48,12 +54,35 @@ const FuzzyText = ({
       if (typeof fontSize === 'number') {
         numericFontSize = fontSize;
       } else {
+        // Browser Compatibility: Better handling for Safari/WebKit
         const temp = document.createElement('span');
         temp.style.fontSize = fontSize;
+        temp.style.fontFamily = computedFontFamily;
+        temp.style.fontWeight = String(fontWeight);
+        temp.style.position = 'absolute';
+        temp.style.visibility = 'hidden';
+        temp.style.whiteSpace = 'nowrap';
+        temp.textContent = 'M'; // Use character for better measurement
         document.body.appendChild(temp);
         const computedSize = window.getComputedStyle(temp).fontSize;
         numericFontSize = parseFloat(computedSize);
         document.body.removeChild(temp);
+        
+        // Safari/WebKit: Aggressively override if calculation seems wrong
+        if (isSafari) {
+          // Safari often miscalculates clamp(), use manual calculation
+          const viewportWidth = window.innerWidth;
+          
+          // If original calculation seems wrong (too small)
+          if (numericFontSize < 50) {
+            // clamp(2rem, 8vw, 6rem) manual calculation
+            const minSize = 32; // 2rem = 32px
+            const maxSize = 96; // 6rem = 96px
+            const preferredSize = (viewportWidth * 0.08); // 8vw
+            numericFontSize = Math.min(Math.max(minSize, preferredSize), maxSize);
+            console.log(`[Safari Fix] Original: ${numericFontSize}px -> Corrected: ${numericFontSize}px`);
+          }
+        }
       }
 
       const text = React.Children.toArray(children).join('');
@@ -98,18 +127,54 @@ const FuzzyText = ({
       const interactiveBottom = interactiveTop + tightHeight;
 
       let isHovering = false;
+      let isVisible = true; // Performance: Track visibility
       const fuzzRange = 30;
+
+      // Performance: Reduce animation complexity if reduced motion is preferred
+      const frameSkip = prefersReducedMotion ? 5 : 1; // Skip frames for reduced motion
+      let frameCount = 0;
 
       const run = () => {
         if (isCancelled) return;
+        
+        // Performance: Skip animation when off-screen
+        if (!isVisible) {
+          animationFrameId = window.requestAnimationFrame(run);
+          return;
+        }
+
+        // Performance: Frame skipping for reduced motion
+        frameCount++;
+        if (prefersReducedMotion && frameCount % frameSkip !== 0) {
+          animationFrameId = window.requestAnimationFrame(run);
+          return;
+        }
+
         ctx.clearRect(-fuzzRange, -fuzzRange, offscreenWidth + 2 * fuzzRange, tightHeight + 2 * fuzzRange);
         const intensity = isHovering ? hoverIntensity : baseIntensity;
-        for (let j = 0; j < tightHeight; j++) {
-          const dx = Math.floor(intensity * (Math.random() - 0.5) * fuzzRange);
-          ctx.drawImage(offscreen, 0, j, offscreenWidth, 1, dx, j, offscreenWidth, 1);
+        
+        // Performance: Use faster drawing for base intensity
+        if (!isHovering && baseIntensity < 0.3) {
+          // Faster static rendering when not hovering
+          ctx.drawImage(offscreen, 0, 0);
+        } else {
+          // Full fuzzy effect
+          for (let j = 0; j < tightHeight; j++) {
+            const dx = Math.floor(intensity * (Math.random() - 0.5) * fuzzRange);
+            ctx.drawImage(offscreen, 0, j, offscreenWidth, 1, dx, j, offscreenWidth, 1);
+          }
         }
         animationFrameId = window.requestAnimationFrame(run);
       };
+
+      // Performance: Intersection Observer to pause when off-screen
+      const observer = new IntersectionObserver(
+        (entries) => {
+          isVisible = entries[0].isIntersecting;
+        },
+        { threshold: 0.1 }
+      );
+      observer.observe(canvas);
 
       run();
 
@@ -152,6 +217,7 @@ const FuzzyText = ({
 
       const cleanup = () => {
         window.cancelAnimationFrame(animationFrameId);
+        observer.disconnect(); // Performance: Clean up observer
         if (enableHover) {
           canvas.removeEventListener('mousemove', handleMouseMove);
           canvas.removeEventListener('mouseleave', handleMouseLeave);
@@ -176,7 +242,17 @@ const FuzzyText = ({
     };
   }, [children, fontSize, fontWeight, fontFamily, color, enableHover, baseIntensity, hoverIntensity]);
 
-  return <canvas ref={canvasRef} style={{ display: 'block', margin: '0 auto' }} />;
+  return (
+    <canvas 
+      ref={canvasRef} 
+      style={{ 
+        display: 'block', 
+        margin: '0 auto',
+        minWidth: '200px',
+        minHeight: '80px'
+      }} 
+    />
+  );
 };
 
 export default FuzzyText;

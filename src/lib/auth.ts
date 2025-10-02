@@ -112,11 +112,12 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
-    async signIn() {
+    async signIn({ user, account, profile }) {
       // Keep sign-in permissive; username handling is disabled due to minimal User model
+      // For OAuth providers (Google, GitHub), auto-create account if new user
       return true
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.role = (user as any).role
         token.id = user.id
@@ -130,6 +131,15 @@ export const authOptions: NextAuthOptions = {
       }
       return session
     },
+    async redirect({ url, baseUrl }) {
+      // Always redirect to landing page after sign in/sign up
+      // Handle relative URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      // Handle same origin URLs
+      if (new URL(url).origin === baseUrl) return url
+      // Always redirect to home page for OAuth callbacks
+      return baseUrl
+    },
   },
   events: {
     async createUser({ user }) {
@@ -142,8 +152,13 @@ export const authOptions: NextAuthOptions = {
         // Don't fail user creation if badge checking fails
       }
     },
+    async signOut() {
+      // Clear any additional session data if needed
+      // Session is automatically cleared by NextAuth
+    },
   },
   pages: {
     signIn: "/auth/signin",
+    error: "/auth/signin", // Redirect to signin page on error (we'll handle it client-side with toast)
   },
 }

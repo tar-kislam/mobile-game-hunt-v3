@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { trackGameView } from '@/lib/analytics';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -147,6 +148,11 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
   const [productVotes, setProductVotes] = useState(product._count.votes);
   const [isProductUpvoted, setIsProductUpvoted] = useState(hasVoted);
   const [recommended, setRecommended] = useState<any[]>([])
+
+  // Track product view in Google Analytics
+  useEffect(() => {
+    trackGameView(product.id, product.title)
+  }, [product.id, product.title])
   const [currentUrl, setCurrentUrl] = useState('')
   const [isPromoExpanded, setIsPromoExpanded] = useState(false)
 
