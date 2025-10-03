@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
@@ -14,7 +14,7 @@ import { ArrowLeftIcon, GithubIcon, MailIcon } from "lucide-react"
 import DarkVeil from "@/components/DarkVeil"
 import { toast } from "sonner"
 
-export default function SignUpPage() {
+function SignUpForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
@@ -339,5 +339,20 @@ export default function SignUpPage() {
       </div>
       </div>
     </div>
+  )
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen w-full relative">
+        <DarkVeil />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-white">Loading...</div>
+        </div>
+      </div>
+    }>
+      <SignUpForm />
+    </Suspense>
   )
 }
