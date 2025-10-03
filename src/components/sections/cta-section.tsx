@@ -38,46 +38,40 @@ export function CTASection() {
       {/* Content */}
       <div className="relative z-20 flex flex-col items-center justify-center h-full px-4 text-center">
         <div className="max-w-5xl mx-auto space-y-10">
-          {/* Mobile Layout: Avatar above title */}
-          <div className="block md:hidden w-full max-w-sm mx-auto px-6">
-            {/* Fox Avatar - Mobile first */}
+          {/* Mobile Layout: Perfect vertical stack - Logo > Text > Buttons */}
+          <div className="block md:hidden w-full flex flex-col items-center justify-center min-h-[80vh] px-4">
+            
+            {/* 1. LOGO - Lower position */}
             <motion.div
               initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.8, y: shouldReduceMotion ? 0 : -20 }}
               animate={{ 
                 opacity: 1, 
                 scale: 1,
-                y: shouldReduceMotion ? 0 : [0, -10, 0],
+                y: shouldReduceMotion ? 0 : [0, -3, 0],
               }}
               transition={{ 
                 duration: shouldReduceMotion ? 0.01 : 0.8, 
-                delay: shouldReduceMotion ? 0 : 0.3, 
+                delay: shouldReduceMotion ? 0 : 0.1, 
                 ease: 'easeOut',
                 y: {
-                  duration: 3,
+                  duration: 4,
                   repeat: Infinity,
                   ease: 'easeInOut'
                 }
               }}
-              className="text-center"
+              className="flex justify-center mb-4 mt-8"
             >
               <motion.img 
                 src="/logo/mgh.png" 
                 alt="Fox mascot of Mobile Game Hunt" 
-                className="object-contain mt-4 mb-2 mx-auto max-h-[80px] sm:max-h-[100px] w-auto"
+                className="object-contain h-16 w-16"
                 style={{
-                  filter: 'drop-shadow(0 0 20px rgba(139, 92, 246, 0.5))',
+                  filter: 'drop-shadow(0 0 15px rgba(139, 92, 246, 0.4))',
                 }}
                 whileHover={shouldReduceMotion ? {} : { 
-                  scale: 1.1,
-                  rotate: [0, -5, 5, -5, 0],
-                  filter: 'drop-shadow(0 0 30px rgba(139, 92, 246, 0.8))',
-                  transition: { 
-                    duration: 0.6,
-                    rotate: {
-                      duration: 0.5,
-                      ease: 'easeInOut'
-                    }
-                  }
+                  scale: 1.05,
+                  filter: 'drop-shadow(0 0 20px rgba(139, 92, 246, 0.6))',
+                  transition: { duration: 0.3 }
                 }}
                 onError={(e) => {
                   e.currentTarget.src = '/logo/moblogo.png';
@@ -85,117 +79,125 @@ export function CTASection() {
               />
             </motion.div>
 
-            {/* Title - Mobile: Two clean lines */}
-            <motion.div
-              initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: shouldReduceMotion ? 0.01 : 0.8, delay: shouldReduceMotion ? 0 : 0.3, ease: 'easeOut' }}
-              className="mb-6 text-center w-full flex justify-center px-4"
-            >
-              <h1 className="text-center w-full flex flex-col items-center">
-                <FuzzyText
-                  fontSize={40}
-                  fontWeight={900}
-                  color={brandColor}
-                  enableHover={true}
-                  baseIntensity={0.2}
-                  hoverIntensity={0.5}
-                >
-                  Mobile Game
-                </FuzzyText>
-                <FuzzyText
-                  fontSize={40}
-                  fontWeight={900}
-                  color={brandColor}
-                  enableHover={true}
-                  baseIntensity={0.2}
-                  hoverIntensity={0.5}
-                >
-                  Hunt
-                </FuzzyText>
-              </h1>
-            </motion.div>
-
-            {/* CTA Text - Mobile */}
+            {/* 2. TEXT - Compact and no overflow */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="mb-6 text-center"
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="flex flex-col items-center justify-center text-center mb-6 w-full px-2"
             >
-              <h2 
-                className="text-lg text-gray-300"
+              {/* Main Title - Mobile: Very small and centered */}
+              <motion.h1
+                initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: shouldReduceMotion ? 0.01 : 0.8, delay: shouldReduceMotion ? 0 : 0.4, ease: 'easeOut' }}
+                className="mb-3 text-center w-full"
+              >
+                <div className="flex flex-col items-center justify-center space-y-1">
+                  <div className="text-center">
+                    <span 
+                      className="text-white font-bold"
+                      style={{ 
+                        fontSize: '14px',
+                        lineHeight: '1.2',
+                        textShadow: '0 0 8px rgba(168, 85, 247, 0.6)'
+                      }}
+                    >
+                      Mobile Game
+                    </span>
+                  </div>
+                  <div className="text-center">
+                    <span 
+                      className="text-white font-bold"
+                      style={{ 
+                        fontSize: '14px',
+                        lineHeight: '1.2',
+                        textShadow: '0 0 8px rgba(168, 85, 247, 0.6)'
+                      }}
+                    >
+                      Hunt
+                    </span>
+                  </div>
+                </div>
+              </motion.h1>
+
+              {/* Tagline - Compact */}
+              <motion.h2
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+                className="text-xs text-gray-300 leading-relaxed px-3 max-w-[300px]"
                 style={{ 
                   fontFamily: '"Underdog", cursive',
-                  textShadow: '0 0 10px rgba(168, 85, 247, 0.5)'
+                  textShadow: '0 0 6px rgba(168, 85, 247, 0.3)'
                 }}
               >
                 Join the hunt — submit games, cast your votes, and rise to the top!
-              </h2>
+              </motion.h2>
             </motion.div>
 
-            {/* Action Buttons - Mobile: Perfectly centered */}
+            {/* 3. BUTTONS - Bottom */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="flex flex-col items-center justify-center w-full px-2 space-y-3 mt-4 mb-8"
+              transition={{ duration: 0.6, delay: 0.8 }}
+              className="flex flex-col items-center justify-center w-full max-w-xs space-y-3"
             >
-              <Link href="/submit" className="w-full max-w-xs">
+              <Link href="/submit" className="w-full">
                 <Button 
-                  className="w-full max-w-xs bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-full font-semibold transition-all duration-300 hover:shadow-[0_0_30px_rgba(168,85,247,0.8)] hover:scale-105 text-center"
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 hover:shadow-[0_0_25px_rgba(168,85,247,0.7)] hover:scale-105 text-sm"
                 >
                   Submit Game
                 </Button>
               </Link>
               
-              <Link href="/community" className="w-full max-w-xs">
+              <Link href="/community" className="w-full">
                 <Button 
                   variant="outline"
-                  className="w-full max-w-xs bg-transparent border-2 border-purple-500/70 text-purple-300 hover:text-white hover:bg-purple-500/20 px-4 py-3 rounded-full font-semibold transition-all duration-300 hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] hover:border-purple-400 hover:scale-105 text-center"
+                  className="w-full bg-transparent border-2 border-purple-500/70 text-purple-300 hover:text-white hover:bg-purple-500/20 px-8 py-3 rounded-full font-semibold transition-all duration-300 hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] hover:border-purple-400 hover:scale-105 text-sm"
                 >
                   Join Community
                 </Button>
               </Link>
             </motion.div>
 
-            {/* Stats Section - Mobile: Grid with centered items */}
+            {/* 4. STATS - Very Bottom (Optional) */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.7 }}
-              className="grid grid-cols-3 gap-2 w-full px-2"
+              transition={{ duration: 0.6, delay: 1.0 }}
+              className="grid grid-cols-3 gap-4 w-full max-w-xs mt-8"
             >
-              {/* Stat 1: Curated Games */}
+              {/* Stat 1 */}
               <section className="text-center">
                 <div className="mb-1 flex justify-center">
-                  <div className="text-xl drop-shadow-[0_0_6px_rgba(168,85,247,0.8)]" style={{ color: '#a855f7' }}>
+                  <div className="text-base drop-shadow-[0_0_4px_rgba(168,85,247,0.6)]" style={{ color: '#a855f7' }}>
                     <LuGamepad2 />
                   </div>
                 </div>
-                <div className="text-lg font-bold text-white mb-1">100+</div>
+                <div className="text-sm font-bold text-white mb-0.5">100+</div>
                 <p className="text-xs text-gray-400 leading-tight">Games</p>
               </section>
 
-              {/* Stat 2: Community Members */}
+              {/* Stat 2 */}
               <section className="text-center">
                 <div className="mb-1 flex justify-center">
-                  <div className="text-xl drop-shadow-[0_0_6px_rgba(168,85,247,0.8)]" style={{ color: '#a855f7' }}>
+                  <div className="text-base drop-shadow-[0_0_4px_rgba(168,85,247,0.6)]" style={{ color: '#a855f7' }}>
                     <IoPeople />
                   </div>
                 </div>
-                <div className="text-lg font-bold text-white mb-1">10k+</div>
+                <div className="text-sm font-bold text-white mb-0.5">10k+</div>
                 <p className="text-xs text-gray-400 leading-tight">Members</p>
               </section>
 
-              {/* Stat 3: User Reviews */}
+              {/* Stat 3 */}
               <section className="text-center">
                 <div className="mb-1 flex justify-center">
-                  <div className="text-xl drop-shadow-[0_0_6px_rgba(168,85,247,0.8)]" style={{ color: '#a855f7' }}>
+                  <div className="text-base drop-shadow-[0_0_4px_rgba(168,85,247,0.6)]" style={{ color: '#a855f7' }}>
                     <HiOutlineChat />
                   </div>
                 </div>
-                <div className="text-lg font-bold text-white mb-1">250+</div>
+                <div className="text-sm font-bold text-white mb-0.5">250+</div>
                 <p className="text-xs text-gray-400 leading-tight">Reviews</p>
               </section>
             </motion.div>

@@ -192,7 +192,7 @@ interface MobileGameCardProps {
 
 function MobileGameCard({ game, onVote }: MobileGameCardProps) {
   return (
-    <Link href={`/product/${game.id}`} className="block w-full max-w-full">
+    <Link href={`/product/${game.slug}`} className="block w-full max-w-full">
       <Card className="overflow-hidden bg-black border-0 rounded-xl aspect-[3/4] relative shadow-lg w-full max-w-full mx-auto">
         {/* Background Image */}
         <div className="absolute inset-0">
@@ -330,6 +330,7 @@ function ProductCard({ product, rank }: { product: any, rank?: number }) {
 interface Game {
   id: string
   title: string
+  slug: string
   tagline?: string | null
   description: string
   url: string
