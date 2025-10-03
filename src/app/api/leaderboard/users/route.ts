@@ -96,26 +96,31 @@ export async function GET(req: NextRequest) {
         by: ['userId'],
         where: { createdAt: { gte: since } },
         _count: { userId: true },
+        orderBy: { userId: 'asc' },
       }),
       prisma.productComment.groupBy({
         by: ['userId'],
         where: { createdAt: { gte: since } },
         _count: { userId: true },
+        orderBy: { userId: 'asc' },
       }),
       prisma.follow.groupBy({
         by: ['followerId'],
         where: { createdAt: { gte: since } },
         _count: { followerId: true },
+        orderBy: { followerId: 'asc' },
       }),
       prisma.post.groupBy({
         by: ['userId'],
         where: { createdAt: { gte: since } },
         _count: { userId: true },
+        orderBy: { userId: 'asc' },
       }),
       prisma.product.groupBy({
         by: ['userId'],
         where: { createdAt: { gte: since } },
         _count: { userId: true },
+        orderBy: { userId: 'asc' },
       }),
     ])
 
@@ -130,11 +135,11 @@ export async function GET(req: NextRequest) {
       return row
     }
 
-    for (const v of votes)   ensure(v.userId).votes   = v._count.userId
-    for (const c of comments) ensure(c.userId).comments = c._count.userId
-    for (const f of follows)  ensure(f.followerId).follows = f._count.followerId
-    for (const p of posts)    ensure(p.userId).posts   = p._count.userId
-    for (const s of submits)  ensure(s.userId).submits = s._count.userId
+    for (const v of votes)   ensure(v.userId).votes   = (v._count as any)?.userId || 0
+    for (const c of comments) ensure(c.userId).comments = (c._count as any)?.userId || 0
+    for (const f of follows)  ensure(f.followerId).follows = (f._count as any)?.followerId || 0
+    for (const p of posts)    ensure(p.userId).posts   = (p._count as any)?.userId || 0
+    for (const s of submits)  ensure(s.userId).submits = (s._count as any)?.userId || 0
 
     const top = Array.from(map.values())
       .map(r => ({

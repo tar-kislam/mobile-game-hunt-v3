@@ -14,6 +14,7 @@ interface LeaderboardProduct {
   id: string;
   title: string;
   description: string;
+  tagline?: string | null;
   shortPitch?: string | null;
   thumbnail: string | null;
   url: string;
