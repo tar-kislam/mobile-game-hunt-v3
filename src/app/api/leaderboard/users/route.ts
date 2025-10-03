@@ -2,46 +2,155 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { calculateLevelProgress } from '@/lib/xpCalculator'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+type ScoreRow = {
+  userId: string
+  votes: number
+  comments: number
+  follows: number
+  posts: number
+  submits: number
+  score: number
+}
+
+type NormalizedBadge = {
+  id: string
+  name: string
+  icon?: string | null
+}
+
+async function fetchUserBadges(userIds: string[]) {
+  // Olası join tablo isimleri (şemanıza göre biri tutacaktır)
+  const candidates = [
+    'userBadge',
+    'userBadges',
+    'badgeAward',
+    'badgeAwards',
+    'awardedBadge',
+    'awardedBadges',
+  ]
+
+  const byUser = new Map<string, NormalizedBadge[]>()
+
+  for (const key of candidates) {
+    const client: any = prisma as any
+    const model = client?.[key]
+    if (!model || typeof model.findMany !== 'function') continue
+
+    try {
+      // Badge detayına erişmek için en yaygın isim 'badge' / 'Badge'
+      const rows = await model.findMany({
+        where: { userId: { in: userIds } },
+        include: { badge: true },
+      })
+
+      if (!rows || rows.length === 0) continue
+
+      for (const row of rows) {
+        const uid: string = row.userId
+        const b =
+          row.badge ??
+          row.Badge ??
+          row // bazen join tablosu doğrudan badge alanlarını taşıyabilir
+
+        // Alan isimlerini normalize et (hangisi varsa onu kullan)
+        const id: string =
+          b?.code ?? b?.slug ?? b?.name ?? b?.id ?? 'badge'
+        const name: string =
+          b?.title ?? b?.name ?? String(id)
+        const icon: string | null =
+          b?.icon ?? b?.image ?? b?.emoji ?? null
+
+        const arr = byUser.get(uid) ?? []
+        arr.push({ id: String(id), name: String(name), icon: icon ?? null })
+        byUser.set(uid, arr)
+      }
+
+      // Bir modelden veri aldıysak diğerlerini denemeye gerek yok
+      return byUser
+    } catch {
+      // Bu model tutmadı, diğer adaya geç
+      continue
+    }
+  }
+
+  // Hiçbiri tutmazsa boş dön
+  return byUser
+}
+
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url)
-    const take = Math.min(parseInt(url.searchParams.get('take') || '5', 10), 50)
+    const takeRaw = url.searchParams.get('take')
+    const take = Math.max(1, Math.min(Number.isFinite(Number(takeRaw)) ? Number(takeRaw) : 5, 50))
 
-    // Window: last 30 days
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    // Son 30 gün
+    const since = new Date()
+    since.setDate(since.getDate() - 30)
 
-    // Aggregate interaction counts per user in window
-    const [votes, comments, follows, posts, submits] = await Promise.all([
-      prisma.vote.groupBy({ by: ['userId'], where: { createdAt: { gte: thirtyDaysAgo } }, _count: { userId: true } }),
-      prisma.productComment.groupBy({ by: ['userId'], where: { createdAt: { gte: thirtyDaysAgo } }, _count: { userId: true } }),
-      prisma.follow.groupBy({ by: ['followerId'], where: { createdAt: { gte: thirtyDaysAgo } }, _count: { followerId: true } }),
-      prisma.post.groupBy({ by: ['userId'], where: { createdAt: { gte: thirtyDaysAgo } }, _count: { userId: true } }),
-      prisma.product.groupBy({ by: ['userId'], where: { createdAt: { gte: thirtyDaysAgo } }, _count: { userId: true } }),
+    // Gruplamalar (tek transaction)
+    const [votes, comments, follows, posts, submits] = await prisma.$transaction([
+      prisma.vote.groupBy({
+        by: ['userId'],
+        where: { createdAt: { gte: since } },
+        _count: { userId: true },
+      }),
+      prisma.productComment.groupBy({
+        by: ['userId'],
+        where: { createdAt: { gte: since } },
+        _count: { userId: true },
+      }),
+      prisma.follow.groupBy({
+        by: ['followerId'],
+        where: { createdAt: { gte: since } },
+        _count: { followerId: true },
+      }),
+      prisma.post.groupBy({
+        by: ['userId'],
+        where: { createdAt: { gte: since } },
+        _count: { userId: true },
+      }),
+      prisma.product.groupBy({
+        by: ['userId'],
+        where: { createdAt: { gte: since } },
+        _count: { userId: true },
+      }),
     ])
 
-    const map = new Map<string, { userId: string; votes: number; comments: number; follows: number; posts: number; submits: number; score: number }>()
-
+    // Skor haritası
+    const map = new Map<string, ScoreRow>()
     const ensure = (userId: string) => {
-      if (!map.has(userId)) map.set(userId, { userId, votes: 0, comments: 0, follows: 0, posts: 0, submits: 0, score: 0 })
-      return map.get(userId)!
+      let row = map.get(userId)
+      if (!row) {
+        row = { userId, votes: 0, comments: 0, follows: 0, posts: 0, submits: 0, score: 0 }
+        map.set(userId, row)
+      }
+      return row
     }
 
-    votes.forEach(v => { const e = ensure(v.userId); e.votes = v._count.userId })
-    comments.forEach(c => { const e = ensure(c.userId); e.comments = c._count.userId })
-    follows.forEach(f => { const e = ensure(f.followerId); e.follows = f._count.followerId })
-    posts.forEach(p => { const e = ensure(p.userId); e.posts = p._count.userId })
-    submits.forEach(s => { const e = ensure(s.userId); e.submits = s._count.userId })
+    for (const v of votes)   ensure(v.userId).votes   = v._count.userId
+    for (const c of comments) ensure(c.userId).comments = c._count.userId
+    for (const f of follows)  ensure(f.followerId).follows = f._count.followerId
+    for (const p of posts)    ensure(p.userId).posts   = p._count.userId
+    for (const s of submits)  ensure(s.userId).submits = s._count.userId
 
-    // Scoring
-    const users = Array.from(map.values()).map(u => ({
-      ...u,
-      score: (u.votes * 2) + (u.comments * 3) + (u.follows * 1) + (u.posts * 5) + (u.submits * 10)
-    }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, take)
+    const top = Array.from(map.values())
+      .map(r => ({
+        ...r,
+        // Ağırlıklar
+        score: (r.votes * 2) + (r.comments * 3) + (r.follows) + (r.posts * 5) + (r.submits * 10),
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, take)
 
-    const userIds = users.map(u => u.userId)
+    if (top.length === 0) {
+      return NextResponse.json({ users: [] }, { headers: { 'Cache-Control': 'no-store' } })
+    }
+
+    // Kullanıcı temel bilgileri
+    const userIds = top.map(t => t.userId)
     const userInfos = await prisma.user.findMany({
       where: { id: { in: userIds } },
       select: { 
@@ -53,35 +162,41 @@ export async function GET(req: NextRequest) {
         xp: true
       }
     })
-    const infoMap = new Map(userInfos.map(u => [u.id, u]))
+    const infoById = new Map(userInfos.map(u => [u.id, u]))
 
-    return NextResponse.json({
-      users: users.map((u, i) => {
-        const userInfo = infoMap.get(u.userId);
-        const userXP = userInfo?.xp || 0;
-        const calculatedLevel = calculateLevelProgress(userXP).level;
+    // Badge'leri esnekçe çek
+    const badgesByUser = await fetchUserBadges(userIds)
+
+    const payload = {
+      users: top.map((r, i) => {
+        const info = infoById.get(r.userId)
+        const badges = badgesByUser.get(r.userId) ?? []
+        const userXP = info?.xp || 0
+        const calculatedLevel = calculateLevelProgress(userXP).level
         
         return {
           rank: i + 1,
-          id: u.userId,
-          name: userInfo?.name || 'Anonymous',
-          image: userInfo?.image || null,
-          username: userInfo?.username || null,
+          id: r.userId,
+          name: info?.name ?? 'Anonymous',
+          image: info?.image ?? null,
+          username: info?.username ?? null,
           level: calculatedLevel, // Use calculated level from XP
           xp: userXP,
-          score: u.score,
-          votes: u.votes,
-          comments: u.comments,
-          follows: u.follows,
-          posts: u.posts,
-          submits: u.submits
-        };
-      })
-    })
+          score: r.score,
+          votes: r.votes,
+          comments: r.comments,
+          follows: r.follows,
+          posts: r.posts,
+          submits: r.submits,
+          badgesCount: badges.length,
+          badges, // {id,name,icon?} listesi (mevcutsa)
+        }
+      }),
+    }
+
+    return NextResponse.json(payload, { headers: { 'Cache-Control': 'no-store' } })
   } catch (e) {
-    console.error('user leaderboard error', e)
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+    console.error('[LEADERBOARD:USERS] error:', e)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
-
-
