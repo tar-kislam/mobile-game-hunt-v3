@@ -799,6 +799,49 @@ export default function HomePage() {
                   {/* Divider */}
                   <div className="border-t border-gray-700 opacity-50 my-8" />
 
+                  {/* Why We Started Section */}
+                  <section className="pb-4">
+                    <Link href="/about" className="block group">
+                      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-600/30 via-purple-500/20 to-violet-600/30 border border-purple-500/40 p-6 transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(168,85,247,0.4)] hover:border-purple-400">
+                        {/* Animated Background Gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 via-purple-400/10 to-purple-600/0 animate-[shimmer_3s_ease-in-out_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        
+                        {/* Content */}
+                        <div className="relative z-10 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl animate-bounce">🦊</span>
+                            <h3 className="bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent font-bold text-lg group-hover:from-purple-200 group-hover:to-pink-200 transition-all duration-300">
+                              Why We Started the Hunt
+                            </h3>
+                          </div>
+                          
+                          <p className="text-sm text-gray-300 leading-relaxed group-hover:text-white transition-colors duration-300">
+                            Discover our mission to connect gamers with amazing mobile games and help developers shine.
+                          </p>
+                          
+                          <div className="flex items-center gap-2 text-purple-400 group-hover:text-purple-300 transition-colors duration-300">
+                            <span className="text-xs font-semibold">Learn Our Story</span>
+                            <svg 
+                              className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </div>
+                        </div>
+
+                        {/* Decorative Elements */}
+                        <div className="absolute top-2 right-2 w-20 h-20 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-400/20 transition-all duration-500"></div>
+                        <div className="absolute bottom-2 left-2 w-16 h-16 bg-pink-500/10 rounded-full blur-2xl group-hover:bg-pink-400/20 transition-all duration-500"></div>
+                      </div>
+                    </Link>
+                  </section>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-700 opacity-50 my-8" />
+
                   {/* Legal Section */}
                   <section className="pb-4">
                     <h3 className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold text-lg mb-4">Legal</h3>

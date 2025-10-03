@@ -396,7 +396,7 @@ export default function ProfilePage() {
               <h2 className="text-2xl font-bold text-white">Your Badges</h2>
               <p className="text-muted-foreground">Collect achievements and show off your progress</p>
             </div>
-            <BadgesGrid />
+            <BadgesGrid userId={session?.user?.id} />
           </div>
 
           {/* Profile Tabs */}

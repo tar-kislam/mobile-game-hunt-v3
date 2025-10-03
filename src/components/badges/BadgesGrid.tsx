@@ -39,12 +39,20 @@ async function fetcher(url: string) {
   }
 }
 
-export function BadgesGrid() {
-  const { data, error, mutate } = useSWR("/api/badges", fetcher, {
-    refreshInterval: 5000, // Refresh every 5 seconds for real-time updates
-    revalidateOnFocus: true,
-    revalidateOnReconnect: true
-  })
+interface BadgesGridProps {
+  userId?: string
+}
+
+export function BadgesGrid({ userId }: BadgesGridProps) {
+  const { data, error, mutate } = useSWR(
+    userId ? `/api/user/${userId}/badges` : "/api/badges", 
+    fetcher, 
+    {
+      refreshInterval: 5000, // Refresh every 5 seconds for real-time updates
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true
+    }
+  )
 
   // Listen for badge updates from follow actions
   useEffect(() => {

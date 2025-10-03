@@ -14,7 +14,7 @@ interface SubmitStepperProps {
 const stepConfig = [
   { id: 'main-info', label: 'Main Info' },
   { id: 'images-media', label: 'Images & Media' },
-  { id: 'makers', label: 'Makers' },
+  { id: 'makers', label: 'Makers & Studio' },
   { id: 'launch-details', label: 'Launch Details' },
   { id: 'community-extras', label: 'Community & Extras' },
   { id: 'final-checklist', label: 'Final Checklist' }
@@ -140,48 +140,66 @@ export function MobileSubmitStepper({ activeStep, completedSteps, onStepClick }:
               const stepNumber = index + 1
               const isActive = activeStep === stepNumber
               const isCompleted = completedSteps.includes(stepNumber)
+              const isNotLastStep = index < stepConfig.length - 1
               
               return (
-                <motion.button
-                  key={stepNumber}
-                  onClick={() => onStepClick(index)}
-                  className="flex items-center gap-3 p-3 rounded-xl transition-all duration-300 whitespace-nowrap group relative"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {/* Step Circle */}
-                  <div className={`
-                    w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300
-                    border-2 flex-shrink-0
-                    ${isActive 
-                      ? 'border-purple-500 bg-purple-500 text-white shadow-lg shadow-purple-500/25' 
-                      : isCompleted 
-                      ? 'border-green-500 bg-green-500 text-white' 
-                      : 'border-gray-600 bg-gray-800 text-gray-400 group-hover:border-purple-400 group-hover:text-purple-300'
-                    }
-                  `}>
-                    {isCompleted ? (
-                      <Check className="w-5 h-5" />
-                    ) : (
-                      <span className="text-sm font-semibold">{stepNumber}</span>
-                    )}
-                  </div>
-                  
-                  {/* Step Label */}
-                  <div className="text-left">
+                <React.Fragment key={stepNumber}>
+                  <motion.button
+                    onClick={() => onStepClick(index)}
+                    className="flex items-center gap-3 p-3 rounded-xl transition-all duration-300 whitespace-nowrap group relative"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {/* Step Circle */}
                     <div className={`
-                      text-sm font-medium transition-colors duration-300
+                      w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300
+                      border-2 flex-shrink-0
                       ${isActive 
-                        ? 'text-purple-400' 
+                        ? 'border-purple-500 bg-purple-500 text-white shadow-lg shadow-purple-500/25' 
                         : isCompleted 
-                        ? 'text-green-400' 
-                        : 'text-gray-400 group-hover:text-purple-300'
+                        ? 'border-green-500 bg-green-500 text-white' 
+                        : 'border-gray-600 bg-gray-800 text-gray-400 group-hover:border-purple-400 group-hover:text-purple-300'
                       }
                     `}>
-                      {stepData.label}
+                      {isCompleted ? (
+                        <Check className="w-5 h-5" />
+                      ) : (
+                        <span className="text-sm font-semibold">{stepNumber}</span>
+                      )}
                     </div>
-                  </div>
-                </motion.button>
+                    
+                    {/* Step Label */}
+                    <div className="text-left">
+                      <div className={`
+                        text-sm font-medium transition-colors duration-300
+                        ${isActive 
+                          ? 'text-purple-400' 
+                          : isCompleted 
+                          ? 'text-green-400' 
+                          : 'text-gray-400 group-hover:text-purple-300'
+                        }
+                      `}>
+                        {stepData.label}
+                      </div>
+                    </div>
+                  </motion.button>
+                  
+                  {/* Connecting Line for Mobile */}
+                  {isNotLastStep && (
+                    <div className="flex-shrink-0 w-8 relative">
+                      <div className="h-0.5 bg-gray-700 rounded-full overflow-hidden">
+                        <motion.div
+                          className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"
+                          initial={{ width: 0 }}
+                          animate={{ 
+                            width: activeStep > stepNumber ? '100%' : '0%' 
+                          }}
+                          transition={{ duration: 0.5, ease: "easeInOut" }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </React.Fragment>
               )
             })}
           </div>

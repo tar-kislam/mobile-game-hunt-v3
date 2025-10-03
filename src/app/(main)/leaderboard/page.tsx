@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Trophy, TrendingUp, Calendar, Clock, Star, MessageCircle, Eye, Share2, Twitter, Instagram, Linkedin, Crown, Sparkles } from 'lucide-react';
+import { Trophy, TrendingUp, Calendar, Clock, Star, MessageCircle, Eye, Share2, Twitter, Instagram, Linkedin, Crown, Sparkles, ExternalLink } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import Shuffle from '@/components/Shuffle';
+import useSWR from 'swr';
+import Link from 'next/link';
 
 interface LeaderboardProduct {
   id: string;
@@ -44,7 +46,7 @@ export default function LeaderboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sharingProduct, setSharingProduct] = useState<LeaderboardProduct | null>(null);
-  const [topUsers, setTopUsers] = useState<Array<{id:string;name:string|null;image:string|null;username:string|null;rank:number;score:number;badges?:Array<{id:string;name:string;icon:string;description:string|null}>}>|null>(null)
+  const [topUsers, setTopUsers] = useState<Array<{id:string;name:string|null;image:string|null;username:string|null;rank:number;score:number;level:number;xp:number;votes:number;comments:number;follows:number;posts:number;submits:number}>|null>(null)
   useEffect(() => { (async () => {
     try {
       const res = await fetch('/api/leaderboard/users?take=5', { cache: 'no-store' })
@@ -83,6 +85,26 @@ export default function LeaderboardPage() {
     if (rank === 2) return <Trophy className="w-8 h-8 text-gray-300" />;
     if (rank === 3) return <Trophy className="w-8 h-8 text-amber-500" />;
     return <span className="text-2xl font-bold text-purple-400">#{rank}</span>;
+  };
+
+  const getUserBadges = (level: number, xp: number, score: number) => {
+    const badges = [];
+    
+    // Level badges
+    if (level >= 10) badges.push({ icon: '👑', name: 'King', color: 'text-yellow-400' });
+    else if (level >= 5) badges.push({ icon: '🏆', name: 'Champion', color: 'text-purple-400' });
+    else if (level >= 3) badges.push({ icon: '⭐', name: 'Rising Star', color: 'text-blue-400' });
+    
+    // XP badges
+    if (xp >= 1000) badges.push({ icon: '💎', name: 'Diamond', color: 'text-cyan-400' });
+    else if (xp >= 500) badges.push({ icon: '🥇', name: 'Gold', color: 'text-yellow-500' });
+    else if (xp >= 100) badges.push({ icon: '🥈', name: 'Silver', color: 'text-gray-400' });
+    
+    // Score badges
+    if (score >= 50) badges.push({ icon: '🔥', name: 'Hot', color: 'text-red-400' });
+    else if (score >= 20) badges.push({ icon: '⚡', name: 'Active', color: 'text-blue-500' });
+    
+    return badges;
   };
 
   const getRankBadgeColor = (rank: number) => {
@@ -235,28 +257,53 @@ export default function LeaderboardPage() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <div className="mb-6 flex items-end justify-center">
-            <span className="text-6xl mr-4 mb-2">🏆</span>
-            <Shuffle
-              text="Leaderboard"
-              shuffleDirection="right"
-              duration={0.35}
-              animationMode="evenodd"
-              shuffleTimes={1}
-              ease="power3.out"
-              stagger={0.03}
-              threshold={0.1}
-              loop={true}
-              loopDelay={1}
-              triggerOnce={false}
-              triggerOnHover={false}
-              respectReducedMotion={true}
-              className="text-6xl font-bold text-white"
-              tag="h1"
-            />
+          <div className="mb-6 flex items-center justify-center flex-col sm:flex-row gap-4">
+            <div className="relative">
+              <img 
+                src="/logo/logo-leaderboards.png" 
+                alt="Leaderboard Trophy"
+                className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 object-contain"
+                loading="eager"
+                decoding="async"
+              />
+            </div>
+            {/* Smooth Letter-by-Letter Animation */}
+            <motion.h1 
+              className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              {['L', 'e', 'a', 'd', 'e', 'r', 'b', 'o', 'a', 'r', 'd'].map((letter, index) => (
+                <motion.span
+                  key={index}
+                  initial={{ 
+                    opacity: 0, 
+                    y: 20,
+                    scale: 0.8
+                  }}
+                  animate={{ 
+                    opacity: 1, 
+                    y: 0,
+                    scale: 1
+                  }}
+                  transition={{ 
+                    delay: 0.1 + (index * 0.08),
+                    duration: 0.6,
+                    ease: [0.25, 0.46, 0.45, 0.94]
+                  }}
+                  className="inline-block"
+                  style={{
+                    textShadow: '0 0 20px rgba(168, 85, 247, 0.3)'
+                  }}
+                >
+                  {letter}
+                </motion.span>
+              ))}
+            </motion.h1>
           </div>
           <p 
-            className="text-lg md:text-xl font-semibold text-white max-w-2xl mx-auto"
+            className="text-sm sm:text-base md:text-lg lg:text-xl font-semibold text-white max-w-2xl mx-auto text-center px-4"
             style={{
               fontFamily: '"Underdog", cursive',
               textShadow: '0 0 10px rgba(168, 85, 247, 0.5)'
@@ -326,7 +373,7 @@ export default function LeaderboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
               {/* Left: User Leaderboard (25%) */}
               <div className="lg:col-span-1">
-                <Card className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/30 hover:shadow-purple-500/10 hover:shadow-lg transition-shadow">
+                <Card className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/30 hover:shadow-purple-500/10 hover:shadow-lg transition-shadow rounded-3xl">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-lg font-bold text-white flex items-center gap-2">🎭 Top Contributors</h3>
@@ -349,13 +396,38 @@ export default function LeaderboardPage() {
                             </div>
                             <div className="relative w-full h-2 rounded-full bg-white/10 overflow-hidden">
                               <div className="h-full bg-gradient-to-r from-purple-500 to-cyan-400 animate-[grow_1s_ease-out]" style={{ width: `${Math.min(100, (u.score / ((topUsers?.[0]?.score||1))) * 100)}%` }} />
-                              <span className="absolute inset-0 flex items-center justify-end pr-1 text-[10px] text-purple-200 transition opacity-100 group-hover:opacity-0">
-                                {Math.round(Math.min(100, (u.score / ((topUsers?.[0]?.score||1))) * 100))}%
-                              </span>
-                              <span className="absolute inset-0 flex items-center justify-end pr-1 text-[10px] text-purple-200 opacity-0 group-hover:opacity-100 transition">
+                              <span className="absolute inset-0 flex items-center justify-end pr-1 text-[10px] text-purple-200">
                                 {u.score} pts
                               </span>
                             </div>
+                            {/* Level and XP Info */}
+                            <div className="flex items-center justify-between mt-1">
+                              <div className="text-[10px] text-gray-400 flex items-center gap-1">
+                                <span className="text-yellow-400">⭐</span>
+                                <span>Lv.{u.level}</span>
+                              </div>
+                              <div className="text-[10px] text-gray-400 flex items-center gap-1">
+                                <span className="text-blue-400">⚡</span>
+                                <span>{u.xp} XP</span>
+                              </div>
+                            </div>
+                            {/* Badges */}
+                            {getUserBadges(u.level, u.xp, u.score).length > 0 && (
+                              <div className="flex items-center gap-1 mt-1">
+                                {getUserBadges(u.level, u.xp, u.score).slice(0, 3).map((badge, index) => (
+                                  <span 
+                                    key={index} 
+                                    className={`text-[10px] ${badge.color}`}
+                                    title={badge.name}
+                                  >
+                                    {badge.icon}
+                                  </span>
+                                ))}
+                                {getUserBadges(u.level, u.xp, u.score).length > 3 && (
+                                  <span className="text-[8px] text-gray-500">+{getUserBadges(u.level, u.xp, u.score).length - 3}</span>
+                                )}
+                              </div>
+                            )}
                           </div>
                           {/* Hover Mini Profile Card */}
                           <div className="absolute left-0 top-full mt-2 w-56 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-10">
@@ -367,17 +439,18 @@ export default function LeaderboardPage() {
                               <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden mb-2">
                                 <div className="h-full bg-gradient-to-r from-purple-500 to-cyan-400" style={{ width: `${Math.min(100, (u.score / ((topUsers?.[0]?.score||1))) * 100)}%` }} />
                               </div>
-                              {u.badges && u.badges.length > 0 ? (
-                                <div className="text-[11px] text-purple-200 mb-2 flex items-center gap-1 flex-wrap">
-                                  <span>Badges:</span>
-                                  {u.badges.slice(0, 5).map(badge => (
-                                    <span key={badge.id} title={badge.description || badge.name}>{badge.icon}</span>
-                                  ))}
-                                  {u.badges.length > 5 && <span className="text-purple-300">+{u.badges.length - 5}</span>}
+                              <div className="text-[11px] text-purple-200 mb-2 flex items-center gap-2">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-yellow-400">⭐</span>
+                                  <span>Level {u.level}</span>
                                 </div>
-                              ) : (
-                                <div className="text-[11px] text-purple-200/50 mb-2">No badges yet</div>
-                              )}
+                                <div className="flex items-center gap-1">
+                                  <span className="text-blue-400">⚡</span>
+                                  <span>{u.xp} XP</span>
+                                </div>
+                              </div>
+                              {/* Badges in hover card */}
+                              <UserBadgesInCard userId={u.id} />
                               <button
                                 type="button"
                                 className="text-xs text-purple-300 hover:text-purple-200 underline"
@@ -423,13 +496,17 @@ export default function LeaderboardPage() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.4, delay: index * 0.1 }}
                   >
-                    <Card className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/30 hover:border-purple-500/60 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20 hover:scale-[1.02] group">
-                      <CardContent className="p-6">
-                        <div className="flex items-center space-x-6">
+                    <Card className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/30 hover:border-purple-500/60 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20 hover:scale-[1.02] group rounded-3xl">
+                      <CardContent className="p-4 sm:p-6">
+                        <div className="flex items-center space-x-3 sm:space-x-6">
                           {/* Rank - Enhanced for top 3 */}
                           <div className="flex-shrink-0">
-                            <div className={`inline-flex items-center justify-center w-20 h-20 rounded-2xl ${getRankBadgeColor(product.rank)} shadow-lg ${getRankGlow(product.rank)} group-hover:scale-110 transition-transform duration-300 ${product.rank <= 3 ? 'animate-pulse' : ''}`}>
-                              {getRankIcon(product.rank)}
+                            <div className={`inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-3xl ${getRankBadgeColor(product.rank)} shadow-lg ${getRankGlow(product.rank)} group-hover:scale-110 transition-transform duration-300 ${product.rank <= 3 ? 'animate-pulse' : ''}`}>
+                              {product.rank <= 3 ? (
+                                <Crown className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-400" />
+                              ) : (
+                                <span className="text-lg sm:text-2xl font-bold text-purple-400">#{product.rank}</span>
+                              )}
                             </div>
                           </div>
 
@@ -439,73 +516,70 @@ export default function LeaderboardPage() {
                               <img
                                 src={product.thumbnail}
                                 alt={product.title}
-                                className="w-24 h-24 rounded-xl object-cover border-2 border-purple-500/30 group-hover:border-purple-400/60 transition-colors duration-300"
+                                className="w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-2xl object-cover border-2 border-purple-500/30 group-hover:border-purple-400/60 transition-colors duration-300"
                               />
                             ) : (
-                              <div className="w-24 h-24 bg-gradient-to-br from-slate-700 to-purple-700 rounded-xl flex items-center justify-center border-2 border-purple-500/30 group-hover:border-purple-400/60 transition-colors duration-300">
-                                <span className="text-purple-300 text-sm font-medium">No Image</span>
+                              <div className="w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-gradient-to-br from-slate-700 to-purple-700 rounded-2xl flex items-center justify-center border-2 border-purple-500/30 group-hover:border-purple-400/60 transition-colors duration-300">
+                                <span className="text-purple-300 text-xs font-medium">No Image</span>
                               </div>
                             )}
                           </div>
 
                           {/* Product Info */}
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <h3 className="text-xl font-bold text-white truncate group-hover:text-purple-300 transition-colors duration-300">
+                            {/* Mobile: Only Title */}
+                            <div className="block sm:hidden">
+                              <h3 className="text-sm font-bold text-white truncate group-hover:text-purple-300 transition-colors duration-300">
                                 {product.title}
                               </h3>
-                              <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white border-0 shadow-lg shadow-green-500/30">
-                                {product.status}
-                              </Badge>
                             </div>
                             
-                            <p className="text-purple-200 text-sm mb-3 line-clamp-2">
-                              {product.shortPitch || product.description}
-                            </p>
-
-                            {/* Platforms */}
-                            <div className="flex flex-wrap gap-2 mb-3">
-                              {product.platforms?.slice(0, 3).map((platform) => (
-                                <Badge key={platform} variant="outline" className="text-xs border-purple-500/50 text-purple-300 hover:bg-purple-500/20 transition-colors duration-300">
-                                  {platform.toUpperCase()}
-                                </Badge>
-                              ))}
-                              {product.platforms?.length > 3 && (
-                                <Badge variant="outline" className="text-xs border-purple-500/50 text-purple-300">
-                                  +{product.platforms.length - 3}
-                                </Badge>
-                              )}
-                            </div>
-
-                            {/* User Info */}
-                            <div className="flex items-center space-x-2 text-sm text-purple-300">
-                              <span>by</span>
-                              <span className="font-medium text-purple-200">
-                                {product.user.name || 'Anonymous'}
-                              </span>
-                              <span>•</span>
-                              <span>{formatDate(product.createdAt)}</span>
+                            {/* Desktop: Title + Tagline + Info */}
+                            <div className="hidden sm:block">
+                              <div className="mb-2">
+                                <Link href={`/product/${product.id}`}>
+                                  <h3 className="text-lg md:text-xl font-bold text-white truncate group-hover:text-purple-300 transition-colors duration-300 cursor-pointer hover:underline">
+                                    {product.title}
+                                  </h3>
+                                </Link>
+                                {product.tagline && (
+                                  <p className="text-sm text-gray-300 mt-1 font-normal leading-relaxed">
+                                    {product.tagline}
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           </div>
 
-                          {/* Stats */}
-                          <div className="flex-shrink-0 text-right">
-                            <div className="space-y-2 text-sm">
-                              <div className="flex items-center space-x-2 text-purple-300">
+                          {/* Stats - Modern Single Row */}
+                          <div className="flex-shrink-0">
+                            {/* Mobile: Only votes and views */}
+                            <div className="block sm:hidden">
+                              <div className="flex items-center space-x-3 text-xs">
+                                <div className="flex items-center space-x-1 bg-yellow-400/10 px-2 py-1 rounded-full">
+                                  <Star className="w-3 h-3 text-yellow-400" />
+                                  <span className="text-yellow-300 font-medium">{product.votes || 0}</span>
+                                </div>
+                                <div className="flex items-center space-x-1 bg-cyan-400/10 px-2 py-1 rounded-full">
+                                  <Eye className="w-3 h-3 text-cyan-400" />
+                                  <span className="text-cyan-300 font-medium">{product.views || 0}</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Desktop: All stats */}
+                            <div className="hidden sm:flex items-center space-x-3 text-xs text-purple-300">
+                              <div className="flex items-center space-x-1">
                                 <Star className="w-4 h-4 text-yellow-400" />
-                                <span>{product.votes || 0} votes</span>
+                                <span>{product.votes || 0}</span>
                               </div>
-                              <div className="flex items-center space-x-2 text-purple-300">
+                              <div className="flex items-center space-x-1">
                                 <MessageCircle className="w-4 h-4 text-blue-400" />
-                                <span>{product.comments || 0} comments</span>
+                                <span>{product.comments || 0}</span>
                               </div>
-                              <div className="flex items-center space-x-2 text-purple-300">
-                                <TrendingUp className="w-4 h-4 text-green-400" />
-                                <span>{product.follows || 0} follows</span>
-                              </div>
-                              <div className="flex items-center space-x-2 text-purple-300">
+                              <div className="flex items-center space-x-1">
                                 <Eye className="w-4 h-4 text-cyan-400" />
-                                <span>{product.views || 0} views</span>
+                                <span>{product.views || 0}</span>
                               </div>
                             </div>
                           </div>
@@ -517,10 +591,9 @@ export default function LeaderboardPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setSharingProduct(sharingProduct?.id === product.id ? null : product)}
-                                className="border-purple-500/50 text-purple-300 hover:bg-purple-500/20 hover:border-purple-400/60 transition-all duration-300"
+                                className="border-purple-500/30 text-purple-300 hover:bg-purple-500/20 hover:border-purple-400/60 transition-all duration-300 h-8 w-8 p-0 bg-purple-500/5 backdrop-blur-sm"
                               >
-                                <Share2 className="w-4 h-4 mr-2" />
-                                Share
+                                <Share2 className="w-3 h-3 sm:w-4 sm:h-4" />
                               </Button>
                               
                               {/* Share Dropdown */}
@@ -591,4 +664,35 @@ export default function LeaderboardPage() {
       </div>
     </div>
   );
+}
+
+// Component to show user badges in leaderboard hover card
+function UserBadgesInCard({ userId }: { userId: string }) {
+  const fetcher = (url: string) => fetch(url).then(r => r.json())
+  const { data: userBadges } = useSWR(`/api/user/${userId}/badges`, fetcher)
+  
+  if (!userBadges || userBadges.length === 0) return null
+  
+  // Filter only completed badges
+  const completedBadges = userBadges.filter((badge: any) => {
+    const isCompleted = badge.isCompleted || (!badge.locked && badge.progress?.pct >= 100)
+    return isCompleted
+  })
+  
+  if (completedBadges.length === 0) return null
+  
+  return (
+    <div className="text-[10px] text-purple-200 mb-2 flex items-center gap-1 flex-wrap">
+      <span>Badges:</span>
+      {completedBadges.map((badge: any, index: number) => (
+        <span 
+          key={index} 
+          className="text-sm"
+          title={`${badge.title}: ${badge.description}`}
+        >
+          {badge.emoji}
+        </span>
+      ))}
+    </div>
+  )
 }

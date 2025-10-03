@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { calculateLevelProgress } from '@/lib/xpCalculator'
 
 export async function GET(req: NextRequest) {
   try {
@@ -48,18 +49,8 @@ export async function GET(req: NextRequest) {
         name: true, 
         image: true, 
         username: true,
-        badges: {
-          select: {
-            badge: {
-              select: {
-                id: true,
-                name: true,
-                icon: true,
-                description: true
-              }
-            }
-          }
-        }
+        level: true,
+        xp: true
       }
     })
     const infoMap = new Map(userInfos.map(u => [u.id, u]))
@@ -67,19 +58,23 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       users: users.map((u, i) => {
         const userInfo = infoMap.get(u.userId);
+        const userXP = userInfo?.xp || 0;
+        const calculatedLevel = calculateLevelProgress(userXP).level;
+        
         return {
           rank: i + 1,
           id: u.userId,
           name: userInfo?.name || 'Anonymous',
           image: userInfo?.image || null,
           username: userInfo?.username || null,
+          level: calculatedLevel, // Use calculated level from XP
+          xp: userXP,
           score: u.score,
           votes: u.votes,
           comments: u.comments,
           follows: u.follows,
           posts: u.posts,
-          submits: u.submits,
-          badges: userInfo?.badges?.map(ub => ub.badge) || []
+          submits: u.submits
         };
       })
     })

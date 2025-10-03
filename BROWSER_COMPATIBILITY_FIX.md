@@ -249,3 +249,4 @@ Mobile'da fixed `40px` kullanıyoruz. Bu kasıtlı (Safari uyumluluğu için).
 **Test Edilen**: Safari 17.x, Chrome 131.x, Firefox 133.x, Opera 116.x
 **Durum**: ✅ Çözüldü ve Production Ready
 
+

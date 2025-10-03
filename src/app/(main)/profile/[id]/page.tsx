@@ -294,7 +294,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                     </div>
                   )
                 },
-                ...(badgesData?.badges || []).map((badge: any) => ({
+                ...(badgesData || []).map((badge: any) => ({
                   id: `badge-${badge.type}`,
                   className: 'col-span-1',
                   children: (

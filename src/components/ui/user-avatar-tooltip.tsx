@@ -135,7 +135,12 @@ export function UserAvatarTooltip({
               <div className="space-y-2">
                 <div className="text-xs text-gray-400 font-medium">Earned Badges</div>
                 <div className="flex items-center gap-2 flex-wrap overflow-visible">
-                  {userBadges.map((badge: any) => {
+                  {userBadges
+                    .filter((badge: any) => {
+                      const isCompleted = badge.isCompleted || (!badge.locked && badge.progress?.pct >= 100)
+                      return isCompleted
+                    })
+                    .map((badge: any) => {
                     const isCompleted = badge.isCompleted || (!badge.locked && badge.progress?.pct >= 100)
                     
                     return (

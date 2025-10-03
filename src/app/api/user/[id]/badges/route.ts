@@ -211,10 +211,20 @@ export async function GET(
       }
     })
 
-    // Return only unlocked badges
-    const unlockedBadges = badges.filter(badge => !badge.locked)
+    // Sort badges: completed first (by unlock date desc), then locked badges
+    const sortedBadges = badges.sort((a, b) => {
+      // If both are unlocked, sort by unlock date (most recent first)
+      if (!a.locked && !b.locked) {
+        return new Date(b.unlockedAt || 0).getTime() - new Date(a.unlockedAt || 0).getTime()
+      }
+      // If only one is unlocked, unlocked comes first
+      if (!a.locked && b.locked) return -1
+      if (a.locked && !b.locked) return 1
+      // If both are locked, maintain original order
+      return 0
+    })
 
-    return NextResponse.json(unlockedBadges)
+    return NextResponse.json(sortedBadges)
   } catch (error) {
     console.error('[USER BADGES API] Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

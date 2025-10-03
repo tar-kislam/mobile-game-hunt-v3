@@ -269,7 +269,7 @@ export default function UsernameProfilePage({ params }: UsernameProfileProps) {
               <h2 className="text-2xl font-bold text-white">Badges</h2>
               <p className="text-muted-foreground">Achievements and progress</p>
             </div>
-            <BadgesGrid />
+            <BadgesGrid userId={profileData?.id} />
           </div>
 
           {/* User Recommendations */}
