@@ -128,6 +128,29 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         (session.user as any).id = token.id as string || token.sub as string
         (session.user as any).role = token.role as string
+        
+        // Fetch fresh user data from database
+        try {
+          const user = await prisma.user.findUnique({
+            where: { id: token.id as string || token.sub as string },
+            select: { 
+              id: true, 
+              name: true, 
+              email: true, 
+              image: true, 
+              username: true 
+            }
+          })
+          
+          if (user) {
+            session.user.name = user.name
+            session.user.email = user.email
+            session.user.image = user.image
+            ;(session.user as any).username = user.username
+          }
+        } catch (error) {
+          console.error('Error fetching user data in session callback:', error)
+        }
       }
       return session
     },

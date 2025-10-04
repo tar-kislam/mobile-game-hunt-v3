@@ -380,7 +380,7 @@ export function CTASection() {
                     <IoPeople />
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-white mb-1">10k+</div>
+                <div className="text-2xl font-bold text-white mb-1">1k+</div>
                 <div className="text-sm text-gray-400">Community Members</div>
               </div>
 

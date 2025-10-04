@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Progress } from "@/components/ui/progress"
 import { UserBadges, LevelBadge } from "@/components/ui/user-badges"
 import { Trophy } from "lucide-react"
+import { getBadgeIconPath } from "@/lib/badgeIconMapper"
 import Link from "next/link"
 import useSWR from 'swr'
 import { useSession } from 'next-auth/react'
@@ -153,7 +154,14 @@ export function UserAvatarTooltip({
                         }`}
                         title={`${badge.title}: ${badge.description}`}
                       >
-                        <span className={`text-sm ${isCompleted ? 'scale-110 drop-shadow-[0_0_8px_rgba(255,215,0,0.6),0_2px_4px_rgba(0,0,0,0.3)]' : ''}`}>{badge.emoji}</span>
+                        <img
+                       src={badge.code ? getBadgeIconPath(badge.code) : '/badges/default.svg'}
+                       alt={badge.title}
+                       className={`w-5 h-5 object-contain ${isCompleted ? 'scale-110 drop-shadow-[0_0_8px_rgba(255,215,0,0.6),0_2px_4px_rgba(0,0,0,0.3)]' : ''}`}
+                       onError={(e) => {
+                         e.currentTarget.src = '/badges/default.svg'
+                       }}
+                     />
                         {/* Badge tooltip */}
                         <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900/95 backdrop-blur-sm border border-gray-600 rounded-lg text-white text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-[99999] shadow-2xl">
                           <div className="font-semibold">{badge.title}</div>

@@ -3,6 +3,7 @@
 import { Card } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Lock, ShieldCheck, Check, Trophy } from "lucide-react"
+import { getBadgeIconPath } from "@/lib/badgeIconMapper"
 
 type Props = {
   title: string
@@ -46,9 +47,18 @@ export function BadgeCard({ title, emoji, description, progress, xp, locked, cla
         {/* Top */}
         <div className="space-y-3">
           <div className="flex items-start justify-between">
-            <span className={`text-3xl md:text-4xl transition-transform duration-300 drop-shadow-[0_0_8px_rgba(255,215,0,0.6),0_2px_4px_rgba(0,0,0,0.3)] ${
+            <div className={`w-12 h-12 md:w-16 md:h-16 transition-transform duration-300 drop-shadow-[0_0_8px_rgba(255,215,0,0.6),0_2px_4px_rgba(0,0,0,0.3)] ${
               isCompletedBadge ? 'scale-110' : ''
-            }`}>{emoji}</span>
+            }`}>
+              <img
+                src={badgeCode ? getBadgeIconPath(badgeCode) : '/badges/default.svg'}
+                alt={title}
+                className="w-full h-full object-contain"
+                onError={(e) => {
+                  e.currentTarget.src = '/badges/default.svg'
+                }}
+              />
+            </div>
             {locked ? (
               <Lock className="h-5 w-5 text-white/40" />
             ) : isCompletedBadge ? (

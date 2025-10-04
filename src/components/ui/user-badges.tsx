@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { getBadgeIconPath } from "@/lib/badgeIconMapper"
 import { 
   Trophy, 
   Target, 
@@ -104,7 +105,14 @@ export function UserBadge({ badge, className = "", isCompleted = false }: UserBa
               ? 'bg-gradient-to-br from-[#1a1a1a]/70 to-[#2c2c2c]/70 backdrop-blur-[10px] border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_0_20px_rgba(147,51,234,0.3)] hover:border-purple-400/30' 
               : 'bg-gray-800/80 border border-gray-600 hover:border-gray-500'
           } ${className}`}>
-            <span className={`text-sm ${isCompleted ? 'scale-110 drop-shadow-[0_0_8px_rgba(255,215,0,0.6),0_2px_4px_rgba(0,0,0,0.3)]' : ''}`}>{badgeInfo.emoji}</span>
+            <img
+              src={getBadgeIconPath(badge)}
+              alt={badgeInfo.name}
+              className={`w-5 h-5 object-contain ${isCompleted ? 'scale-110 drop-shadow-[0_0_8px_rgba(255,215,0,0.6),0_2px_4px_rgba(0,0,0,0.3)]' : ''}`}
+              onError={(e) => {
+                e.currentTarget.src = '/badges/default.svg'
+              }}
+            />
           </div>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="bg-gray-900 border-gray-700 text-white z-[9999]">

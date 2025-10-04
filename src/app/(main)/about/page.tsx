@@ -126,9 +126,9 @@ export default function AboutPage() {
             <div className="rounded-2xl bg-gradient-to-br from-purple-600/20 via-purple-500/10 to-transparent border border-purple-500/30 p-8 shadow-[0_0_30px_rgba(168,85,247,0.3)] hover:shadow-[0_0_40px_rgba(168,85,247,0.5)] transition-all duration-300 transform hover:scale-105">
               <div className="text-center space-y-4">
                 <div className="text-5xl font-bold text-purple-400">
-                  <ShinyText>10K+</ShinyText>
+                  <ShinyText>100+</ShinyText>
                 </div>
-                <p className="text-gray-300">Games Discovered</p>
+                <p className="text-gray-300">Curated Games</p>
               </div>
             </div>
           </div>
@@ -449,25 +449,25 @@ export default function AboutPage() {
           <div className="pt-12 flex flex-wrap justify-center gap-8 md:gap-12 text-center">
             <div className="space-y-1">
               <div className="text-3xl font-bold text-purple-400">
-                <ShinyText>50K+</ShinyText>
+                <ShinyText>1K+</ShinyText>
               </div>
-              <p className="text-sm text-gray-400">Active Users</p>
+              <p className="text-sm text-gray-400">Community Members</p>
             </div>
             <div className="space-y-1">
               <div className="text-3xl font-bold text-purple-400">
-                <ShinyText>10K+</ShinyText>
+                <ShinyText>100+</ShinyText>
               </div>
-              <p className="text-sm text-gray-400">Games Listed</p>
+              <p className="text-sm text-gray-400">Curated Games</p>
             </div>
             <div className="space-y-1">
               <div className="text-3xl font-bold text-purple-400">
-                <ShinyText>1M+</ShinyText>
+                <ShinyText>250+</ShinyText>
               </div>
-              <p className="text-sm text-gray-400">Community Votes</p>
+              <p className="text-sm text-gray-400">User Reviews</p>
             </div>
             <div className="space-y-1">
               <div className="text-3xl font-bold text-purple-400">
-                <ShinyText>500+</ShinyText>
+                <ShinyText>50+</ShinyText>
               </div>
               <p className="text-sm text-gray-400">Daily Submissions</p>
             </div>

@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Shuffle from '@/components/Shuffle';
 import useSWR from 'swr';
 import Link from 'next/link';
+import { getBadgeIconPath } from "@/lib/badgeIconMapper";
 
 interface LeaderboardProduct {
   id: string;
@@ -94,7 +95,7 @@ export default function LeaderboardPage() {
     // Level badges
     if (level >= 10) badges.push({ icon: '👑', name: 'King', color: 'text-yellow-400' });
     else if (level >= 5) badges.push({ icon: '🏆', name: 'Champion', color: 'text-purple-400' });
-    else if (level >= 3) badges.push({ icon: '⭐', name: 'Rising Star', color: 'text-blue-400' });
+    else if (level >= 3) badges.push({ icon: '🏆', name: 'Rising Star', color: 'text-blue-400' });
     
     // XP badges
     if (xp >= 1000) badges.push({ icon: '💎', name: 'Diamond', color: 'text-cyan-400' });
@@ -377,7 +378,7 @@ export default function LeaderboardPage() {
                 <Card className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/30 hover:shadow-purple-500/10 hover:shadow-lg transition-shadow rounded-3xl">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-lg font-bold text-white flex items-center gap-2">🎭 Top Contributors</h3>
+                      <h3 className="text-lg font-bold text-white flex items-center gap-2">Top Contributors</h3>
                       <span className="text-xs text-purple-300">Last 30 days</span>
                     </div>
                     <div className="space-y-2">
@@ -397,7 +398,7 @@ export default function LeaderboardPage() {
                             </div>
                             <div className="relative w-full h-2 rounded-full bg-white/10 overflow-hidden">
                               <div className="h-full bg-gradient-to-r from-purple-500 to-cyan-400 animate-[grow_1s_ease-out]" style={{ width: `${Math.min(100, (u.score / ((topUsers?.[0]?.score||1))) * 100)}%` }} />
-                              <span className="absolute inset-0 flex items-center justify-end pr-1 text-[10px] text-purple-200">
+                              <span className="absolute inset-0 flex items-center justify-end pr-1 text-[10px] text-purple-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                 {u.score} pts
                               </span>
                             </div>
@@ -691,7 +692,14 @@ function UserBadgesInCard({ userId }: { userId: string }) {
           className="text-sm"
           title={`${badge.title}: ${badge.description}`}
         >
-          {badge.emoji}
+          <img
+            src={badge.code ? getBadgeIconPath(badge.code) : '/badges/default.svg'}
+            alt={badge.title}
+            className="w-4 h-4 object-contain"
+            onError={(e) => {
+              e.currentTarget.src = '/badges/default.svg'
+            }}
+          />
         </span>
       ))}
     </div>

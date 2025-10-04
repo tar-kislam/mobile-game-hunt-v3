@@ -34,7 +34,11 @@ interface FeedItem {
   productTitle?: string
 }
 
-export function Feed() {
+interface FeedProps {
+  filter?: { type: string; value: string } | null
+}
+
+export function Feed({ filter }: FeedProps) {
   const { data: session } = useSession()
   const [feedItems, setFeedItems] = useState<FeedItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -46,7 +50,15 @@ export function Feed() {
 
     setLoading(true)
     try {
-      const response = await fetch(`/api/feed?page=${pageNum}&limit=10`)
+      const filterParams = new URLSearchParams()
+      if (filter) {
+        filterParams.append('filterType', filter.type)
+        filterParams.append('filterValue', filter.value)
+      }
+      filterParams.append('page', pageNum.toString())
+      filterParams.append('limit', '10')
+
+      const response = await fetch(`/api/feed?${filterParams.toString()}`)
       const data = await response.json()
       
       if (data.feed) {
@@ -71,8 +83,10 @@ export function Feed() {
   }
 
   useEffect(() => {
-    fetchFeed()
-  }, [session?.user?.id])
+    setPage(1)
+    setFeedItems([])
+    fetchFeed(1, false)
+  }, [session?.user?.id, filter])
 
   if (!session?.user?.id) {
     return (

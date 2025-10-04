@@ -1,10 +1,22 @@
 "use client"
 
+import { useState } from 'react'
 import { Feed } from '@/components/social/Feed'
+import { FeedSidebar } from '@/components/feed/FeedSidebar'
 import Galaxy from '@/components/Galaxy'
 import Shuffle from '@/components/Shuffle'
 
 export default function FeedPage() {
+  const [activeFilter, setActiveFilter] = useState<{ type: string; value: string } | null>(null)
+
+  const handleFilterChange = (filterType: string, filterValue: string | null) => {
+    if (filterValue) {
+      setActiveFilter({ type: filterType, value: filterValue })
+    } else {
+      setActiveFilter(null)
+    }
+  }
+
   return (
     <div className="relative w-full min-h-screen overflow-hidden">
       <div className="absolute inset-0 z-0">
@@ -58,7 +70,21 @@ export default function FeedPage() {
           </p>
         </div>
 
-        <Feed />
+        {/* Main Content Layout */}
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar - Mobile: Full width, Desktop: 35% width */}
+          <div className="w-full lg:w-[35%]">
+            <FeedSidebar 
+              onFilterChange={handleFilterChange}
+              activeFilter={activeFilter}
+            />
+          </div>
+
+          {/* Feed Content - Mobile: Full width, Desktop: 65% width */}
+          <div className="w-full lg:w-[65%]">
+            <Feed filter={activeFilter} />
+          </div>
+        </div>
       </div>
     </div>
   )

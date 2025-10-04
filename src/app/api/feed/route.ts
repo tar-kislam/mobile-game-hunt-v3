@@ -15,6 +15,8 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const skip = (page - 1) * limit;
+    const filterType = searchParams.get('filterType');
+    const filterValue = searchParams.get('filterValue');
 
     // Get users that the current user follows
     const following = await prisma.follow.findMany({
@@ -24,12 +26,27 @@ export async function GET(request: NextRequest) {
 
     const followingIds = following.map(f => f.followingId);
 
+    // Build base where clause for filtering
+    let baseWhereClause: any = {
+      status: 'PUBLISHED'
+    };
+
+    // Apply filters
+    if (filterType && filterValue) {
+      switch (filterType) {
+        case 'game':
+          baseWhereClause.id = filterValue;
+          break;
+        case 'user':
+          baseWhereClause.userId = filterValue;
+          break;
+      }
+    }
+
     if (followingIds.length === 0) {
       // If user follows no one, show popular games
       const popularGames = await prisma.product.findMany({
-        where: {
-          status: 'PUBLISHED'
-        },
+        where: baseWhereClause,
         select: {
           id: true,
           title: true,
@@ -87,11 +104,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Get recent games from followed users
+    const feedGamesWhere = filterType && filterValue ? baseWhereClause : {
+      userId: { in: followingIds },
+      ...baseWhereClause
+    };
+    
     const feedGames = await prisma.product.findMany({
-      where: {
-        userId: { in: followingIds },
-        status: 'PUBLISHED'
-      },
+      where: feedGamesWhere,
       select: {
         id: true,
         title: true,
