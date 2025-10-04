@@ -240,7 +240,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
             href="/notifications" 
             className="p-3 text-center text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
           >
-            View all notifications
+            Notifications
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>

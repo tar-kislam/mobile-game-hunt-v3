@@ -103,7 +103,7 @@ export function EpicFeaturedGames({ games, onGameClick }: EpicFeaturedGamesProps
         </h2>
         {games.length > 6 && (
           <Link href="/leaderboard" className="text-sm text-purple-300 hover:text-purple-200 underline">
-            View all
+            Explore All Games
           </Link>
         )}
       </div>

@@ -520,7 +520,7 @@ export default function HomePage() {
     <>
       <Head>
         <title>Mobile Game Hunt - Discover the Best Mobile Games</title>
-        <meta name="description" content="Discover and showcase the best mobile games and apps. Connect with developers, share your favorites, and stay updated with the latest releases in mobile gaming." />
+        <meta name="description" content="Discover and showcase the best mobile games. Connect with developers, share your favorites and stay updated with the latest releases in mobile gaming." />
         <meta name="keywords" content="mobile games, app discovery, game reviews, mobile gaming, indie games, game developers" />
         <link rel="canonical" href={process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'} />
       </Head>
@@ -686,7 +686,7 @@ export default function HomePage() {
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold text-lg">Top Rated Games</h3>
                       <Button variant="ghost" size="sm" asChild className="h-auto py-0 px-2 text-xs">
-                        <Link href="/products?filter=top-rated">View all</Link>
+                        <Link href="/products?filter=top-rated" rel="nofollow">Browse Top Rated Games</Link>
                       </Button>
                     </div>
                     {!topRatedData ? (
