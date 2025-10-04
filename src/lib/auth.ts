@@ -101,13 +101,6 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
-  events: {
-    async createUser({ user }) {
-      // This event is triggered when a new user is created
-      // The username should already be set in the signIn callback
-      console.log(`[NextAuth] New user created: ${user.email}`)
-    },
-  },
   callbacks: {
     async signIn({ user, account, profile }) {
       try {
@@ -153,7 +146,8 @@ export const authOptions: NextAuthOptions = {
           })
 
           if (!existingUser || !existingUser.username) {
-            const githubName = profile.name || profile.login || user.name || user.email?.split('@')[0] || 'user'
+            const githubProfile = profile as any // Cast to any to access GitHub-specific properties
+            const githubName = githubProfile.name || githubProfile.login || user.name || user.email?.split('@')[0] || 'user'
             
             try {
               const username = await generateUniqueUsername(githubName)
@@ -232,6 +226,10 @@ export const authOptions: NextAuthOptions = {
   },
   events: {
     async createUser({ user }) {
+      // This event is triggered when a new user is created
+      // The username should already be set in the signIn callback
+      console.log(`[NextAuth] New user created: ${user.email}`)
+      
       // Check for Pioneer badge eligibility when user is created
       try {
         const { checkAndAwardBadges } = await import('@/lib/badgeService')

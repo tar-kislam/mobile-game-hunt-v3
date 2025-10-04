@@ -14,6 +14,7 @@ const mockGames: FeaturedGame[] = [
   {
     id: 'game-1',
     title: 'Editorial Override Game',
+    slug: 'editorial-override-game',
     upvotes: 50,
     comments: 20,
     rating: 4.5,
@@ -24,6 +25,7 @@ const mockGames: FeaturedGame[] = [
   {
     id: 'game-2',
     title: 'High Performance Game',
+    slug: 'high-performance-game',
     upvotes: 200,
     comments: 150,
     rating: 4.8,
@@ -34,6 +36,7 @@ const mockGames: FeaturedGame[] = [
   {
     id: 'game-3',
     title: 'Popular Game',
+    slug: 'popular-game',
     upvotes: 300,
     comments: 100,
     rating: 4.2,
@@ -44,6 +47,7 @@ const mockGames: FeaturedGame[] = [
   {
     id: 'game-4',
     title: 'Recent Release',
+    slug: 'recent-release',
     upvotes: 80,
     comments: 30,
     rating: 4.0,
@@ -54,6 +58,7 @@ const mockGames: FeaturedGame[] = [
   {
     id: 'game-5',
     title: 'Low Performance Game',
+    slug: 'low-performance-game',
     upvotes: 10,
     comments: 5,
     rating: 3.0,
@@ -64,6 +69,7 @@ const mockGames: FeaturedGame[] = [
   {
     id: 'game-6',
     title: 'Editorial Boosted Game',
+    slug: 'editorial-boosted-game',
     upvotes: 120,
     comments: 80,
     rating: 4.1,
@@ -74,6 +80,7 @@ const mockGames: FeaturedGame[] = [
   {
     id: 'game-7',
     title: 'High Rating Game',
+    slug: 'high-rating-game',
     upvotes: 90,
     comments: 40,
     rating: 4.9,
@@ -84,6 +91,7 @@ const mockGames: FeaturedGame[] = [
   {
     id: 'game-8',
     title: 'Average Game',
+    slug: 'average-game',
     upvotes: 60,
     comments: 25,
     rating: 3.8,
@@ -94,6 +102,7 @@ const mockGames: FeaturedGame[] = [
   {
     id: 'game-9',
     title: 'Another Editorial Override',
+    slug: 'another-editorial-override',
     upvotes: 30,
     comments: 15,
     rating: 3.5,
@@ -104,6 +113,7 @@ const mockGames: FeaturedGame[] = [
   {
     id: 'game-10',
     title: 'Older Game',
+    slug: 'older-game',
     upvotes: 150,
     comments: 90,
     rating: 4.3,

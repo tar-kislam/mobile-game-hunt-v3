@@ -114,6 +114,10 @@ export default withAuth(
           pathname.startsWith('/api/user') ||
           pathname.startsWith('/product') ||       // Added product detail pages
           pathname.startsWith('/user/') ||        // Allow username-based profile pages
+          pathname.startsWith('/advertise') ||     // Allow advertise pages
+          pathname.startsWith('/community') ||    // Allow community pages
+          pathname.startsWith('/about') ||        // Allow about page
+          pathname.startsWith('/calendar') ||     // Allow calendar page
           pathname.match(/^\/[^\/]+\/public$/) || // Allow /[username]/public routes (legacy)
           pathname.match(/^\/[^\/]+$/) ||          // Allow single-segment usernames
           pathname.startsWith('/profile/') ||     // Allow old profile routes for backward compatibility
