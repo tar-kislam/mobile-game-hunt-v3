@@ -42,7 +42,7 @@ export default function MagicBento({
   return (
     <div
       className={
-        "grid grid-cols-1 md:grid-cols-3 gap-4 relative auto-rows-[140px] md:auto-rows-[220px] " +
+        "grid grid-cols-1 md:grid-cols-3 gap-4 relative auto-rows-[minmax(140px,auto)] md:auto-rows-[minmax(220px,auto)] " +
         (className || "")
       }
       {...rest}

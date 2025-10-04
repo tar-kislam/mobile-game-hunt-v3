@@ -16,13 +16,16 @@ import {
   GamepadIcon,
   TrophyIcon,
   UserIcon,
-  StarIcon
+  StarIcon,
+  ArrowLeftIcon
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import useSWR from 'swr'
 import MagicBento from '@/components/ui/magic-bento'
 import { format } from "date-fns"
 import { BadgeCard } from "@/components/badges/BadgeCard"
+import { Header } from "@/components/layout/header"
+import { FollowButton } from "@/components/ui/follow-button"
 
 interface ProfilePageProps {
   params: Promise<{ username: string }>
@@ -115,10 +118,13 @@ export default function ProfilePage({ params }: ProfilePageProps) {
 
   if (status === "loading" || !resolvedParams) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading profile...</p>
+      <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]">
+        <Header />
+        <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading profile...</p>
+          </div>
         </div>
       </div>
     )
@@ -126,34 +132,54 @@ export default function ProfilePage({ params }: ProfilePageProps) {
 
   if (userError || !userData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)] flex items-center justify-center">
-        <Card className="w-full max-w-md rounded-2xl shadow-lg border-white/10">
-          <CardHeader className="p-4 text-center">
-            <CardTitle>User Not Found</CardTitle>
-            <CardDescription>
-              The user @{resolvedParams.username} doesn't exist or has been removed.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-4 pt-0 space-y-3">
-            <Button asChild className="w-full rounded-2xl">
-              <Link href="/">Back to Home</Link>
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]">
+        <Header />
+        <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+          <Card className="w-full max-w-md rounded-2xl shadow-lg border-white/10">
+            <CardHeader className="p-4 text-center">
+              <CardTitle>User Not Found</CardTitle>
+              <CardDescription>
+                The user @{resolvedParams.username} doesn't exist or has been removed.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 space-y-3">
+              <Button asChild className="w-full rounded-2xl">
+                <Link href="/">Back to Home</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }
 
-  // Calculate XP progress
+  // Use XP data from API (already calculated correctly)
   const currentLevel = xpData?.level || 1
-  const currentXP = xpData?.xp || 0
-  const nextLevelXP = currentLevel * 100
-  const currentLevelXP = (currentLevel - 1) * 100
-  const xpProgress = ((currentXP - currentLevelXP) / 100) * 100
-  const xpToNextLevel = nextLevelXP - currentXP
+  const currentXP = xpData?.currentXP || 0
+  const requiredXP = xpData?.requiredXP || 100
+  const xpProgress = xpData?.xpProgress || 0
+  const xpToNextLevel = xpData?.remainingXP || 100
+  const totalXP = xpData?.xp || 0
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]">
+      <Header />
+      
+      {/* Minimal Glass Back Button */}
+      <div className="fixed top-20 left-4 z-40">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="backdrop-blur-md bg-white/10 border border-white/20 hover:bg-white/20 text-white hover:text-white transition-all duration-200 rounded-full px-3 py-2"
+        >
+          <Link href="/" className="flex items-center gap-2">
+            <ArrowLeftIcon className="h-4 w-4" />
+            <span className="text-sm font-medium">Back</span>
+          </Link>
+        </Button>
+      </div>
+      
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Magic Bento - Profile Header */}
@@ -216,7 +242,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-gray-300">Experience Points</span>
                           <span className="text-purple-300 font-medium">
-                            {currentXP} / {nextLevelXP} XP
+                            {currentXP} / {requiredXP} XP
                           </span>
                         </div>
                         <Progress 
@@ -256,18 +282,28 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                   )
                 },
                 {
-                  id: 'back',
+                  id: 'follow',
                   className: 'row-span-1',
                   children: (
-                    <Link href="/" className="block">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-lg font-semibold">Back to Home</div>
-                          <div className="text-sm text-muted-foreground">Return to the main page</div>
-                        </div>
-                        <ArrowUpIcon className="h-5 w-5 text-emerald-300 rotate-180" />
-                      </div>
-                    </Link>
+                    <div className="flex items-center justify-center h-full">
+                      {session?.user?.id === userData.id ? (
+                        <Link href="/dashboard" className="block w-full">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="text-lg font-semibold">Dashboard</div>
+                              <div className="text-sm text-muted-foreground">Manage your games</div>
+                            </div>
+                            <UserIcon className="h-5 w-5 text-purple-300" />
+                          </div>
+                        </Link>
+                      ) : (
+                        <FollowButton 
+                          username={userData.username}
+                          userDisplayName={userData.name || userData.username}
+                          className="w-full"
+                        />
+                      )}
+                    </div>
                   )
                 },
                 {
@@ -290,42 +326,59 @@ export default function ProfilePage({ params }: ProfilePageProps) {
           </div>
 
           {/* Magic Bento - Badges & Progress */}
-          <div className="mb-8">
-            <MagicBento
-              enableTilt
-              enableSpotlight
-              enableStars
-              enableBorderGlow
-              glowColor="132, 0, 255"
-              items={[
-                {
-                  id: 'badges-header',
-                  className: 'col-span-full',
-                  children: (
-                    <div className="text-center space-y-2">
-                      <h2 className="text-2xl font-bold text-white">Badges</h2>
-                      <p className="text-muted-foreground">Achievements and progress</p>
-                    </div>
-                  )
-                },
-                ...(badgesData || []).map((badge: any) => ({
-                  id: `badge-${badge.type}`,
-                  className: 'col-span-1',
-                  children: (
-                    <BadgeCard
-                      title={badge.title}
-                      emoji={badge.emoji}
-                      description={badge.description}
-                      progress={badge.progress}
-                      xp={badge.xp}
-                      locked={badge.locked}
-                      claimable={badge.claimable}
-                      badgeCode={badge.code}
-                    />
-                  )
-                }))
-              ]}
-            />
+          <div className="mb-8 overflow-hidden">
+            {(() => {
+              const earnedBadges = (badgesData || []).filter((badge: any) => !badge.locked)
+              
+              if (earnedBadges.length === 0) {
+                return (
+                  <Card className="rounded-2xl shadow-soft">
+                    <CardContent className="p-8 text-center">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center">
+                          <TrophyIcon className="h-8 w-8 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">No badges earned yet</h3>
+                          <p className="text-muted-foreground">
+                            {(userData.name || userData.username)} hasn't earned any badges yet.
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              }
+              
+              return (
+                <MagicBento
+                  className="min-h-fit w-full grid-cols-1 md:grid-cols-4"
+                  enableTilt
+                  enableSpotlight
+                  enableStars
+                  enableBorderGlow
+                  glowColor="132, 0, 255"
+                  items={[
+                    ...earnedBadges.map((badge: any) => ({
+                      id: `badge-${badge.type}`,
+                      className: 'col-span-1',
+                      children: (
+                        <BadgeCard
+                          title={badge.title}
+                          emoji={badge.emoji}
+                          description={badge.description}
+                          progress={badge.progress}
+                          xp={badge.xp}
+                          locked={badge.locked}
+                          claimable={badge.claimable}
+                          badgeCode={badge.code}
+                        />
+                      )
+                    }))
+                  ]}
+                />
+              )
+            })()}
           </div>
 
           {/* Profile Tabs */}
@@ -498,7 +551,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                   <CardContent className="space-y-4">
                     <div className="text-center">
                       <div className="text-3xl font-bold text-purple-300">Level {currentLevel}</div>
-                      <div className="text-sm text-muted-foreground">{currentXP} Total XP</div>
+                      <div className="text-sm text-muted-foreground">{totalXP} Total XP</div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">

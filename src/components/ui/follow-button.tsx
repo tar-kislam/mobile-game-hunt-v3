@@ -165,49 +165,78 @@ export function FollowButton({ userId, username, className, userDisplayName, onF
 
   return (
     <motion.div
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className="relative"
     >
+      {/* Outer glow ring */}
+      <motion.div
+        className="absolute -inset-1 rounded-full opacity-0"
+        animate={{
+          background: isFollowing 
+            ? 'linear-gradient(45deg, rgba(168, 85, 247, 0.4), rgba(236, 72, 153, 0.4))'
+            : 'linear-gradient(45deg, rgba(168, 85, 247, 0.6), rgba(6, 182, 212, 0.6))'
+        }}
+        whileHover={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      />
+      
       <Button
         onClick={handleFollowToggle}
         disabled={loading}
-        variant={isFollowing ? "outline" : "default"}
+        variant="ghost"
         className={`
+          relative overflow-hidden rounded-full px-8 py-4 h-auto
+          backdrop-blur-md border border-white/20
           ${isFollowing 
-            ? 'border-purple-500/50 text-purple-400 hover:bg-purple-500/10 hover:border-purple-400/70 hover:text-purple-300 bg-purple-500/5' 
-            : 'bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white border-0 hover:shadow-lg hover:shadow-purple-500/25'
+            ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 hover:from-purple-500/30 hover:to-pink-500/30 text-purple-300 hover:text-purple-200' 
+            : 'bg-gradient-to-r from-purple-600/30 to-cyan-600/30 hover:from-purple-600/40 hover:to-cyan-600/40 text-white hover:text-white'
           }
-          transition-all duration-300 shadow-lg hover:shadow-xl
-          relative overflow-hidden min-w-[120px]
+          transition-all duration-300 ease-out
+          hover:shadow-2xl hover:shadow-purple-500/25
+          hover:border-white/30
+          min-w-[140px] font-semibold text-base
           ${className}
         `}
       >
-        {/* Glow effect overlay */}
+        {/* Animated background particles */}
         <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-purple-400/20 to-cyan-400/20 opacity-0"
-          whileHover={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
+          className="absolute inset-0 rounded-full"
+          animate={{
+            background: isFollowing 
+              ? 'radial-gradient(circle at 30% 20%, rgba(168, 85, 247, 0.1) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 50%)'
+              : 'radial-gradient(circle at 30% 20%, rgba(168, 85, 247, 0.15) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(6, 182, 212, 0.15) 0%, transparent 50%)'
+          }}
+          transition={{ duration: 0.5 }}
+        />
+        
+        {/* Shimmer effect */}
+        <motion.div
+          className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/10 to-transparent"
+          initial={{ x: '-100%' }}
+          whileHover={{ x: '100%' }}
+          transition={{ duration: 0.6, ease: 'easeInOut' }}
         />
         
         {/* Button content */}
         <motion.div 
-          className="relative z-10 flex items-center justify-center"
-          animate={loading ? { opacity: 0.7 } : { opacity: 1 }}
+          className="relative z-10 flex items-center justify-center gap-3"
+          animate={loading ? { opacity: 0.8 } : { opacity: 1 }}
           transition={{ duration: 0.2 }}
         >
           {loading ? (
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="flex items-center"
+              className="flex items-center gap-3"
             >
-              <LoaderIcon className="h-4 w-4 mr-2" />
-              <span className="font-medium">...</span>
+              <LoaderIcon className="h-5 w-5" />
+              <span className="font-semibold">Loading...</span>
             </motion.div>
           ) : (
             <motion.div
-              className="flex items-center"
+              className="flex items-center gap-3"
               initial={false}
               animate={{ 
                 scale: 1,
@@ -215,27 +244,29 @@ export function FollowButton({ userId, username, className, userDisplayName, onF
               }}
               transition={{ 
                 type: "spring", 
-                stiffness: 400, 
-                damping: 17,
-                duration: 0.3 
+                stiffness: 300, 
+                damping: 20,
+                duration: 0.4 
               }}
             >
               {isFollowing ? (
                 <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  whileHover={{ scale: 1.15, rotate: 5 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                  className="p-1 rounded-full bg-purple-500/20"
                 >
-                  <UserMinusIcon className="h-4 w-4 mr-2" />
+                  <UserMinusIcon className="h-5 w-5" />
                 </motion.div>
               ) : (
                 <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  whileHover={{ scale: 1.15, rotate: -5 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                  className="p-1 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20"
                 >
-                  <UserPlusIcon className="h-4 w-4 mr-2" />
+                  <UserPlusIcon className="h-5 w-5" />
                 </motion.div>
               )}
-              <span className="font-medium">
+              <span className="font-semibold tracking-wide">
                 {isFollowing ? 'Unfollow' : 'Follow'}
               </span>
             </motion.div>

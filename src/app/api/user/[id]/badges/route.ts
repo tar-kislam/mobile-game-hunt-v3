@@ -195,6 +195,7 @@ export async function GET(
 
       return {
         code: badgeConfig.code,
+        type: badgeConfig.type,
         title: badgeConfig.title,
         emoji: badgeConfig.emoji,
         description: badgeConfig.description,
