@@ -250,3 +250,4 @@ Mobile'da fixed `40px` kullanıyoruz. Bu kasıtlı (Safari uyumluluğu için).
 **Durum**: ✅ Çözüldü ve Production Ready
 
 
+

@@ -31,8 +31,8 @@ export async function GET(request: NextRequest) {
       take: 10
     })
 
-    // Get followed products (if product follows exist)
-    const followedProducts = await prisma.productFollow?.findMany?.({
+    // Get followed products (games)
+    const followedProducts = await prisma.gameFollow.findMany({
       where: {
         userId: session.user.id
       },
@@ -49,21 +49,23 @@ export async function GET(request: NextRequest) {
         createdAt: 'desc'
       },
       take: 10
-    }).catch(() => []) // Gracefully handle if productFollow doesn't exist
+    })
 
     const userItems = followedUsers.map(follow => ({
       id: follow.following.id,
       name: follow.following.name || 'Anonymous',
       username: follow.following.username,
       image: follow.following.image,
-      type: 'user' as const
+      type: 'user' as const,
+      createdAt: follow.createdAt
     }))
 
-    const gameItems = (followedProducts || []).map(follow => ({
+    const gameItems = followedProducts.map(follow => ({
       id: follow.product.id,
       title: follow.product.title,
       thumbnail: follow.product.thumbnail,
-      type: 'game' as const
+      type: 'game' as const,
+      createdAt: follow.createdAt
     }))
 
     const items = [...userItems, ...gameItems].sort((a, b) => 
@@ -76,3 +78,4 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
+
