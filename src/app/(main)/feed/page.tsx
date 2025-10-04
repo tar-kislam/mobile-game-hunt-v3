@@ -27,10 +27,16 @@ export default function FeedPage() {
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header Section */}
         <div className="text-center mb-8">
-          <div className="mb-6 flex items-end justify-center">
-            <span className="text-6xl mr-4 mb-2">📱</span>
+          <div className="mb-6 flex items-center justify-center">
+            <img 
+              src="/logo/logo-feed.png" 
+              alt="Feed Logo"
+              className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 mr-4 object-contain"
+              loading="eager"
+              decoding="async"
+            />
             <Shuffle
-              text="Your Feed"
+              text="FEED"
               shuffleDirection="right"
               duration={0.35}
               animationMode="evenodd"
@@ -43,11 +49,11 @@ export default function FeedPage() {
               triggerOnce={false}
               triggerOnHover={false}
               respectReducedMotion={true}
-              className="text-6xl font-bold text-white"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white"
               tag="h1"
             />
           </div>
-          <p className="text-xl text-indigo-200 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-indigo-200 max-w-2xl mx-auto px-4">
             Stay up to date with the latest games and activity from the community you follow.
           </p>
         </div>

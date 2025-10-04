@@ -810,7 +810,13 @@ export default function HomePage() {
                         {/* Content */}
                         <div className="relative z-10 space-y-3">
                           <div className="flex items-center gap-2">
-                            <span className="text-2xl animate-bounce">🦊</span>
+                            <img 
+                              src="/logo/logo-head.webp" 
+                              alt="Fox Head Logo"
+                              className="w-10 h-10 object-contain animate-bounce"
+                              loading="eager"
+                              decoding="async"
+                            />
                             <h3 className="bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent font-bold text-lg group-hover:from-purple-200 group-hover:to-pink-200 transition-all duration-300">
                               Why We Started the Hunt
                             </h3>
