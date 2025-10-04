@@ -23,6 +23,24 @@ export default withAuth(
       }
     }
 
+    // DB-backed redirect: /user/:id -> /user/:username (compat)
+    const userMatch = pathname.match(/^\/user\/([a-z0-9]{20,})$/)
+    if (userMatch) {
+      const userId = userMatch[1]
+      try {
+        const resp = await fetch(`${origin}/api/user/${userId}/public`, { headers: { accept: 'application/json' } })
+        if (resp.ok) {
+          const data = await resp.json()
+          const username = data?.user?.username
+          if (username) {
+            return NextResponse.redirect(new URL(`/user/${username}`, req.url), 301)
+          }
+        }
+      } catch (error) {
+        // ignore and continue to next
+      }
+    }
+
     // DB-backed redirect: /profile/:id/public -> /@username (compat)
     const match = pathname.match(/^\/profile\/([^/]+)\/public$/)
     if (match) {
