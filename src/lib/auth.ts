@@ -230,8 +230,16 @@ export const authOptions: NextAuthOptions = {
       // The username should already be set in the signIn callback
       console.log(`[NextAuth] New user created: ${user.email}`)
       
-      // Only check badges in production/runtime, not during build
-      if (process.env.NODE_ENV === 'production' || process.env.NEXT_PHASE !== 'phase-production-build') {
+      // Skip badge checking during build, deployment, or any non-runtime environment
+      const skipBadgeCheck = 
+        process.env.NEXT_PHASE === 'phase-production-build' ||
+        process.env.VERCEL_ENV === 'production' ||
+        process.env.NODE_ENV === 'test' ||
+        process.env.NODE_ENV === 'development' ||
+        process.env.CI === 'true' ||
+        process.env.VERCEL === '1'
+      
+      if (!skipBadgeCheck) {
         // Check for Pioneer badge eligibility when user is created
         try {
           const { checkAndAwardBadges } = await import('@/lib/badgeService')
@@ -241,7 +249,7 @@ export const authOptions: NextAuthOptions = {
           // Don't fail user creation if badge checking fails
         }
       } else {
-        console.log(`[NextAuth] Skipping badge check during build phase for user: ${user.email}`)
+        console.log(`[NextAuth] Skipping badge check during ${process.env.NEXT_PHASE || process.env.VERCEL_ENV || process.env.NODE_ENV} phase for user: ${user.email}`)
       }
     },
     async signOut() {
