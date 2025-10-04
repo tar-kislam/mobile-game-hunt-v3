@@ -1,59 +1,23 @@
 import { NextAuthOptions } from "next-auth"
-import { PrismaAdapter } from "@next-auth/prisma-adapter"
+import { PrismaAdapter } from "@auth/prisma-adapter"
+import { prisma } from "@/lib/prisma"
 import GoogleProvider from "next-auth/providers/google"
 import GitHubProvider from "next-auth/providers/github"
-import EmailProvider from "next-auth/providers/email"
 import CredentialsProvider from "next-auth/providers/credentials"
-import bcrypt from "bcryptjs"
-import { prisma } from "@/lib/prisma"
-import { notify } from "@/lib/notificationService"
 import { generateUniqueUsername } from "@/lib/usernameUtils"
 
-// Build providers conditionally to avoid 500s when env vars are missing
-const providers: any[] = []
-
-if (
-  process.env.EMAIL_SERVER_HOST &&
-  process.env.EMAIL_SERVER_PORT &&
-  process.env.EMAIL_SERVER_USER &&
-  process.env.EMAIL_SERVER_PASSWORD &&
-  process.env.EMAIL_FROM
-) {
-  providers.push(
-    EmailProvider({
-      server: {
-        host: process.env.EMAIL_SERVER_HOST,
-        port: Number(process.env.EMAIL_SERVER_PORT),
-        auth: {
-          user: process.env.EMAIL_SERVER_USER,
-          pass: process.env.EMAIL_SERVER_PASSWORD,
-        },
-      },
-      from: process.env.EMAIL_FROM,
-    })
-  )
-}
-
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  providers.push(
+export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
+  providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    })
-  )
-}
-
-if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
-  providers.push(
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     GitHubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    })
-  )
-}
-
-providers.push(
-  CredentialsProvider({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+    CredentialsProvider({
       name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
@@ -65,19 +29,15 @@ providers.push(
         }
 
         const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
-          }
+          where: { email: credentials.email }
         })
 
         if (!user || !user.passwordHash) {
           return null
         }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.passwordHash
-        )
+        const bcrypt = await import('bcryptjs')
+        const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash)
 
         if (!isPasswordValid) {
           return null
@@ -89,15 +49,11 @@ providers.push(
           name: user.name,
           image: user.image,
           role: user.role,
+          username: user.username
         }
       }
     })
-)
-
-export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
-  providers,
-  secret: process.env.NEXTAUTH_SECRET,
+  ],
   session: {
     strategy: "jwt",
   },
@@ -114,10 +70,10 @@ export const authOptions: NextAuthOptions = {
           // If user doesn't exist or doesn't have a username, generate one
           if (!existingUser || !existingUser.username) {
             const googleName = profile.name || user.name || user.email?.split('@')[0] || 'user'
-            
+
             try {
               const username = await generateUniqueUsername(googleName)
-              
+
               if (existingUser) {
                 // Update existing user with username
                 await prisma.user.update({
@@ -148,10 +104,10 @@ export const authOptions: NextAuthOptions = {
           if (!existingUser || !existingUser.username) {
             const githubProfile = profile as any // Cast to any to access GitHub-specific properties
             const githubName = githubProfile.name || githubProfile.login || user.name || user.email?.split('@')[0] || 'user'
-            
+
             try {
               const username = await generateUniqueUsername(githubName)
-              
+
               if (existingUser) {
                 await prisma.user.update({
                   where: { id: existingUser.id },
@@ -179,7 +135,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = (user as any).role
         token.id = user.id
-        token.username = (user as any).username
+        token.username = (user as any).username // Added username to JWT
       }
       return token
     },
@@ -187,21 +143,21 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         (session.user as any).id = token.id as string || token.sub as string
         (session.user as any).role = token.role as string
-        (session.user as any).username = token.username as string
-        
+        (session.user as any).username = token.username as string // Added username to session
+
         // Fetch fresh user data from database
         try {
           const user = await prisma.user.findUnique({
             where: { id: token.id as string || token.sub as string },
-            select: { 
-              id: true, 
-              name: true, 
-              email: true, 
-              image: true, 
-              username: true 
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+              username: true
             }
           })
-          
+
           if (user) {
             session.user.name = user.name
             session.user.email = user.email
@@ -230,14 +186,26 @@ export const authOptions: NextAuthOptions = {
       // The username should already be set in the signIn callback
       console.log(`[NextAuth] New user created: ${user.email}`)
       
-      // Skip badge checking during build, deployment, or any non-runtime environment
+      // Comprehensive check to skip badge checking during build, deployment, migration, or any non-runtime environment
       const skipBadgeCheck = 
         process.env.NEXT_PHASE === 'phase-production-build' ||
         process.env.VERCEL_ENV === 'production' ||
         process.env.NODE_ENV === 'test' ||
         process.env.NODE_ENV === 'development' ||
         process.env.CI === 'true' ||
-        process.env.VERCEL === '1'
+        process.env.VERCEL === '1' ||
+        // Docker environment checks
+        process.env.DOCKER === 'true' ||
+        process.env.DATABASE_URL?.includes('postgresql://postgres:') ||
+        // Migration process checks
+        process.argv.includes('migrate') ||
+        process.argv.includes('deploy') ||
+        process.argv.includes('prisma') ||
+        // Additional Docker container checks
+        process.env.HOSTNAME === '0.0.0.0' ||
+        process.env.PORT === '3000' ||
+        // Check if running in container
+        process.env.NODE_ENV === 'production' && process.env.DATABASE_URL?.includes('postgres:')
       
       if (!skipBadgeCheck) {
         // Check for Pioneer badge eligibility when user is created
@@ -249,7 +217,11 @@ export const authOptions: NextAuthOptions = {
           // Don't fail user creation if badge checking fails
         }
       } else {
-        console.log(`[NextAuth] Skipping badge check during ${process.env.NEXT_PHASE || process.env.VERCEL_ENV || process.env.NODE_ENV} phase for user: ${user.email}`)
+        const environmentInfo = process.env.NEXT_PHASE || 
+                              process.env.VERCEL_ENV || 
+                              process.env.NODE_ENV || 
+                              (process.env.DATABASE_URL?.includes('postgres:') ? 'docker' : 'unknown')
+        console.log(`[NextAuth] Skipping badge check during ${environmentInfo} phase for user: ${user.email}`)
       }
     },
     async signOut() {
