@@ -230,13 +230,18 @@ export const authOptions: NextAuthOptions = {
       // The username should already be set in the signIn callback
       console.log(`[NextAuth] New user created: ${user.email}`)
       
-      // Check for Pioneer badge eligibility when user is created
-      try {
-        const { checkAndAwardBadges } = await import('@/lib/badgeService')
-        await checkAndAwardBadges(user.id)
-      } catch (error) {
-        console.error('Error checking badges on user creation:', error)
-        // Don't fail user creation if badge checking fails
+      // Only check badges in production/runtime, not during build
+      if (process.env.NODE_ENV === 'production' || process.env.NEXT_PHASE !== 'phase-production-build') {
+        // Check for Pioneer badge eligibility when user is created
+        try {
+          const { checkAndAwardBadges } = await import('@/lib/badgeService')
+          await checkAndAwardBadges(user.id)
+        } catch (error) {
+          console.error('Error checking badges on user creation:', error)
+          // Don't fail user creation if badge checking fails
+        }
+      } else {
+        console.log(`[NextAuth] Skipping badge check during build phase for user: ${user.email}`)
       }
     },
     async signOut() {
