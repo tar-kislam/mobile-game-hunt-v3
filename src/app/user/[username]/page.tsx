@@ -26,6 +26,7 @@ import { format } from "date-fns"
 import { BadgeCard } from "@/components/badges/BadgeCard"
 import { Header } from "@/components/layout/header"
 import { FollowButton } from "@/components/ui/follow-button"
+import { useRouter } from "next/navigation"
 
 interface ProfilePageProps {
   params: Promise<{ username: string }>
@@ -34,6 +35,7 @@ interface ProfilePageProps {
 export default function ProfilePage({ params }: ProfilePageProps) {
   const [resolvedParams, setResolvedParams] = useState<{ username: string } | null>(null)
   const { data: session, status } = useSession()
+  const router = useRouter()
   
   useEffect(() => {
     params.then(setResolvedParams)
@@ -168,15 +170,15 @@ export default function ProfilePage({ params }: ProfilePageProps) {
       {/* Minimal Glass Back Button */}
       <div className="fixed top-20 left-4 z-40">
         <Button
-          asChild
+          onClick={() => router.back()}
           variant="ghost"
           size="sm"
           className="backdrop-blur-md bg-white/10 border border-white/20 hover:bg-white/20 text-white hover:text-white transition-all duration-200 rounded-full px-3 py-2"
         >
-          <Link href="/" className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <ArrowLeftIcon className="h-4 w-4" />
             <span className="text-sm font-medium">Back</span>
-          </Link>
+          </div>
         </Button>
       </div>
       
