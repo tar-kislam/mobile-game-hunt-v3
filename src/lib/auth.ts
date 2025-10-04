@@ -7,17 +7,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
 import { notify } from "@/lib/notificationService"
-
-// Function to generate a pseudo-unique username without DB dependency
-function generateUniqueUsername(baseUsername: string): string {
-  let username = baseUsername.toLowerCase().replace(/[^a-z0-9]/g, '')
-  if (!username || !/^[a-z]/.test(username)) {
-    username = 'user'
-  }
-  // Append short random suffix to avoid collisions without querying DB
-  const suffix = Math.random().toString(36).substring(2, 6)
-  return `${username}-${suffix}`
-}
+import { generateUniqueUsername } from "@/lib/usernameUtils"
 
 // Build providers conditionally to avoid 500s when env vars are missing
 const providers: any[] = []
@@ -111,16 +101,91 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
+  events: {
+    async createUser({ user }) {
+      // This event is triggered when a new user is created
+      // The username should already be set in the signIn callback
+      console.log(`[NextAuth] New user created: ${user.email}`)
+    },
+  },
   callbacks: {
     async signIn({ user, account, profile }) {
-      // Keep sign-in permissive; username handling is disabled due to minimal User model
-      // For OAuth providers (Google, GitHub), auto-create account if new user
-      return true
+      try {
+        // Handle Google OAuth sign-in
+        if (account?.provider === 'google' && profile) {
+          // Check if user already exists
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email! }
+          })
+
+          // If user doesn't exist or doesn't have a username, generate one
+          if (!existingUser || !existingUser.username) {
+            const googleName = profile.name || user.name || user.email?.split('@')[0] || 'user'
+            
+            try {
+              const username = await generateUniqueUsername(googleName)
+              
+              if (existingUser) {
+                // Update existing user with username
+                await prisma.user.update({
+                  where: { id: existingUser.id },
+                  data: { username }
+                })
+                console.log(`[NextAuth] Updated username for existing user ${existingUser.email}: ${username}`)
+              } else {
+                // For new users, the PrismaAdapter will handle user creation
+                // We'll set the username in the user object so it gets saved
+                ;(user as any).username = username
+                console.log(`[NextAuth] Generated username for new Google user: ${username}`)
+              }
+            } catch (error) {
+              console.error('[NextAuth] Error generating username:', error)
+              // Fallback to a simple username if generation fails
+              ;(user as any).username = `user-${Math.random().toString(36).substring(2, 8)}`
+            }
+          }
+        }
+
+        // Handle GitHub OAuth sign-in
+        if (account?.provider === 'github' && profile) {
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email! }
+          })
+
+          if (!existingUser || !existingUser.username) {
+            const githubName = profile.name || profile.login || user.name || user.email?.split('@')[0] || 'user'
+            
+            try {
+              const username = await generateUniqueUsername(githubName)
+              
+              if (existingUser) {
+                await prisma.user.update({
+                  where: { id: existingUser.id },
+                  data: { username }
+                })
+                console.log(`[NextAuth] Updated username for existing GitHub user ${existingUser.email}: ${username}`)
+              } else {
+                ;(user as any).username = username
+                console.log(`[NextAuth] Generated username for new GitHub user: ${username}`)
+              }
+            } catch (error) {
+              console.error('[NextAuth] Error generating username for GitHub user:', error)
+              ;(user as any).username = `user-${Math.random().toString(36).substring(2, 8)}`
+            }
+          }
+        }
+
+        return true
+      } catch (error) {
+        console.error('[NextAuth] Error in signIn callback:', error)
+        return true // Allow sign-in even if username generation fails
+      }
     },
     async jwt({ token, user, account }) {
       if (user) {
         token.role = (user as any).role
         token.id = user.id
+        token.username = (user as any).username
       }
       return token
     },
@@ -128,6 +193,7 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         (session.user as any).id = token.id as string || token.sub as string
         (session.user as any).role = token.role as string
+        (session.user as any).username = token.username as string
         
         // Fetch fresh user data from database
         try {
