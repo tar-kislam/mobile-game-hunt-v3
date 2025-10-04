@@ -119,7 +119,8 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             name: true,
-            image: true
+            image: true,
+            role: true
           }
         },
         votes: {

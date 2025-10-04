@@ -235,6 +235,7 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             image: true,
+            role: true,
           }
         },
         categories: {
@@ -394,6 +395,7 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             image: true,
+            role: true,
           }
         },
         _count: {

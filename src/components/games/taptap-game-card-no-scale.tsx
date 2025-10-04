@@ -31,6 +31,7 @@ interface Game {
   user: {
     name: string | null
     image?: string | null
+    role?: string | null
   }
 }
 

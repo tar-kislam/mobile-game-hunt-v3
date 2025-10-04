@@ -28,6 +28,7 @@ import Autoplay from "embla-carousel-autoplay"
 import { EnhancedSubmitGameModal } from "@/components/games/enhanced-submit-game-modal"
 import { GameCard } from "@/components/games/game-card"
 import { TapTapGameCardNoScale } from "@/components/games/taptap-game-card-no-scale"
+import { getAuthorLabel } from "@/lib/author"
 import { EpicFeaturedGames } from "@/components/games/epic-featured-games"
 import { TiltedGameCard } from "@/components/games/tilted-game-card"
 import { CTASection } from "@/components/sections/cta-section"
@@ -298,7 +299,7 @@ function ProductCard({ product, rank }: { product: any, rank?: number }) {
                   <Badge variant="secondary" className="rounded-2xl text-xs">
                     {product.platforms?.map((p: string) => p.toUpperCase()).join(', ') || 'No platforms listed'}
                   </Badge>
-                  <span className="text-xs text-muted-foreground">by {/* author label handled in card components now */}</span>
+                  <span className="text-xs text-muted-foreground">by {getAuthorLabel({ user: product.user })}</span>
                 </div>
               </div>
               

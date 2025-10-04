@@ -166,10 +166,10 @@ export default function AdvertisePage() {
       setShowSuccess(true)
       toast.success('🎉 Your campaign has been submitted!')
       
-      // Redirect to editorial dashboard after a short delay
+      // Redirect to home page after a short delay
       setTimeout(() => {
-        router.push('/editorial-dashboard')
-      }, 2000)
+        router.push('/')
+      }, 3000)
     } catch (error) {
       console.error('Error submitting campaign:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -263,6 +263,10 @@ export default function AdvertisePage() {
                 </h1>
                 <p className="text-gray-400">
                   Our team will review your campaign and get back to you soon.
+                  <br />
+                  <span className="text-gray-500 text-sm">
+                    You will receive an email notification once your campaign is approved.
+                  </span>
                 </p>
               </motion.div>
 

@@ -10,6 +10,7 @@ import { ArrowLeftIcon, Star, MessageCircle, Eye } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { PlatformIcons } from '@/components/ui/platform-icons'
+import { getAuthorLabel } from "@/lib/author"
 
 interface TagPageProps {
   params: Promise<{ slug: string }>
@@ -153,7 +154,7 @@ export default async function TagPage({ params }: TagPageProps) {
                       {/* Author */}
                       {product.user && (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span>by {product.user.role === 'ADMIN' ? 'MobileGameHunt' : (product.user.name || 'Anonymous')}</span>
+                          <span>by {getAuthorLabel({ user: product.user })}</span>
                         </div>
                       )}
                     </div>

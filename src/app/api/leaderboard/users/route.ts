@@ -90,35 +90,57 @@ export async function GET(req: NextRequest) {
     const since = new Date()
     since.setDate(since.getDate() - 30)
 
-    // Gruplamalar (tek transaction)
+    // Önce admin olmayan kullanıcıları al
+    const nonAdminUsers = await prisma.user.findMany({
+      where: { role: { not: 'ADMIN' } },
+      select: { id: true }
+    });
+    const nonAdminUserIds = nonAdminUsers.map(u => u.id);
+
+    // Gruplamalar (tek transaction) - sadece admin olmayan kullanıcılar için
     const [votes, comments, follows, posts, submits] = await prisma.$transaction([
       prisma.vote.groupBy({
         by: ['userId'],
-        where: { createdAt: { gte: since } },
+        where: { 
+          createdAt: { gte: since },
+          userId: { in: nonAdminUserIds }
+        },
         _count: { userId: true },
         orderBy: { userId: 'asc' },
       }),
       prisma.productComment.groupBy({
         by: ['userId'],
-        where: { createdAt: { gte: since } },
+        where: { 
+          createdAt: { gte: since },
+          userId: { in: nonAdminUserIds }
+        },
         _count: { userId: true },
         orderBy: { userId: 'asc' },
       }),
       prisma.follow.groupBy({
         by: ['followerId'],
-        where: { createdAt: { gte: since } },
+        where: { 
+          createdAt: { gte: since },
+          followerId: { in: nonAdminUserIds }
+        },
         _count: { followerId: true },
         orderBy: { followerId: 'asc' },
       }),
       prisma.post.groupBy({
         by: ['userId'],
-        where: { createdAt: { gte: since } },
+        where: { 
+          createdAt: { gte: since },
+          userId: { in: nonAdminUserIds }
+        },
         _count: { userId: true },
         orderBy: { userId: 'asc' },
       }),
       prisma.product.groupBy({
         by: ['userId'],
-        where: { createdAt: { gte: since } },
+        where: { 
+          createdAt: { gte: since },
+          userId: { in: nonAdminUserIds }
+        },
         _count: { userId: true },
         orderBy: { userId: 'asc' },
       }),

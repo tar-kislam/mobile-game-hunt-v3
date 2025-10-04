@@ -427,6 +427,8 @@ export default function EditorialDashboard() {
                                   <h3 className="text-white font-semibold text-lg">{campaign.gameName}</h3>
                                   <p className="text-gray-400 text-sm">
                                     by {campaign.user.name || campaign.user.username || campaign.user.email}
+                                    <br />
+                                    <span className="text-gray-500 text-xs">{campaign.user.email}</span>
                                   </p>
                                 </div>
                               </div>

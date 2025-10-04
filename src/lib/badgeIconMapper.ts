@@ -13,7 +13,7 @@ export function getBadgeIconFilename(badgeCode: string): string {
     'SWIFT_PUMA': 'badge-puma.webp',
     'EXPLORER': 'badge-explorer.webp',
     'RISING_STAR': 'badge-star.webp',
-    'FIRST_LAUNCH': 'default.svg', // Fallback since we don't have this file yet
+    'FIRST_LAUNCH': 'badge-launch.webp',
   }
 
   return badgeIconMap[badgeCode] || 'default.svg'

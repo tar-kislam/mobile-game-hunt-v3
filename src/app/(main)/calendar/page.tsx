@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { getAuthorLabel } from "@/lib/author";
 
 interface CalendarProduct {
   id: string;
@@ -1292,7 +1293,7 @@ function CalendarPageContent() {
                                   <div className="flex items-center justify-between mt-auto">
                                     <div className="text-sm text-gray-500 dark:text-gray-400">
                                       by <span className="font-medium text-gray-300">
-                                        {product.user.name || 'Anonymous'}
+                                        {getAuthorLabel({ user: product.user })}
                                       </span>
                                     </div>
                                     <Button asChild variant="outline" size="sm" className="border-purple-500/50 text-purple-300 hover:bg-purple-500/10 transition-colors">

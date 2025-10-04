@@ -555,21 +555,17 @@ export default function LeaderboardPage() {
 
                           {/* Stats - Modern Single Row */}
                           <div className="flex-shrink-0">
-                            {/* Mobile: Only votes and views */}
+                            {/* Mobile: Only votes */}
                             <div className="block sm:hidden">
                               <div className="flex items-center space-x-3 text-xs">
                                 <div className="flex items-center space-x-1 bg-yellow-400/10 px-2 py-1 rounded-full">
                                   <Star className="w-3 h-3 text-yellow-400" />
                                   <span className="text-yellow-300 font-medium">{product.votes || 0}</span>
                                 </div>
-                                <div className="flex items-center space-x-1 bg-cyan-400/10 px-2 py-1 rounded-full">
-                                  <Eye className="w-3 h-3 text-cyan-400" />
-                                  <span className="text-cyan-300 font-medium">{product.views || 0}</span>
-                                </div>
                               </div>
                             </div>
                             
-                            {/* Desktop: All stats */}
+                            {/* Desktop: Vote and comment stats */}
                             <div className="hidden sm:flex items-center space-x-3 text-xs text-purple-300">
                               <div className="flex items-center space-x-1">
                                 <Star className="w-4 h-4 text-yellow-400" />
@@ -578,10 +574,6 @@ export default function LeaderboardPage() {
                               <div className="flex items-center space-x-1">
                                 <MessageCircle className="w-4 h-4 text-blue-400" />
                                 <span>{product.comments || 0}</span>
-                              </div>
-                              <div className="flex items-center space-x-1">
-                                <Eye className="w-4 h-4 text-cyan-400" />
-                                <span>{product.views || 0}</span>
                               </div>
                             </div>
                           </div>

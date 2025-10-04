@@ -146,6 +146,15 @@ export async function GET(
         threshold: 1000,
         xp: 500,
         type: 'registration_order'
+      },
+      {
+        code: 'FIRST_LAUNCH',
+        title: 'First Launch',
+        emoji: '🎯',
+        description: 'Successfully published your first game',
+        threshold: 1,
+        xp: 150,
+        type: 'first_game'
       }
     ]
 
@@ -179,6 +188,10 @@ export async function GET(
           // Pioneer badge: 100% if eligible, 0% if not
           current = isPioneerEligible ? badgeConfig.threshold : 0
           break
+        case 'first_game':
+          // First Launch badge: count published games
+          current = userStats?._count.products || 0
+          break
         default:
           current = 0
       }
@@ -189,8 +202,21 @@ export async function GET(
       let isUnlocked = false
       if (badgeConfig.code === 'PIONEER') {
         isUnlocked = isPioneerEligible
+      } else if (badgeConfig.code === 'FIRST_LAUNCH') {
+        // First Launch badge: unlocked if user has published at least 1 game
+        isUnlocked = earnedBadges.includes(badgeConfig.code as any) || current >= badgeConfig.threshold
       } else {
         isUnlocked = earnedBadges.includes(badgeConfig.code as any) || current >= badgeConfig.threshold
+      }
+
+      // Special progress handling for First Launch badge
+      let finalCurrent = current
+      let finalPct = pct
+      
+      if (badgeConfig.code === 'FIRST_LAUNCH' && isUnlocked) {
+        // First Launch badge: show 100% progress when unlocked
+        finalCurrent = badgeConfig.threshold
+        finalPct = 100
       }
 
       return {
@@ -201,9 +227,9 @@ export async function GET(
         description: badgeConfig.description,
         threshold: badgeConfig.threshold,
         progress: { 
-          current: Math.min(current, badgeConfig.threshold), 
+          current: Math.min(finalCurrent, badgeConfig.threshold), 
           threshold: badgeConfig.threshold, 
-          pct: Math.round(pct) 
+          pct: Math.round(finalPct) 
         },
         xp: badgeConfig.xp,
         locked: !isUnlocked,

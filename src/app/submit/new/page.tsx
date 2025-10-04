@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 import { Info, ExternalLink, Globe, MessageCircle, Twitter, Youtube, X, Plus, Check, X as XIcon, Instagram, ChevronDown, ChevronUp } from 'lucide-react'
 import { CategoryMultiSelect } from '@/components/ui/category-multi-select'
 import { MultiSelect } from '@/components/ui/multi-select'
+import { ModernDatePicker } from '@/components/ui/modern-date-picker'
 import { PLATFORMS } from '@/components/ui/platform-icons'
 import { COUNTRIES } from '@/lib/constants/countries'
 import { GAMIFICATION_TAGS } from '@/lib/constants/gamification'
@@ -1518,10 +1519,11 @@ export default function NewSubmitPage() {
                       {/* Launch Date */}
                       <div>
                         <Label htmlFor="launchDate" className="text-sm font-medium">Launch Date *</Label>
-                        <Input
+                        <ModernDatePicker
                           id="launchDate"
-                          type="date"
-                          {...form.register('launchDate')}
+                          value={form.watch('launchDate')}
+                          onChange={(date) => form.setValue('launchDate', date)}
+                          placeholder="Select launch date"
                           className="mt-2"
                           onBlur={() => form.trigger('launchDate')}
                         />
@@ -1534,10 +1536,11 @@ export default function NewSubmitPage() {
                       <div>
                         <Label htmlFor="releaseAt" className="text-sm font-medium">Release Date (Calendar)</Label>
                         <p className="text-sm text-muted-foreground mt-1 mb-2">When will your game be released? This will appear on the release calendar.</p>
-                        <Input
+                        <ModernDatePicker
                           id="releaseAt"
-                          type="date"
-                          {...form.register('releaseAt')}
+                          value={form.watch('releaseAt')}
+                          onChange={(date) => form.setValue('releaseAt', date)}
+                          placeholder="Select release date"
                           className="mt-2"
                         />
                         {form.formState.errors.releaseAt && (
@@ -1717,60 +1720,6 @@ export default function NewSubmitPage() {
                             <p className="text-xs text-muted-foreground mt-1">When keys expire</p>
                           </div>
                         </div>
-                      </div>
-
-                      {/* Sponsor Slot Request */}
-                      <div>
-                        <h3 className="text-lg font-semibold">Sponsor Slot Request</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Request a sponsored slot for increased visibility.</p>
-                        
-                        <div className="space-y-4">
-                          <label className="flex items-start gap-3 cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              {...form.register('sponsorRequest')}
-                              className="mt-1"
-                            />
-                            <div>
-                              <span className="font-medium">Request sponsored slot</span>
-                              <div className="text-sm text-muted-foreground">Get featured placement for better visibility</div>
-                            </div>
-                          </label>
-                          
-                          {form.watch('sponsorRequest') && (
-                            <div>
-                              <Label htmlFor="sponsorNote" className="text-sm font-medium">Additional Notes</Label>
-                              <Textarea
-                                id="sponsorNote"
-                                placeholder="Tell us why your game deserves a sponsored slot..."
-                                rows={3}
-                                {...form.register('sponsorNote')}
-                                className="mt-1"
-                              />
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {(form.watch('sponsorNote') || '').length}/500 characters
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Crowdfunding Pledge */}
-                      <div>
-                        <h3 className="text-lg font-semibold">Crowdfunding Pledge</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Enable community support through pledges.</p>
-                        
-                        <label className="flex items-start gap-3 cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            {...form.register('crowdfundingPledge')}
-                            className="mt-1"
-                          />
-                          <div>
-                            <span className="font-medium">Enable crowdfunding pledges</span>
-                            <div className="text-sm text-muted-foreground">Allow community members to support your game development</div>
-                          </div>
-                        </label>
                       </div>
 
                       {/* Gamification Tags */}
