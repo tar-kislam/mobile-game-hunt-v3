@@ -138,6 +138,45 @@ const BADGE_CONFIG: Record<BadgeType, BadgeInfo> = {
 }
 
 /**
+ * Check from the database (persistent storage) whether the user has already
+ * been awarded the given badge. We purposefully avoid relying only on Redis
+ * so that flushing the cache does not re-trigger XP awards.
+ */
+async function hasBadgePersisted(userId: string, badgeType: BadgeType): Promise<boolean> {
+  try {
+    const badgeInfo = BADGE_CONFIG[badgeType]
+    // Look for any prior badge-related notification that encodes this badge
+    // in its JSON meta. This acts as an idempotency guard across cache resets.
+    const existing = await (prisma as any).notification.findFirst({
+      where: {
+        userId,
+        type: { in: ['badge', 'badge_unlocked'] },
+        OR: [
+          {
+            meta: {
+              path: ['badgeId'],
+              equals: badgeType
+            }
+          },
+          {
+            message: {
+              contains: badgeInfo?.name ?? badgeType,
+              mode: 'insensitive'
+            }
+          }
+        ]
+      },
+      select: { id: true }
+    })
+
+    return Boolean(existing)
+  } catch (err) {
+    console.error('[BADGE SERVICE] Error checking persisted badge:', err)
+    return false
+  }
+}
+
+/**
  * Get all user badges from Redis
  */
 export async function getAllUserBadges(): Promise<UserBadges[]> {
@@ -161,6 +200,11 @@ export async function getUserBadges(userId: string): Promise<BadgeType[]> {
     // Special handling for Pioneer badge - always include if eligible
     const isPioneerEligible = await checkPioneerEligibility(userId)
     if (isPioneerEligible && !userBadges.includes('PIONEER')) {
+      // Before auto-award, ensure it wasn't already persisted in DB
+      const alreadyPersisted = await hasBadgePersisted(userId, 'PIONEER')
+      if (alreadyPersisted) {
+        return [...userBadges, 'PIONEER']
+      }
       // Auto-award Pioneer badge if user is eligible but doesn't have it
       console.log(`[BADGE SERVICE] Auto-awarding Pioneer badge to eligible user ${userId}`)
       await awardBadge(userId, 'PIONEER')
@@ -179,6 +223,13 @@ export async function getUserBadges(userId: string): Promise<BadgeType[]> {
  */
 export async function awardBadge(userId: string, badgeType: BadgeType): Promise<boolean> {
   try {
+    // DB-level idempotency guard: if this badge was already awarded in the past,
+    // do not re-award and do not grant XP again (survives Redis flushes).
+    const alreadyPersisted = await hasBadgePersisted(userId, badgeType)
+    if (alreadyPersisted) {
+      return false
+    }
+
     const allBadges = await getAllUserBadges()
     const existingUser = allBadges.find(u => u.userId === userId)
     

@@ -265,7 +265,7 @@ export default function UsernameProfilePage({ params }: UsernameProfileProps) {
                           <div className="flex items-center justify-between text-xs md:text-sm">
                             <span className="text-gray-300">Experience Points</span>
                             <span className="text-purple-300 font-medium">
-                              {xp.current} / {xp.nextLevelXP} XP
+                              {xp.currentXP} / {xp.requiredXP} XP
                             </span>
                           </div>
                           <Progress 
