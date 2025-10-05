@@ -5,9 +5,13 @@ export async function GET(
   request: NextRequest,
   context: any
 ) {
-  const params = (context?.params || {}) as { id: string }
+  const params = (context?.params || {}) as { userId?: string }
   try {
-    const { id: userId } = params;
+    const userId = params.userId;
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
+    }
 
     // Verify the user exists
     const user = await prisma.user.findUnique({

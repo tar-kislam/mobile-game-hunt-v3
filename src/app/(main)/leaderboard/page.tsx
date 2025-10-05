@@ -383,7 +383,7 @@ export default function LeaderboardPage() {
                     </div>
                     <div className="space-y-2">
                       {(topUsers || []).map(u => (
-                        <a key={u.id} href={u.username ? `/user/${u.username}` : `/user/${u.id}`} className="group block">
+                        <a key={u.id} href={u.username ? `/@${u.username}` : `/profile/${u.id}/public`} className="group block">
                         <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-purple-400/50 hover:bg-white/10 transition-all duration-200 relative">
                           <div className="relative">
                             <img src={u.image || '/logo/mgh.png'} alt={u.name || 'User'} className={`w-9 h-9 rounded-full object-cover ring-2 ${u.rank<=3 ? 'ring-yellow-400/60 animate-pulse' : 'ring-purple-500/30'} group-hover:ring-purple-400/60 transition`} />
@@ -459,7 +459,7 @@ export default function LeaderboardPage() {
                                 onClick={(e) => {
                                   e.preventDefault()
                                   e.stopPropagation()
-                                  window.location.href = u.username ? `/user/${u.username}` : `/user/${u.id}`
+                                  window.location.href = u.username ? `/@${u.username}` : `/profile/${u.id}/public`
                                 }}
                               >
                                 View Profile

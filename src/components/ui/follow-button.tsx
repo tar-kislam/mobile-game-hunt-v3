@@ -138,6 +138,13 @@ export function FollowButton({ userId, username, className, userDisplayName, onF
         toast.success(`You are now following ${displayName}! +5 XP earned 🚀`, {
           duration: 3500,
         })
+
+        // Proactively refresh XP UI immediately (avoid waiting for polling)
+        if (typeof window !== 'undefined' && window.dispatchEvent && session?.user?.id) {
+          window.dispatchEvent(new CustomEvent('xp-updated', {
+            detail: { userId: session.user.id }
+          }))
+        }
       } else {
         const displayName = userDisplayName || username || 'this user'
         toast.success(`You unfollowed ${displayName} ❌`, {

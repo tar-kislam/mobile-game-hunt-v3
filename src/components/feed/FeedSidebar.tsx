@@ -13,11 +13,13 @@ import {
   Gamepad2,
   User,
   ExternalLink,
-  X
+  X,
+  Bell
 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { AnimatePresence } from 'framer-motion'
+import { useNotifications } from '@/hooks/useNotifications'
 
 interface VotedGame {
   id: string
@@ -60,6 +62,7 @@ export function FeedSidebar({ onFilterChange, activeFilter }: FeedSidebarProps) 
   const [followedItems, setFollowedItems] = useState<(FollowedUser | FollowedGame)[]>([])
   const [lastSeenProducts, setLastSeenProducts] = useState<LastSeenProduct[]>([])
   const [loading, setLoading] = useState(true)
+  const { notifications } = useNotifications()
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -254,21 +257,21 @@ export function FeedSidebar({ onFilterChange, activeFilter }: FeedSidebarProps) 
                 >
                   <button
                     onClick={() => handleFilterClick(item.type, item.id)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 hover:bg-slate-800/50 ${
+                    className={`w-full flex items-center gap-3 p-2 rounded-lg transition-all duration-200 hover:bg-slate-800/50 ${
                       activeFilter?.type === item.type && activeFilter?.value === item.id
                         ? 'bg-purple-500/20 border border-purple-400/30'
                         : 'hover:border-purple-500/20'
                     }`}
                   >
                     {item.type === 'user' ? (
-                      <Avatar className="w-8 h-8 rounded-xl">
+                      <Avatar className="w-8 h-8">
                         <AvatarImage src={item.image} />
-                        <AvatarFallback className="bg-purple-600 text-white text-xs rounded-xl">
+                        <AvatarFallback className="bg-purple-600 text-white text-xs">
                           {(item as FollowedUser).name?.[0]?.toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>
                     ) : (
-                      <div className="w-8 h-8 bg-slate-700 rounded-xl flex items-center justify-center">
+                      <div className="w-8 h-8 bg-slate-700 rounded flex items-center justify-center">
                         <Gamepad2 className="w-4 h-4 text-slate-400" />
                       </div>
                     )}
@@ -288,12 +291,68 @@ export function FeedSidebar({ onFilterChange, activeFilter }: FeedSidebarProps) 
         </Card>
       </motion.div>
 
+      {/* Notifications Section */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <Card className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/30 hover:border-purple-500/30 transition-all duration-300 rounded-2xl">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+              <Bell className="w-5 h-5 text-purple-400" />
+              Notifications
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {notifications.length === 0 ? (
+              <p className="text-sm text-gray-400">No notifications</p>
+            ) : (
+              notifications.map((notification, index) => (
+                <motion.div
+                  key={notification.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + index * 0.05 }}
+                >
+                  {notification.link ? (
+                    <Link
+                      href={notification.link}
+                      className="block p-2 rounded-lg hover:bg-slate-800/50 transition-colors"
+                    >
+                      <div className="flex items-start gap-2">
+                        <div className={`w-2 h-2 rounded-full mt-2 ${!notification.read ? 'bg-purple-400' : 'bg-slate-600'}`} />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-white">{notification.title}</p>
+                          <p className="text-xs text-gray-400 mt-1">{notification.message}</p>
+                          <p className="text-xs text-gray-500 mt-1">{formatTimeAgo(notification.createdAt)}</p>
+                        </div>
+                      </div>
+                    </Link>
+                  ) : (
+                    <div className="p-2 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <div className={`w-2 h-2 rounded-full mt-2 ${!notification.read ? 'bg-purple-400' : 'bg-slate-600'}`} />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-white">{notification.title}</p>
+                          <p className="text-xs text-gray-400 mt-1">{notification.message}</p>
+                          <p className="text-xs text-gray-500 mt-1">{formatTimeAgo(notification.createdAt)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Last Seen Section */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.3 }}
+        transition={{ delay: 0.4 }}
       >
         <Card className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/30 hover:border-purple-500/30 transition-all duration-300 rounded-2xl">
           <CardHeader className="pb-3">
@@ -311,11 +370,11 @@ export function FeedSidebar({ onFilterChange, activeFilter }: FeedSidebarProps) 
                   key={product.id}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + index * 0.05 }}
+                  transition={{ delay: 0.4 + index * 0.05 }}
                 >
                   <Link
                     href={`/product/${product.id}`}
-                    className="block w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 hover:bg-slate-800/50"
+                    className="block w-full flex items-center gap-3 p-2 rounded-lg transition-all duration-200 hover:bg-slate-800/50"
                   >
                     {product.thumbnail ? (
                       <Image
@@ -323,10 +382,10 @@ export function FeedSidebar({ onFilterChange, activeFilter }: FeedSidebarProps) 
                         alt={product.title}
                         width={32}
                         height={32}
-                        className="w-8 h-8 rounded-xl object-cover"
+                        className="w-8 h-8 rounded object-cover"
                       />
                     ) : (
-                      <div className="w-8 h-8 bg-slate-700 rounded-xl flex items-center justify-center">
+                      <div className="w-8 h-8 bg-slate-700 rounded flex items-center justify-center">
                         <Gamepad2 className="w-4 h-4 text-slate-400" />
                       </div>
                     )}
