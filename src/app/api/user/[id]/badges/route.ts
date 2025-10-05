@@ -48,6 +48,14 @@ export async function GET(
       }
     })
 
+    // Count published games for First Launch badge
+    const publishedGamesCount = await prisma.product.count({
+      where: {
+        userId: targetUserId,
+        status: 'PUBLISHED'
+      }
+    })
+
     // Check Pioneer badge eligibility
     const isPioneerEligible = await prisma.user.findUnique({
       where: { id: targetUserId },
@@ -189,8 +197,8 @@ export async function GET(
           current = isPioneerEligible ? badgeConfig.threshold : 0
           break
         case 'first_game':
-          // First Launch badge: count published games
-          current = userStats?._count.products || 0
+          // First Launch badge: progress is number of published games
+          current = publishedGamesCount
           break
         default:
           current = 0
@@ -198,13 +206,12 @@ export async function GET(
 
       const pct = Math.min((current / badgeConfig.threshold) * 100, 100)
       
-      // Special handling for Pioneer badge - always unlocked if eligible
+      // Special handling for Pioneer and First Launch badges
       let isUnlocked = false
       if (badgeConfig.code === 'PIONEER') {
         isUnlocked = isPioneerEligible
       } else if (badgeConfig.code === 'FIRST_LAUNCH') {
-        // First Launch badge: unlocked if user has published at least 1 game
-        isUnlocked = earnedBadges.includes(badgeConfig.code as any) || current >= badgeConfig.threshold
+        isUnlocked = current >= badgeConfig.threshold
       } else {
         isUnlocked = earnedBadges.includes(badgeConfig.code as any) || current >= badgeConfig.threshold
       }
