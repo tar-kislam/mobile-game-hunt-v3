@@ -55,7 +55,7 @@ export function UserAvatarTooltip({
     ? '/profile' 
     : userUsername 
       ? `/@${userUsername}` 
-      : `/${userId}`
+      : `/profile/${userId}/public`
 
   const sizeClasses = {
     sm: "h-8 w-8",
