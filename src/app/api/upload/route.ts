@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { promises as fs } from 'fs'
 import path from 'path'
 import crypto from 'crypto'
+import sharp from 'sharp'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60 // 60 seconds timeout for large files
@@ -9,13 +10,12 @@ export const maxDuration = 60 // 60 seconds timeout for large files
 // Increase body size limit to 10MB  
 export const dynamic = 'force-dynamic'
 
-// Generate unique filename using UUID
-function generateUniqueFilename(originalName: string): string {
-  const ext = path.extname(originalName) || '.png'
-  const base = path.basename(originalName, ext).replace(/[^a-zA-Z0-9-_]/g, '') || 'image'
-  const uuid = crypto.randomUUID().split('-')[0] // Use first segment of UUID
-  const timestamp = Date.now()
-  return `${timestamp}-${uuid}-${base}${ext}`
+// Generate unique filename using timestamp + short hash
+function generateWebpFilename(originalName: string): string {
+  const base = path.parse(originalName).name.replace(/[^a-zA-Z0-9-_]/g, '') || 'image'
+  const hash = crypto.randomUUID().split('-')[0]
+  const ts = Date.now()
+  return `${ts}-${hash}-${base}.webp`
 }
 
 export async function POST(request: NextRequest) {
@@ -59,23 +59,24 @@ export async function POST(request: NextRequest) {
 
     console.log('📁 File received:', file.name, file.size, 'bytes', file.type)
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
+    // Validate file type (strict)
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
       console.log('❌ Invalid file type:', file.type)
       return NextResponse.json({ 
         ok: false, 
         success: false,
-        error: 'Only image files are allowed' 
+        error: 'Only JPEG, PNG, or WEBP images are allowed' 
       }, { status: 400 })
     }
 
-    // Validate file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
+    // Validate file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
       console.log('❌ File too large:', file.size, 'bytes')
       return NextResponse.json({ 
         ok: false, 
         success: false,
-        error: 'File size must be less than 5MB' 
+        error: 'File size must be less than 10MB' 
       }, { status: 400 })
     }
 
@@ -85,25 +86,36 @@ export async function POST(request: NextRequest) {
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
     await fs.mkdir(uploadsDir, { recursive: true })
 
-    // Use UUID-based unique filename for better collision avoidance in parallel uploads
-    const filename = generateUniqueFilename(file.name)
+    // Convert to webp using sharp
+    const start = Date.now()
+    let webpBuffer: Buffer
+    try {
+      webpBuffer = await sharp(buffer).webp({ quality: 85 }).toBuffer()
+    } catch (err) {
+      console.error('❌ Image conversion failed:', err)
+      return NextResponse.json({ ok: false, success: false, error: 'Image conversion failed' }, { status: 500 })
+    }
+
+    const filename = generateWebpFilename(file.name)
     const filePath = path.join(uploadsDir, filename)
 
-    await fs.writeFile(filePath, buffer)
+    await fs.writeFile(filePath, webpBuffer)
 
     const url = `/uploads/${filename}`
-    console.log('✅ File uploaded successfully:', url)
+    console.log('✅ File converted to webp and saved:', url, 'bytes:', webpBuffer.byteLength, 'time:', (Date.now()-start)+'ms')
     
-    // Return standardized response with multiple field names for compatibility
+    // Return standardized response (backward compatibility kept)
     return NextResponse.json({ 
       ok: true, 
       success: true,
       url,
-      fileUrl: url // Alternative field name
+      fileUrl: url,
+      imageUrl: url
     }, { 
       status: 201,
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=604800'
       }
     })
   } catch (error) {
