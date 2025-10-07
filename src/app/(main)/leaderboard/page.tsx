@@ -10,6 +10,7 @@ import Shuffle from '@/components/Shuffle';
 import useSWR from 'swr';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { toast } from 'sonner'
 import { getBadgeIconPath } from "@/lib/badgeIconMapper";
 
 interface LeaderboardProduct {
