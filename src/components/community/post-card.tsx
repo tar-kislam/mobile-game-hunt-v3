@@ -138,6 +138,7 @@ export function PostCard({ post, onDelete }: PostCardProps) {
                 userName={post.user.name}
                 userImage={post.user.image || null}
                 size="md"
+                requireAuthOnClick
               />
               <div>
                 <p className="font-medium text-gray-200">{post.user.name}</p>

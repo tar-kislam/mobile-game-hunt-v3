@@ -34,6 +34,12 @@ type Step = 1 | 2 | 3 | 4 | 5 | 6
 
 export default function NewSubmitPage() {
   const { data: session, status } = useSession()
+  // placeholder for duplicate state; effect will be defined after form init
+  const [dupLoading, setDupLoading] = useState(false)
+  const [titleExists, setTitleExists] = useState<null | { exists: boolean; slug?: string }>(null)
+  const [iosExists, setIosExists] = useState<boolean | null>(null)
+  const [androidExists, setAndroidExists] = useState<boolean | null>(null)
+
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
   const [autosave, setAutosave] = useState(false)
@@ -144,6 +150,41 @@ export default function NewSubmitPage() {
       promoOffer: '', promoCode: '', promoExpiry: '', playtestQuota: undefined, playtestExpiry: '', sponsorRequest: false, sponsorNote: '', crowdfundingPledge: false, gamificationTags: [],
     }
   })
+
+  // --- Real-time duplicate validation (title/ios/android) ---
+  useEffect(() => {
+    const controller = new AbortController()
+    const handler = setTimeout(async () => {
+      const values = form.getValues()
+      const title = (values.title || '').trim()
+      const iosUrl = (values.iosUrl || '').trim()
+      const androidUrl = (values.androidUrl || '').trim()
+      if (!title && !iosUrl && !androidUrl) {
+        setTitleExists(null); setIosExists(null); setAndroidExists(null)
+        return
+      }
+      try {
+        setDupLoading(true)
+        const q = new URLSearchParams()
+        if (title) q.set('title', title)
+        if (iosUrl) q.set('iosUrl', iosUrl)
+        if (androidUrl) q.set('androidUrl', androidUrl)
+        const res = await fetch(`/api/validate-game?${q.toString()}`, { signal: controller.signal })
+        if (!res.ok) throw new Error('Dup check failed')
+        const data = await res.json()
+        setTitleExists({ exists: !!data.titleExists, slug: data.existingSlug || undefined })
+        setIosExists(!!data.iosExists)
+        setAndroidExists(!!data.androidExists)
+      } catch (e) {
+        if ((e as any).name !== 'AbortError') {
+          setTitleExists(null); setIosExists(null); setAndroidExists(null)
+        }
+      } finally {
+        setDupLoading(false)
+      }
+    }, 500)
+    return () => { controller.abort(); clearTimeout(handler) }
+  }, [form])
 
   // Check authentication status
   useEffect(() => {
@@ -331,7 +372,7 @@ export default function NewSubmitPage() {
   const tags = form.watch('tags') || []
   const categories = form.watch('categories') || []
   const platforms = form.watch('platforms') || []
-  const canNextFromStep1 = nameLen > 0 && nameLen <= 40 && taglineLen > 0 && taglineLen <= 60 && descLen >= 260 && descLen <= 500 && tags.length >= 1 && tags.length <= 3 && categories.length >= 1 && categories.length <= 3 && platforms.length >= 1
+  const canNextFromStep1 = nameLen > 0 && nameLen <= 40 && taglineLen > 0 && taglineLen <= 60 && descLen >= 260 && descLen <= 500 && tags.length >= 1 && tags.length <= 3 && categories.length >= 1 && categories.length <= 3 && platforms.length >= 1 && !titleExists?.exists && !iosExists && !androidExists
   const canNextFromStep2 = !!form.watch('thumbnail') && (form.watch('gallery') || []).length >= 1
   const canNextFromStep3 = (form.watch('makers') || []).length >= 1
 
@@ -486,7 +527,7 @@ export default function NewSubmitPage() {
                     <div className="space-y-8">
                       {/* Game Title */}
                       <div>
-                        <Label htmlFor="title" className="block text-sm font-medium mb-2">Game Title *</Label>
+                        <Label htmlFor="title" className="block text-sm font-medium mb-2 flex items-center gap-2">Game Title * {dupLoading && <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />}</Label>
                         <div className="relative">
                           <Input 
                             id="title"
@@ -503,6 +544,12 @@ export default function NewSubmitPage() {
                         </div>
                         {form.formState.errors.title && (
                           <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.title.message)}</p>
+                        )}
+                        {titleExists?.exists && (
+                          <p className="text-destructive text-sm mt-1 transition-opacity">⚠️ A game with this title already exists. Please choose a different name. {titleExists.slug && (<a href={`/product/${titleExists.slug}`} className="underline ml-1">View existing game →</a>)}</p>
+                        )}
+                        {titleExists && !titleExists.exists && (
+                          <p className="text-emerald-400 text-xs mt-1">✓ Title looks unique</p>
                         )}
                       </div>
 
@@ -567,35 +614,35 @@ export default function NewSubmitPage() {
                         <p className="text-sm text-muted-foreground">Provide at least one app store link</p>
                         
                         <div>
-                          <Label htmlFor="iosUrl" className="block text-sm font-medium mb-2">iPhone App Store URL</Label>
-                          <Input 
+                          <Label htmlFor="iosUrl" className="text-sm font-medium flex items-center gap-2">iPhone App Store URL (Optional) {dupLoading && <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />}</Label>
+                          <Input
                             id="iosUrl"
-                            aria-label="iPhone App Store URL" 
-                            placeholder="https://apps.apple.com/app/your-game" 
-                            {...form.register('iosUrl')} 
-                            className="h-12" 
-                            onBlur={() => form.trigger(['iosUrl', 'androidUrl'])}
+                            placeholder="https://apps.apple.com/app/..."
+                            {...form.register('iosUrl')}
+                            className="mt-2"
                           />
-                          {form.formState.errors.iosUrl && (
-                            <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.iosUrl.message)}</p>
+                          {iosExists && (
+                            <p className="text-destructive text-sm mt-1">⚠️ This App Store link is already in use.</p>
                           )}
-                          <p className="text-xs text-muted-foreground mt-1">Optional - iPhone App Store link</p>
+                          {iosExists===false && (
+                            <p className="text-emerald-400 text-xs mt-1">✓ App Store URL looks unique</p>
+                          )}
                         </div>
 
                         <div>
-                          <Label htmlFor="androidUrl" className="block text-sm font-medium mb-2">Google Play URL</Label>
-                          <Input 
+                          <Label htmlFor="androidUrl" className="text-sm font-medium flex items-center gap-2">Google Play URL (Optional) {dupLoading && <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />}</Label>
+                          <Input
                             id="androidUrl"
-                            aria-label="Google Play URL" 
-                            placeholder="https://play.google.com/store/apps/details?id=your.game" 
-                            {...form.register('androidUrl')} 
-                            className="h-12" 
-                            onBlur={() => form.trigger(['iosUrl', 'androidUrl'])}
+                            placeholder="https://play.google.com/store/apps/details?id=..."
+                            {...form.register('androidUrl')}
+                            className="mt-2"
                           />
-                          {form.formState.errors.androidUrl && (
-                            <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.androidUrl.message)}</p>
+                          {androidExists && (
+                            <p className="text-destructive text-sm mt-1">⚠️ This Play Store link is already in use.</p>
                           )}
-                          <p className="text-xs text-muted-foreground mt-1">Optional - Google Play Store link</p>
+                          {androidExists===false && (
+                            <p className="text-emerald-400 text-xs mt-1">✓ Play Store URL looks unique</p>
+                          )}
                         </div>
                       </div>
 

@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Shuffle from '@/components/Shuffle';
 import useSWR from 'swr';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { getBadgeIconPath } from "@/lib/badgeIconMapper";
 
 interface LeaderboardProduct {
@@ -43,6 +44,7 @@ interface LeaderboardData {
 }
 
 export default function LeaderboardPage() {
+  const { data: session } = useSession()
   const [activeTab, setActiveTab] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -383,7 +385,7 @@ export default function LeaderboardPage() {
                     </div>
                     <div className="space-y-2">
                       {(topUsers || []).map(u => (
-                        <a key={u.id} href={u.username ? `/@${u.username}` : `/profile/${u.id}/public`} className="group block">
+                        <a key={u.id} href={u.username ? `/@${u.username}` : `/profile/${u.id}/public`} className="group block" onClick={(e)=>{ if(!session){ e.preventDefault(); const target=u.username?`/@${u.username}`:`/profile/${u.id}/public`; window.location.href=`/auth/signin?callbackUrl=${encodeURIComponent(target)}` } }}>
                         <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-purple-400/50 hover:bg-white/10 transition-all duration-200 relative">
                           <div className="relative">
                             <img src={u.image || '/logo/mgh.png'} alt={u.name || 'User'} className={`w-9 h-9 rounded-full object-cover ring-2 ${u.rank<=3 ? 'ring-yellow-400/60 animate-pulse' : 'ring-purple-500/30'} group-hover:ring-purple-400/60 transition`} />
@@ -459,6 +461,7 @@ export default function LeaderboardPage() {
                                 onClick={(e) => {
                                   e.preventDefault()
                                   e.stopPropagation()
+                                  if (!session) { toast.error('Please sign in to view profiles'); return }
                                   window.location.href = u.username ? `/@${u.username}` : `/profile/${u.id}/public`
                                 }}
                               >

@@ -194,12 +194,7 @@ export function useNotifications(): UseNotificationsReturn {
         // Add new notification to the top of the list
         setNotifications(prev => [notification, ...prev])
         setUnreadCount(prev => prev + 1)
-        
-        // Show toast for new notification
-        toast.success(formatNotificationMessage(notification), {
-          duration: 4000,
-          position: 'top-right',
-        })
+        // Avoid double toasts: polling loop is responsible for user-facing toast
       }
     }
 

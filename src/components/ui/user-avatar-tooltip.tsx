@@ -9,6 +9,7 @@ import { getBadgeIconPath } from "@/lib/badgeIconMapper"
 import Link from "next/link"
 import useSWR from 'swr'
 import { useSession } from 'next-auth/react'
+import { toast } from 'sonner'
 import { useState, useEffect } from 'react'
 import { calculateLevelProgress } from "@/lib/xpCalculator"
 import { useXP } from "@/hooks/useXP"
@@ -20,6 +21,7 @@ interface UserAvatarTooltipProps {
   userUsername?: string | null
   className?: string
   size?: "sm" | "md" | "lg"
+  requireAuthOnClick?: boolean
 }
 
 export function UserAvatarTooltip({ 
@@ -28,7 +30,8 @@ export function UserAvatarTooltip({
   userImage, 
   userUsername,
   className = "",
-  size = "md"
+  size = "md",
+  requireAuthOnClick = false
 }: UserAvatarTooltipProps) {
   const { data: session } = useSession()
   const [isHovered, setIsHovered] = useState(false)
@@ -69,7 +72,13 @@ export function UserAvatarTooltip({
     <TooltipProvider>
       <Tooltip open={isHovered} onOpenChange={setIsHovered}>
         <TooltipTrigger asChild>
-          <Link href={profileLink}>
+          <Link href={profileLink} onClick={(e)=>{
+            if (requireAuthOnClick && !session) {
+              e.preventDefault()
+              const cb = encodeURIComponent(profileLink)
+              window.location.href = `/auth/signin?callbackUrl=${cb}`
+            }
+          }}>
             <Avatar 
               className={`${avatarSize} cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all duration-200 ${className}`}
               onMouseEnter={() => setIsHovered(true)}

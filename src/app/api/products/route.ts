@@ -14,17 +14,34 @@ import { z } from "zod"
 // Use the global Prisma instance
 import { prisma } from '@/lib/prisma'
 
-// Validation schema for product submission
+// --- Security helpers ---
+const ALLOWED_APP_DOMAINS = [
+  'itunes.apple.com',
+  'apps.apple.com', // some regions
+  'play.google.com'
+]
+const SHORTLINK_BLOCKLIST = [
+  'bit.ly','tinyurl.com','t.co','goo.gl','is.gd','ow.ly','rebrand.ly','bl.ink','cutt.ly','s.id'
+]
+const PROFANITY = [
+  'fuck','shit','bitch','asshole','bastard','dick','cunt','nigger','faggot' // minimal set; customize as needed
+]
+const hasProfanity = (text: string) => {
+  const lower = text.toLowerCase()
+  return PROFANITY.some(w => lower.includes(w))
+}
+
+// Validation schema for product submission (frontend + backend)
 const createProductSchema = z.object({
-  title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
+  title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters").transform(v=>v.trim()).refine(v=>!hasProfanity(v), 'Please choose a different title.'),
   tagline: z.string().optional(),
-  description: z.string().min(10, "Description must be at least 10 characters").max(1000, "Description must be less than 1000 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters").max(2000, "Description must be less than 2000 characters").transform(v=>v.trim()).refine(v=>!hasProfanity(v), 'Description contains inappropriate content.'),
   url: z.string().url("Please enter a valid URL"),
   image: z.string().url("Please enter a valid image URL").optional(),
   images: z.array(z.string().url("Please enter valid image URLs")).optional(),
   video: z.string().url("Please enter a valid video URL").optional(),
-  iosUrl: z.string().url("Please enter a valid App Store URL").optional(),
-  androidUrl: z.string().url("Please enter a valid Play Store URL").optional(),
+  iosUrl: z.string().url("Please enter a valid App Store URL").optional().refine((u)=>!u || ALLOWED_APP_DOMAINS.includes(new URL(u).hostname), 'Only App Store URLs are allowed'),
+  androidUrl: z.string().url("Please enter a valid Play Store URL").optional().refine((u)=>!u || ALLOWED_APP_DOMAINS.includes(new URL(u).hostname), 'Only Play Store URLs are allowed'),
   socialLinks: z.object({
     twitter: z.string().url("Please enter a valid Twitter URL").optional()
   }).optional(),
@@ -35,7 +52,11 @@ const createProductSchema = z.object({
     "Invalid platform selected"
   ),
   releaseAt: z.string().optional(),
-})
+}).refine((data)=>{
+  // Block shortlink/redirect domains for store URLs
+  const hosts = [data.iosUrl, data.androidUrl].filter(Boolean).map(u=>new URL(u as string).hostname)
+  return hosts.every(h => !SHORTLINK_BLOCKLIST.includes(h))
+}, { message: 'Shortened/redirect links are not allowed for store URLs.' })
 
 // GET /api/products - Fetch all products or user-specific products
 export async function GET(request: NextRequest) {
@@ -365,6 +386,42 @@ export async function POST(request: NextRequest) {
     // Validate input
     const validatedData = createProductSchema.parse(body)
 
+    // Per-user rate limit: 3 submissions in 5 minutes
+    try {
+      const rl = await RateLimiter.getInstance().checkLimit(request, {
+        windowMs: 5 * 60 * 1000,
+        maxRequests: 3,
+        keyGenerator: () => `submit:${user.id}`
+      })
+      if (!rl.allowed) {
+        return NextResponse.json(
+          { error: `Rate limit exceeded. Try again after ${Math.ceil((rl.resetTime - Date.now())/1000)} seconds.` },
+          { status: 429 }
+        )
+      }
+    } catch {}
+
+    // Duplicate checks
+    const duplicateTitle = await prisma.product.findFirst({
+      where: { title: { equals: validatedData.title, mode: 'insensitive' } },
+      select: { id: true }
+    })
+    if (duplicateTitle) {
+      return NextResponse.json({ error: 'A game with this title already exists.' }, { status: 409 })
+    }
+    if (validatedData.iosUrl) {
+      const dupIos = await prisma.product.findFirst({ where: { iosUrl: validatedData.iosUrl }, select: { id: true } })
+      if (dupIos) {
+        return NextResponse.json({ error: 'This App Store URL is already submitted.' }, { status: 409 })
+      }
+    }
+    if (validatedData.androidUrl) {
+      const dupAndroid = await prisma.product.findFirst({ where: { androidUrl: validatedData.androidUrl }, select: { id: true } })
+      if (dupAndroid) {
+        return NextResponse.json({ error: 'This Play Store URL is already submitted.' }, { status: 409 })
+      }
+    }
+
     // Generate unique slug
     const baseSlug = generateSlug(validatedData.title)
     const existingSlugs = await prisma.product.findMany({
@@ -373,6 +430,13 @@ export async function POST(request: NextRequest) {
     const uniqueSlug = generateUniqueSlug(baseSlug, existingSlugs)
 
     // Create the product
+    // Log submission
+    try {
+      const forwarded = request.headers.get('x-forwarded-for')
+      const ip = forwarded ? forwarded.split(',')[0] : request.headers.get('x-real-ip') || 'unknown'
+      console.log('[SUBMIT_LOG]', JSON.stringify({ userId: user.id, ip, ts: new Date().toISOString(), title: validatedData.title }))
+    } catch {}
+
     const product = await prisma.product.create({
       data: {
         title: validatedData.title,
