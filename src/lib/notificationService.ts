@@ -372,7 +372,7 @@ export async function notifyFollow(
   followerUserId: string,
   followerName: string
 ) {
-  const message = `${followerName} started following you! 🎮`
+  const message = `${followerName} started following you!`
   
   return await notify(
     followedUserId,

@@ -87,7 +87,9 @@ export function TapTapGameCard({ game, onVote, showAuthor = true }: TapTapGameCa
           
           {/* Fallback icon */}
           <div className={`fallback-icon w-full h-full flex items-center justify-center ${getMainDisplayImage(game) ? 'hidden' : ''}`}>
-            <div className="text-4xl">🎮</div>
+            <div>
+              <img src="/logo/logo-gamepad.webp" alt="Game" className="w-10 h-10" />
+            </div>
           </div>
 
           {/* Rating Badge - positioned like TapTap */}

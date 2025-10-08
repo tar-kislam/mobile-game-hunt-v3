@@ -79,7 +79,9 @@ export function GamePreviewCard({
             </div>
           ) : (
             <div className="h-48 w-full bg-gradient-to-br from-gray-700 to-gray-800 rounded-t-xl flex items-center justify-center">
-              <div className="text-gray-400 text-4xl">🎮</div>
+              <div>
+                <img src="/logo/logo-gamepad.webp" alt="Game" className="w-10 h-10" />
+              </div>
             </div>
           )}
           

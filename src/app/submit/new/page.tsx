@@ -42,6 +42,8 @@ export default function NewSubmitPage() {
 
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [isLoadingInitial, setIsLoadingInitial] = useState(false)
   const [autosave, setAutosave] = useState(false)
   const [additionalLinks, setAdditionalLinks] = useState<Array<{ type: string; url: string }>>([])
   const [isAdditionalLinksExpanded, setIsAdditionalLinksExpanded] = useState(false)
@@ -151,6 +153,53 @@ export default function NewSubmitPage() {
     }
   })
 
+  // Detect edit mode from URL and prefill
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const m = window.location.pathname.match(/\/submit\/edit\/([^/]+)/)
+    const id = m?.[1]
+    if (!id) return
+    setEditId(id)
+    ;(async () => {
+      try {
+        setIsLoadingInitial(true)
+        const res = await fetch(`/api/products/${id}`, { cache: 'no-store' })
+        if (!res.ok) return
+        const p = await res.json()
+        form.reset({
+          title: p.title || '',
+          tagline: p.tagline || '',
+          description: p.description || '',
+          iosUrl: p.iosUrl || '',
+          androidUrl: p.androidUrl || '',
+          thumbnail: p.thumbnail || '',
+          gallery: p.gallery || [],
+          youtubeUrl: p.youtubeUrl || '',
+          gameplayGifUrl: p.gameplayGifUrl || '',
+          demoUrl: p.demoUrl || '',
+          image: p.image || '',
+          images: p.images || [],
+          video: p.video || '',
+          releaseAt: p.releaseAt ? String(p.releaseAt).slice(0,10) : '',
+          tags: (p.tags||[]).map((t:any)=> t.tag?.name).filter(Boolean),
+          categories: (p.categories||[]).map((c:any)=> c.category?.id).filter(Boolean),
+          makers: p.makers?.map((m:any)=>({ userId: m.user?.id || '', email: m.email || '', role: m.role })) || [],
+          platforms: p.platforms || [],
+          languages: p.languages || [],
+          launchType: p.launchType || '',
+          launchDate: p.launchDate ? String(p.launchDate).slice(0,10) : '',
+          monetization: p.monetization || '',
+          engine: p.engine || '',
+          gamificationTags: p.gamificationTags || [],
+          studioName: p.studioName || '',
+        })
+      } finally {
+        setIsLoadingInitial(false)
+      }
+    })()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // --- Real-time duplicate validation (title/ios/android) ---
   useEffect(() => {
     const controller = new AbortController()
@@ -169,6 +218,7 @@ export default function NewSubmitPage() {
         if (title) q.set('title', title)
         if (iosUrl) q.set('iosUrl', iosUrl)
         if (androidUrl) q.set('androidUrl', androidUrl)
+        if (editId) q.set('excludeId', editId)
         const res = await fetch(`/api/validate-game?${q.toString()}`, { signal: controller.signal })
         if (!res.ok) throw new Error('Dup check failed')
         const data = await res.json()
@@ -184,7 +234,7 @@ export default function NewSubmitPage() {
       }
     }, 500)
     return () => { controller.abort(); clearTimeout(handler) }
-  }, [form])
+  }, [form, editId])
 
   // Check authentication status
   useEffect(() => {
@@ -288,18 +338,35 @@ export default function NewSubmitPage() {
 
     setIsSubmitting(true)
     try {
-      const res = await createProductAction(values)
-      if (res.ok) {
-        console.log('Product created successfully:', res.productId)
-        toast.success('Game submitted successfully! 🎉')
+      if (editId) {
+        const payload: any = {
+          title: values.title,
+          description: values.description,
+          tagline: values.tagline,
+          iosUrl: values.iosUrl || null,
+          androidUrl: values.androidUrl || null,
+          image: values.image || null,
+          thumbnail: values.thumbnail || null,
+          images: values.gallery || [],
+          video: values.video || null,
+          platforms: values.platforms || [],
+        }
+        const res = await fetch(`/api/products/${editId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        if (!res.ok) throw new Error('Update failed')
+        toast.success('✅ Your game has been updated!')
         try { localStorage.removeItem('submit-autosave') } catch {}
-        // Redirect to dashboard after successful submission
-        setTimeout(() => {
-          window.location.href = '/dashboard'
-        }, 1000)
+        setTimeout(() => { window.location.href = '/dashboard' }, 800)
       } else {
-        console.error('Submit error:', res.error)
-        toast.error(res.error || 'Failed to submit game. Please try again.')
+        const res = await createProductAction(values)
+        if (res.ok) {
+          console.log('Product created successfully:', res.productId)
+          toast.success('Game submitted successfully! 🎉')
+          try { localStorage.removeItem('submit-autosave') } catch {}
+          setTimeout(() => { window.location.href = '/dashboard' }, 1000)
+        } else {
+          console.error('Submit error:', res.error)
+          toast.error(res.error || 'Failed to submit game. Please try again.')
+        }
       }
     } catch (error) {
       console.error('Submit error:', error)
@@ -349,14 +416,33 @@ export default function NewSubmitPage() {
     setIsSubmitting(true)
     try {
       const values = form.getValues()
-      const res = await submitApprovalAction(values)
-      if (res.ok) {
-        toast.success('Submitted for approval!')
+      if (editId) {
+        const payload: any = {
+          title: values.title,
+          description: values.description,
+          tagline: values.tagline,
+          iosUrl: values.iosUrl || null,
+          androidUrl: values.androidUrl || null,
+          image: values.image || null,
+          thumbnail: values.thumbnail || null,
+          images: values.gallery || [],
+          video: values.video || null,
+          platforms: values.platforms || [],
+        }
+        const res = await fetch(`/api/products/${editId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        if (!res.ok) throw new Error('Update failed')
+        toast.success('✅ Your game has been updated!')
         try { localStorage.removeItem('submit-autosave') } catch {}
-        // Redirect to dashboard
         window.location.href = '/dashboard'
       } else {
-        toast.error('Failed to submit for approval')
+        const res = await submitApprovalAction(values)
+        if (res.ok) {
+          toast.success('Submitted for approval!')
+          try { localStorage.removeItem('submit-autosave') } catch {}
+          window.location.href = '/dashboard'
+        } else {
+          toast.error('Failed to submit for approval')
+        }
       }
     } catch (error) {
       toast.error('Failed to submit for approval')

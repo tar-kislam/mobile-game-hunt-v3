@@ -161,7 +161,7 @@ function EpicFeaturedLayout({ games, onGameClick }: EpicFeaturedLayoutProps) {
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-2xl">
-                    🎮
+                    <img src="/logo/logo-gamepad.webp" alt="Game" className="w-6 h-6" />
                   </div>
                 )}
               </button>
@@ -243,7 +243,9 @@ function EpicHeroCard({ game, isMobile = false }: EpicHeroCardProps) {
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-600 flex items-center justify-center">
-              <div className="text-8xl">🎮</div>
+              <div>
+                <img src="/logo/logo-gamepad.webp" alt="Game" className="w-32 h-32" />
+              </div>
             </div>
           )}
           {/* Epic Games style gradient overlay */}
@@ -324,7 +326,7 @@ function EpicSideCard({ game, onClick, isSelected }: EpicSideCardProps) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-xl">
-            🎮
+            <img src="/logo/logo-gamepad.webp" alt="Game" className="w-6 h-6" />
           </div>
         )}
       </div>

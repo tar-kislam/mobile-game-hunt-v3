@@ -835,7 +835,7 @@ function CalendarPageContent() {
                   <div
                     key={index}
                     onClick={() => handleDateClick(day.date)}
-                    className={`min-h-[120px] p-2 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:border-purple-400 dark:hover:border-purple-500 transition-colors ${
+                    className={`min-h-[120px] p-2 border border-gray-200 dark:border-gray-700 rounded-2xl cursor-pointer hover:border-purple-400 dark:hover:border-purple-500 transition-colors ${
                       day.isToday 
                         ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-300 dark:border-purple-600' 
                         : day.isCurrentMonth 
@@ -868,16 +868,16 @@ function CalendarPageContent() {
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Link href={`/product/${product.id}`}>
-                                <div className="flex items-center gap-1 p-1 rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors">
+                                <div className="flex items-center gap-1 p-1 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors">
                                   {product.thumbnail ? (
                                     <img
                                       src={product.thumbnail}
                                       alt={product.title}
-                                      className="w-4 h-4 rounded object-cover"
+                                      className="w-4 h-4 rounded-lg object-cover"
                                     />
                                   ) : (
-                                    <div className="w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded flex items-center justify-center">
-                                      <span className="text-xs">🎮</span>
+                                    <div className="w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+                                      <img src="/logo/logo-gamepad.webp" alt="Game" className="w-4 h-4" />
                                     </div>
                                   )}
                                   <span className="text-xs truncate">{product.title}</span>
@@ -986,7 +986,9 @@ function CalendarPageContent() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
                       >
-                        <div className="text-6xl mb-4">🎮</div>
+                        <div className="mb-4 flex justify-center">
+                          <img src="/logo/logo-gamepad.webp" alt="Game" className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20" />
+                        </div>
                         <h3 className="text-lg font-medium text-white mb-2">
                           No releases on this day
                         </h3>

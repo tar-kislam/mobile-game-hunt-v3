@@ -61,7 +61,10 @@ export function FeaturedGamesCarousel({ games, onGameClick }: FeaturedGamesCarou
     <section className="w-full">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold flex items-center gap-2">
-          🎮 Featured Games
+          <div className="flex items-center gap-2">
+            <img src="/logo/logo-gamepad.webp" alt="Game" className="w-6 h-6" />
+            Featured Games
+          </div>
         </h2>
       </div>
 
@@ -140,7 +143,9 @@ function HeroGameCard({ game, onClick }: HeroGameCardProps) {
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
-              <div className="text-8xl">🎮</div>
+              <div>
+                <img src="/logo/logo-gamepad.webp" alt="Game" className="w-32 h-32" />
+              </div>
             </div>
           )}
           {/* Dark overlay */}
@@ -234,7 +239,9 @@ function SideGameCard({ game, onClick, onHover, isSelected, compact = false }: S
             unoptimized={true}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-lg">🎮</div>
+          <div className="w-full h-full flex items-center justify-center">
+            <img src="/logo/logo-gamepad.webp" alt="Game" className="w-6 h-6" />
+          </div>
         )}
       </div>
 

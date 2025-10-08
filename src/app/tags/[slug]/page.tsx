@@ -111,7 +111,7 @@ export default async function TagPage({ params }: TagPageProps) {
                       />
                     ) : (
                       <div className="flex items-center justify-center h-full text-gray-400">
-                        <span className="text-4xl">🎮</span>
+                        <img src="/logo/logo-gamepad.webp" alt="Game" className="w-10 h-10" />
                       </div>
                     )}
                   </div>

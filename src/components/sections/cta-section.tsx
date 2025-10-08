@@ -9,15 +9,38 @@ import Link from 'next/link'
 import { LuGamepad2 } from 'react-icons/lu'
 import { IoPeople } from 'react-icons/io5'
 import { HiOutlineChat } from 'react-icons/hi'
+import TargetCursor from '@/components/TargetCursor'
+import { useState } from 'react'
 
 export function CTASection() {
   const brandColor = '#ffffff'
+  const [isHovering, setIsHovering] = useState(false)
   
   // Performance: Respect user's motion preferences
   const shouldReduceMotion = useReducedMotion()
 
+  const handleMouseEnter = () => {
+    setIsHovering(true)
+  }
+
+  const handleMouseLeave = () => {
+    setIsHovering(false)
+  }
+
   return (
-    <section className="relative w-full h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden mb-12">
+    <section 
+      className="relative w-full h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden mb-12"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* Target Cursor - Only for hero section buttons */}
+      {isHovering && (
+        <TargetCursor 
+          spinDuration={2}
+          hideDefaultCursor={true}
+          targetSelector=".cursor-target"
+        />
+      )}
       {/* Particles Background */}
       <div className="absolute inset-0 z-0">
         <Particles
@@ -325,7 +348,7 @@ export function CTASection() {
                 <div className="inline-flex gap-3 sm:gap-4 items-center justify-center w-full">
                   <Link href="/submit">
                     <Button 
-                      className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 hover:shadow-[0_0_30px_rgba(168,85,247,0.8)] hover:scale-105"
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 hover:shadow-[0_0_30px_rgba(168,85,247,0.8)] hover:scale-105 cursor-target"
                     >
                       Submit Game
                     </Button>
@@ -334,7 +357,7 @@ export function CTASection() {
                   <Link href="/community">
                     <Button 
                       variant="outline"
-                      className="bg-transparent border-2 border-purple-500/70 text-purple-300 hover:text-white hover:bg-purple-500/20 px-8 py-3 rounded-full font-semibold transition-all duration-300 hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] hover:border-purple-400 hover:scale-105"
+                      className="bg-transparent border-2 border-purple-500/70 text-purple-300 hover:text-white hover:bg-purple-500/20 px-8 py-3 rounded-full font-semibold transition-all duration-300 hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] hover:border-purple-400 hover:scale-105 cursor-target"
                     >
                       Join Community
                     </Button>
@@ -345,7 +368,7 @@ export function CTASection() {
                 <div className="mt-3 sm:mt-4">
                   <Button
                     onClick={() => (window as any)?.dispatchEvent?.(new CustomEvent('newsletter:open'))}
-                    className="w-full p-[2px] rounded-full bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 [background-size:200%_200%] [background-position:0%_50%] hover:[background-position:100%_50%] transition-all duration-300 shadow-md hover:shadow-purple-500/50 hover:scale-105"
+                    className="w-full p-[2px] rounded-full bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 [background-size:200%_200%] [background-position:0%_50%] hover:[background-position:100%_50%] transition-all duration-300 shadow-md hover:shadow-purple-500/50 hover:scale-105 cursor-target"
                   >
                     <span className="block w-full text-center px-8 sm:px-16 py-3 rounded-full bg-black/90 text-white font-semibold">
                       Subscribe to Newsletter

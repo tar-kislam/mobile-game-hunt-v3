@@ -22,7 +22,7 @@ const basePackages = [
     duration: '1 day',
     description: 'Quick boost for immediate visibility',
     features: ['Featured placement', 'Social media mention', '24-hour promotion'],
-    icon: '⚡'
+    icon: '/emojis/lightning-emoji.webp'
   },
   {
     id: 'weekly',
@@ -31,7 +31,7 @@ const basePackages = [
     duration: '7 days',
     description: 'Extended promotion for sustained growth',
     features: ['Premium placement', 'Newsletter inclusion', 'Cross-platform promotion'],
-    icon: '📈'
+    icon: '/emojis/promo-emoji.webp'
   },
   {
     id: 'monthly',
@@ -40,7 +40,7 @@ const basePackages = [
     duration: '30 days',
     description: 'Comprehensive campaign for maximum impact',
     features: ['Editor\'s Choice badge', 'Priority placement', 'Full marketing suite'],
-    icon: '🎯'
+    icon: '/emojis/target-emoji.webp'
   }
 ]
 
@@ -93,7 +93,7 @@ export default function StepPackage({ data, updateData }: StepPackageProps) {
     <div className="space-y-6">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-white mb-2">
-          💰 Choose Your Package
+          Choose Your Package
         </h2>
         <p className="text-gray-300">
           Select a promotion package. Pricing is calculated based on your selected placements.
@@ -118,7 +118,7 @@ export default function StepPackage({ data, updateData }: StepPackageProps) {
             >
               <CardContent className="p-6">
                 <div className="text-center space-y-4">
-                  <div className="text-4xl">{pkg.icon}</div>
+                  <img src={pkg.icon} alt={pkg.label} className="w-12 h-12 mx-auto" />
                   
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-1">

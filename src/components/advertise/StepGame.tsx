@@ -63,7 +63,10 @@ export default function StepGame({ data, updateData }: StepGameProps) {
       <div className="space-y-6">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-white mb-2">
-            🎮 Select Your Game
+            <div className="flex items-center gap-2">
+              <img src="/logo/logo-gamepad.webp" alt="Game" className="w-6 h-6" />
+              Select Your Game
+            </div>
           </h2>
           <p className="text-gray-300">
             Choose which of your games to promote
@@ -81,7 +84,10 @@ export default function StepGame({ data, updateData }: StepGameProps) {
       <div className="space-y-6">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-white mb-2">
-            🎮 Select Your Game
+            <div className="flex items-center gap-2">
+              <img src="/logo/logo-gamepad.webp" alt="Game" className="w-6 h-6" />
+              Select Your Game
+            </div>
           </h2>
           <p className="text-gray-300">
             Choose which of your games to promote
@@ -102,7 +108,10 @@ export default function StepGame({ data, updateData }: StepGameProps) {
       <div className="space-y-6">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-white mb-2">
-            🎮 Select Your Game
+            <div className="flex items-center gap-2">
+              <img src="/logo/logo-gamepad.webp" alt="Game" className="w-6 h-6" />
+              Select Your Game
+            </div>
           </h2>
           <p className="text-gray-300">
             Choose which of your games to promote
@@ -129,7 +138,7 @@ export default function StepGame({ data, updateData }: StepGameProps) {
     <div className="space-y-6">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-white mb-2">
-          🎮 Select Your Game
+          Select Your Game
         </h2>
         <p className="text-gray-300">
           Choose which of your games to promote

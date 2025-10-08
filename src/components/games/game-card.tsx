@@ -50,6 +50,7 @@ interface GameCardProps {
   game: Game
   onVote?: (gameId: string) => void
   showAuthor?: boolean
+  footer?: React.ReactNode
 }
 
 // Helper function to get the main display image for product cards
@@ -65,7 +66,7 @@ function getMainDisplayImage(game: Game): string | null {
   return game.thumbnail || game.image || null
 }
 
-export function GameCard({ game, onVote, showAuthor = true }: GameCardProps) {
+export function GameCard({ game, onVote, showAuthor = true, footer }: GameCardProps) {
   const handleVote = () => {
     onVote?.(game.id)
   }
@@ -103,7 +104,9 @@ export function GameCard({ game, onVote, showAuthor = true }: GameCardProps) {
         ) : null}
         {/* Fallback icon - always present but hidden when image loads */}
         <div className={`fallback-icon w-full h-full flex items-center justify-center ${getMainDisplayImage(game) ? 'hidden' : ''}`}>
-          <div className="text-6xl">🎮</div>
+          <div>
+            <img src="/logo/logo-gamepad.webp" alt="Game" className="w-16 h-16" />
+          </div>
         </div>
         
         {/* Platform Icons */}
@@ -210,7 +213,7 @@ export function GameCard({ game, onVote, showAuthor = true }: GameCardProps) {
         )}
       </CardContent>
 
-      <CardFooter className="p-4 pt-0 flex items-center justify-between">
+      <CardFooter className="p-4 pt-0 flex items-center justify-between gap-3">
         {/* Vote Button */}
         <Button
           variant="ghost"
@@ -232,6 +235,12 @@ export function GameCard({ game, onVote, showAuthor = true }: GameCardProps) {
         <span className="text-xs text-gray-400 dark:text-gray-500">
           {new Date(game.createdAt).toLocaleDateString()}
         </span>
+
+        {footer ? (
+          <div className="ml-auto flex items-center gap-2">
+            {footer}
+          </div>
+        ) : null}
       </CardFooter>
     </Card>
   )

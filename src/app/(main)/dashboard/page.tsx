@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
@@ -14,6 +13,9 @@ import { Eye, TrendingUp, BarChart3, PieChart } from 'lucide-react';
 import { DonutWithText, BarCompare, LineOverTime } from '@/components/dashboard/charts';
 import useSWR from 'swr';
 import Head from 'next/head';
+import Link from 'next/link';
+import { Pen, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 // Fetcher function for SWR
 const fetcher = (url: string) => fetch(url, { credentials: 'include' }).then((res) => {
@@ -47,6 +49,7 @@ export default function DashboardPage() {
   const [games, setGames] = useState<DashboardGame[]>([]);
   const [selectedGameId, setSelectedGameId] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   // SWR hook for analytics data with real-time updates
   const { data: analyticsData, error: analyticsError, isLoading: analyticsLoading } = useSWR(
@@ -119,8 +122,8 @@ export default function DashboardPage() {
             color: item.color
           }))
         ],
-        geoStats: [], // Not provided by current API
-        languagePreferences: [], // Not provided by current API
+        geoStats: analyticsData.geoStats || [],
+        languagePreferences: analyticsData.languagePreferences || [],
         trafficTimeline: [], // Not provided by current API
         votesVsFollows: analyticsData.votesVsFollows || [],
         clicksOverTime: analyticsData.clicksOverTime || []
@@ -164,17 +167,23 @@ export default function DashboardPage() {
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent font-orbitron">
+            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent font-orbitron animate-pulse hover:animate-bounce transition-all duration-300">
               Your Game Dashboard
             </h1>
-            <p className="text-gray-300">Track your game's performance and analyze user engagement.</p>
+            <p className="text-gray-300">
+              Welcome back,{' '}
+              <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent font-bold animate-pulse hover:animate-bounce transition-all duration-300">
+                {session?.user?.name || 'User'}
+              </span>
+              ! Let's see how your games are performing and celebrate your wins!
+            </p>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-gray-300">{session?.user?.name}</span>
-            <Avatar className="h-10 w-10 border-2 border-purple-400">
-              <AvatarImage src={session?.user?.image || ''} />
-              <AvatarFallback className="bg-purple-600 text-white">{session?.user?.name?.charAt(0) || 'U'}</AvatarFallback>
-            </Avatar>
+          <div className="flex items-center">
+            <img 
+              src="/logo/dashboard-logo.webp" 
+              alt="Dashboard Logo" 
+              className="h-16 w-auto object-contain"
+            />
           </div>
         </div>
 
@@ -194,22 +203,20 @@ export default function DashboardPage() {
                   {games.map((g) => {
                     const isSelected = g.id === selectedGameId;
                     return (
-                      <button key={g.id} onClick={() => setSelectedGameId(g.id)} className="text-left">
+                      <div key={g.id} className="text-left">
                         <div className={`rounded-lg border transition-all duration-300 ${
                           isSelected
                             ? 'border-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.4)]'
                             : 'border-purple-500/20 hover:border-purple-400/60 hover:shadow-[0_0_12px_rgba(168,85,247,0.25)]'
                         }`}>
-                          <div className="p-4 flex items-center gap-3">
+                          <div className="p-4 flex items-center gap-3 cursor-pointer" onClick={() => setSelectedGameId(g.id)}>
                             <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-700 flex items-center justify-center transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 hover:ring-2 hover:ring-purple-400/50">
                               {g.thumbnail ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img src={g.thumbnail} alt={g.title} className="w-full h-full object-cover" />
                               ) : (
                                 // eslint-disable-next-line @next/next/no-img-element
-                                <img src="/logo/mgh.png" alt="Game placeholder" className="w-8 h-8 object-contain" onError={(e) => {
-                                  e.currentTarget.src = '/logo/moblogo.png';
-                                }} />
+                                <img src="/logo/mgh.png" alt="Game placeholder" className="w-8 h-8 object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/logo/moblogo.png' }} />
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -219,8 +226,51 @@ export default function DashboardPage() {
                               ) : null}
                             </div>
                           </div>
+                          <div className="px-4 pb-4 flex items-center gap-2">
+                            <Link href={`/submit/edit/${g.id}`}>
+                              <Button variant="outline" className="rounded-2xl h-8 px-3">
+                                <Pen className="w-4 h-4 mr-2" /> Edit
+                              </Button>
+                            </Link>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" className="rounded-2xl h-8 px-3">
+                                  <Trash2 className="w-4 h-4 mr-2" /> Delete
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete this game?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. The game and its related data will be permanently removed.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={async ()=>{
+                                    try{
+                                      setPendingDeleteId(g.id)
+                                      const res = await fetch(`/api/products/${g.id}`, { method: 'DELETE' })
+                                      if(!res.ok) throw new Error('Failed')
+                                      setGames(prev=> prev.filter(x=> x.id!==g.id))
+                                      if(selectedGameId===g.id){
+                                        const remaining = games.filter(x=>x.id!==g.id)
+                                        setSelectedGameId(remaining[0]?.id || '')
+                                      }
+                                      toast.success('🗑️ Game successfully removed')
+                                    }catch(err){
+                                      console.error(err)
+                                      toast.error('Failed to remove the game')
+                                    }finally{
+                                      setPendingDeleteId(null)
+                                    }
+                                  }}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -347,11 +397,10 @@ export default function DashboardPage() {
               />
             </div>
 
-            {/* Audience Insights */}
-            <div className="mb-8">
+            {/* Audience Insights - Temporarily Hidden */}
+            {/* <div className="mb-8">
               <h2 className="text-2xl font-bold text-white mb-6">Audience Insights</h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Top Countries - ranked list with skeleton/empty state */}
                 <Card className="bg-gray-800/50 border-purple-500/20">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2"><BarChart3 className="w-5 h-5 text-blue-400" />Top Countries</CardTitle>
@@ -383,7 +432,6 @@ export default function DashboardPage() {
                   </CardContent>
                 </Card>
 
-                {/* Language Preferences - donut chart using DonutWithText */}
                 <DonutWithText
                   title="Language Preferences"
                   data={(analytics?.charts.languagePreferences || []).slice(0,5).map((l: any) => ({ name: l.name || l.type, value: l.value }))}
@@ -394,12 +442,12 @@ export default function DashboardPage() {
                   className="bg-gray-800/50 border-purple-500/20"
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         )}
 
-        {/* Developer Games Table (simple) */}
-        <div className="mb-8">
+        {/* Developer Games Table - Temporarily Hidden */}
+        {/* <div className="mb-8">
           <Card className="bg-gray-800/50 border-purple-500/20">
             <CardHeader>
               <CardTitle className="text-white">Your Games</CardTitle>
@@ -424,10 +472,8 @@ export default function DashboardPage() {
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-700 flex items-center justify-center transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 hover:ring-2 hover:ring-purple-400/50">
                               {g.thumbnail ? (
-                                // eslint-disable-next-line @next/next/no-img-element
                                 <img src={g.thumbnail} alt={g.title} className="w-full h-full object-cover" />
                               ) : (
-                                // eslint-disable-next-line @next/next/no-img-element
                                 <img src="/logo/mgh.png" alt="Game placeholder" className="w-6 h-6 object-contain" onError={(e) => {
                                   e.currentTarget.src = '/logo/moblogo.png';
                                 }} />
@@ -444,7 +490,7 @@ export default function DashboardPage() {
               </Table>
               </CardContent>
             </Card>
-        </div>
+        </div> */}
       </div>
     </div>
     </>

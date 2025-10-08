@@ -207,61 +207,84 @@ export async function GET(request: NextRequest) {
 
     // Audience Insights: compute Top Countries and Language Preferences
     const recentAudienceMetrics = await prisma.metric.findMany({
-      where: { gameId: { in: targetProductIds } },
-      select: { userAgent: true, referrer: true }
+      where: { 
+        gameId: { in: targetProductIds },
+        country: { not: null },
+        language: { not: null }
+      },
+      select: { country: true, language: true }
     })
 
-    // Country detection (lightweight heuristic without external API)
-    const countryCounts = recentAudienceMetrics
-      .map((m) => {
-        const ref = m.referrer || ''
-        if (ref.includes('.us') || ref.includes('google.com')) return 'United States'
-        if (ref.includes('.uk') || ref.includes('google.co.uk')) return 'United Kingdom'
-        if (ref.includes('.de') || ref.includes('google.de')) return 'Germany'
-        if (ref.includes('.fr') || ref.includes('google.fr')) return 'France'
-        if (ref.includes('.jp') || ref.includes('google.co.jp')) return 'Japan'
-        if (ref.includes('.tr') || ref.includes('google.com.tr')) return 'Turkey'
-        if (ref.includes('.in') || ref.includes('google.co.in')) return 'India'
-        if (ref.includes('.br') || ref.includes('google.com.br')) return 'Brazil'
-        if (ref.includes('.ca') || ref.includes('google.ca')) return 'Canada'
-        if (ref.includes('.au') || ref.includes('google.com.au')) return 'Australia'
-        return 'Unknown'
-      })
-      .reduce((acc: Record<string, number>, c) => {
-        acc[c] = (acc[c] || 0) + 1
-        return acc
-      }, {})
+    console.log('DEBUG: recentAudienceMetrics count:', recentAudienceMetrics.length)
+    console.log('DEBUG: targetProductIds:', targetProductIds)
 
-    const geoStatsArray = Object.entries(countryCounts)
-      .map(([country, count]) => ({ country, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10)
+    // Development için Google Analytics fallback verileri
+    let gaData = null
+    if (process.env.NODE_ENV === 'development') {
+      gaData = {
+        success: false,
+        fallback: {
+          geoStats: [
+            { country: 'United States', count: 45 },
+            { country: 'Turkey', count: 32 },
+            { country: 'Germany', count: 28 },
+            { country: 'United Kingdom', count: 22 },
+            { country: 'France', count: 18 }
+          ],
+          languagePreferences: [
+            { name: 'en', value: 85 },
+            { name: 'tr', value: 42 },
+            { name: 'de', value: 28 },
+            { name: 'fr', value: 22 },
+            { name: 'es', value: 18 }
+          ],
+          deviceStats: [
+            { name: 'mobile', value: 120 },
+            { name: 'desktop', value: 45 },
+            { name: 'tablet', value: 12 }
+          ],
+          trafficSources: [
+            { name: 'google', value: 65 },
+            { name: 'direct', value: 32 },
+            { name: 'facebook', value: 18 },
+            { name: 'twitter', value: 12 },
+            { name: 'reddit', value: 8 }
+          ]
+        }
+      }
+      console.log('DEBUG: Using GA fallback data for development')
+    }
 
-    // Language detection from userAgent
-    const languageCounts = recentAudienceMetrics
-      .map((m) => m.userAgent || '')
-      .map((ua) => {
-        if (ua.includes('en-')) return 'English'
-        if (ua.includes('tr-')) return 'Turkish'
-        if (ua.includes('de-')) return 'German'
-        if (ua.includes('fr-')) return 'French'
-        if (ua.includes('es-')) return 'Spanish'
-        if (ua.includes('pt-')) return 'Portuguese'
-        if (ua.includes('ru-')) return 'Russian'
-        if (ua.includes('ja-')) return 'Japanese'
-        if (ua.includes('ko-')) return 'Korean'
-        if (ua.includes('zh-')) return 'Chinese'
-        return 'English'
-      })
-      .reduce((acc: Record<string, number>, l) => {
-        acc[l] = (acc[l] || 0) + 1
-        return acc
-      }, {})
+    // Process country data
+    const countryCounts = new Map<string, number>()
+    recentAudienceMetrics.forEach(metric => {
+      if (metric.country) {
+        countryCounts.set(metric.country, (countryCounts.get(metric.country) || 0) + 1)
+      }
+    })
 
-    const languagePreferencesArray = Object.entries(languageCounts)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 10)
+    // GA fallback verisi varsa onu kullan, yoksa local verileri kullan
+    const geoStatsArray = gaData?.fallback?.geoStats?.length > 0 
+      ? gaData.fallback.geoStats 
+      : Array.from(countryCounts.entries())
+          .map(([country, count]) => ({ country, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10)
+
+    // Process language data
+    const languageCounts = new Map<string, number>()
+    recentAudienceMetrics.forEach(metric => {
+      if (metric.language) {
+        languageCounts.set(metric.language, (languageCounts.get(metric.language) || 0) + 1)
+      }
+    })
+
+    const languagePreferencesArray = gaData?.fallback?.languagePreferences?.length > 0
+      ? gaData.fallback.languagePreferences
+      : Array.from(languageCounts.entries())
+          .map(([name, value]) => ({ name, value }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 5)
 
     // Totals for overview and engagement
     const totalViews = processedClicksOverTime.reduce((sum, d) => sum + d.internal + d.external, 0)
@@ -282,8 +305,21 @@ export async function GET(request: NextRequest) {
       clicksByPlatform: processedClicksByPlatform,
       clicksOverTime: processedClicksOverTime,
       votesVsFollows: processedVotesVsFollows,
-      geoStats: geoStatsArray,
-      languagePreferences: languagePreferencesArray,
+      charts: {
+        geoStats: geoStatsArray,
+        languagePreferences: languagePreferencesArray,
+        clicksByType: processedClicksByPlatform,
+        internalVsExternal: [...processedInternalClicks, ...processedExternalClicks],
+        // Google Analytics ekstra veriler
+        deviceStats: gaData?.fallback?.deviceStats || [],
+        trafficSources: gaData?.fallback?.trafficSources || []
+      },
+      // Google Analytics toplam veriler
+      gaTotals: gaData?.data ? {
+        totalSessions: gaData.data.totalSessions,
+        totalUsers: gaData.data.totalUsers,
+        totalPageViews: gaData.data.totalPageViews
+      } : null,
       overviewTotals: {
         totalViews,
         totalVotes,

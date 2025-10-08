@@ -196,7 +196,9 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
                   </div>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
-                    <div className="text-6xl mb-4">🎮</div>
+                    <div className="mb-4">
+                      <img src="/logo/logo-gamepad.webp" alt="Game" className="w-16 h-16" />
+                    </div>
                     <p className="text-sm">No media available</p>
                   </div>
                 )}
@@ -242,7 +244,9 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
                       onError={(e)=>{const t=e.target as HTMLImageElement;t.onerror=null;t.src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 64'%3E%3Crect width='80' height='64' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='12'%3E%F0%9F%8E%AE%3C/text%3E%3C/svg%3E"}}/>
                   )
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-purple-100 to-blue-100 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center text-2xl">🎮</div>
+                  <div className="w-full h-full bg-gradient-to-br from-purple-100 to-blue-100 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                    <img src="/logo/logo-gamepad.webp" alt="Game" className="w-6 h-6" />
+                  </div>
                 )}
                 {current === index + 1 && (<div className="absolute inset-0 border-2 border-primary rounded-lg" />)}
               </button>

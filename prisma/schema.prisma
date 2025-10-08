@@ -187,6 +187,8 @@ model Metric {
   userId    String?
   userAgent String?
   ipAddress String?
+  country   String?
+  language  String?
   timestamp DateTime @default(now())
   product   Product  @relation(fields: [gameId], references: [id])
   user      User?    @relation(fields: [userId], references: [id])
@@ -195,6 +197,8 @@ model Metric {
   @@index([timestamp])
   @@index([type])
   @@index([gameId, timestamp], map: "idx_metric_gameId_timestamp")
+  @@index([country])
+  @@index([language])
 }
 
 model ProductComment {

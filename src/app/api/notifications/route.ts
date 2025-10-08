@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
         
         switch (type) {
           case 'follow':
-            notificationMessage = `${displayName} started following you 🎮`;
+            notificationMessage = `${displayName} started following you`;
             break;
           case 'comment':
             notificationMessage = `${displayName} commented on your game 💬`;

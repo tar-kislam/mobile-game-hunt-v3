@@ -47,7 +47,9 @@ export function FallbackImage({
       className
     )}>
       <div className="text-center">
-        <div className="text-4xl mb-2">🎮</div>
+        <div className="mb-2">
+          <img src="/logo/logo-gamepad.webp" alt="Game" className="w-10 h-10" />
+        </div>
         <div className="text-xs opacity-75">No Image</div>
       </div>
     </div>
@@ -132,7 +134,9 @@ export function GameFallbackImage({
       case 'hero':
         return (
           <div className={cn(baseStyle, "text-center p-8")}>
-            <div className="text-8xl mb-4">🎮</div>
+            <div className="mb-4">
+              <img src="/logo/logo-gamepad.webp" alt="Game" className="w-32 h-32" />
+            </div>
             <div className="text-lg font-semibold">{gameTitle || 'Featured Game'}</div>
             <div className="text-sm opacity-75 mt-2">No image available</div>
           </div>
@@ -140,14 +144,18 @@ export function GameFallbackImage({
       case 'thumbnail':
         return (
           <div className={cn(baseStyle, "text-center")}>
-            <div className="text-lg">🎮</div>
+            <div>
+              <img src="/logo/logo-gamepad.webp" alt="Game" className="w-6 h-6" />
+            </div>
           </div>
         )
       case 'card':
       default:
         return (
           <div className={cn(baseStyle, "text-center p-4")}>
-            <div className="text-4xl mb-2">🎮</div>
+            <div className="mb-2">
+          <img src="/logo/logo-gamepad.webp" alt="Game" className="w-10 h-10" />
+        </div>
             <div className="text-xs opacity-75">{gameTitle || 'Game'}</div>
           </div>
         )

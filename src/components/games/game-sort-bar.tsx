@@ -72,7 +72,7 @@ export function GameSortBar({
         <span className="text-sm text-gray-400 hidden sm:block">Sort by:</span>
         
         {/* Desktop: Button Group */}
-        <div className="hidden sm:flex items-center space-x-1 bg-gray-800/50 rounded-lg p-1">
+        <div className="hidden sm:flex items-center space-x-1 bg-gray-800/50 rounded-full p-1">
           {SORT_OPTIONS.map((option) => {
             const Icon = option.icon
             const isSelected = option.value === sortBy
@@ -83,7 +83,7 @@ export function GameSortBar({
                 variant={isSelected ? "default" : "ghost"}
                 size="sm"
                 onClick={() => onSortChange(option.value)}
-                className={`px-3 py-1 text-sm transition-all duration-200 font-[Orbitron] font-semibold ${
+                className={`px-3 py-1 text-sm transition-all duration-200 font-[Orbitron] font-semibold rounded-full ${
                   isSelected 
                     ? "bg-purple-600 hover:bg-purple-700 text-white shadow-lg" 
                     : "text-gray-300 hover:text-white hover:bg-gray-700/50"

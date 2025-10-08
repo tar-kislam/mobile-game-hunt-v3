@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { z } from 'zod'
 import { sendMail } from '@/lib/mail'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { z } from 'zod'
 
 export async function DELETE(
   request: NextRequest,
@@ -117,6 +117,56 @@ export async function PATCH(req: NextRequest, context: any) {
     return NextResponse.json({ ok: true, product: updated })
   } catch (e) {
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+  }
+}
+
+// PUT /api/products/[id] - Update product (owner only)
+export async function PUT(req: NextRequest, context: any) {
+  const paramsPromise = (context?.params || {}) as Promise<{ id: string }>
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await paramsPromise
+    const body = await req.json()
+    console.log('PUT /api/products/[id] - body:', body)
+
+    // Validate payload (keep flexible, only fields we allow to change)
+    const schema = z.object({
+      title: z.string().min(1).max(100).optional(),
+      description: z.string().min(1).max(5000).optional(),
+      tagline: z.string().max(200).optional(),
+      iosUrl: z.string().url().optional().nullable(),
+      androidUrl: z.string().url().optional().nullable(),
+      image: z.string().optional().nullable(),
+      thumbnail: z.string().optional().nullable(),
+      images: z.array(z.string()).optional().nullable(),
+      video: z.string().url().optional().nullable(),
+      platforms: z.array(z.string()).optional().nullable(),
+      socialLinks: z.record(z.string(), z.any()).optional().nullable() as any,
+    })
+    const parsed = schema.safeParse(body)
+    if (!parsed.success) {
+      console.log('PUT /api/products/[id] - validation failed:', parsed.error.flatten())
+      return NextResponse.json({ error: 'Invalid payload', details: parsed.error.flatten() }, { status: 400 })
+    }
+
+    // Check ownership
+    const product = await prisma.product.findUnique({ where: { id }, select: { userId: true } })
+    if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+    if (product.userId !== session.user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+    const updated = await prisma.product.update({
+      where: { id },
+      data: parsed.data as any,
+    })
+
+    return NextResponse.json({ success: true, product: updated })
+  } catch (e) {
+    console.error('Update product error:', e)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 

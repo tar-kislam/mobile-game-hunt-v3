@@ -108,7 +108,7 @@ export function TapTapGameCardNoScale({ game, onVote, showAuthor = true }: TapTa
           
           {/* Fallback icon - hidden */}
           <div className={`fallback-icon absolute inset-0 flex items-center justify-center text-4xl text-gray-400 ${getMainDisplayImage(game) ? 'hidden' : ''}`}>
-            🎮
+            <img src="/logo/logo-gamepad.webp" alt="Game" className="w-6 h-6" />
           </div>
 
           {/* Category Badge */}

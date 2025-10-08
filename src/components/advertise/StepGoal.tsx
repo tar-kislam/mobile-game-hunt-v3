@@ -16,19 +16,19 @@ const goals = [
     id: 'brand-awareness',
     label: 'Brand Awareness',
     description: 'Increase visibility and recognition for your studio',
-    icon: '🎯'
+    icon: '/emojis/target-emoji.webp'
   },
   {
     id: 'game-launch',
     label: 'Game Launch',
     description: 'Generate buzz and downloads for your new release',
-    icon: '🚀'
+    icon: '/emojis/rocket-emoji.webp'
   },
   {
     id: 'community-growth',
     label: 'Community Growth',
     description: 'Build an engaged player community',
-    icon: '👥'
+    icon: '/emojis/community-emoji.webp'
   }
 ]
 
@@ -37,7 +37,7 @@ export default function StepGoal({ data, updateData }: StepGoalProps) {
     <div className="space-y-6">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-white mb-2">
-          🎯 Advertising Goal
+          Advertising Goal
         </h2>
         <p className="text-gray-300">
           What do you want to achieve with your campaign?
@@ -55,7 +55,7 @@ export default function StepGoal({ data, updateData }: StepGoalProps) {
             <Label htmlFor={goal.id} className="flex-1 cursor-pointer">
               <div className="p-6 rounded-xl border border-gray-600 hover:border-purple-400 transition-all duration-200 hover:bg-purple-500/5">
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-2xl">{goal.icon}</span>
+                  <img src={goal.icon} alt={goal.label} className="w-6 h-6" />
                   <h3 className="text-xl font-semibold text-white">{goal.label}</h3>
                 </div>
                 <p className="text-gray-400">{goal.description}</p>

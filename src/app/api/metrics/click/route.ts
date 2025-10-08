@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod'
 import { rateLimit } from '@/lib/rate-limit'
+import { detectGeoInfo } from '@/lib/geo-detection'
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,6 +52,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Detect geo information
+    const ipAddress = request.headers.get('x-forwarded-for') || 
+                     request.headers.get('x-real-ip') || 
+                     'unknown'
+    const userAgent = request.headers.get('user-agent') || ''
+    const geoInfo = detectGeoInfo(ipAddress, userAgent)
+
     // Create metric record
     const metric = await prisma.metric.create({
       data: {
@@ -58,10 +66,10 @@ export async function POST(request: NextRequest) {
         type,
         referrer: referrer || null,
         userId: validUserId, // Use validated userId or null
-        userAgent: request.headers.get('user-agent') || null,
-        ipAddress: request.headers.get('x-forwarded-for') || 
-                   request.headers.get('x-real-ip') || 
-                   'unknown',
+        userAgent: userAgent || null,
+        ipAddress: ipAddress,
+        country: geoInfo.country,
+        language: geoInfo.language,
         timestamp: new Date()
       }
     });

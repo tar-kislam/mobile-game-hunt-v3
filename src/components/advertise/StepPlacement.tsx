@@ -17,21 +17,21 @@ const placementOptions = [
     id: 'featured-games',
     label: 'Featured Games',
     description: 'Prominent placement on the homepage',
-    icon: '⭐',
+    icon: '/emojis/star-emoji.webp',
     multiplier: 1.0
   },
   {
     id: 'editors-choice',
     label: 'Editor\'s Choice',
     description: 'Curated selection by our editorial team',
-    icon: '🎯',
+    icon: '/emojis/target-emoji.webp',
     multiplier: 1.2
   },
   {
     id: 'newsletter',
     label: 'Newsletter',
     description: 'Featured in our weekly newsletter',
-    icon: '📧',
+    icon: '/emojis/newsletter-emoji.webp',
     multiplier: 1.3
   }
 ]
@@ -58,7 +58,7 @@ export default function StepPlacement({ data, updateData }: StepPlacementProps) 
     <div className="space-y-6">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-white mb-2">
-          📍 Choose Your Placements
+          Choose Your Placements
         </h2>
         <p className="text-gray-300">
           Select where you want your game to be featured. You can choose multiple placements.
@@ -82,7 +82,7 @@ export default function StepPlacement({ data, updateData }: StepPlacementProps) 
             >
               <CardContent className="p-6">
                 <div className="text-center space-y-4">
-                  <div className="text-4xl">{option.icon}</div>
+                  <img src={option.icon} alt={option.label} className="w-12 h-12 mx-auto" />
                   
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-2">

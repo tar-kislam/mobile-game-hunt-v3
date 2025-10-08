@@ -4,6 +4,9 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Pen, Trash2 } from "lucide-react"
+import Link from "next/link"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { GameCard } from "./game-card"
 import { EnhancedSubmitGameModal } from "./enhanced-submit-game-modal"
 import { toast } from "sonner"
@@ -96,7 +99,10 @@ export function MyGamesSection() {
   return (
     <Card className="rounded-2xl shadow-soft">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
-        <CardTitle className="text-xl font-bold">🎮 My Games</CardTitle>
+        <CardTitle className="text-xl font-bold flex items-center gap-2">
+          <img src="/logo/logo-gamepad.webp" alt="Game" className="w-6 h-6" />
+          My Games
+        </CardTitle>
         <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
           <Button size="sm" className="bg-[rgb(60,41,100)] hover:bg-[rgb(50,31,90)] text-white rounded-2xl">
             <Plus className="w-4 h-4 mr-2" />
@@ -113,7 +119,9 @@ export function MyGamesSection() {
           </div>
         ) : myGames.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">🎮</div>
+            <div className="mb-4">
+              <img src="/logo/logo-gamepad.webp" alt="Game" className="w-16 h-16" />
+            </div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No games submitted yet</h3>
             <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md mx-auto">
               Share your amazing mobile games with the community! Submit your first game to get started.
@@ -137,6 +145,44 @@ export function MyGamesSection() {
                   game={game} 
                   onVote={handleVote}
                   showAuthor={false} // Don't show author since it's the user's own games
+                  footer={
+                    <div className="flex gap-2 mt-3">
+                      <Link href={`/submit/edit/${game.id}`}>
+                        <Button variant="outline" className="rounded-2xl">
+                          <Pen className="w-4 h-4 mr-2" /> Edit
+                        </Button>
+                      </Link>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" className="rounded-2xl">
+                            <Trash2 className="w-4 h-4 mr-2" /> Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete this game?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. The game and its related data will be permanently removed.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={async()=>{
+                              try{
+                                const res = await fetch(`/api/products/${game.id}`, { method: 'DELETE' })
+                                if(!res.ok){ throw new Error('Failed') }
+                                setMyGames(prev=> prev.filter(g=> g.id!==game.id))
+                                toast.success('🗑️ Game successfully removed')
+                              }catch(err){
+                                console.error(err)
+                                toast.error('Failed to remove the game')
+                              }
+                            }}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  }
                 />
               ))}
             </div>

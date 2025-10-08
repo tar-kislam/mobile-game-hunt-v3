@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
     const rawTitle = searchParams.get('title')
     const rawIos = searchParams.get('iosUrl')
     const rawAndroid = searchParams.get('androidUrl')
+    const excludeId = searchParams.get('excludeId') || undefined
 
     const title = sanitize(rawTitle)
     const iosUrl = normalizeStoreUrl(rawIos)
@@ -36,13 +37,13 @@ export async function GET(req: NextRequest) {
 
     const [titleExists, iosExists, androidExists] = await Promise.all([
       title
-        ? prisma.product.findFirst({ where: { title: { equals: title, mode: 'insensitive' } }, select: { id: true, slug: true } })
+        ? prisma.product.findFirst({ where: { title: { equals: title, mode: 'insensitive' }, NOT: excludeId ? { id: excludeId } : undefined }, select: { id: true, slug: true } })
         : null,
       iosUrl
-        ? prisma.product.findFirst({ where: { iosUrl }, select: { id: true } })
+        ? prisma.product.findFirst({ where: { iosUrl, NOT: excludeId ? { id: excludeId } : undefined }, select: { id: true } })
         : null,
       androidUrl
-        ? prisma.product.findFirst({ where: { androidUrl }, select: { id: true } })
+        ? prisma.product.findFirst({ where: { androidUrl, NOT: excludeId ? { id: excludeId } : undefined }, select: { id: true } })
         : null,
     ])
 

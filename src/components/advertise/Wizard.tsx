@@ -88,15 +88,15 @@ export default function Wizard({ data, updateData, onSubmit, isSubmitting }: Wiz
   const getStepIcon = (step: number) => {
     switch (step) {
       case 1:
-        return '🎯'
+        return ''
       case 2:
-        return '📍'
+        return ''
       case 3:
-        return '💰'
+        return ''
       case 4:
-        return '🎮'
+        return ''
       case 5:
-        return '✅'
+        return ''
       default:
         return ''
     }

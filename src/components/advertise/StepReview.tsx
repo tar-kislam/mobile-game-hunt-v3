@@ -22,9 +22,9 @@ interface StepReviewProps {
 }
 
 const goals = [
-  { id: 'brand-awareness', label: 'Brand Awareness', icon: '🎯' },
-  { id: 'game-launch', label: 'Game Launch', icon: '🚀' },
-  { id: 'community-growth', label: 'Community Growth', icon: '👥' }
+  { id: 'brand-awareness', label: 'Brand Awareness', icon: '/emojis/target-emoji.webp' },
+  { id: 'game-launch', label: 'Game Launch', icon: '/emojis/rocket-emoji.webp' },
+  { id: 'community-growth', label: 'Community Growth', icon: '/emojis/community-emoji.webp' }
 ]
 
 const packages = [
@@ -33,28 +33,28 @@ const packages = [
     label: 'Daily Promo',
     budget: 100,
     duration: '1 day',
-    icon: '⚡'
+    icon: '/emojis/lightning-emoji.webp'
   },
   {
     id: 'weekly',
     label: 'Weekly Promo',
     budget: 500,
     duration: '7 days',
-    icon: '📈'
+    icon: '/emojis/promo-emoji.webp'
   },
   {
     id: 'monthly',
     label: 'Monthly Promo',
     budget: 1500,
     duration: '30 days',
-    icon: '🎯'
+    icon: '/emojis/target-emoji.webp'
   }
 ]
 
 const placementOptions = [
-  { id: 'featured-games', label: 'Featured Games', icon: '⭐' },
-  { id: 'editors-choice', label: 'Editor\'s Choice', icon: '🎯' },
-  { id: 'newsletter', label: 'Newsletter', icon: '📧' }
+  { id: 'featured-games', label: 'Featured Games', icon: '/emojis/star-emoji.webp' },
+  { id: 'editors-choice', label: 'Editor\'s Choice', icon: '/emojis/target-emoji.webp' },
+  { id: 'newsletter', label: 'Newsletter', icon: '/emojis/newsletter-emoji.webp' }
 ]
 
 export default function StepReview({ data, onSubmit, isSubmitting, onEdit }: StepReviewProps) {
@@ -68,7 +68,7 @@ export default function StepReview({ data, onSubmit, isSubmitting, onEdit }: Ste
     <div className="space-y-6">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-white mb-2">
-          ✅ Review & Submit
+          Review & Submit
         </h2>
         <p className="text-gray-300">
           Review your campaign details before launching
@@ -97,7 +97,7 @@ export default function StepReview({ data, onSubmit, isSubmitting, onEdit }: Ste
             </CardHeader>
             <CardContent className="pt-0">
               <div className="flex items-center gap-2">
-                <span className="text-xl">{selectedGoal?.icon}</span>
+                <img src={selectedGoal?.icon} alt={selectedGoal?.label} className="w-5 h-5" />
                 <p className="text-gray-300">{selectedGoal?.label}</p>
               </div>
             </CardContent>
@@ -121,7 +121,7 @@ export default function StepReview({ data, onSubmit, isSubmitting, onEdit }: Ste
             <CardContent className="pt-0">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">{selectedPackage?.icon}</span>
+                  <img src={selectedPackage?.icon} alt={selectedPackage?.label} className="w-5 h-5" />
                   <p className="text-gray-300 font-medium">{selectedPackage?.label}</p>
                 </div>
                 <div className="flex items-center gap-1">
@@ -155,7 +155,7 @@ export default function StepReview({ data, onSubmit, isSubmitting, onEdit }: Ste
                 <div className="flex flex-wrap gap-2">
                   {selectedPlacements.map((placement) => (
                     <Badge key={placement?.id} variant="secondary" className="bg-purple-500/20 text-purple-300 border-purple-400/30">
-                      <span className="mr-1">{placement?.icon}</span>
+                      <img src={placement?.icon} alt={placement?.label} className="w-4 h-4 mr-1" />
                       {placement?.label}
                     </Badge>
                   ))}

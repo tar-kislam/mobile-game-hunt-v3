@@ -102,7 +102,9 @@ export function GogGameCard({ game, onVote }: GogGameCardProps) {
           
           {/* Fallback icon */}
           <div className={`fallback-icon w-full h-full flex items-center justify-center ${coverImage ? 'hidden' : ''}`}>
-            <div className="text-6xl text-gray-600">🎮</div>
+            <div>
+              <img src="/logo/logo-gamepad.webp" alt="Game" className="w-16 h-16" />
+            </div>
           </div>
           
           {/* Platform Icons - Top Left */}

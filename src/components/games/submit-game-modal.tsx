@@ -162,7 +162,10 @@ export function SubmitGameModal({ children, onGameSubmitted }: SubmitGameModalPr
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center mb-2">
-            🎮 Submit Your Game
+            <div className="flex items-center gap-2">
+              <img src="/logo/logo-gamepad.webp" alt="Game" className="w-6 h-6" />
+              Submit Your Game
+            </div>
           </DialogTitle>
         </DialogHeader>
         

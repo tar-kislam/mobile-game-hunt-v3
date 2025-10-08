@@ -30,7 +30,9 @@ export default function NotFound() {
 
         {/* Error illustration */}
         <div className="mb-12">
-          <div className="text-8xl mb-4">🎮</div>
+          <div className="mb-4">
+            <img src="/logo/logo-gamepad.webp" alt="Game" className="w-32 h-32" />
+          </div>
           <p className="text-gray-400 text-sm">
             Even the best games have bugs... this is just a navigation bug!
           </p>

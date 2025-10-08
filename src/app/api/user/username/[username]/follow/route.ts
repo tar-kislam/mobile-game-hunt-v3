@@ -82,7 +82,7 @@ export async function POST(
           await prisma.notification.create({
             data: {
               userId: followingId,
-              message: `${follower.name || follower.username || 'Someone'} started following you 🎮`,
+              message: `${follower.name || follower.username || 'Someone'} started following you`,
               type: 'follow'
             }
           })

@@ -116,7 +116,9 @@ function MobileGamesCarousel({ games, onVote }: MobileGamesCarouselProps) {
   if (games.length === 0) {
     return (
       <Card className="rounded-2xl shadow-lg p-8 text-center border-white/10">
-        <div className="text-6xl mb-4">🎮</div>
+        <div className="mb-4">
+          <img src="/logo/logo-gamepad.webp" alt="Game" className="w-16 h-16" />
+        </div>
         <h3 className="text-xl font-semibold mb-2">No games yet</h3>
         <p className="text-muted-foreground mb-4">Be the first to submit a game to the community!</p>
       </Card>
@@ -208,7 +210,9 @@ function MobileGameCard({ game, onVote }: MobileGameCardProps) {
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
-              <div className="text-6xl">🎮</div>
+              <div>
+                <img src="/logo/logo-gamepad.webp" alt="Game" className="w-16 h-16" />
+              </div>
             </div>
           )}
           {/* Gradient Overlay */}
@@ -573,28 +577,28 @@ export default function HomePage() {
                     }
                   >
                     <Tabs value={sortBy} onValueChange={(value) => setSortBy(value as any)} className="w-full">
-                      <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-gray-900/80 backdrop-blur-sm border border-white/10 rounded-xl p-1 shadow-lg shadow-purple-500/10">
+                      <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-gray-900/80 backdrop-blur-sm border border-white/10 rounded-full p-1 shadow-lg shadow-purple-500/10">
                         <TabsTrigger 
                           value="newest" 
-                          className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
+                          className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-full font-medium"
                         >
                           Newest
                         </TabsTrigger>
                         <TabsTrigger 
                           value="most-upvoted" 
-                          className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
+                          className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-full font-medium"
                         >
                           Most Upvoted
                         </TabsTrigger>
                         <TabsTrigger 
                           value="most-viewed" 
-                          className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
+                          className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-full font-medium"
                         >
                           Most Viewed
                         </TabsTrigger>
                         <TabsTrigger 
                           value="editors-choice" 
-                          className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-lg font-medium"
+                          className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/40 data-[state=active]:scale-105 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-full font-medium"
                         >
                           Editor's Choice
                         </TabsTrigger>
@@ -626,7 +630,9 @@ export default function HomePage() {
                 </div>
               ) : games.length === 0 ? (
                 <Card className="rounded-2xl shadow-lg p-8 text-center border-white/10">
-                  <div className="text-6xl mb-4">🎮</div>
+                  <div className="mb-4">
+          <img src="/logo/logo-gamepad.webp" alt="Game" className="w-16 h-16" />
+        </div>
                   <h3 className="text-xl font-semibold mb-2">No games yet</h3>
                   <p className="text-muted-foreground mb-4">Be the first to submit a game to the community!</p>
                   <EnhancedSubmitGameModal onGameSubmitted={handleGameSubmitted}>
