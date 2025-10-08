@@ -264,7 +264,7 @@ export async function GET(request: NextRequest) {
     })
 
     // GA fallback verisi varsa onu kullan, yoksa local verileri kullan
-    const geoStatsArray = gaData?.fallback?.geoStats?.length > 0 
+    const geoStatsArray = (gaData?.fallback?.geoStats && gaData.fallback.geoStats.length > 0) 
       ? gaData.fallback.geoStats 
       : Array.from(countryCounts.entries())
           .map(([country, count]) => ({ country, count }))
@@ -279,7 +279,7 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    const languagePreferencesArray = gaData?.fallback?.languagePreferences?.length > 0
+    const languagePreferencesArray = (gaData?.fallback?.languagePreferences && gaData.fallback.languagePreferences.length > 0)
       ? gaData.fallback.languagePreferences
       : Array.from(languageCounts.entries())
           .map(([name, value]) => ({ name, value }))
@@ -315,11 +315,7 @@ export async function GET(request: NextRequest) {
         trafficSources: gaData?.fallback?.trafficSources || []
       },
       // Google Analytics toplam veriler
-      gaTotals: gaData?.data ? {
-        totalSessions: gaData.data.totalSessions,
-        totalUsers: gaData.data.totalUsers,
-        totalPageViews: gaData.data.totalPageViews
-      } : null,
+      gaTotals: null,
       overviewTotals: {
         totalViews,
         totalVotes,
