@@ -5,6 +5,11 @@ import { prisma } from '@/lib/prisma'
 import { createPostSchema, postsQuerySchema } from '@/lib/validations/community'
 import { revalidatePath } from 'next/cache'
 import { notifyFollowersOfCommunityPost } from '@/lib/followNotifications'
+import { handlePostCreation } from '@/lib/xp-system'
+import { Prisma } from '@prisma/client'
+
+// Configuration constants
+export const DAILY_POST_LIMIT = 3
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,6 +29,31 @@ export async function POST(request: NextRequest) {
       console.error(`[COMMUNITY][CREATE] User not found: ${session.user.id}`)
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
+
+    // Check daily post limit (24 hours from now)
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    const postsToday = await prisma.post.count({
+      where: {
+        userId: session.user.id,
+        createdAt: { gte: twentyFourHoursAgo }
+      }
+    })
+
+    if (postsToday >= DAILY_POST_LIMIT) {
+      console.log(`[COMMUNITY][CREATE] Daily post limit reached for user ${session.user.id}: ${postsToday}/${DAILY_POST_LIMIT}`)
+      return NextResponse.json(
+        { 
+          error: 'Daily post limit reached',
+          message: `You've reached your daily limit of ${DAILY_POST_LIMIT} posts. Keep engaging — tomorrow you can post again!`,
+          limit: DAILY_POST_LIMIT,
+          used: postsToday,
+          resetTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        },
+        { status: 429 } // Too Many Requests
+      )
+    }
+
+    console.log(`[COMMUNITY][CREATE] User ${session.user.id} has ${postsToday}/${DAILY_POST_LIMIT} posts today`)
 
     const body = await request.json()
     console.log('[COMMUNITY][CREATE] Request body:', JSON.stringify(body, null, 2))
@@ -144,6 +174,17 @@ export async function POST(request: NextRequest) {
         }
       })
       console.log('[COMMUNITY][CREATE] Post created successfully:', post.id)
+
+      // Award XP for creating a post
+      try {
+        const xpResult = await handlePostCreation(session.user.id, post.id)
+        if (xpResult.success) {
+          console.log(`[XP] Awarded ${xpResult.xpDelta} XP to user ${session.user.id} for creating post`)
+        }
+      } catch (xpError) {
+        console.error('[XP] Error awarding XP for post creation:', xpError)
+        // Don't fail the request if XP awarding fails
+      }
 
       // Notify followers of new community post
       try {

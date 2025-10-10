@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { toggleLikeSchema } from '@/lib/validations/community'
-import { awardXP } from '@/lib/xpService'
+import { handleLikeAction } from '@/lib/xp-system'
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,6 +47,22 @@ export async function POST(request: NextRequest) {
         }
       })
 
+      // Handle XP removal for unliking
+      try {
+        const xpResult = await handleLikeAction(session.user.id, postId, false)
+        if (xpResult.success) {
+          console.log(`[XP] Removed ${Math.abs(xpResult.xpDelta)} XP from user ${session.user.id} for unliking`)
+        }
+      } catch (xpError) {
+        console.error('[XP] Error removing XP for unliking:', xpError)
+        // Don't fail the request if XP removal fails
+      }
+
+      // Get updated like count
+      const updatedLikeCount = await prisma.like.count({
+        where: { postId: postId }
+      })
+
       // Create notification for post author (if not the same user)
       if (post.userId !== session.user.id) {
         await prisma.notification.create({
@@ -62,6 +78,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ 
         liked: false, 
+        likeCount: updatedLikeCount,
         message: 'Post unliked successfully' 
       })
     } else {
@@ -73,25 +90,21 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      // Award XP for liking
+      // Handle XP for liking
       try {
-        await awardXP(session.user.id, 'vote', 2)
-        console.log(`[XP] Awarded 2 XP to user ${session.user.id} for liking`)
+        const xpResult = await handleLikeAction(session.user.id, postId, true)
+        if (xpResult.success) {
+          console.log(`[XP] Awarded ${xpResult.xpDelta} XP to user ${session.user.id} for liking`)
+        }
       } catch (xpError) {
         console.error('[XP] Error awarding XP for liking:', xpError)
         // Don't fail the request if XP awarding fails
       }
 
-      // Award XP to post author for receiving a like (if not the same user)
-      if (post.userId !== session.user.id) {
-        try {
-          await awardXP(post.userId, 'vote', 2)
-          console.log(`[XP] Awarded 2 XP to user ${post.userId} for receiving a like`)
-        } catch (xpError) {
-          console.error('[XP] Error awarding XP for receiving like:', xpError)
-          // Don't fail the request if XP awarding fails
-        }
-      }
+      // Get updated like count
+      const updatedLikeCount = await prisma.like.count({
+        where: { postId: postId }
+      })
 
       // Create notification for post author (if not the same user)
       if (post.userId !== session.user.id) {
@@ -108,6 +121,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ 
         liked: true, 
+        likeCount: updatedLikeCount,
         message: 'Post liked successfully' 
       })
     }

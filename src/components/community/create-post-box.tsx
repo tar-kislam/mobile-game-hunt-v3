@@ -6,12 +6,15 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { ImageIcon, Send, X, Smile } from 'lucide-react'
+import { ImageIcon, Send, X, Smile, Clock, AlertCircle } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { PollModal } from './poll-modal'
 import { PollSummary } from './poll-summary'
+import { usePostLimit } from '@/hooks/usePostLimit'
+import { Progress } from '@/components/ui/progress'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface CreatePostBoxProps {
   userId?: string
@@ -41,6 +44,9 @@ export function CreatePostBox({ userId }: CreatePostBoxProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const emojiPickerRef = useRef<HTMLDivElement>(null)
+  
+  // Post limit hook
+  const { canPost, remaining, used, limit, getStatusMessage, getProgressPercentage, isLoading: limitLoading } = usePostLimit()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,6 +58,12 @@ export function CreatePostBox({ userId }: CreatePostBoxProps) {
 
     if (images.length > 4) {
       toast.error('Maximum 4 images allowed')
+      return
+    }
+
+    // Check daily post limit
+    if (!canPost) {
+      toast.error(`Daily post limit reached (${limit} posts per day). Try again tomorrow!`)
       return
     }
 
@@ -460,16 +472,57 @@ export function CreatePostBox({ userId }: CreatePostBoxProps) {
                   />
                 </div>
                 <div className="flex items-center gap-2">
+                  {/* Post Limit Indicator */}
+                  {!limitLoading && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {canPost ? (
+                              <div className="flex items-center gap-1">
+                                <span>{remaining}/{limit}</span>
+                                <Progress 
+                                  value={getProgressPercentage()} 
+                                  className="w-12 h-1"
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1 text-red-400">
+                                <AlertCircle className="h-3 w-3" />
+                                <span>Limit reached</span>
+                              </div>
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{getStatusMessage()}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  
                   <span className="text-sm text-muted-foreground">
                     {content.length}/2000
                   </span>
-                  <Button
-                    type="submit"
-                    disabled={!content.trim() || isSubmitting}
-                    className="rounded-full bg-slate-600 hover:bg-slate-500 text-white px-5"
-                  >
-                    {isSubmitting ? 'Posting...' : 'Post'}
-                  </Button>
+                  
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="submit"
+                          disabled={!content.trim() || isSubmitting || !canPost}
+                          className="rounded-full bg-slate-600 hover:bg-slate-500 text-white px-5 disabled:opacity-50"
+                        >
+                          {isSubmitting ? 'Posting...' : canPost ? 'Post' : 'Limit Reached'}
+                        </Button>
+                      </TooltipTrigger>
+                      {!canPost && (
+                        <TooltipContent>
+                          <p>Daily post limit reached. Try again tomorrow!</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
 

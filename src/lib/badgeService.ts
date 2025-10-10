@@ -2,7 +2,7 @@ import { redisClient } from '@/lib/redis'
 import { prisma } from '@/lib/prisma'
 import { notify, notifyBadgeEarned } from '@/lib/notificationService'
 import { badgeUnlocked, badgeClaimed } from '@/lib/notifications/messages'
-import { awardBadgeXP } from './xpService'
+import { addXp } from './xp-system'
 
 type BadgeType = 'WISE_OWL' | 'FIRE_DRAGON' | 'CLEVER_FOX' | 'GENTLE_PANDA' | 'SWIFT_PUMA' | 'EXPLORER' | 'RISING_STAR' | 'PIONEER' | 'FIRST_LAUNCH'
 
@@ -246,12 +246,17 @@ export async function awardBadge(userId: string, badgeType: BadgeType): Promise<
     
     await redisClient.set(BADGE_KEY, JSON.stringify(allBadges))
     
-    // Grant XP reward using the XP service
+    // Grant XP reward using the new XP system
     const badgeInfo = BADGE_CONFIG[badgeType]
-    const xpAwarded = await awardBadgeXP(userId, badgeType, badgeInfo.xpReward)
-    
-    if (!xpAwarded) {
-      console.warn(`[BADGE SERVICE] Failed to award XP for badge ${badgeType}`)
+    try {
+      const xpResult = await addXp(userId, 'BADGE_UNLOCKED', badgeType, badgeInfo.xpReward)
+      if (xpResult.success) {
+        console.log(`[BADGE SERVICE] Awarded ${badgeInfo.xpReward} XP for badge ${badgeType}`)
+      } else {
+        console.warn(`[BADGE SERVICE] Failed to award XP for badge ${badgeType}: ${xpResult.message}`)
+      }
+    } catch (error) {
+      console.error(`[BADGE SERVICE] Error awarding XP for badge ${badgeType}:`, error)
     }
     
     // Send notification about badge earned

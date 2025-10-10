@@ -12,6 +12,7 @@ import { CommunitySidebar } from '@/components/community/community-sidebar'
 import { CreatePostBox } from '@/components/community/create-post-box'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CreatePostRefresh } from '@/components/community/CreatePostRefresh'
+import { Button } from '@/components/ui/button'
 
 export default async function CommunityPage() {
   const session = await getServerSession(authOptions)
@@ -31,11 +32,6 @@ export default async function CommunityPage() {
           }
         },
         likes: true,
-        comments: {
-          select: {
-            id: true,
-          }
-        },
         poll: {
           include: {
             options: {
@@ -50,7 +46,6 @@ export default async function CommunityPage() {
         _count: {
           select: {
             likes: true,
-            comments: true,
           }
         }
       },
@@ -107,10 +102,19 @@ export default async function CommunityPage() {
           </Suspense>
         </aside>
         <main className="lg:col-span-2 space-y-6">
-          {session && (
+          {/* Create Post Box */}
+          {session ? (
             <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl" />}>
               <CreatePostBox />
             </Suspense>
+          ) : (
+            <div className="bg-card/50 border-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+              <h3 className="text-lg font-semibold text-white mb-2">Join the Conversation</h3>
+              <p className="text-gray-400 mb-4">Sign in to share your thoughts with the community</p>
+              <Button asChild className="bg-blue-600 hover:bg-blue-700">
+                <a href="/auth/signin">Sign In to Post</a>
+              </Button>
+            </div>
           )}
           {/* lightweight client refresh hook for after-create */}
           <CreatePostRefresh trigger={0} />

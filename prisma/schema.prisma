@@ -78,6 +78,8 @@ model User {
   studios              Studio[]
   votes                Vote[]
   campaigns            Campaign[]
+  xpLogs               UserXpLog[]
+  badges               UserBadge[]
 }
 
 model Product {
@@ -397,13 +399,18 @@ model PostComment {
   content   String
   userId    String
   postId    String
+  parentId  String?  // nullable for top-level comments
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([postId])
-  @@index([createdAt])
+  post      Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    PostComment? @relation("PostCommentToPostComment", fields: [parentId], references: [id])
+  children  PostComment[] @relation("PostCommentToPostComment")
+
+  @@index([postId, createdAt])
+  @@index([parentId])
+  @@index([userId, createdAt])
 }
 
 model Poll {
@@ -597,4 +604,51 @@ model Campaign {
 
   @@index([userId])
   @@index([submittedAt])
+}
+
+// XP and Badge System Models
+
+model UserXpLog {
+  id          String   @id @default(cuid())
+  userId      String
+  action      String   // POST_CREATED, POST_LIKED, etc.
+  xpDelta     Int      // Can be positive or negative
+  referenceId String?  // ID of the post, comment, etc. that triggered this XP change
+  reverted    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, action, referenceId])
+  @@index([createdAt])
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeKey  String   // FIRST_POST, COMMUNITY_CONTRIBUTOR, etc.
+  earnedAt  DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeKey])
+  @@index([userId])
+  @@index([badgeKey])
+}
+
+model BadgeDefinition {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String
+  icon        String?  // Icon name or URL
+  category    String   @default("general") // general, milestone, special, etc.
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([category])
+  @@index([isActive])
 }

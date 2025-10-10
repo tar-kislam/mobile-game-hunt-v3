@@ -1,24 +1,43 @@
 "use client"
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { TrendingUp, Hash } from 'lucide-react'
+import { TrendingUp, Hash, Heart } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { CommunitySearchSimple } from './community-search-simple'
+import { Skeleton } from '@/components/ui/skeleton'
+
+interface HashtagStats {
+  tag: string
+  score: number
+  likes: number
+  mentions: number
+}
+
+interface TrendingData {
+  hashtags: HashtagStats[]
+  posts: any[]
+  lastUpdated: string
+}
 
 interface TrendingTopicsProps {
   topics: string[]
+  trendingData?: TrendingData
+  isLoading?: boolean
   onSelectTag?: (tag: string) => void
   onSimpleSearch?: (query: string) => void
   onSimpleSearchClear?: () => void
 }
 
-export function TrendingTopics({ topics, onSelectTag, onSimpleSearch, onSimpleSearchClear }: TrendingTopicsProps) {
+export function TrendingTopics({ topics, trendingData, isLoading, onSelectTag, onSimpleSearch, onSimpleSearchClear }: TrendingTopicsProps) {
   const router = useRouter()
   const handleClick = (raw: string) => {
     const tag = raw.replace(/^#/, '')
     if (onSelectTag) return onSelectTag(tag)
     router.push(`/community?hashtag=${encodeURIComponent(tag)}`)
   }
+
+  // Use trending data if available, fallback to topics array
+  const displayItems = trendingData?.hashtags || topics.map(tag => ({ tag, likes: 0, mentions: 0, score: 0 }))
   return (
     <div className="space-y-4">
       {/* Simple Search Bar */}
@@ -40,7 +59,22 @@ export function TrendingTopics({ topics, onSelectTag, onSimpleSearch, onSimpleSe
           </CardTitle>
         </CardHeader>
       <CardContent>
-        {topics.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-3">
+            {[...Array(5)].map((_, index) => (
+              <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-background/30">
+                <div className="flex items-center space-x-3">
+                  <Skeleton className="w-6 h-6 rounded-full" />
+                  <div className="flex items-center space-x-2">
+                    <Skeleton className="h-4 w-4" />
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                </div>
+                <Skeleton className="h-4 w-8" />
+              </div>
+            ))}
+          </div>
+        ) : displayItems.length === 0 ? (
           <div className="text-center py-4">
             <p className="text-muted-foreground text-sm">
               No trending topics yet
@@ -48,12 +82,16 @@ export function TrendingTopics({ topics, onSelectTag, onSimpleSearch, onSimpleSe
           </div>
         ) : (
           <div className="space-y-3">
-            {topics.map((topic, index) => {
-              const clean = (topic || '').toString().replace(/^#+/, '')
+            {displayItems.map((item, index) => {
+              const tag = typeof item === 'string' ? item : item.tag
+              const clean = (tag || '').toString().replace(/^#+/, '')
               const display = clean
+              const likes = typeof item === 'object' ? item.likes : 0
+              const mentions = typeof item === 'object' ? item.mentions : 0
+              
               return (
               <div
-                key={topic}
+                key={tag}
                 className="flex items-center justify-between p-3 rounded-lg bg-background/30 hover:bg-background/50 transition-colors cursor-pointer group"
                 onClick={() => handleClick(clean)}
               >
@@ -68,8 +106,16 @@ export function TrendingTopics({ topics, onSelectTag, onSimpleSearch, onSimpleSe
                     </span>
                   </div>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  #{index + 1}
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  {likes > 0 && (
+                    <div className="flex items-center space-x-1">
+                      <Heart className="h-3 w-3 text-red-500" />
+                      <span>{likes}</span>
+                    </div>
+                  )}
+                  <span className="text-xs">
+                    {likes > 0 ? `${likes} likes` : `#${index + 1}`}
+                  </span>
                 </div>
               </div>
               )
@@ -79,7 +125,7 @@ export function TrendingTopics({ topics, onSelectTag, onSimpleSearch, onSimpleSe
         
         <div className="mt-4 pt-4 border-t border-white/10">
           <p className="text-xs text-muted-foreground text-center">
-            Based on posts from the last 7 days
+            Based on likes and hashtags from the last 7 days
           </p>
         </div>
       </CardContent>
