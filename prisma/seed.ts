@@ -1,20 +1,19 @@
 import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
-async function main() {
+async function main(): Promise<void> {
   console.log('🌱 Starting seed...')
 
   // Create predefined categories
-  const categories = [
+  const categories: string[] = [
     'Action', 'Adventure', 'RPG', 'Strategy', 'Puzzle', 'Shooter', 'Simulation', 
     'Sports', 'Racing', 'Casual', 'Arcade', 'Fighting', 'Card', 'MOBA', 'Idle', 
     'Music', 'Educational', 'Platformer', 'Roguelike', 'Sandbox'
   ]
 
   console.log('📂 Creating categories...')
-  const createdCategories = []
+  const createdCategories: any[] = []
   for (const categoryName of categories) {
     const category = await prisma.category.upsert({
       where: { name: categoryName },
@@ -30,7 +29,7 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch((e: any) => {
     console.error('❌ Seed failed:', e)
     process.exit(1)
   })
