@@ -78,6 +78,22 @@ export function PostCard({ post, onDelete }: PostCardProps) {
     }
   }
 
+  const handleCommentClick = () => {
+    if (!session?.user?.id) {
+      toast.error('Please sign in to comment')
+      return
+    }
+    // Future: open comment input or navigate to detail
+  }
+
+  const handleShareClick = () => {
+    if (!session?.user?.id) {
+      toast.error('Please sign in to share posts')
+      return
+    }
+    // Future: open share menu
+  }
+
   const handleDelete = async () => {
     if (!session) {
       toast.error('Please sign in to delete posts')
@@ -262,11 +278,11 @@ export function PostCard({ post, onDelete }: PostCardProps) {
                 <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
                 <span>{likeCount}</span>
               </Button>
-              <Button variant="ghost" size="sm" className="flex items-center space-x-2 text-gray-400 hover:text-blue-500">
+              <Button variant="ghost" size="sm" onClick={handleCommentClick} className="flex items-center space-x-2 text-gray-400 hover:text-blue-500">
                 <MessageCircle className="h-4 w-4" />
                 <span>{post._count.comments}</span>
               </Button>
-              <Button variant="ghost" size="sm" className="text-gray-400 hover:text-green-500">
+              <Button variant="ghost" size="sm" onClick={handleShareClick} className="text-gray-400 hover:text-green-500">
                 <Share className="h-4 w-4" />
               </Button>
             </div>

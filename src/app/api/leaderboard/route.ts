@@ -4,12 +4,14 @@ import { redisClient } from '@/lib/redis';
 import { getScoringWeights, calculateFinalScore, DEFAULT_LEADERBOARD_CONFIG } from '@/lib/leaderboardConfig';
 
 // Cache keys and TTL constants
+// Bump cache version to invalidate old payload shape
+const CACHE_VERSION = 'v2';
 const LEADERBOARD_KEYS = {
-  DAILY: 'leaderboard:daily',
-  WEEKLY: 'leaderboard:weekly',
-  MONTHLY: 'leaderboard:monthly',
-  YEARLY: 'leaderboard:yearly',
-  ALL: 'leaderboard:all'
+  DAILY: `leaderboard:${CACHE_VERSION}:daily`,
+  WEEKLY: `leaderboard:${CACHE_VERSION}:weekly`,
+  MONTHLY: `leaderboard:${CACHE_VERSION}:monthly`,
+  YEARLY: `leaderboard:${CACHE_VERSION}:yearly`,
+  ALL: `leaderboard:${CACHE_VERSION}:all`
 };
 
 const CACHE_TTL = DEFAULT_LEADERBOARD_CONFIG.cacheTTL;
@@ -105,6 +107,7 @@ export async function GET(request: NextRequest) {
       where: productWhereClause,
       select: {
         id: true,
+        slug: true,
         title: true,
         description: true,
         tagline: true,
@@ -115,6 +118,9 @@ export async function GET(request: NextRequest) {
         status: true,
         createdAt: true,
         clicks: true, // This is the views metric
+        _count: {
+          select: { votes: true, comments: true, followUsers: true }
+        },
         user: {
           select: {
             id: true,
@@ -154,12 +160,17 @@ export async function GET(request: NextRequest) {
       const comments = product.comments.length;
       const follows = product.followUsers.length;
       const views = product.clicks || 0; // Use the clicks field as views
+      // Lifetime totals for display
+      const lifetimeVotes = product._count?.votes || 0;
+      const lifetimeComments = product._count?.comments || 0;
+      const lifetimeFollows = product._count?.followUsers || 0;
       
       // Calculate final score using weighted metrics
       const finalScore = calculateFinalScore(votes, comments, follows, views, scoringWeights);
 
       return {
         id: product.id,
+        slug: product.slug,
         title: product.title,
         description: product.description,
         tagline: product.tagline,
@@ -169,9 +180,9 @@ export async function GET(request: NextRequest) {
         status: product.status,
         createdAt: product.createdAt,
         user: product.user,
-        votes,
-        comments,
-        follows,
+        votes: lifetimeVotes,
+        comments: lifetimeComments,
+        follows: lifetimeFollows,
         views,
         finalScore
       };

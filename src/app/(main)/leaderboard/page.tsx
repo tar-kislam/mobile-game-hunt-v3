@@ -15,6 +15,7 @@ import { getBadgeIconPath } from "@/lib/badgeIconMapper";
 
 interface LeaderboardProduct {
   id: string;
+  slug?: string;
   title: string;
   description: string;
   tagline?: string | null;
@@ -543,7 +544,7 @@ export default function LeaderboardPage() {
                             {/* Desktop: Title + Tagline + Info */}
                             <div className="hidden sm:block">
                               <div className="mb-2">
-                                <Link href={`/product/${product.id}`}>
+                                <Link href={`/product/${product.slug || product.id}`}>
                                   <h3 className="text-lg md:text-xl font-bold text-white truncate group-hover:text-purple-300 transition-colors duration-300 cursor-pointer hover:underline">
                                     {product.title}
                                   </h3>

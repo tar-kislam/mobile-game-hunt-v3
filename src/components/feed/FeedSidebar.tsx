@@ -46,6 +46,7 @@ interface FollowedGame {
 
 interface LastSeenProduct {
   id: string
+  slug?: string
   title: string
   thumbnail?: string
   lastViewed: string
@@ -373,7 +374,7 @@ export function FeedSidebar({ onFilterChange, activeFilter }: FeedSidebarProps) 
                   transition={{ delay: 0.4 + index * 0.05 }}
                 >
                   <Link
-                    href={`/product/${product.id}`}
+                    href={`/product/${product.slug || product.id}`}
                     className="block w-full flex items-center gap-3 p-2 rounded-lg transition-all duration-200 hover:bg-slate-800/50"
                   >
                     {product.thumbnail ? (

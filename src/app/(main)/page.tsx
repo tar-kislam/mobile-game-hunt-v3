@@ -293,7 +293,7 @@ function ProductCard({ product, rank }: { product: any, rank?: number }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <Link href={`/product/${product.id}`} className="hover:underline">
+                <Link href={`/product/${product.slug || product.id}`} className="hover:underline">
                   <h3 className="font-semibold text-sm leading-tight">{product.title}</h3>
                 </Link>
                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">

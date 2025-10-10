@@ -47,6 +47,7 @@ export function Providers({ children }: ProvidersProps) {
               borderRadius: '12px',
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
               backdropFilter: 'blur(10px)',
+              zIndex: 9999,
             },
             className: 'toast-custom',
             duration: 3500,

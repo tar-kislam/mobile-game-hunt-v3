@@ -16,6 +16,7 @@ import { getAuthorLabel } from "@/lib/author";
 
 interface CalendarProduct {
   id: string;
+  slug?: string;
   title: string;
   tagline?: string | null;
   description: string;
@@ -867,7 +868,7 @@ function CalendarPageContent() {
                         <TooltipProvider key={product.id}>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Link href={`/product/${product.id}`}>
+                              <Link href={`/product/${product.slug || product.id}`}>
                                 <div className="flex items-center gap-1 p-1 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors">
                                   {product.thumbnail ? (
                                     <img
@@ -1018,7 +1019,7 @@ function CalendarPageContent() {
                               >
                                 {/* Small Thumbnail */}
                                 <div className="flex-shrink-0 mr-3">
-                                  <Link href={`/product/${product.id}`} className="block">
+                                  <Link href={`/product/${product.slug || product.id}`} className="block">
                                     {product.thumbnail ? (
                                       <img
                                         src={product.thumbnail}
@@ -1036,7 +1037,7 @@ function CalendarPageContent() {
                                 {/* Game Info */}
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center justify-between gap-2 mb-1">
-                                    <Link href={`/product/${product.id}`} className="flex-1 min-w-0">
+                                    <Link href={`/product/${product.slug || product.id}`} className="flex-1 min-w-0">
                                       <h3 className="text-sm font-semibold text-white truncate">
                                         {product.title}
                                       </h3>
@@ -1081,7 +1082,7 @@ function CalendarPageContent() {
                                 {/* View Details Button */}
                                 <div className="flex-shrink-0 ml-3">
                                   <Button asChild variant="outline" size="sm" className="border-purple-500/50 text-purple-300 text-xs px-3 py-1">
-                                    <Link href={`/product/${product.id}`}>
+                                    <Link href={`/product/${product.slug || product.id}`}>
                                       <Eye className="w-3 h-3 mr-1" />
                                       View
                                     </Link>
