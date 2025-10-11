@@ -48,6 +48,7 @@ import { LANGUAGES } from '@/lib/constants/languages'
 import { UserAvatarTooltip } from '@/components/ui/user-avatar-tooltip'
 import { ProductTags } from './product-tags'
 import { MeetTheTeamCard } from './meet-the-team-card';
+import { AboutGameSection } from './about-game-section';
 
 interface Product {
   id: string;
@@ -584,18 +585,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
           </Card>
           
           {/* About This Game Section */}
-          {product.description && (
-            <Card className="rounded-3xl shadow-soft border-2 mt-6">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold">About This Game</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
-                  {product.description}
-                </p>
-              </CardContent>
-            </Card>
-          )}
+          <AboutGameSection description={product.description} />
 
           {/* Comments Section - Right below About This Game */}
           <Card className="rounded-3xl shadow-soft border-2 mt-6">
