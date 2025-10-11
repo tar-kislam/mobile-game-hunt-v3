@@ -565,7 +565,7 @@ export default function NewSubmitPage() {
             </div>
           </div>
           
-          <div className="container mx-auto px-4 pt-4 pb-8 relative z-10 bg-transparent">
+          <div className="container mx-auto px-4 pt-2 pb-8 relative z-10 bg-transparent">
 
           {/* Main Content Container */}
           <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
@@ -575,7 +575,7 @@ export default function NewSubmitPage() {
           <div className="border border-transparent bg-gradient-to-br from-purple-900/60 via-purple-800/40 to-violet-900/60 p-[1px] rounded-2xl shadow-[0_0_30px_rgba(168,85,247,0.4)]">
             <Card className="relative bg-gradient-to-br from-gray-900/80 via-black/70 to-gray-900/80 backdrop-blur-xl rounded-2xl border-gray-800/50 shadow-lg transition-all duration-500 hover:shadow-[0_0_40px_rgba(168,85,247,0.6)]">
             {/* Stepper Section */}
-            <div className="pt-4 pb-4">
+            <div className="pt-2 pb-4">
               {/* Desktop Stepper */}
               <div className="hidden md:block">
                 <SubmitStepper
@@ -595,7 +595,7 @@ export default function NewSubmitPage() {
               </div>
             </div>
             {/* Form Header */}
-            <div className="px-4 md:px-6 pb-2">
+            <div className="px-4 md:px-6 pb-1">
               <div className="transition-all duration-300 ease-in-out">
                 {step===1 && (<div><h1 className="text-2xl font-semibold">Tell us more about this launch</h1><p className="text-sm text-muted-foreground">We'll need its name, tagline, links, launch tags, and description.</p></div>)}
                 {step===2 && (<div><h1 className="text-2xl font-semibold">Images and media</h1><p className="text-sm text-muted-foreground">Upload your thumbnail, gallery, and optional video or demo link.</p></div>)}
