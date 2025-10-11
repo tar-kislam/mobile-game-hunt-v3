@@ -248,6 +248,8 @@ export async function GET(request: NextRequest) {
         releaseAt: true,
         clicks: true,
         editorChoice: true,
+        editorial_boost: true,
+        editorial_override: true,
         monetization: true,
         engine: true,
         pricing: true,

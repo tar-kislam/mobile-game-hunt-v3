@@ -40,6 +40,8 @@ interface FeaturedGame {
   clicks?: number
   appStoreUrl?: string | null
   playStoreUrl?: string | null
+  editorial_boost?: boolean
+  editorial_override?: boolean
 }
 
 interface EpicFeaturedGamesProps {
@@ -66,7 +68,7 @@ function getMainDisplayImage(game: FeaturedGame): string | null {
 }
 
 export function EpicFeaturedGames({ games, onGameClick }: EpicFeaturedGamesProps) {
-  // Apply leaderboard scoring logic: votes > comments > follows > views(clicks)
+  // Apply editorial priority logic first, then leaderboard scoring
   const weights = getScoringWeights()
 
   const scored = [...games].map((g) => {
@@ -75,9 +77,22 @@ export function EpicFeaturedGames({ games, onGameClick }: EpicFeaturedGamesProps
     const follows = g.follows || 0
     const views = g.clicks || 0
     const finalScore = calculateFinalScore(votes, comments, follows, views, weights)
-    return { game: g, finalScore, votes, comments, follows, views }
+    
+    // Editorial priority scoring
+    let editorialScore = 0
+    if (g.editorial_override) {
+      editorialScore = 10000 // Highest priority - always shows first
+    } else if (g.editorial_boost) {
+      editorialScore = 1000 // High priority - shows before normal games
+    }
+    
+    return { game: g, finalScore, editorialScore, votes, comments, follows, views }
   })
   .sort((a, b) => {
+    // First sort by editorial priority
+    if (b.editorialScore !== a.editorialScore) return b.editorialScore - a.editorialScore
+    
+    // Then by final score
     if (b.finalScore !== a.finalScore) return b.finalScore - a.finalScore
     if (b.votes !== a.votes) return b.votes - a.votes
     if (b.comments !== a.comments) return b.comments - a.comments
