@@ -12,18 +12,28 @@ import PixelBlast from '@/components/effects/pixel-blast'
 interface NewsletterModalProps {
   isOpen: boolean
   onClose: () => void
+  onSubscribed?: () => void
+  onDismissed?: () => void
 }
 
-export function NewsletterModal({ isOpen, onClose }: NewsletterModalProps) {
+export function NewsletterModal({ isOpen, onClose, onSubscribed, onDismissed }: NewsletterModalProps) {
   const [email, setEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const brandColor = '#ffffff'
+
+  // Handle close with dismissal tracking
+  const handleClose = () => {
+    if (onDismissed) {
+      onDismissed()
+    }
+    onClose()
+  }
 
   // Handle ESC key press
   useEffect(() => {
     const handleEscKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isOpen) {
-        onClose()
+        handleClose()
       }
     }
 
@@ -70,6 +80,12 @@ export function NewsletterModal({ isOpen, onClose }: NewsletterModalProps) {
       if (response.ok) {
         toast.success(data.message || 'Welcome to the early community! We\'ll be in touch soon.')
         setEmail('')
+        
+        // Mark as subscribed in localStorage
+        if (onSubscribed) {
+          onSubscribed()
+        }
+        
         // Close modal after 2 seconds
         setTimeout(() => {
           onClose()
@@ -77,6 +93,10 @@ export function NewsletterModal({ isOpen, onClose }: NewsletterModalProps) {
       } else {
         if (response.status === 409) {
           toast.info('You\'re already subscribed to our newsletter!')
+          // Mark as subscribed even if already exists
+          if (onSubscribed) {
+            onSubscribed()
+          }
         } else {
           toast.error(data.error || 'Something went wrong. Please try again.')
         }
@@ -100,7 +120,7 @@ export function NewsletterModal({ isOpen, onClose }: NewsletterModalProps) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="fixed inset-0 bg-black z-50"
-            onClick={onClose}
+            onClick={handleClose}
           />
           
           {/* Modal Card */}
@@ -147,7 +167,7 @@ export function NewsletterModal({ isOpen, onClose }: NewsletterModalProps) {
               <div className="relative z-20">
                 {/* Close Button (pushed further to the corner) */}
                 <button
-                  onClick={onClose}
+                  onClick={handleClose}
                   className="absolute -top-3 -right-3 p-2 rounded-full bg-black/60 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 transition-colors z-30"
                   aria-label="Close"
                 >

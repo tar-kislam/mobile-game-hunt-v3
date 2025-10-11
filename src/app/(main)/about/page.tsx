@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import ShinyText from "@/components/ShinyText";
 import SplashCursor from "@/components/effects/SplashCursor";
 import Particles from "@/components/effects/Particles";
+import { LegalDisclaimer } from "@/components/legal/LegalDisclaimer";
 import { 
   Rocket, 
   Target, 
@@ -397,6 +398,9 @@ export default function AboutPage() {
             </div>
           </div>
         </div>
+
+        {/* Legal Disclaimer Section */}
+        <LegalDisclaimer className="mt-12" />
 
         {/* CTA Section */}
         <div className="text-center space-y-8 pt-12 animate-fade-in [animation-delay:1200ms] opacity-0 [animation-fill-mode:forwards]">

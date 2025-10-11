@@ -37,6 +37,7 @@ import { toast } from "sonner"
 import useSWR from 'swr'
 import ShinyText from "@/components/ShinyText"
 import { ClientOnly } from "@/components/ui/client-only"
+import { useNewsletterAutoPopup } from "@/hooks/useNewsletterAutoPopup"
 
 // Fetcher function for SWR
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
@@ -371,6 +372,12 @@ export default function HomePage() {
   }[]>([])
   const [isLoadingPreview, setIsLoadingPreview] = useState(false)
   const [isNewsletterModalOpen, setIsNewsletterModalOpen] = useState(false)
+
+  // Auto-popup functionality
+  const { markAsDismissed, markAsSubscribed } = useNewsletterAutoPopup({
+    onOpen: () => setIsNewsletterModalOpen(true),
+    enabled: true,
+  })
 
   // Allow external open from Hero CTA via custom event
   useEffect(() => {
@@ -859,23 +866,34 @@ export default function HomePage() {
                   {/* Legal Section */}
                   <section className="pb-4">
                     <h3 className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold text-lg mb-4">Legal</h3>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
-                      <Link href="/terms" className="flex-1 min-w-0">
+                    <div className="flex flex-col gap-3">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
+                        <Link href="/terms" className="flex-1 min-w-0">
+                          <Button 
+                            variant="outline" 
+                            className="w-full text-purple-400 hover:text-white border-purple-400/30 hover:border-purple-400 hover:shadow-[0_0_18px_rgba(168,85,247,0.25)] transition-all duration-200 hover:bg-purple-400/10 text-xs px-2 py-2"
+                          >
+                            <span className="mr-1">📜</span>
+                            <span className="truncate">Terms and Conditions</span>
+                          </Button>
+                        </Link>
+                        <Link href="/privacy" className="flex-1 min-w-0">
+                          <Button 
+                            variant="outline" 
+                            className="w-full text-purple-400 hover:text-white border-purple-400/30 hover:border-purple-400 hover:shadow-[0_0_18px_rgba(168,85,247,0.25)] transition-all duration-200 hover:bg-purple-400/10 text-xs px-2 py-2"
+                          >
+                            <span className="mr-1">🔒</span>
+                            <span className="truncate">Privacy Policy</span>
+                          </Button>
+                        </Link>
+                      </div>
+                      <Link href="/legal/copyright" className="w-full">
                         <Button 
                           variant="outline" 
                           className="w-full text-purple-400 hover:text-white border-purple-400/30 hover:border-purple-400 hover:shadow-[0_0_18px_rgba(168,85,247,0.25)] transition-all duration-200 hover:bg-purple-400/10 text-xs px-2 py-2"
                         >
-                          <span className="mr-1">📜</span>
-                          <span className="truncate">Terms and Conditions</span>
-                        </Button>
-                      </Link>
-                      <Link href="/privacy" className="flex-1 min-w-0">
-                        <Button 
-                          variant="outline" 
-                          className="w-full text-purple-400 hover:text-white border-purple-400/30 hover:border-purple-400 hover:shadow-[0_0_18px_rgba(168,85,247,0.25)] transition-all duration-200 hover:bg-purple-400/10 text-xs px-2 py-2"
-                        >
-                          <span className="mr-1">🔒</span>
-                          <span className="truncate">Privacy Policy</span>
+                          <span className="mr-1">⚖️</span>
+                          <span className="truncate">Copyright & DMCA Policy</span>
                         </Button>
                       </Link>
                     </div>
@@ -890,7 +908,9 @@ export default function HomePage() {
       {/* Newsletter Modal */}
       <NewsletterModal 
         isOpen={isNewsletterModalOpen} 
-        onClose={() => setIsNewsletterModalOpen(false)} 
+        onClose={() => setIsNewsletterModalOpen(false)}
+        onDismissed={markAsDismissed}
+        onSubscribed={markAsSubscribed}
       />
     </div>
     </>
