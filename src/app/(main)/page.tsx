@@ -725,7 +725,7 @@ export default function HomePage() {
                                 {game.rank}
                               </div>
                               <div className="min-w-0">
-                                <Link href={`/product/${game.id}`} className="truncate hover:underline text-sm font-medium block text-neutral-200">
+                                <Link href={`/product/${game.slug || game.id}`} className="truncate hover:underline text-sm font-medium block text-neutral-200">
                                   {game.title}
                                 </Link>
                                 <div className="text-xs text-neutral-400">
@@ -771,7 +771,7 @@ export default function HomePage() {
                         {trendingData.games?.map((game: any) => (
                           <div key={game.id} className="flex items-center justify-between">
                             <div className="min-w-0">
-                              <Link href={`/product/${game.id}`} className="font-medium text-sm hover:underline block text-neutral-200">
+                              <Link href={`/product/${game.slug || game.id}`} className="font-medium text-sm hover:underline block text-neutral-200">
                                 {game.title}
                               </Link>
                               <div className="text-xs text-neutral-400">

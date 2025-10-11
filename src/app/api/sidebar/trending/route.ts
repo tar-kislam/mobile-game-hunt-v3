@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
 
     const result = sortedTrending.map((product: any) => ({
       id: product.id,
+      slug: product.slug || product.id, // Use slug if available, fallback to id
       title: product.title,
       platforms: product.platforms || [],
       votes: product._count?.votes || 0
