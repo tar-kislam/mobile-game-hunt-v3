@@ -32,7 +32,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { Plus, Loader2 } from "lucide-react"
+import { Plus, Loader2, Info } from "lucide-react"
 
 // Form validation schema
 const submitGameSchema = z.object({
@@ -213,19 +213,44 @@ export function SubmitGameModal({ children, onGameSubmitted }: SubmitGameModalPr
             <FormField
               control={form.control}
               name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description *</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Describe your game, its features, and what makes it unique..."
-                      className="rounded-2xl min-h-[100px]"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const descLen = field.value?.length || 0
+                return (
+                  <FormItem>
+                    <FormLabel>Description *</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Describe your game, its features, and what makes it unique..."
+                        className="rounded-2xl min-h-[160px] resize-none overflow-y-auto"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-muted-foreground">Minimum 260 characters required</p>
+                      <span 
+                        className={`text-xs transition-colors ${
+                          descLen < 2000 
+                            ? 'text-muted-foreground' 
+                            : descLen < 2500 
+                              ? 'text-yellow-500' 
+                              : 'text-red-500'
+                        }`}
+                        aria-live="polite"
+                        aria-label={`Character count: ${descLen}`}
+                      >
+                        {descLen} / 3000
+                      </span>
+                    </div>
+                    {descLen >= 3000 && (
+                      <p className="text-xs text-amber-500 mt-1 flex items-center gap-1">
+                        <Info className="w-3 h-3" />
+                        That's a lot of detail! Consider keeping it concise for best readability.
+                      </p>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )
+              }}
             />
 
             {/* Category Field */}

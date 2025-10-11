@@ -458,7 +458,7 @@ export default function NewSubmitPage() {
   const tags = form.watch('tags') || []
   const categories = form.watch('categories') || []
   const platforms = form.watch('platforms') || []
-  const canNextFromStep1 = nameLen > 0 && nameLen <= 40 && taglineLen > 0 && taglineLen <= 60 && descLen >= 260 && descLen <= 500 && tags.length >= 1 && tags.length <= 3 && categories.length >= 1 && categories.length <= 3 && platforms.length >= 1 && !titleExists?.exists && !iosExists && !androidExists
+  const canNextFromStep1 = nameLen > 0 && nameLen <= 40 && taglineLen > 0 && taglineLen <= 60 && descLen >= 260 && tags.length >= 1 && tags.length <= 3 && categories.length >= 1 && categories.length <= 3 && platforms.length >= 1 && !titleExists?.exists && !iosExists && !androidExists
   const canNextFromStep2 = !!form.watch('thumbnail') && (form.watch('gallery') || []).length >= 1
   const canNextFromStep3 = (form.watch('makers') || []).length >= 1
 
@@ -678,20 +678,37 @@ export default function NewSubmitPage() {
                           <Textarea 
                             id="description"
                             aria-label="Description" 
-                            maxLength={500} 
                             placeholder="Tell us about your game. What makes it unique? What's the gameplay like? What inspired you to create it?" 
                             {...form.register('description')} 
-                            className="min-h-[120px]" 
+                            className="min-h-[160px] resize-none overflow-y-auto" 
                             onBlur={() => form.trigger('description')}
                           />
-                          <span className="absolute right-2 bottom-2 text-xs text-muted-foreground">
-                            {descLen}/500
-                          </span>
                         </div>
                         {form.formState.errors.description && (
                           <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.description.message)}</p>
                         )}
-                        <p className="text-xs text-muted-foreground mt-1">Minimum 260 characters required</p>
+                        <div className="flex justify-between items-center mt-1">
+                          <p className="text-xs text-muted-foreground">Minimum 260 characters required</p>
+                          <span 
+                            className={`text-xs transition-colors ${
+                              descLen < 2000 
+                                ? 'text-muted-foreground' 
+                                : descLen < 2500 
+                                  ? 'text-yellow-500' 
+                                  : 'text-red-500'
+                            }`}
+                            aria-live="polite"
+                            aria-label={`Character count: ${descLen}`}
+                          >
+                            {descLen} / 3000
+                          </span>
+                        </div>
+                        {descLen >= 3000 && (
+                          <p className="text-xs text-amber-500 mt-1 flex items-center gap-1">
+                            <Info className="w-3 h-3" />
+                            That's a lot of detail! Consider keeping it concise for best readability.
+                          </p>
+                        )}
                       </div>
 
                       {/* App Store URLs */}

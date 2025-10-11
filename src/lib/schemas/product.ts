@@ -3,7 +3,7 @@ import { z } from 'zod'
 export const productMainInfoSchema = z.object({
   title: z.string().min(1, 'Game title is required').max(40, 'Game title must be 40 characters or less'),
   tagline: z.string().min(1, 'Tagline is required').max(60, 'Tagline must be 60 characters or less'),
-  description: z.string().min(260, 'Description must be at least 260 characters').max(500, 'Description must be 500 characters or less'),
+  description: z.string().min(260, 'Description must be at least 260 characters'),
   iosUrl: z.string().url('Please enter a valid App Store URL').refine(
     (url) => {
       if (!url) return true
