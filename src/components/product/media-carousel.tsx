@@ -154,6 +154,7 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
                         src={media.src}
                         alt={`${title} - Gameplay GIF`}
                         fill
+                        loading="lazy"
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
                         unoptimized={true}
@@ -181,6 +182,7 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
                         src={media.src}
                         alt={`${title} - Image ${index + 1}`}
                         fill
+                        loading="lazy"
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
                         priority={index === 0}
@@ -240,7 +242,7 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
                   media.src.startsWith('/') ? (
                     <img src={media.src} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
                   ) : (
-                    <Image src={media.src} alt={`Thumbnail ${index + 1}`} fill className="object-cover" sizes="80px" quality={60}
+                    <Image src={media.src} alt={`Thumbnail ${index + 1}`} fill className="object-cover" sizes="80px" quality={60} loading="lazy"
                       onError={(e)=>{const t=e.target as HTMLImageElement;t.onerror=null;t.src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 64'%3E%3Crect width='80' height='64' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='12'%3E%F0%9F%8E%AE%3C/text%3E%3C/svg%3E"}}/>
                   )
                 ) : (

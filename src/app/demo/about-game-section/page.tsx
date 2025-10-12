@@ -44,7 +44,7 @@ export default function AboutGameSectionDemo() {
           <ul className="space-y-3 text-gray-300">
             <li className="flex items-center gap-3">
               <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-              <span>Shows first 600 words by default with fade gradient</span>
+              <span>Shows first 100 words or 500 characters by default with fade gradient</span>
             </li>
             <li className="flex items-center gap-3">
               <span className="w-2 h-2 bg-purple-500 rounded-full"></span>

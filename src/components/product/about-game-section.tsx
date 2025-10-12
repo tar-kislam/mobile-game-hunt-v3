@@ -25,9 +25,21 @@ export function AboutGameSection({ description }: AboutGameSectionProps) {
     const words = description.trim().split(/\s+/)
     setFullText(description)
 
-    if (words.length > 600) {
+    // Show "Read More" if text is longer than 100 words or 500 characters
+    if (words.length > 100 || description.length > 500) {
       setShowReadMore(true)
-      setPreviewText(words.slice(0, 600).join(' '))
+      // Show first 100 words or first 500 characters, whichever is shorter
+      const wordLimit = Math.min(100, words.length)
+      const charLimit = Math.min(500, description.length)
+      
+      let preview = ''
+      if (words.slice(0, wordLimit).join(' ').length <= charLimit) {
+        preview = words.slice(0, wordLimit).join(' ') + '...'
+      } else {
+        preview = description.substring(0, charLimit).trim() + '...'
+      }
+      
+      setPreviewText(preview)
     } else {
       setShowReadMore(false)
       setPreviewText(description)
@@ -63,9 +75,9 @@ export function AboutGameSection({ description }: AboutGameSectionProps) {
       className="rounded-3xl shadow-soft border-2 mt-6 bg-gradient-to-br from-gray-900/80 via-black/70 to-gray-900/80 backdrop-blur-xl border-gray-800/50 shadow-lg transition-all duration-500 hover:shadow-[0_0_40px_rgba(168,85,247,0.6)]"
     >
       <CardHeader className="pb-4">
-        <CardTitle className="text-xl font-semibold text-white">
+        <h2 className="text-xl font-semibold text-white">
           About This Game
-        </CardTitle>
+        </h2>
       </CardHeader>
       <CardContent>
         <div className="relative">
@@ -106,7 +118,7 @@ export function AboutGameSection({ description }: AboutGameSectionProps) {
                 onClick={handleToggle}
                 onKeyDown={handleKeyDown}
                 variant="outline"
-                className="bg-purple-600/20 hover:bg-purple-600/30 border-purple-500/30 hover:border-purple-400 text-purple-300 hover:text-white transition-all duration-300 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] px-6 py-2 rounded-full"
+                className="bg-purple-600/30 hover:bg-purple-600/50 border-purple-500/50 hover:border-purple-400 text-purple-200 hover:text-white transition-all duration-300 hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] px-8 py-3 rounded-full font-medium text-sm"
                 aria-expanded={isExpanded}
                 aria-label={isExpanded ? 'Show less content' : 'Read more content'}
               >

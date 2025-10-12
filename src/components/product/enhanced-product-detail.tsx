@@ -491,6 +491,11 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
+      {/* H1 Heading for SEO */}
+      <h1 className="text-3xl font-bold text-white mb-6 sr-only">
+        {product.title} - Mobile Game Details & Launch Info
+      </h1>
+      
       {/* Hero Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column - Media */}
@@ -508,9 +513,9 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
           {/* Game Overview Block - Steam Style */}
           <Card className="rounded-3xl shadow-soft border-2 mt-6 border border-gray-200 dark:border-gray-700">
             <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-semibold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
                 Game Overview
-              </CardTitle>
+              </h2>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Release Date */}
@@ -518,14 +523,14 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-blue-400" />
                   <div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Release Date:</span>
-                    <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Release Date:</h3>
+                    <p className="ml-2 text-sm text-gray-600 dark:text-gray-400">
                       {new Date(product.launchDate).toLocaleDateString('en-US', { 
                         year: 'numeric', 
                         month: 'long', 
                         day: 'numeric' 
                       })}
-                    </span>
+                    </p>
                   </div>
                 </div>
               )}
@@ -535,8 +540,8 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                 <div className="flex items-center gap-3">
                   <Globe className="w-5 h-5 text-purple-400" />
                   <div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Publisher:</span>
-                    <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">{product.studioName}</span>
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Publisher:</h3>
+                    <p className="ml-2 text-sm text-gray-600 dark:text-gray-400">{product.studioName}</p>
                   </div>
                 </div>
               )}
@@ -546,7 +551,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                 <div className="flex items-start gap-3">
                   <Star className="w-5 h-5 text-yellow-400 mt-0.5" />
                   <div className="flex-1">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Categories:</span>
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Categories:</h3>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {product.categories.map((cat, index) => (
                         <Badge key={index} variant="outline" className="text-xs rounded-full px-3 py-1">
@@ -568,7 +573,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                 <div className="flex items-start gap-3">
                   <Globe className="w-5 h-5 text-indigo-400 mt-0.5" />
                   <div className="flex-1">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Regions:</span>
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Regions:</h3>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {product.countries.map((country, index) => (
                         <Badge key={index} variant="outline" className="text-xs rounded-full px-3 py-1">
@@ -590,9 +595,9 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
           {/* Comments Section - Right below About This Game */}
           <Card className="rounded-3xl shadow-soft border-2 mt-6">
             <CardHeader>
-              <CardTitle className="text-xl font-semibold">
+              <h2 className="text-xl font-semibold">
                 Comments ({product._count.comments})
-              </CardTitle>
+              </h2>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Add Comment */}

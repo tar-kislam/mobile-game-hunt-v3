@@ -208,9 +208,9 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   
   if (!product) return { title: 'Game not found' }
   
-  const url = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-  const productUrl = `${url}/product/${slug}`
-  const ogImage = product.thumbnail || `${url}/api/og?title=${encodeURIComponent(product.title)}`
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mobilegamehunt.com'
+  const productUrl = `${baseUrl}/product/${slug}`
+  const ogImage = product.thumbnail || `${baseUrl}/api/og?title=${encodeURIComponent(product.title)}`
   
   // Extract tag names for SEO
   const tagNames = product.tags?.map(pt => pt.tag.name) || []
@@ -218,25 +218,33 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     tag.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
   )
   
-  // Create SEO-friendly title
-  const title = `${product.title} – Mobile Game Hunt`
+  // Create SEO-friendly title with proper format
+  const title = `${product.title} – Mobile Game Details & Launch Info | Mobile Game Hunt`
   
-  // Create enhanced description with tags
-  const baseDescription = product.tagline || product.description?.slice(0, 120) || 'Discover new mobile games'
-  const tagsText = tagNames.length > 0 ? ` Tags: ${tagNames.join(', ')}.` : ''
-  const description = `${baseDescription}${tagsText}`
+  // Create enhanced description with keywords
+  const categoryText = 'mobile game'
+  const baseDescription = product.tagline || product.description?.slice(0, 120) || `Discover ${product.title}, an exciting ${categoryText}.`
+  const description = `Discover ${product.title}, an exciting ${categoryText}. Learn its launch date, gameplay, and updates on Mobile Game Hunt.`
   
-  // Create keywords meta tag
+  // Create enhanced keywords meta tag
   const keywords = [
     product.title.toLowerCase(),
     ...tagNames.map(tag => tag.toLowerCase()),
     ...product.platforms.map(platform => platform.toLowerCase()),
     'mobile game',
     'game',
-    'mobile'
+    'mobile',
+    'launch date',
+    'gameplay',
+    'release date',
+    'game details',
+    'mobile gaming',
+    'new game',
+    'upcoming game',
+    'game release'
   ].join(', ')
   
-  // Create structured data
+  // Create comprehensive structured data
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "VideoGame",
@@ -246,9 +254,16 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     "image": ogImage,
     "operatingSystem": product.platforms,
     "genre": normalizedTags,
+    "applicationCategory": "Game",
     "publisher": {
       "@type": "Organization",
       "name": "Mobile Game Hunt"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
     }
   }
   
