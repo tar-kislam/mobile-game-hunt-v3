@@ -1,15 +1,24 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-import { Suspense } from 'react'
+// Removed unused Suspense import
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { EnhancedProductDetail } from '@/components/product/enhanced-product-detail'
+import dynamicImport from 'next/dynamic'
 import { ChevronLeftIcon } from 'lucide-react'
 import Link from 'next/link'
 import { generateProductJsonLd, generateBreadcrumbJsonLd } from '@/lib/seo'
+
+// Dynamic import for large component to improve initial load
+const EnhancedProductDetail = dynamicImport(
+  () => import('@/components/product/enhanced-product-detail').then(mod => ({ default: mod.EnhancedProductDetail })),
+  { 
+    loading: () => <div className="animate-pulse bg-gray-800 rounded-lg h-96 w-full" />,
+    ssr: true
+  }
+)
 
 
 interface ProductPageProps {
@@ -143,11 +152,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <>
+      {/* Preload critical resources */}
+      <link rel="preload" href="/fonts/inter.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+      <link rel="preload" href="/api/og?title=" as="image" />
+      
+      {/* Non-blocking structured data scripts */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(generateProductJsonLd(productData)),
         }}
+        defer
       />
       <script
         type="application/ld+json"
@@ -158,6 +173,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             { name: productData.title, url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'}/product/${productData.slug}` }
           ])),
         }}
+        defer
       />
       <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]">
         <div className="container mx-auto px-4 py-6">
@@ -218,13 +234,12 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     tag.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
   )
   
-  // Create SEO-friendly title with proper format
-  const title = `${product.title} – Mobile Game Details & Launch Info | Mobile Game Hunt`
+  // Create SEO-friendly title (max 60 chars for optimal display)
+  const title = `${product.title} | Mobile Game Hunt`.slice(0, 60)
   
-  // Create enhanced description with keywords
+  // Create enhanced description (max 180 chars for optimal display)
   const categoryText = 'mobile game'
-  const baseDescription = product.tagline || product.description?.slice(0, 120) || `Discover ${product.title}, an exciting ${categoryText}.`
-  const description = `Discover ${product.title}, an exciting ${categoryText}. Learn its launch date, gameplay, and updates on Mobile Game Hunt.`
+  const description = `Discover ${product.title}, an exciting ${categoryText}. Learn its launch date, gameplay, and updates on Mobile Game Hunt.`.slice(0, 180)
   
   // Create enhanced keywords meta tag
   const keywords = [

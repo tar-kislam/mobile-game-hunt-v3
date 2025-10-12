@@ -36,11 +36,19 @@ import {
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { PlatformIcons } from '@/components/ui/platform-icons';
-import { MediaCarousel } from './media-carousel';
+import dynamicImport from 'next/dynamic';
 import { PlaytestClaim } from '@/components/playtest/playtest-claim';
 import { UpvoteButton } from '@/components/ui/upvote-button';
 import { Comment } from '@/components/ui/comment';
-import { ShareModal } from './share-modal';
+
+// Dynamic imports for heavy components
+const MediaCarousel = dynamicImport(() => import('./media-carousel').then(mod => ({ default: mod.MediaCarousel })), {
+  loading: () => <div className="animate-pulse bg-gray-800 rounded-lg h-96 w-full" />
+});
+
+const ShareModal = dynamicImport(() => import('./share-modal').then(mod => ({ default: mod.ShareModal })), {
+  ssr: false
+});
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input'
 import Link from 'next/link'

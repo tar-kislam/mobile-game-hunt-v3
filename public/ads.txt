@@ -1,0 +1,14 @@
+# ads.txt file for mobilegamehunt.com
+# Format: domain.com, publisher-account-id, relationship, certification-authority-id
+
+# Google AdSense (replace with your actual publisher ID)
+# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+
+# Google Ad Manager (replace with your actual publisher ID)
+# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+
+# Facebook Audience Network (replace with your actual publisher ID)
+# facebook.com, XXXXXXXX, DIRECT, c3e20eee3f780d68
+
+# Add your actual ad network configurations here
+# This is a template - replace with real publisher IDs
