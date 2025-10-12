@@ -499,10 +499,15 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
-      {/* H1 Heading for SEO */}
-      <h1 className="text-3xl font-bold text-white mb-6 sr-only">
-        {product.title} - Mobile Game Details & Launch Info
+      {/* Main H1 Heading - Visible for SEO */}
+      <h1 className="text-4xl font-bold text-white mb-6 leading-tight">
+        {product.title}
       </h1>
+      {product.tagline && (
+        <p className="text-xl text-gray-300 mb-6 leading-relaxed">
+          {product.tagline}
+        </p>
+      )}
       
       {/* Hero Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
