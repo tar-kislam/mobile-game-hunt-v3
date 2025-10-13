@@ -209,6 +209,13 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
       description: true,
       thumbnail: true,
       platforms: true,
+      categories: {
+        include: {
+          category: {
+            select: { name: true }
+          }
+        }
+      },
       tags: {
         include: {
           tag: {
@@ -239,9 +246,31 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   // Keep within 60 chars without losing key tokens
   const title = rawTitle.length > 60 ? `${product.title} – Features & Reviews | Mobile Game Hunt`.slice(0, 60) : rawTitle
   
-  // Build improved Description (~150–220 chars)
-  const baseDescription = `Discover ${product.title}, an exciting mobile game featuring epic battles, unique gameplay mechanics, and new updates. Explore release details, reviews, and more on Mobile Game Hunt.`
-  const description = baseDescription.length > 220 ? baseDescription.slice(0, 220) : baseDescription
+  // Build strict 155–160 char meta description including game title, "mobile game", and brand
+  const categoryName = product.categories && product.categories.length > 0
+    ? `${product.categories[0].category.name.toLowerCase()} `
+    : ''
+
+  // Derive a short summary from description
+  const rawSummary = (product.description || '').replace(/\s+/g, ' ').replace(/[^\w\s,.-]/g, '').trim()
+  const summaryBase = rawSummary ? rawSummary.slice(0, 90).replace(/[.,;:!\-\s]+$/, '') : 'engaging gameplay and regular updates'
+
+  const makeDesc = (summary: string) => `Discover ${product.title}, a ${categoryName}mobile game featuring ${summary}. Explore details, reviews, and more on Mobile Game Hunt.`
+
+  // Start with the fullest summary, then shrink until 160 max
+  let description = makeDesc(summaryBase)
+  if (description.length > 160) description = makeDesc(summaryBase.slice(0, 70))
+  if (description.length > 160) description = makeDesc(summaryBase.slice(0, 55))
+  if (description.length > 160) description = makeDesc(summaryBase.slice(0, 40))
+  if (description.length > 160) description = `Discover ${product.title}, a ${categoryName}mobile game with engaging gameplay. Explore details, reviews, and more on Mobile Game Hunt.`
+
+  // If shorter than 155, softly extend without repeating brand
+  if (description.length < 155) {
+    const filler = ' Compare features and release info.'
+    const room = 160 - description.length
+    description = description.replace('Mobile Game Hunt.', `Mobile Game Hunt.${filler.slice(0, Math.max(0, room))}`)
+    if (description.length > 160) description = description.slice(0, 160)
+  }
   
   // Create enhanced keywords meta tag
   const keywords = [
