@@ -234,12 +234,14 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     tag.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
   )
   
-  // Create SEO-friendly title (max 60 chars for optimal display)
-  const title = `${product.title} | Mobile Game Hunt`.slice(0, 60)
+  // Build improved, keyword-rich Title (~50–60 chars)
+  const rawTitle = `${product.title} – Launch Date, Features & Reviews | Mobile Game Hunt`
+  // Keep within 60 chars without losing key tokens
+  const title = rawTitle.length > 60 ? `${product.title} – Features & Reviews | Mobile Game Hunt`.slice(0, 60) : rawTitle
   
-  // Create enhanced description (max 180 chars for optimal display)
-  const categoryText = 'mobile game'
-  const description = `Discover ${product.title}, an exciting ${categoryText}. Learn its launch date, gameplay, and updates on Mobile Game Hunt.`.slice(0, 180)
+  // Build improved Description (~150–220 chars)
+  const baseDescription = `Discover ${product.title}, an exciting mobile game featuring epic battles, unique gameplay mechanics, and new updates. Explore release details, reviews, and more on Mobile Game Hunt.`
+  const description = baseDescription.length > 220 ? baseDescription.slice(0, 220) : baseDescription
   
   // Create enhanced keywords meta tag
   const keywords = [
