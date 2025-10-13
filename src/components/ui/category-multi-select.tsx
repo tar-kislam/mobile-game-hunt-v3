@@ -49,9 +49,10 @@ export function CategoryMultiSelect({
   }
 
   const ordered = useMemo(() => {
-    // Show selected first for better visibility
-    const selected = categories.filter(c => selectedCategories.includes(c.id))
-    const rest = categories.filter(c => !selectedCategories.includes(c.id))
+    // Sort A–Z for consistency, but keep selected first preserving alphabetical order in each group
+    const byName = (a: Category, b: Category) => a.name.localeCompare(b.name)
+    const selected = categories.filter(c => selectedCategories.includes(c.id)).sort(byName)
+    const rest = categories.filter(c => !selectedCategories.includes(c.id)).sort(byName)
     return [...selected, ...rest]
   }, [categories, selectedCategories])
 
