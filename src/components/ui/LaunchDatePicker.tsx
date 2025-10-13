@@ -27,12 +27,14 @@ const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 // Date parsing formats
 const DATE_FORMATS = [
-  'yyyy-MM-dd',      // ISO format: 2025-10-11
+  'yyyy-MM-dd',      // ISO: 2025-10-11
   'dd/MM/yyyy',      // European: 11/10/2025
   'MM/dd/yyyy',      // US: 10/11/2025
-  'MMM dd, yyyy',    // English: Oct 11, 2025
-  'dd MMM yyyy',     // European: 11 Oct 2025
-  'yyyy/MM/dd',      // Alternative: 2025/10/11
+  'MM.dd.yyyy',      // Dotted: 10.11.2025
+  'MMM dd, yyyy',    // Abbrev month with comma: Oct 11, 2025
+  'MMMM d yyyy',     // Full month no comma: October 11 2025
+  'dd MMM yyyy',     // 11 Oct 2025
+  'yyyy/MM/dd',      // 2025/10/11
 ]
 
 export function LaunchDatePicker({
@@ -53,6 +55,7 @@ export function LaunchDatePicker({
   const [isInvalid, setIsInvalid] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const debounceRef = useRef<number | null>(null)
   
   const inputRef = useRef<HTMLInputElement>(null)
   const calendarRef = useRef<HTMLDivElement>(null)
@@ -149,36 +152,36 @@ export function LaunchDatePicker({
     setInputValue(newValue)
     setIsTyping(true)
 
-    if (!newValue.trim()) {
+    if (debounceRef.current) {
+      window.clearTimeout(debounceRef.current)
+    }
+
+    debounceRef.current = window.setTimeout(() => {
+      if (!newValue.trim()) {
+        setIsInvalid(false)
+        setErrorMessage('')
+        onChange?.('')
+        return
+      }
+
+      const parsedDate = parseDateInput(newValue)
+      
+      if (!parsedDate || !validateDate(parsedDate)) {
+        setIsInvalid(true)
+        setErrorMessage('Invalid date format')
+        return
+      }
+
+      // Valid date
       setIsInvalid(false)
       setErrorMessage('')
-      onChange?.('')
-      return
-    }
-
-    const parsedDate = parseDateInput(newValue)
-    
-    if (!parsedDate) {
-      setIsInvalid(true)
-      setErrorMessage('Invalid date format')
-      return
-    }
-
-    if (!validateDate(parsedDate)) {
-      setIsInvalid(true)
-      setErrorMessage('Invalid date format')
-      return
-    }
-
-    // Valid date
-    setIsInvalid(false)
-    setErrorMessage('')
-    const isoString = format(parsedDate, 'yyyy-MM-dd')
-    onChange?.(isoString)
-    
-    // Update calendar position
-    setCurrentMonth(parsedDate.getMonth())
-    setCurrentYear(parsedDate.getFullYear())
+      const isoString = format(parsedDate, 'yyyy-MM-dd')
+      onChange?.(isoString)
+      
+      // Update calendar position
+      setCurrentMonth(parsedDate.getMonth())
+      setCurrentYear(parsedDate.getFullYear())
+    }, 300)
   }
 
   const handleInputKeyDown = (e: React.KeyboardEvent) => {

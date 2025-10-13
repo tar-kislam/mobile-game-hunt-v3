@@ -191,7 +191,7 @@ export function NewsletterModal({ isOpen, onClose, onSubscribed, onDismissed }: 
                   </h2>
                 </motion.div>
 
-                {/* Futuristic Email Form with Logo - Same as hero section */}
+                {/* Futuristic Email Form with Logo - Mobile optimized */}
                 <motion.form
                   onSubmit={handleSubmit}
                   className="flex flex-col lg:flex-row gap-6 items-center justify-center w-full mx-auto"
@@ -199,22 +199,21 @@ export function NewsletterModal({ isOpen, onClose, onSubscribed, onDismissed }: 
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.5 }}
                 >
-                  {/* Logo and Input Container */}
-                  <div className="flex items-center gap-4 w-full lg:w-auto">
-                    {/* Logo */}
+                  {/* Mobile: Logo above input, Desktop: Logo beside input */}
+                  <div className="flex flex-col lg:flex-row items-center gap-4 w-full lg:w-auto">
+                    {/* Logo - Smaller on mobile, original size on desktop */}
                     <img
                       src="/logo/mgh-newsletter.png"
                       alt="Mobile Game Hunt Logo"
-                      className="object-contain flex-shrink-0"
-                      style={{ width: '150px', height: '150px' }}
+                      className="object-contain flex-shrink-0 w-[100px] h-[100px] lg:w-[150px] lg:h-[150px]"
                       onError={(e) => {
                         e.currentTarget.src = '/logo/moblogo.png';
                       }}
                     />
                     
-                    {/* Input Field */}
+                    {/* Input Field - Larger on mobile */}
                     <div 
-                      className="w-full lg:w-[450px] p-1 rounded-md relative animate-pulse"
+                      className="w-full lg:w-[450px] p-1 rounded-md relative animate-pulse min-h-[60px] lg:min-h-auto"
                       style={{
                         background: 'linear-gradient(45deg, rgba(177, 158, 239, 0.3), rgba(177, 158, 239, 0.1))',
                         borderRadius: '8px',
@@ -235,7 +234,7 @@ export function NewsletterModal({ isOpen, onClose, onSubscribed, onDismissed }: 
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         disabled={isSubmitting}
-                        className="w-full p-3 bg-transparent outline-none text-white placeholder:text-gray-300 rounded-md focus:shadow-[0_0_25px_rgba(177,158,239,0.8)] hover:shadow-[0_0_15px_rgba(177,158,239,0.4)] transition-all duration-500"
+                        className="w-full p-4 lg:p-3 bg-transparent outline-none text-white placeholder:text-gray-300 rounded-md focus:shadow-[0_0_25px_rgba(177,158,239,0.8)] hover:shadow-[0_0_15px_rgba(177,158,239,0.4)] transition-all duration-500 text-base lg:text-sm"
                         style={{
                           background: 'rgba(0, 0, 0, 0.5)',
                           border: 'none',

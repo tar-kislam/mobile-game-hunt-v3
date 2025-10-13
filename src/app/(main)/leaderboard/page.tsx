@@ -503,8 +503,9 @@ export default function LeaderboardPage() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.4, delay: index * 0.1 }}
                   >
-                    <Card className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/30 hover:border-purple-500/60 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20 hover:scale-[1.02] group rounded-3xl">
-                      <CardContent className="p-4 sm:p-6">
+                    <Link href={`/product/${product.slug || product.id}`} className="block">
+                      <Card className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/30 hover:border-purple-500/60 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20 hover:scale-[1.02] group rounded-3xl cursor-pointer">
+                        <CardContent className="p-4 sm:p-6">
                         <div className="flex items-center space-x-3 sm:space-x-6">
                           {/* Rank - Enhanced for top 3 */}
                           <div className="flex-shrink-0">
@@ -544,11 +545,9 @@ export default function LeaderboardPage() {
                             {/* Desktop: Title + Tagline + Info */}
                             <div className="hidden sm:block">
                               <div className="mb-2">
-                                <Link href={`/product/${product.slug || product.id}`}>
-                                  <h3 className="text-lg md:text-xl font-bold text-white truncate group-hover:text-purple-300 transition-colors duration-300 cursor-pointer hover:underline">
-                                    {product.title}
-                                  </h3>
-                                </Link>
+                                <h3 className="text-lg md:text-xl font-bold text-white truncate group-hover:text-purple-300 transition-colors duration-300">
+                                  {product.title}
+                                </h3>
                                 {product.tagline && (
                                   <p className="text-sm text-gray-300 mt-1 font-normal leading-relaxed">
                                     {product.tagline}
@@ -633,6 +632,7 @@ export default function LeaderboardPage() {
                         </div>
                       </CardContent>
                     </Card>
+                    </Link>
                   </motion.div>
                 ))}
               </motion.div>

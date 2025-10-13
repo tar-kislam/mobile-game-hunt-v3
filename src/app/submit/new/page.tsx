@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -15,7 +15,9 @@ import { productMainInfoSchema, productMediaSchema, productExtrasSchema, product
 import { createProductAction, saveDraftAction, scheduleLaunchAction, submitApprovalAction } from '@/lib/actions/products'
 import { toast } from 'sonner'
 import { Info, ExternalLink, Globe, MessageCircle, Twitter, Youtube, X, Plus, Check, X as XIcon, Instagram, ChevronDown, ChevronUp } from 'lucide-react'
-import { CategoryMultiSelect } from '@/components/ui/category-multi-select'
+import { CategorySelector } from '@/components/category/CategorySelector'
+import { ThumbnailUpload } from '@/components/forms/ThumbnailUpload'
+import { AnimatedHeader } from '@/components/ui/animated-header'
 import { MultiSelect } from '@/components/ui/multi-select'
 import { LaunchDatePicker } from '@/components/ui/LaunchDatePicker'
 import { PLATFORMS } from '@/components/ui/platform-icons'
@@ -55,6 +57,22 @@ export default function NewSubmitPage() {
   const [isUploadingGallery, setIsUploadingGallery] = useState(false)
   const [isDragOverThumbnail, setIsDragOverThumbnail] = useState(false)
   const [isDragOverGallery, setIsDragOverGallery] = useState(false)
+  
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll to card after 2 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (cardRef.current) {
+        cardRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        })
+      }
+    }, 2000)
+
+    return () => clearTimeout(timer)
+  }, [])
 
   // Simple, reliable upload function with absolute URL
   const uploadFile = async (file: File): Promise<{ ok: boolean; url?: string; error?: string }> => {
@@ -565,12 +583,19 @@ export default function NewSubmitPage() {
             </div>
           </div>
           
-          <div className="container mx-auto px-4 pt-2 pb-8 relative z-10 bg-transparent">
+          {/* Animated Header Section */}
+          <div className="max-w-7xl mx-auto px-4 -mt-4">
+            <AnimatedHeader
+              title="Showcase Your Game to the World"
+              subtitle="Upload your creation, share your vision, and connect with thousands of players worldwide."
+            />
+          </div>
 
           {/* Main Content Container */}
-          <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
+          <div className="container mx-auto px-4 pb-8 relative z-10 bg-transparent">
+            <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
             {/* Main Form Card */}
-            <div className="flex-1 max-w-4xl">
+            <div className="flex-1 max-w-4xl" ref={cardRef}>
           {/* Landing Page Style Main Card - Darker Theme */}
           <div className="border border-transparent bg-gradient-to-br from-purple-900/60 via-purple-800/40 to-violet-900/60 p-[1px] rounded-2xl shadow-[0_0_30px_rgba(168,85,247,0.4)]">
             <Card className="relative bg-gradient-to-br from-gray-900/80 via-black/70 to-gray-900/80 backdrop-blur-xl rounded-2xl border-gray-800/50 shadow-lg transition-all duration-500 hover:shadow-[0_0_40px_rgba(168,85,247,0.6)]">
@@ -594,6 +619,7 @@ export default function NewSubmitPage() {
                 />
               </div>
             </div>
+            
             {/* Form Header */}
             <div className="px-4 md:px-6 pb-1">
               <div className="transition-all duration-300 ease-in-out">
@@ -912,11 +938,10 @@ export default function NewSubmitPage() {
                       {/* Categories */}
                       <div>
                         <Label className="block text-sm font-medium mb-2">Categories *</Label>
-                        <CategoryMultiSelect
-                          selectedCategories={form.watch('categories') || []}
-                          onSelectionChange={(categoryIds) => form.setValue('categories', categoryIds)}
-                          maxSelections={3}
-                          placeholder="Select game categories..."
+                        <CategorySelector
+                          selectedCategoryIds={form.watch('categories') || []}
+                          onChange={(ids) => form.setValue('categories', ids)}
+                          maxSelections={5}
                         />
                         {form.formState.errors.categories && (
                           <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.categories.message)}</p>
@@ -984,143 +1009,17 @@ export default function NewSubmitPage() {
                       {/* Thumbnail Upload */}
                       <div>
                         <h3 className="text-lg font-semibold">Thumbnail *</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Upload a square thumbnail image (240x240px recommended)</p>
-                        <div className="space-y-4">
-                          <div className="flex gap-2">
-                            <div 
-                              className={`flex-1 border-2 border-dashed rounded-lg p-4 transition-colors ${
-                                isDragOverThumbnail 
-                                  ? 'border-purple-500 bg-purple-500/10' 
-                                  : 'border-gray-300 hover:border-purple-400'
-                              }`}
-                              onDragOver={(e) => {
-                                e.preventDefault()
-                                setIsDragOverThumbnail(true)
-                              }}
-                              onDragLeave={() => setIsDragOverThumbnail(false)}
-                              onDrop={async (e) => {
-                                e.preventDefault()
-                                setIsDragOverThumbnail(false)
-                                
-                                const files = Array.from(e.dataTransfer.files)
-                                const imageFile = files.find(file => file.type.startsWith('image/'))
-                                
-                                if (!imageFile) {
-                                  toast.error('Please drop a valid image file')
-                                  return
-                                }
-                                
-                                if (imageFile.size > 5 * 1024 * 1024) {
-                                  toast.error('File size must be less than 5MB')
-                                  return
-                                }
-                                
-                                setIsUploadingThumbnail(true)
-                                
-                                try {
-                                  const result = await uploadFile(imageFile)
-                                  
-                                  if (result.ok && result.url) {
-                                    form.setValue('thumbnail', result.url)
-                                    toast.success('Thumbnail uploaded!')
-                                  } else {
-                                    toast.error(result.error || 'Upload failed')
-                                  }
-                                } catch (error) {
-                                  console.error('Upload error:', error)
-                                  toast.error('Upload failed')
-                                } finally {
-                                  setIsUploadingThumbnail(false)
-                                }
-                              }}
-                            >
-                            <Input 
-                                placeholder="Paste thumbnail URL here or drag & drop image..." 
-                              {...form.register('thumbnail')} 
-                                className="border-0 focus:ring-0"
-                                onBlur={() => form.trigger('thumbnail')}
-                            />
-                            </div>
-                            <Button 
-                              type="button" 
-                              variant="outline"
-                              disabled={isUploadingThumbnail}
-                              onClick={async () => {
-                                const input = document.createElement('input')
-                                input.type = 'file'
-                                input.accept = 'image/*'
-                                input.onchange = async (e) => {
-                                  const inputEl = e.target as HTMLInputElement
-                                  const file = inputEl.files?.[0]
-                                  
-                                  // Reset input value to allow re-selecting same file
-                                  inputEl.value = ''
-                                  
-                                  if (!file) return
-                                  
-                                  // Validate file type
-                                  if (!file.type.startsWith('image/')) {
-                                    toast.error('Please select a valid image file')
-                                    return
-                                  }
-                                  
-                                  // Validate file size (5MB limit)
-                                  if (file.size > 5 * 1024 * 1024) {
-                                    toast.error('File size must be less than 5MB')
-                                    return
-                                  }
-                                  
-                                  setIsUploadingThumbnail(true)
-                                  
-                                  try {
-                                    const result = await uploadFile(file)
-                                    
-                                    if (result.ok && result.url) {
-                                        form.setValue('thumbnail', result.url)
-                                      toast.success('Thumbnail uploaded!')
-                                    } else {
-                                      toast.error(result.error || 'Upload failed')
-                                      }
-                                    } catch (error) {
-                                    console.error('Upload error:', error)
-                                    toast.error('Upload failed')
-                                  } finally {
-                                    setIsUploadingThumbnail(false)
-                                  }
-                                }
-                                input.click()
-                              }}
-                            >
-                              {isUploadingThumbnail ? (
-                                <>
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                  Uploading...
-                                </>
-                              ) : (
-                                'Upload'
-                              )}
-                            </Button>
-                          </div>
-                          {form.watch('thumbnail') && (
-                            <div className="relative w-24 h-24">
-                              <img 
-                                src={form.watch('thumbnail')} 
-                                alt="Thumbnail preview" 
-                                className="w-full h-full object-cover rounded-lg border"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => form.setValue('thumbnail', '')}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
-                            </div>
-                          )}
-                          {form.formState.errors.thumbnail && (
-                            <p className="text-sm text-red-500">{String(form.formState.errors.thumbnail.message)}</p>
-                          )}
-                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">Upload a square thumbnail image (512x512px recommended)</p>
+                        <ThumbnailUpload
+                          value={form.watch('thumbnail') || ''}
+                          onChange={(url) => form.setValue('thumbnail', url)}
+                          onBlur={() => form.trigger('thumbnail')}
+                          disabled={isUploadingThumbnail}
+                          required
+                        />
+                        {form.formState.errors.thumbnail && (
+                          <p className="text-sm text-red-500 mt-1">{String(form.formState.errors.thumbnail.message)}</p>
+                        )}
                       </div>
 
                       {/* Gallery Images */}
