@@ -178,22 +178,39 @@ export default function NewSubmitPage({ productId }: { productId?: string } = {}
     }
   })
 
-  // Detect edit mode from URL and prefill
+  // Detect edit mode from URL or prop and prefill
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const m = window.location.pathname.match(/\/submit\/edit\/([^/]+)/)
-    const id = m?.[1]
+    // Use productId prop if provided, otherwise extract from URL
+    const id = productId || (() => {
+      if (typeof window === 'undefined') return null
+      const m = window.location.pathname.match(/\/submit\/edit\/([^/]+)/)
+      return m?.[1] || null
+    })()
+    
     if (!id) return
+    
+    console.log('[NewSubmitPage] Loading product data for ID:', id)
     setEditId(id)
+    
     ;(async () => {
       try {
         setIsLoadingInitial(true)
+        console.log('[NewSubmitPage] Fetching /api/products/' + id)
         const res = await fetch(`/api/products/${id}`, { 
           cache: 'no-store',
           credentials: 'include'
         })
-        if (!res.ok) return
+        console.log('[NewSubmitPage] Response status:', res.status, res.ok)
+        
+        if (!res.ok) {
+          console.error('[NewSubmitPage] Failed to load product:', res.status)
+          toast.error('Failed to load game data')
+          return
+        }
+        
         const p = await res.json()
+        console.log('[NewSubmitPage] Product data loaded:', p.title)
+        
         form.reset({
           title: p.title || '',
           tagline: p.tagline || '',
@@ -221,12 +238,17 @@ export default function NewSubmitPage({ productId }: { productId?: string } = {}
           gamificationTags: p.gamificationTags || [],
           studioName: p.studioName || '',
         })
+        
+        console.log('[NewSubmitPage] Form reset complete')
+        toast.success('Game data loaded!')
+      } catch (error) {
+        console.error('[NewSubmitPage] Error loading product:', error)
+        toast.error('Error loading game data')
       } finally {
         setIsLoadingInitial(false)
       }
     })()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [productId, form])
 
   // --- Real-time duplicate validation (title/ios/android) ---
   useEffect(() => {

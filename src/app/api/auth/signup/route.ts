@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { notify } from '@/lib/notificationService'
+import { awardXP } from '@/lib/xpService'
 
 const signupSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -70,6 +71,15 @@ export async function POST(request: NextRequest) {
     } catch (notificationError) {
       console.error('[SIGNUP] Error sending welcome notification:', notificationError)
       // Don't fail signup if notification fails
+    }
+
+    // Award initial XP for joining the platform
+    try {
+      await awardXP(user.id, 'signup', 10) // 10 XP for signing up
+      console.log('[SIGNUP] Awarded initial XP to new user')
+    } catch (xpError) {
+      console.error('[SIGNUP] Error awarding initial XP:', xpError)
+      // Don't fail signup if XP fails
     }
 
     return NextResponse.json({

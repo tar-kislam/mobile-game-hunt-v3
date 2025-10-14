@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { calculateLevelProgress } from './xpCalculator'
 import { notifyXPProgress } from '@/lib/notificationService'
 
-export type XPAction = 'vote' | 'comment' | 'follow' | 'add_game' | 'badge'
+export type XPAction = 'vote' | 'comment' | 'follow' | 'add_game' | 'badge' | 'signup' | 'publish_game'
 
 export interface XPReward {
   action: XPAction
@@ -11,6 +11,11 @@ export interface XPReward {
 }
 
 export const XP_REWARDS: Record<XPAction, XPReward> = {
+  signup: {
+    action: 'signup',
+    amount: 10,
+    description: 'Joined Mobile Game Hunt'
+  },
   vote: {
     action: 'vote',
     amount: 2,
@@ -30,6 +35,11 @@ export const XP_REWARDS: Record<XPAction, XPReward> = {
     action: 'add_game',
     amount: 10,
     description: 'Added a new game'
+  },
+  publish_game: {
+    action: 'publish_game',
+    amount: 20,
+    description: 'Published a game'
   },
   badge: {
     action: 'badge',

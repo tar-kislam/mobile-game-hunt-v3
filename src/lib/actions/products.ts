@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { ProductFullInput } from '@/lib/schemas/product'
+import { awardXP } from '@/lib/xpService'
 
 export async function createProductAction(data: ProductFullInput) {
   try {
@@ -139,6 +140,16 @@ export async function createProductAction(data: ProductFullInput) {
     })
 
     console.log('Product created successfully:', product.id)
+    
+    // Award XP for publishing a game
+    try {
+      await awardXP(user.id, 'publish_game')
+      console.log('[XP] Awarded XP for publishing game')
+    } catch (xpError) {
+      console.error('[XP] Failed to award XP:', xpError)
+      // Don't fail product creation if XP fails
+    }
+    
     revalidatePath('/')
     return { ok: true, productId: product.id }
   } catch (error: any) {
@@ -501,6 +512,15 @@ export async function submitApprovalAction(data: ProductFullInput) {
         }
       }
     })
+
+    // Award XP for publishing a game
+    try {
+      await awardXP(user.id, 'publish_game')
+      console.log('[XP] Awarded XP for publishing game')
+    } catch (xpError) {
+      console.error('[XP] Failed to award XP:', xpError)
+      // Don't fail product creation if XP fails
+    }
 
     revalidatePath('/')
     return { ok: true, productId: product.id }
