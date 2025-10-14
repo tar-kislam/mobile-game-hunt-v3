@@ -73,8 +73,8 @@ export function useLazyLoading() {
   }, [])
 }
 
-// Preload critical resources
-export function preloadCriticalResources() {
+// Preload critical resources - Hook renamed to follow React naming convention
+export function usePreloadCriticalResources() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       // Preload critical fonts

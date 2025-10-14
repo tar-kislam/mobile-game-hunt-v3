@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     
     try {
       const validatedData = createPostSchema.parse(body)
-      let { content, images, hashtags, poll } = validatedData
+      const { content, images, hashtags, poll } = validatedData
       
       console.log('[COMMUNITY][CREATE] Validated data:', { 
         content: content?.substring(0, 50) + '...', 
@@ -290,7 +290,7 @@ export async function GET(request: NextRequest) {
 
     // Show all posts to everyone (no published field exists, all posts are public)
     // Authors can see their own posts, but everyone sees all posts
-    let posts = await prisma.post.findMany({
+    const posts = await prisma.post.findMany({
       where: where,
       include: {
         user: {

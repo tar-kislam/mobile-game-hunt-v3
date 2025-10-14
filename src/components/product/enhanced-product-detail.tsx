@@ -1064,10 +1064,13 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
             product.socialLinks.linkedin || 
             product.socialLinks.youtube
           ) && (
-            <Card className="rounded-3xl shadow-soft border-2">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-                  Connect With Us
+            <Card className="rounded-3xl shadow-soft border-2 bg-gradient-to-br from-gray-900/80 via-black/70 to-gray-900/80 backdrop-blur-xl border-gray-800/50 shadow-lg transition-all duration-500 hover:shadow-[0_0_40px_rgba(168,85,247,0.6)] hover:scale-[1.02]">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl font-semibold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent cursor-pointer hover:from-blue-300 hover:to-purple-400 transition-all duration-300 flex items-center gap-2 group">
+                  <span className="inline-block group-hover:scale-110 transition-transform duration-300">Connect With Us</span>
+                  <svg className="w-5 h-5 text-purple-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
                 </CardTitle>
               </CardHeader>
               <CardContent>

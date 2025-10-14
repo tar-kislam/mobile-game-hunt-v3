@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const followingIds = following.map(f => f.followingId);
 
     // Build base where clause for filtering
-    let baseWhereClause: any = {
+    const baseWhereClause: any = {
       status: 'PUBLISHED'
     };
 

@@ -136,7 +136,7 @@ export async function addXp(
   customXpAmount?: number
 ): Promise<{ success: boolean; xpDelta: number; message?: string }> {
   try {
-    let xpDelta = customXpAmount !== undefined ? customXpAmount : XP_VALUES[action]
+    const xpDelta = customXpAmount !== undefined ? customXpAmount : XP_VALUES[action]
     
     // Don't add XP if the amount is 0 (but allow custom amounts even if action default is 0)
     if (xpDelta === 0 && customXpAmount === undefined) {

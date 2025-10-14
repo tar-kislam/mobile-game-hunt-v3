@@ -34,23 +34,54 @@ export async function GET(req: NextRequest) {
     const title = sanitize(rawTitle)
     const iosUrl = normalizeStoreUrl(rawIos)
     const androidUrl = normalizeStoreUrl(rawAndroid)
+    
+    // If excludeId is provided, this is an edit operation
+    // In edit mode, we should be more lenient with URL conflicts
+    const isEditMode = !!excludeId
+
+    // For edit mode, we need to get the current product's owner to check conflicts within same user
+    let currentProductOwner = null
+    if (isEditMode && excludeId) {
+      const currentProduct = await prisma.product.findUnique({
+        where: { id: excludeId },
+        select: { userId: true }
+      })
+      currentProductOwner = currentProduct?.userId
+    }
 
     const [titleExists, iosExists, androidExists] = await Promise.all([
       title
         ? prisma.product.findFirst({ where: { title: { equals: title, mode: 'insensitive' }, NOT: excludeId ? { id: excludeId } : undefined }, select: { id: true, slug: true } })
         : null,
       iosUrl
-        ? prisma.product.findFirst({ where: { iosUrl, NOT: excludeId ? { id: excludeId } : undefined }, select: { id: true } })
+        ? prisma.product.findFirst({ 
+            where: { 
+              iosUrl, 
+              NOT: excludeId ? { id: excludeId } : undefined,
+              // In edit mode, only check conflicts with same user's other products
+              ...(isEditMode && currentProductOwner ? { userId: currentProductOwner } : {})
+            }, 
+            select: { id: true } 
+          })
         : null,
       androidUrl
-        ? prisma.product.findFirst({ where: { androidUrl, NOT: excludeId ? { id: excludeId } : undefined }, select: { id: true } })
+        ? prisma.product.findFirst({ 
+            where: { 
+              androidUrl, 
+              NOT: excludeId ? { id: excludeId } : undefined,
+              // In edit mode, only check conflicts with same user's other products
+              ...(isEditMode && currentProductOwner ? { userId: currentProductOwner } : {})
+            }, 
+            select: { id: true } 
+          })
         : null,
     ])
 
     return NextResponse.json({
       titleExists: !!titleExists,
-      iosExists: !!iosExists,
-      androidExists: !!androidExists,
+      // In edit mode, don't report URL conflicts as they're not relevant
+      iosExists: isEditMode ? false : !!iosExists,
+      androidExists: isEditMode ? false : !!androidExists,
       existingSlug: titleExists?.slug || null,
       existingId: titleExists?.id || null,
     })

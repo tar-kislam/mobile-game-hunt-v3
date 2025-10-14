@@ -101,7 +101,7 @@ export default withAuth(
           pathname.startsWith('/api/health') ||
           pathname.startsWith('/api/upload') ||   // Allow file upload API (auth handled in route)
           pathname.startsWith('/api/categories') ||
-          pathname.startsWith('/api/products') ||
+          pathname === '/api/products' || // Allow public product listing
           pathname.startsWith('/api/calendar') ||   // Allow calendar API
           pathname.startsWith('/api/sidebar') ||   // Allow sidebar API
           pathname.startsWith('/api/newsletter') || // Allow newsletter API
@@ -109,6 +109,9 @@ export default withAuth(
           pathname.startsWith('/api/featured-games') || // Allow featured games API
           pathname.startsWith('/api/games') ||     // Allow games search API
           pathname.startsWith('/api/leaderboard') || // Allow leaderboard API
+          pathname.startsWith('/api/stats') || // Allow stats API
+          pathname.startsWith('/api/validate-game') || // Allow game validation API
+          pathname.startsWith('/api/products/by-slug') || // Allow product by slug API
           pathname.startsWith('/api/community') || // Allow community APIs (routes enforce method-level auth)
           pathname.startsWith('/api/playtest') || // Allow playtest API (route handles auth per method)
           pathname.startsWith('/api/user') ||

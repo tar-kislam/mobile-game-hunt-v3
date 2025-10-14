@@ -227,7 +227,7 @@ export default function DashboardPage() {
                             </div>
                           </div>
                           <div className="px-4 pb-4 flex items-center gap-2">
-                            <Link href={`/submit/edit/${g.id}`}>
+                            <Link href={`/submit/edit/${g.slug || g.id}`}>
                               <Button variant="outline" className="rounded-2xl h-8 px-3">
                                 <Pen className="w-4 h-4 mr-2" /> Edit
                               </Button>

@@ -128,9 +128,9 @@ export async function createProductAction(data: ProductFullInput) {
           })) || []
         },
         makers: {
-          create: data.makers?.map((maker, index) => ({
-            userId: maker.userId || null,
-            email: maker.email || null,
+          create: data.makers?.filter(maker => maker.userId && maker.userId.trim() !== '').map((maker, index) => ({
+            userId: maker.userId,
+            email: maker.email,
             role: maker.role,
             isCreator: index === 0 // First maker is the creator
           })) || []
@@ -192,12 +192,16 @@ export async function saveDraftAction(data: ProductFullInput) {
       })
     }
 
-    // Generate slug from title
-    const slug = data.title
+    // Generate unique slug from title
+    const baseSlug = data.title
       .toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
       .trim()
+    
+    // Add timestamp to ensure uniqueness for drafts
+    const timestamp = Date.now()
+    const slug = `${baseSlug}-${timestamp}`
 
     const product = await prisma.product.create({
       data: {
@@ -264,7 +268,7 @@ export async function saveDraftAction(data: ProductFullInput) {
           })) || []
         },
         makers: {
-          create: data.makers?.map((maker, index) => ({
+          create: data.makers?.filter(maker => maker.userId && maker.userId.trim() !== '').map((maker, index) => ({
             userId: maker.userId,
             email: maker.email,
             role: maker.role,
@@ -376,7 +380,7 @@ export async function scheduleLaunchAction(data: ProductFullInput, launchDate: s
           })) || []
         },
         makers: {
-          create: data.makers?.map((maker, index) => ({
+          create: data.makers?.filter(maker => maker.userId && maker.userId.trim() !== '').map((maker, index) => ({
             userId: maker.userId,
             email: maker.email,
             role: maker.role,
@@ -488,7 +492,7 @@ export async function submitApprovalAction(data: ProductFullInput) {
           })) || []
         },
         makers: {
-          create: data.makers?.map((maker, index) => ({
+          create: data.makers?.filter(maker => maker.userId && maker.userId.trim() !== '').map((maker, index) => ({
             userId: maker.userId,
             email: maker.email,
             role: maker.role,
@@ -827,4 +831,154 @@ function getExternalClickColor(type: string): string {
     'ANDROID': '#3B82F6'      // Blue for Android
   }
   return colors[type.toUpperCase()] || '#6B7280'
+}
+
+export async function updateProductAction(productId: string, data: ProductFullInput, publish: boolean = false) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.email) {
+      return { ok: false, error: 'Unauthorized' }
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    if (!user) {
+      return { ok: false, error: 'User not found' }
+    }
+
+    // Check if product exists and belongs to user
+    const existingProduct = await prisma.product.findUnique({
+      where: { id: productId },
+      select: { userId: true }
+    })
+
+    if (!existingProduct) {
+      return { ok: false, error: 'Product not found' }
+    }
+
+    if (existingProduct.userId !== user.id) {
+      return { ok: false, error: 'Unauthorized to update this product' }
+    }
+
+    // Update the product
+    const updatedProduct = await prisma.product.update({
+      where: { id: productId },
+      data: {
+        title: data.title,
+        tagline: data.tagline,
+        description: data.description,
+        url: data.iosUrl || data.androidUrl || '', // Use one of the URLs as the primary URL
+        iosUrl: data.iosUrl,
+        androidUrl: data.androidUrl,
+        thumbnail: data.thumbnail,
+        gallery: data.gallery,
+        youtubeUrl: data.youtubeUrl,
+        gameplayGifUrl: data.gameplayGifUrl,
+        demoUrl: data.demoUrl,
+        socialLinks: data.website || data.discordUrl || data.twitterUrl || data.tiktokUrl || data.instagramUrl || data.redditUrl || data.facebookUrl || data.linkedinUrl || data.youtubeUrl
+          ? {
+              website: data.website || undefined,
+              discord: data.discordUrl || undefined,
+              twitter: data.twitterUrl || undefined,
+              tiktok: data.tiktokUrl || undefined,
+              instagram: data.instagramUrl || undefined,
+              reddit: data.redditUrl || undefined,
+              facebook: data.facebookUrl || undefined,
+              linkedin: data.linkedinUrl || undefined,
+              youtube: data.youtubeUrl || undefined,
+            }
+          : undefined,
+        platforms: data.platforms,
+        countries: data.targetCountries,
+        languages: data.languages,
+        releaseAt: data.releaseAt ? new Date(data.releaseAt) : (data.launchDate ? new Date(data.launchDate) : null),
+        studioName: data.studioName,
+        launchType: data.launchType,
+        launchDate: data.launchDate ? new Date(data.launchDate) : null,
+        monetization: data.monetization,
+        engine: data.engine,
+        // Community & Extras fields
+        promoOffer: data.promoOffer,
+        promoCode: data.promoCode,
+        promoExpiry: data.promoExpiry ? new Date(data.promoExpiry) : null,
+        playtestQuota: data.playtestQuota,
+        playtestExpiry: data.playtestExpiry ? new Date(data.playtestExpiry) : null,
+        sponsorRequest: data.sponsorRequest,
+        sponsorNote: data.sponsorNote,
+        crowdfundingPledge: data.crowdfundingPledge,
+        gamificationTags: data.gamificationTags,
+        // Update status if publishing
+        ...(publish ? { status: 'PUBLISHED' } : {})
+      }
+    })
+
+    // Update categories (delete existing and create new ones)
+    await prisma.productCategory.deleteMany({
+      where: { productId: productId }
+    })
+
+    if (data.categories && data.categories.length > 0) {
+      await prisma.productCategory.createMany({
+        data: data.categories.map(categoryId => ({
+          productId: productId,
+          categoryId: categoryId
+        }))
+      })
+    }
+
+    // Update tags (delete existing and create new ones)
+    await prisma.productTag.deleteMany({
+      where: { productId: productId }
+    })
+
+    if (data.tags && data.tags.length > 0) {
+      for (const tagName of data.tags) {
+        await prisma.productTag.create({
+          data: {
+            product: {
+              connect: { id: productId }
+            },
+            tag: {
+              connectOrCreate: {
+                where: { slug: tagName.toLowerCase().replace(/\s+/g, '-') },
+                create: {
+                  slug: tagName.toLowerCase().replace(/\s+/g, '-'),
+                  name: tagName
+                }
+              }
+            }
+          }
+        })
+      }
+    }
+
+    // Update makers (delete existing and create new ones)
+    await prisma.productMaker.deleteMany({
+      where: { productId: productId }
+    })
+
+    if (data.makers && data.makers.length > 0) {
+      await prisma.productMaker.createMany({
+        data: data.makers.filter(maker => maker.userId && maker.userId.trim() !== '').map((maker, index) => ({
+          productId: productId,
+          userId: maker.userId,
+          email: maker.email,
+          role: maker.role,
+          isCreator: index === 0 // First maker is the creator
+        }))
+      })
+    }
+
+    console.log('Product updated successfully:', updatedProduct.id)
+    return { 
+      ok: true, 
+      product: updatedProduct,
+      message: publish ? 'Product published successfully!' : 'Product updated successfully!'
+    }
+  } catch (error) {
+    console.error('Error updating product:', error)
+    return { ok: false, error: 'Failed to update product' }
+  }
 }

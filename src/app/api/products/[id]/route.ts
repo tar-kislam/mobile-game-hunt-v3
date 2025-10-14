@@ -177,11 +177,33 @@ export async function GET(
   const params = (context?.params || {}) as Promise<{ id: string }>
   try {
     const { id } = await params
-    const product = await prisma.product.findUnique({
-      where: {
+    const session = await getServerSession(authOptions)
+    console.log('GET /api/products/[id] - Session:', session?.user?.id ? 'Authenticated' : 'Not authenticated')
+    console.log('GET /api/products/[id] - Session user ID:', session?.user?.id)
+    console.log('GET /api/products/[id] - Product ID:', id)
+    
+    // For authenticated users, allow access to their own drafts
+    // For public access, only show published products
+    let whereClause
+    if (session?.user?.id) {
+      whereClause = {
         id: id,
-        status: 'PUBLISHED', // Only return published products
-      },
+        OR: [
+          { status: 'PUBLISHED' },
+          { status: 'DRAFT', userId: session.user.id }
+        ]
+      }
+      console.log('GET /api/products/[id] - Using authenticated where clause')
+    } else {
+      whereClause = {
+        id: id,
+        status: 'PUBLISHED'
+      }
+      console.log('GET /api/products/[id] - Using public where clause')
+    }
+    
+    const product = await prisma.product.findUnique({
+      where: whereClause,
       select: {
         id: true,
         title: true,

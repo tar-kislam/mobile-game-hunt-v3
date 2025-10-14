@@ -12,7 +12,13 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { productMainInfoSchema, productMediaSchema, productExtrasSchema, productChecklistSchema, productLaunchDetailsSchema, productFullSchema } from '@/lib/schemas/product'
-import { createProductAction, saveDraftAction, scheduleLaunchAction, submitApprovalAction } from '@/lib/actions/products'
+import { 
+  createProductAction, 
+  saveDraftAction, 
+  updateProductAction, 
+  scheduleLaunchAction, 
+  submitApprovalAction 
+} from '@/lib/actions/products'
 import { toast } from 'sonner'
 import { Info, ExternalLink, Globe, MessageCircle, Twitter, Youtube, X, Plus, Check, X as XIcon, Instagram, ChevronDown, ChevronUp } from 'lucide-react'
 import { CategorySelector } from '@/components/category/CategorySelector'
@@ -34,7 +40,7 @@ import Particles from '@/components/effects/Particles'
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6
 
-export default function NewSubmitPage() {
+export default function NewSubmitPage({ productId }: { productId?: string } = {}) {
   const { data: session, status } = useSession()
   // placeholder for duplicate state; effect will be defined after form init
   const [dupLoading, setDupLoading] = useState(false)
@@ -44,7 +50,7 @@ export default function NewSubmitPage() {
 
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
-  const [editId, setEditId] = useState<string | null>(null)
+  const [editId, setEditId] = useState<string | null>(productId || null)
   const [isLoadingInitial, setIsLoadingInitial] = useState(false)
   const [autosave, setAutosave] = useState(false)
   const [additionalLinks, setAdditionalLinks] = useState<Array<{ type: string; url: string }>>([])
@@ -59,12 +65,13 @@ export default function NewSubmitPage() {
   const [isDragOverGallery, setIsDragOverGallery] = useState(false)
   
   const cardRef = useRef<HTMLDivElement>(null)
+  const heroRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll to card after 2 seconds
+  // Auto-scroll to hero section after 2 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (cardRef.current) {
-        cardRef.current.scrollIntoView({ 
+      if (heroRef.current) {
+        heroRef.current.scrollIntoView({ 
           behavior: 'smooth', 
           block: 'start' 
         })
@@ -181,7 +188,10 @@ export default function NewSubmitPage() {
     ;(async () => {
       try {
         setIsLoadingInitial(true)
-        const res = await fetch(`/api/products/${id}`, { cache: 'no-store' })
+        const res = await fetch(`/api/products/${id}`, { 
+          cache: 'no-store',
+          credentials: 'include'
+        })
         if (!res.ok) return
         const p = await res.json()
         form.reset({
@@ -237,7 +247,10 @@ export default function NewSubmitPage() {
         if (iosUrl) q.set('iosUrl', iosUrl)
         if (androidUrl) q.set('androidUrl', androidUrl)
         if (editId) q.set('excludeId', editId)
-        const res = await fetch(`/api/validate-game?${q.toString()}`, { signal: controller.signal })
+        const res = await fetch(`/api/validate-game?${q.toString()}`, { 
+          signal: controller.signal,
+          credentials: 'include'
+        })
         if (!res.ok) throw new Error('Dup check failed')
         const data = await res.json()
         setTitleExists({ exists: !!data.titleExists, slug: data.existingSlug || undefined })
@@ -369,7 +382,12 @@ export default function NewSubmitPage() {
           video: values.video || null,
           platforms: values.platforms || [],
         }
-        const res = await fetch(`/api/products/${editId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        const res = await fetch(`/api/products/${editId}`, { 
+          method: 'PUT', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify(payload),
+          credentials: 'include'
+        })
         if (!res.ok) throw new Error('Update failed')
         toast.success('✅ Your game has been updated!')
         try { localStorage.removeItem('submit-autosave') } catch {}
@@ -398,15 +416,60 @@ export default function NewSubmitPage() {
     setIsSubmitting(true)
     try {
       const values = form.getValues()
-      const res = await saveDraftAction(values)
-      if (res.ok) {
-        toast.success('Draft saved successfully!')
-        try { localStorage.removeItem('submit-autosave') } catch {}
+      
+      // If we're in edit mode, update the existing product instead of creating a new one
+      if (editId) {
+        const res = await updateProductAction(editId, values)
+        if (res.ok) {
+          toast.success('Product updated successfully!')
+          try { localStorage.removeItem('submit-autosave') } catch {}
+        } else {
+          toast.error('Failed to update product')
+        }
       } else {
-        toast.error('Failed to save draft')
+        const res = await saveDraftAction(values)
+        if (res.ok) {
+          toast.success('Draft saved successfully!')
+          try { localStorage.removeItem('submit-autosave') } catch {}
+        } else {
+          toast.error('Failed to save draft')
+        }
       }
     } catch (error) {
+      console.error('Error saving draft:', error)
       toast.error('Failed to save draft')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handlePublish = async () => {
+    setIsSubmitting(true)
+    try {
+      const values = form.getValues()
+      
+      // If we're in edit mode, update and publish the existing product
+      if (editId) {
+        const res = await updateProductAction(editId, values, true) // true = publish
+        if (res.ok) {
+          toast.success(res.message || 'Product published successfully!')
+          try { localStorage.removeItem('submit-autosave') } catch {}
+        } else {
+          toast.error('Failed to publish product')
+        }
+      } else {
+        // For new products, create as published
+        const res = await submitApprovalAction(values)
+        if (res.ok) {
+          toast.success('Product submitted for approval!')
+          try { localStorage.removeItem('submit-autosave') } catch {}
+        } else {
+          toast.error('Failed to submit product')
+        }
+      }
+    } catch (error) {
+      console.error('Error publishing product:', error)
+      toast.error('Failed to publish product')
     } finally {
       setIsSubmitting(false)
     }
@@ -447,7 +510,12 @@ export default function NewSubmitPage() {
           video: values.video || null,
           platforms: values.platforms || [],
         }
-        const res = await fetch(`/api/products/${editId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        const res = await fetch(`/api/products/${editId}`, { 
+          method: 'PUT', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify(payload),
+          credentials: 'include'
+        })
         if (!res.ok) throw new Error('Update failed')
         toast.success('✅ Your game has been updated!')
         try { localStorage.removeItem('submit-autosave') } catch {}
@@ -583,16 +651,15 @@ export default function NewSubmitPage() {
             </div>
           </div>
           
-          {/* Animated Header Section */}
-          <div className="max-w-7xl mx-auto px-4 -mt-4">
-            <AnimatedHeader
-              title="Showcase Your Game to the World"
-              subtitle="Upload your creation, share your vision, and connect with thousands of players worldwide."
-            />
-          </div>
-
           {/* Main Content Container */}
           <div className="container mx-auto px-4 pb-8 relative z-10 bg-transparent">
+            {/* Animated Header Section - Flush with navbar */}
+            <div className="max-w-7xl mx-auto mb-6" ref={heroRef}>
+              <AnimatedHeader
+                title="Showcase Your Game to the World"
+                subtitle="Upload your creation, share your vision, and connect with thousands of players worldwide."
+              />
+            </div>
             <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
             {/* Main Form Card */}
             <div className="flex-1 max-w-4xl" ref={cardRef}>
@@ -1888,9 +1955,27 @@ export default function NewSubmitPage() {
                                 Saving...
                               </>
                             ) : (
-                              'Save as Draft'
+                              editId ? 'Update Draft' : 'Save as Draft'
                             )}
                           </Button>
+                          
+                          {/* Show Publish button for edit mode */}
+                          {editId && (
+                            <Button
+                              onClick={handlePublish}
+                              disabled={isSubmitting}
+                              className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+                            >
+                              {isSubmitting ? (
+                                <>
+                                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                                  Publishing...
+                                </>
+                              ) : (
+                                'Publish Game'
+                              )}
+                            </Button>
+                          )}
                           
                           <ScheduleLaunchModal
                             onSchedule={handleScheduleLaunch}

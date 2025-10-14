@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
       select: {
         id: true,
         title: true,
+        slug: true,
         status: true,
         thumbnail: true,
         images: true,
@@ -29,6 +30,7 @@ export async function GET(req: NextRequest) {
     const result = games.map((g) => ({
       id: g.id,
       title: g.title,
+      slug: g.slug,
       status: g.status ?? 'PUBLISHED',
       thumbnail: g.thumbnail,
     }))

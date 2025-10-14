@@ -6,11 +6,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Particles from '@/components/effects/Particles'
 import FuzzyText from '@/components/effects/fuzzy-text'
 import Link from 'next/link'
-import { LuGamepad2 } from 'react-icons/lu'
-import { IoPeople } from 'react-icons/io5'
-import { HiOutlineChat } from 'react-icons/hi'
 import TargetCursor from '@/components/TargetCursor'
 import { useState } from 'react'
+import { StatsSection } from './StatsSection'
 
 export function CTASection() {
   const brandColor = '#ffffff'
@@ -184,46 +182,8 @@ export function CTASection() {
               </Link>
             </motion.div>
 
-            {/* 4. STATS - Very Bottom (Optional) */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 1.0 }}
-              className="grid grid-cols-3 gap-4 w-full max-w-xs mt-8"
-            >
-              {/* Stat 1 */}
-              <section className="text-center">
-                <div className="mb-1 flex justify-center">
-                  <div className="text-base drop-shadow-[0_0_4px_rgba(168,85,247,0.6)]" style={{ color: '#a855f7' }}>
-                    <LuGamepad2 />
-                  </div>
-                </div>
-                <div className="text-sm font-bold text-white mb-0.5">100+</div>
-                <p className="text-xs text-gray-400 leading-tight">Games</p>
-              </section>
-
-              {/* Stat 2 */}
-              <section className="text-center">
-                <div className="mb-1 flex justify-center">
-                  <div className="text-base drop-shadow-[0_0_4px_rgba(168,85,247,0.6)]" style={{ color: '#a855f7' }}>
-                    <IoPeople />
-                  </div>
-                </div>
-                <div className="text-sm font-bold text-white mb-0.5">10k+</div>
-                <p className="text-xs text-gray-400 leading-tight">Members</p>
-              </section>
-
-              {/* Stat 3 */}
-              <section className="text-center">
-                <div className="mb-1 flex justify-center">
-                  <div className="text-base drop-shadow-[0_0_4px_rgba(168,85,247,0.6)]" style={{ color: '#a855f7' }}>
-                    <HiOutlineChat />
-                  </div>
-                </div>
-                <div className="text-sm font-bold text-white mb-0.5">250+</div>
-                <p className="text-xs text-gray-400 leading-tight">Reviews</p>
-              </section>
-            </motion.div>
+            {/* 4. STATS - Very Bottom (Real-time data) */}
+            <StatsSection />
           </div>
 
           {/* Desktop Layout: Keep existing design */}
@@ -378,46 +338,8 @@ export function CTASection() {
               </div>
             </motion.div>
 
-            {/* Transparent Stats Row - below buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.7 }}
-              className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-center justify-center"
-            >
-              {/* Stat 1: Curated Games */}
-              <div className="text-center hover:scale-105 transition-all duration-300">
-                <div className="mb-2 flex justify-center">
-                  <div className="text-3xl drop-shadow-[0_0_6px_rgba(168,85,247,0.8)]" style={{ color: '#a855f7' }}>
-                    <LuGamepad2 />
-                  </div>
-                </div>
-                <div className="text-2xl font-bold text-white mb-1">100+</div>
-                <div className="text-sm text-gray-400">Curated Games</div>
-              </div>
-
-              {/* Stat 2: Community Members */}
-              <div className="text-center hover:scale-105 transition-all duration-300">
-                <div className="mb-2 flex justify-center">
-                  <div className="text-3xl drop-shadow-[0_0_6px_rgba(168,85,247,0.8)]" style={{ color: '#a855f7' }}>
-                    <IoPeople />
-                  </div>
-                </div>
-                <div className="text-2xl font-bold text-white mb-1">1k+</div>
-                <div className="text-sm text-gray-400">Community Members</div>
-              </div>
-
-              {/* Stat 3: User Reviews */}
-              <div className="text-center hover:scale-105 transition-all duration-300">
-                <div className="mb-2 flex justify-center">
-                  <div className="text-3xl drop-shadow-[0_0_6px_rgba(168,85,247,0.8)]" style={{ color: '#a855f7' }}>
-                    <HiOutlineChat />
-                  </div>
-                </div>
-                <div className="text-2xl font-bold text-white mb-1">250+</div>
-                <div className="text-sm text-gray-400">User Reviews</div>
-              </div>
-            </motion.div>
+            {/* Transparent Stats Row - below buttons - Real-time data */}
+            <StatsSection />
           </div>
 
         </div>
