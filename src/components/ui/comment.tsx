@@ -27,6 +27,7 @@ interface CommentProps {
   onShare?: (commentId: string) => void;
   className?: string;
   isReply?: boolean;
+  isAuthenticated?: boolean;
 }
 
 export function Comment({
@@ -36,7 +37,8 @@ export function Comment({
   onReport,
   onShare,
   className = '',
-  isReply = false
+  isReply = false,
+  isAuthenticated = false
 }: CommentProps) {
   const [isUpvoted, setIsUpvoted] = useState(false);
   const [voteCount, setVoteCount] = useState(comment._count.votes);
@@ -44,10 +46,7 @@ export function Comment({
   const handleVoteChange = (newVoteCount: number, newIsUpvoted: boolean) => {
     setVoteCount(newVoteCount);
     setIsUpvoted(newIsUpvoted);
-    
-    if (onVoteChange) {
-      onVoteChange(comment.id, newVoteCount, newIsUpvoted);
-    }
+    if (onVoteChange) onVoteChange(comment.id, newVoteCount, newIsUpvoted);
   };
 
   const handleReply = () => {
@@ -94,6 +93,7 @@ export function Comment({
             initialVotes={voteCount}
             isUpvoted={isUpvoted}
             onVoteChange={handleVoteChange}
+            isAuthenticated={isAuthenticated}
             onReply={handleReply}
             onReport={handleReport}
             onShare={handleShare}

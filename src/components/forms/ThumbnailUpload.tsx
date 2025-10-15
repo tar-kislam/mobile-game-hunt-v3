@@ -130,12 +130,32 @@ export function ThumbnailUpload({
     }
   }
 
-  const handleUrlSubmit = () => {
-    if (urlInput.trim()) {
-      onChange(urlInput.trim())
-      setUrlInput("")
-      setShowUrlInput(false)
-      toast.success("Thumbnail URL set!")
+  const handleUrlSubmit = async () => {
+    if (!urlInput.trim()) return
+    
+    try {
+      setIsUploading(true)
+      const response = await fetch('/api/upload/from-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: urlInput.trim() })
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok && data.url) {
+        onChange(data.url)
+        setUrlInput("")
+        setShowUrlInput(false)
+        toast.success("Thumbnail URL imported!")
+      } else {
+        toast.error(data.error || "Failed to import image from URL")
+      }
+    } catch (error) {
+      console.error('URL import error:', error)
+      toast.error("Failed to import image from URL")
+    } finally {
+      setIsUploading(false)
     }
   }
 
@@ -244,10 +264,10 @@ export function ThumbnailUpload({
           <button
             type="button"
             onClick={handleUrlSubmit}
-            disabled={disabled || !urlInput.trim()}
+            disabled={disabled || !urlInput.trim() || isUploading}
             className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Set URL
+            {isUploading ? "Importing..." : "Import URL"}
           </button>
         </div>
       )}

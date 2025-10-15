@@ -102,6 +102,7 @@ export default withAuth(
           pathname.startsWith('/api/upload') ||   // Allow file upload API (auth handled in route)
           pathname.startsWith('/api/categories') ||
           pathname === '/api/products' || // Allow public product listing
+          pathname.startsWith('/api/products/') || // Allow product detail subroutes (route files enforce auth per method)
           pathname.startsWith('/api/calendar') ||   // Allow calendar API
           pathname.startsWith('/api/sidebar') ||   // Allow sidebar API
           pathname.startsWith('/api/newsletter') || // Allow newsletter API

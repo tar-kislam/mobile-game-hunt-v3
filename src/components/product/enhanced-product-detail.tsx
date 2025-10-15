@@ -642,6 +642,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                     <Comment
                       key={comment.id}
                       comment={comment}
+                      isAuthenticated={!!session}
                       onVoteChange={handleCommentVote}
                       onReply={handleCommentReply}
                       onReport={handleCommentReport}

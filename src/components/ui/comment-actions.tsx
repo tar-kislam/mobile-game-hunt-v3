@@ -22,6 +22,7 @@ interface CommentActionsProps {
   onShare?: () => void;
   timestamp: string;
   className?: string;
+  isAuthenticated?: boolean;
 }
 
 export function CommentActions({
@@ -33,7 +34,8 @@ export function CommentActions({
   onReport,
   onShare,
   timestamp,
-  className = ''
+  className = '',
+  isAuthenticated = false
 }: CommentActionsProps) {
   const [showMore, setShowMore] = useState(false);
 
@@ -84,13 +86,34 @@ export function CommentActions({
     <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 ${className}`}>
       <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
         {/* Upvote */}
-        <UpvoteButton
-          initialVotes={initialVotes}
-          isUpvoted={isUpvoted}
-          onVoteChange={onVoteChange}
-          size="sm"
-          variant="ghost"
-        />
+        <div
+          onClickCapture={(e) => {
+            if (!isAuthenticated) {
+              e.preventDefault();
+              e.stopPropagation();
+              toast.warning('Please sign in to upvote comments');
+              if (typeof window !== 'undefined') {
+                const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
+                setTimeout(() => {
+                  window.location.assign(`/auth/signin?callbackUrl=${returnTo}`);
+                }, 3000);
+              }
+            }
+          }}
+        >
+          <UpvoteButton
+            initialVotes={initialVotes}
+            isUpvoted={isUpvoted}
+            onVoteChange={(newVotes, up) => {
+              // Only propagate when authenticated; otherwise click was captured above
+              if (isAuthenticated) {
+                onVoteChange && onVoteChange(newVotes, up);
+              }
+            }}
+            size="sm"
+            variant="ghost"
+          />
+        </div>
 
         {/* Reply */}
         <Button
