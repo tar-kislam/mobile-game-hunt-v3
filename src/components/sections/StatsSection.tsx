@@ -84,7 +84,7 @@ export function StatsSection() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.7 }}
-      className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-center justify-center w-full mt-8"
+      className="flex flex-row flex-wrap gap-6 sm:gap-8 items-center justify-center w-full mt-8"
     >
       {/* Stat 1 - Games */}
       <section className="text-center hover:scale-105 transition-all duration-300">

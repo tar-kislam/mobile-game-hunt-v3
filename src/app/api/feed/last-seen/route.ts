@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
       },
       select: {
         id: true,
+        slug: true,
         title: true,
         thumbnail: true,
         createdAt: true,
@@ -85,6 +86,7 @@ export async function GET(request: NextRequest) {
 
       return {
         id: product.id,
+        slug: product.slug,
         title: product.title,
         thumbnail: product.thumbnail,
         lastViewed: lastViewed.toISOString()

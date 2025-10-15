@@ -46,7 +46,7 @@ export default async function CountrySoftLaunchPage({ params }: PageProps) {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {products.map((p) => (
-              <Link key={p.id} href={`/product/${p.id}`}>
+              <Link key={p.id} href={`/product/${p.slug || p.id}`}>
                 <Card className="rounded-2xl shadow-lg border-white/10 hover:shadow-xl transition-shadow">
                   <CardHeader className="pb-2">
                     <CardTitle className="truncate text-lg">{p.title}</CardTitle>

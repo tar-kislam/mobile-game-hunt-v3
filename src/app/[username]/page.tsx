@@ -404,7 +404,7 @@ export default function UsernameProfilePage({ params }: UsernameProfileProps) {
                         <div className="flex-1">
                           <div className="flex items-start justify-between mb-2">
                             <div>
-                              <Link href={`/product/${g.id}`} className="hover:underline">
+                              <Link href={`/product/${g.slug || g.id}`} className="hover:underline">
                                 <h3 className="font-semibold text-sm leading-tight">{g.title}</h3>
                               </Link>
                               <p className="text-sm text-muted-foreground line-clamp-2">{g.tagline || ''}</p>
@@ -419,7 +419,7 @@ export default function UsernameProfilePage({ params }: UsernameProfileProps) {
                               <MessageCircleIcon className="h-3 w-3" />
                               {g._count?.comments ?? 0} comments
                             </div>
-                            <Link href={`/product/${g.id}`} className="flex items-center gap-1 hover:text-foreground">
+                            <Link href={`/product/${g.slug || g.id}`} className="flex items-center gap-1 hover:text-foreground">
                               <ExternalLinkIcon className="h-3 w-3" />
                               View
                             </Link>
@@ -443,7 +443,7 @@ export default function UsernameProfilePage({ params }: UsernameProfileProps) {
                     {activity.votes.map((v: any) => (
                       <div key={v.id} className="flex items-center gap-3">
                         <ArrowUpIcon className="h-4 w-4 text-green-500" />
-                        <Link href={`/product/${v.product.id}`} className="hover:underline text-sm">{v.product.title}</Link>
+                        <Link href={`/product/${v.product.slug || v.product.id}`} className="hover:underline text-sm">{v.product.title}</Link>
                         <span className="text-xs text-muted-foreground">{new Date(v.createdAt).toLocaleDateString()}</span>
                       </div>
                     ))}
@@ -460,7 +460,7 @@ export default function UsernameProfilePage({ params }: UsernameProfileProps) {
                       <div key={c.id} className="space-y-1">
                         <div className="flex items-center gap-2">
                           <MessageCircleIcon className="h-4 w-4 text-blue-500" />
-                          <Link href={`/product/${c.product.id}`} className="hover:underline text-sm">{c.product.title}</Link>
+                          <Link href={`/product/${c.product.slug || c.product.id}`} className="hover:underline text-sm">{c.product.title}</Link>
                           <span className="text-xs text-muted-foreground">{new Date(c.createdAt).toLocaleDateString()}</span>
                         </div>
                         <div className="text-sm text-muted-foreground ml-6">{c.content}</div>

@@ -429,7 +429,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                         <div className="flex-1">
                           <div className="flex items-start justify-between mb-2">
                             <div>
-                              <Link href={`/product/${game.id}`} className="hover:underline">
+                              <Link href={`/product/${game.slug || game.id}`} className="hover:underline">
                                 <h3 className="font-semibold text-sm leading-tight">{game.title}</h3>
                               </Link>
                               <p className="text-sm text-muted-foreground line-clamp-2">{game.description}</p>
@@ -450,7 +450,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                               <MessageCircleIcon className="h-3 w-3" />
                               {game.comments} comments
                             </div>
-                            <Link href={`/product/${game.id}`} className="flex items-center gap-1 hover:text-foreground">
+                            <Link href={`/product/${game.slug || game.id}`} className="flex items-center gap-1 hover:text-foreground">
                               <ExternalLinkIcon className="h-3 w-3" />
                               View
                             </Link>

@@ -1275,7 +1275,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
               <CardContent className="space-y-3">
                 {recommended.map((r) => (
                   <div key={r.id} className="flex items-center justify-between text-sm">
-                    <Link href={`/product/${r.id}`} className="truncate hover:underline">
+                    <Link href={`/product/${r.slug || r.id}`} className="truncate hover:underline">
                       {r.title}
                     </Link>
                     <span className="text-muted-foreground">{Math.round((r._score || 0) * 100)}%</span>

@@ -1205,7 +1205,7 @@ function CalendarPageContent() {
                               <div className="flex flex-col md:flex-row gap-4">
                                 {/* Product Image */}
                                 <div className="flex-shrink-0">
-                                  <Link href={`/product/${product.id}`} className="block">
+                                  <Link href={`/product/${product.slug || product.id}`} className="block">
                                     {product.thumbnail ? (
                                       <img
                                         src={product.thumbnail}
@@ -1223,7 +1223,7 @@ function CalendarPageContent() {
                                 {/* Product Info */}
                                 <div className="flex-1 flex flex-col">
                                   <div className="flex items-start justify-between gap-2 mb-2">
-                                    <Link href={`/product/${product.id}`} className="flex-1 min-w-0">
+                                    <Link href={`/product/${product.slug || product.id}`} className="flex-1 min-w-0">
                                       <h3 className="text-lg md:text-xl font-semibold text-white truncate hover:text-purple-400 transition-colors">
                                         {product.title}
                                       </h3>
@@ -1300,7 +1300,7 @@ function CalendarPageContent() {
                                       </span>
                                     </div>
                                     <Button asChild variant="outline" size="sm" className="border-purple-500/50 text-purple-300 hover:bg-purple-500/10 transition-colors">
-                                      <Link href={`/product/${product.id}`}>
+                                      <Link href={`/product/${product.slug || product.id}`}>
                                         <Eye className="w-4 h-4 mr-2" />
                                         View Details
                                       </Link>

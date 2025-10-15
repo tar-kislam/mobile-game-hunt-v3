@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
         where: baseWhereClause,
         select: {
           id: true,
+          slug: true,
           title: true,
           description: true,
           tagline: true,
@@ -82,6 +83,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         feed: popularGames.map(game => ({
           id: game.id,
+          slug: game.slug,
           title: game.title,
           description: game.description,
           tagline: game.tagline,
@@ -113,6 +115,7 @@ export async function GET(request: NextRequest) {
       where: feedGamesWhere,
       select: {
         id: true,
+        slug: true,
         title: true,
         description: true,
         tagline: true,
@@ -180,6 +183,7 @@ export async function GET(request: NextRequest) {
     const feedItems = [
       ...feedGames.map(game => ({
         id: game.id,
+        slug: game.slug,
         title: game.title,
         description: game.description,
         tagline: game.tagline,

@@ -268,7 +268,7 @@ export function InfoPanel({ product, onVote, hasVoted }: InfoPanelProps) {
             <Separator />
             
             <Link 
-              href={`/product/${product.id}#comments`}
+              href={`/product/${product.slug || product.id}#comments`}
               className="flex items-center justify-between hover:text-primary transition-colors"
             >
               <span className="text-muted-foreground">Forum:</span>

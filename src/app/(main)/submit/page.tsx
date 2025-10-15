@@ -107,7 +107,7 @@ export default function SubmitPage() {
                     <div className="text-xs text-muted-foreground">{p.status} • {new Date(p.createdAt).toLocaleDateString()}</div>
                   </div>
                   <Button asChild variant="outline" size="sm" className="rounded-2xl">
-                    <Link href={`/product/${p.id}`}>View</Link>
+                    <Link href={`/product/${p.slug || p.id}`}>View</Link>
                   </Button>
                 </div>
               ))}

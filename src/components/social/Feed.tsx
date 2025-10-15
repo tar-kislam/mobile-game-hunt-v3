@@ -13,6 +13,7 @@ import Link from 'next/link'
 
 interface FeedItem {
   id: string
+  slug?: string
   title: string
   description: string
   tagline?: string
@@ -131,31 +132,32 @@ export function Feed({ filter }: FeedProps) {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <Card className="group bg-slate-900/60 backdrop-blur-xl border border-slate-700/30 hover:border-purple-500/60 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20">
+                <Card className="group bg-slate-900/60 backdrop-blur-xl border border-slate-700/30 hover:border-purple-500/60 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20 rounded-2xl overflow-hidden">
                   <CardContent className="p-0">
-                    <div className="flex flex-col md:flex-row">
-                      {/* Game Thumbnail - Left Side */}
-                      <div className="md:w-1/3 relative">
+                    <div className="flex flex-row">
+                      {/* Game Thumbnail - Left Side (300x300) */}
+                      <div className="relative w-[300px] h-[300px] flex-shrink-0">
                         {item.thumbnail && item.type === 'game' ? (
-                          <div className="relative w-full h-48 md:h-full min-h-[200px] rounded-l-lg overflow-hidden">
+                          <div className="relative w-full h-full overflow-hidden rounded-l-2xl">
                             <Image
                               src={item.thumbnail}
                               alt={item.title}
-                              fill
+                              width={300}
+                              height={300}
                               className="object-cover group-hover:scale-105 transition-transform duration-300"
                               unoptimized
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/20" />
                           </div>
                         ) : (
-                          <div className="w-full h-48 md:h-full min-h-[200px] bg-gradient-to-br from-purple-900/50 to-blue-900/50 rounded-l-lg flex items-center justify-center">
+                          <div className="w-full h-full bg-gradient-to-br from-purple-900/50 to-blue-900/50 rounded-l-2xl flex items-center justify-center">
                             <GamepadIcon className="h-16 w-16 text-purple-400/50" />
                           </div>
                         )}
                       </div>
 
                       {/* Game Details - Right Side */}
-                      <div className="md:w-2/3 p-6 flex flex-col justify-between">
+                      <div className="flex-1 p-6 flex flex-col justify-between">
                         <div className="space-y-4">
                           {/* User Info */}
                           <div className="flex items-center space-x-3">
@@ -184,10 +186,10 @@ export function Feed({ filter }: FeedProps) {
                             {item.title}
                           </h3>
                           
-                          {/* Description */}
-                          {item.description && (
-                            <p className="text-gray-300 line-clamp-2 leading-relaxed">
-                              {item.description}
+                          {/* Tagline (Short Pitch) */}
+                          {item.tagline && (
+                            <p className="text-gray-300 line-clamp-2 leading-relaxed text-sm">
+                              {item.tagline}
                             </p>
                           )}
 
@@ -220,7 +222,7 @@ export function Feed({ filter }: FeedProps) {
                         </div>
 
                         {/* Action Buttons - Bottom Right */}
-                        <div className="flex items-center justify-end space-x-3 mt-6">
+                        <div className="flex items-center justify-end gap-3 mt-6">
                           {item.type === 'game' && item.url && (
                             <Button
                               size="sm"
@@ -239,7 +241,7 @@ export function Feed({ filter }: FeedProps) {
                               asChild
                               className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10 hover:border-purple-400/70 transition-all duration-300"
                             >
-                              <Link href={`/product/${item.id}`}>
+                              <Link href={`/product/${item.slug || item.id}`}>
                                 <EyeIcon className="h-4 w-4 mr-2" />
                                 View Details
                               </Link>

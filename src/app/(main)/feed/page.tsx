@@ -7,11 +7,11 @@ import Galaxy from '@/components/Galaxy'
 import Shuffle from '@/components/Shuffle'
 
 export default function FeedPage() {
-  const [activeFilter, setActiveFilter] = useState<{ type: string; value: string } | null>(null)
+  const [activeFilter, setActiveFilter] = useState<{ type: string; value: string; displayName?: string } | null>(null)
 
-  const handleFilterChange = (filterType: string, filterValue: string | null) => {
+  const handleFilterChange = (filterType: string, filterValue: string | null, displayName?: string) => {
     if (filterValue) {
-      setActiveFilter({ type: filterType, value: filterValue })
+      setActiveFilter({ type: filterType, value: filterValue, displayName })
     } else {
       setActiveFilter(null)
     }

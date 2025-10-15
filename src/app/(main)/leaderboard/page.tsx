@@ -201,7 +201,7 @@ export default function LeaderboardPage() {
 
   const shareToSocial = (product: LeaderboardProduct, platform: 'twitter' | 'instagram' | 'linkedin') => {
     const text = `🔥 My game "${product.title}" just ranked #${product.rank} on Mobile Game Hunt! 🏆✨ Check it out 👉 mobilegamehunt.com`;
-    const url = `https://mobilegamehunt.com/product/${product.id}`;
+    const url = `https://mobilegamehunt.com/product/${product.slug || product.id}`;
     
     let shareUrl = '';
     switch (platform) {

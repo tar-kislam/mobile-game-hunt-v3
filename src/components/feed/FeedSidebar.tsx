@@ -53,8 +53,8 @@ interface LastSeenProduct {
 }
 
 interface FeedSidebarProps {
-  onFilterChange: (filterType: string, filterValue: string | null) => void
-  activeFilter: { type: string; value: string } | null
+  onFilterChange: (filterType: string, filterValue: string | null, displayName?: string) => void
+  activeFilter: { type: string; value: string; displayName?: string } | null
 }
 
 export function FeedSidebar({ onFilterChange, activeFilter }: FeedSidebarProps) {
@@ -100,9 +100,9 @@ export function FeedSidebar({ onFilterChange, activeFilter }: FeedSidebarProps) 
     }
   }
 
-  const handleFilterClick = (filterType: string, filterValue: string) => {
+  const handleFilterClick = (filterType: string, filterValue: string, displayName?: string) => {
     const isActive = activeFilter?.type === filterType && activeFilter?.value === filterValue
-    onFilterChange(filterType, isActive ? null : filterValue)
+    onFilterChange(filterType, isActive ? null : filterValue, isActive ? undefined : displayName)
   }
 
   const clearAllFilters = () => {
@@ -159,7 +159,7 @@ export function FeedSidebar({ onFilterChange, activeFilter }: FeedSidebarProps) 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="bg-purple-500/20 text-purple-300 border-purple-400/30">
-                    {activeFilter.type}: {activeFilter.value}
+                    {activeFilter.type}: {activeFilter.displayName || activeFilter.value}
                   </Badge>
                 </div>
                 <button
@@ -200,7 +200,7 @@ export function FeedSidebar({ onFilterChange, activeFilter }: FeedSidebarProps) 
                   transition={{ delay: 0.1 + index * 0.05 }}
                 >
                     <button
-                    onClick={() => handleFilterClick('game', game.id)}
+                    onClick={() => handleFilterClick('game', game.id, game.title)}
                     className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 hover:bg-slate-800/50 ${
                       activeFilter?.type === 'game' && activeFilter?.value === game.id
                         ? 'bg-purple-500/20 border border-purple-400/30'
@@ -257,7 +257,11 @@ export function FeedSidebar({ onFilterChange, activeFilter }: FeedSidebarProps) 
                   transition={{ delay: 0.2 + index * 0.05 }}
                 >
                   <button
-                    onClick={() => handleFilterClick(item.type, item.id)}
+                    onClick={() => handleFilterClick(
+                      item.type, 
+                      item.id,
+                      item.type === 'user' ? (item as FollowedUser).name : (item as FollowedGame).title
+                    )}
                     className={`w-full flex items-center gap-3 p-2 rounded-lg transition-all duration-200 hover:bg-slate-800/50 ${
                       activeFilter?.type === item.type && activeFilter?.value === item.id
                         ? 'bg-purple-500/20 border border-purple-400/30'
