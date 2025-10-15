@@ -5,6 +5,7 @@ import GoogleProvider from "next-auth/providers/google"
 import GitHubProvider from "next-auth/providers/github"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { generateUniqueUsername } from "@/lib/usernameUtils"
+import { awardXP } from "@/lib/xpService"
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -187,6 +188,20 @@ export const authOptions: NextAuthOptions = {
       // The username should already be set in the signIn callback
       console.log(`[NextAuth] New user created: ${user.email}`)
       
+      // Award initial signup XP (idempotent: only if current XP is 0 or null)
+      try {
+        const existing = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { xp: true }
+        })
+        if (!existing || (existing.xp ?? 0) === 0) {
+          await awardXP(user.id, 'signup', 10)
+          console.log('[NEXTAUTH][createUser] Awarded signup XP to', user.id)
+        }
+      } catch (xpError) {
+        console.error('[NEXTAUTH][createUser] XP award error', xpError)
+      }
+
       // Comprehensive check to skip badge checking during build, deployment, migration, or any non-runtime environment
       const skipBadgeCheck = 
         process.env.NEXT_PHASE === 'phase-production-build' ||
