@@ -1418,36 +1418,59 @@ export default function NewSubmitPage({ productId }: { productId?: string } = {}
                             <Button 
                               type="button" 
                               variant="outline"
-                              onClick={() => {
-                                const input = document.createElement('input')
-                                input.type = 'file'
-                                input.accept = 'image/gif'
-                                input.onchange = async (e) => {
-                                  const inputEl = e.target as HTMLInputElement
-                                  const file = inputEl.files?.[0]
-                                  
-                                  // Reset input value to allow re-selecting same file
-                                  inputEl.value = ''
-                                  
-                                  if (file) {
-                                    try {
-                                      const result = await uploadFile(file)
-                                      if (result.ok && result.url) {
-                                        form.setValue('gameplayGifUrl', result.url)
-                                        toast.success('GIF uploaded!')
-                                      } else {
-                                        toast.error(result.error || 'Upload failed')
+                              onClick={async () => {
+                                const url = form.getValues('gameplayGifUrl')
+                                if (url && url.trim()) {
+                                  try {
+                                    const response = await fetch('/api/upload/from-url', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ url: url.trim() })
+                                    })
+                                    
+                                    const data = await response.json()
+                                    
+                                    if (response.ok && data.url) {
+                                      form.setValue('gameplayGifUrl', data.url)
+                                      toast.success('GIF imported!')
+                                    } else {
+                                      toast.error(data.error || 'Failed to import GIF from URL')
+                                    }
+                                  } catch (error) {
+                                    console.error('GIF import error:', error)
+                                    toast.error('Failed to import GIF from URL')
+                                  }
+                                } else {
+                                  const input = document.createElement('input')
+                                  input.type = 'file'
+                                  input.accept = 'image/gif'
+                                  input.onchange = async (e) => {
+                                    const inputEl = e.target as HTMLInputElement
+                                    const file = inputEl.files?.[0]
+                                    
+                                    // Reset input value to allow re-selecting same file
+                                    inputEl.value = ''
+                                    
+                                    if (file) {
+                                      try {
+                                        const result = await uploadFile(file)
+                                        if (result.ok && result.url) {
+                                          form.setValue('gameplayGifUrl', result.url)
+                                          toast.success('GIF uploaded!')
+                                        } else {
+                                          toast.error(result.error || 'Upload failed')
+                                        }
+                                      } catch (error) {
+                                        console.error('Upload error:', error)
+                                        toast.error('Upload failed')
                                       }
-                                    } catch (error) {
-                                      console.error('Upload error:', error)
-                                      toast.error('Upload failed')
                                     }
                                   }
+                                  input.click()
                                 }
-                                input.click()
                               }}
                             >
-                              Upload GIF
+                              {form.watch('gameplayGifUrl') ? 'Import URL' : 'Upload GIF'}
                             </Button>
                           </div>
                           {form.watch('gameplayGifUrl') && (
