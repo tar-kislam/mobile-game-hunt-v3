@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { redisClient } from '@/lib/redis';
 import { getScoringWeights, calculateFinalScore, DEFAULT_LEADERBOARD_CONFIG } from '@/lib/leaderboardConfig';
+import { calculateLevelProgress } from '@/lib/xpCalculator';
 
 // Cache keys and TTL constants
 // Bump cache version to invalidate old payload shape
@@ -182,7 +183,11 @@ export async function GET(request: NextRequest) {
         platforms: product.platforms,
         status: product.status,
         createdAt: product.createdAt,
-        user: product.user,
+        user: {
+          ...product.user,
+          level: calculateLevelProgress(product.user.xp || 0).level,
+          xp: product.user.xp || 0
+        },
         votes: lifetimeVotes,
         comments: lifetimeComments,
         follows: lifetimeFollows,

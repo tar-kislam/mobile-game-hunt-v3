@@ -181,6 +181,7 @@ async function hasBadgePersisted(userId: string, badgeType: BadgeType): Promise<
  */
 export async function getAllUserBadges(): Promise<UserBadges[]> {
   try {
+    if (!redisClient) return []
     const raw = await redisClient.get(BADGE_KEY)
     return raw ? JSON.parse(raw) : []
   } catch (error) {
@@ -316,6 +317,17 @@ export async function checkAndAwardBadges(userId: string): Promise<BadgeType[]> 
   const newlyAwardedBadges: BadgeType[] = []
   
   try {
+    // Check if user is admin - admins don't get badges for their actions
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    })
+    
+    if (user?.role === 'ADMIN') {
+      console.log(`[BADGE SERVICE] Skipping badge check for admin user ${userId}`)
+      return newlyAwardedBadges
+    }
+    
     // Get current user badges
     const currentBadges = await getUserBadges(userId)
     

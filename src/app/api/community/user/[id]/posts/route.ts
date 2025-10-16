@@ -4,10 +4,10 @@ import { userPostsQuerySchema } from '@/lib/validations/community'
 
 export async function GET(
   request: NextRequest,
-  context: any
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const params = (context?.params || {}) as { id: string }
   try {
+    const { id: userId } = await params
     const { searchParams } = new URL(request.url)
     const validatedQuery = userPostsQuerySchema.parse({
       page: searchParams.get('page'),
@@ -18,7 +18,7 @@ export async function GET(
     const limit = parseInt(validatedQuery.limit)
     const skip = (page - 1) * limit
 
-    const userId = params.id
+    // userId already extracted from params above
 
     // Check if user exists
     const user = await prisma.user.findUnique({

@@ -3,11 +3,10 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  context: any
+  { params }: { params: Promise<{ userId: string }> }
 ) {
-  const params = (context?.params || {}) as { userId?: string }
   try {
-    const userId = params.userId;
+    const { userId } = await params;
 
     if (!userId) {
       return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
