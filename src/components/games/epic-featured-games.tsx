@@ -116,11 +116,6 @@ export function EpicFeaturedGames({ games, onGameClick }: EpicFeaturedGamesProps
         <h2 className="text-2xl font-bold flex items-center gap-2" style={{ fontFamily: '"Epunda Slab", serif', fontWeight: 600 }}>
           <ShinyText>Featured Games</ShinyText>
         </h2>
-        {games.length > 6 && (
-          <Link href="/leaderboard" className="text-sm text-purple-300 hover:text-purple-200 underline">
-            Explore All Games
-          </Link>
-        )}
       </div>
 
       <EpicFeaturedLayout 

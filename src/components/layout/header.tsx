@@ -65,8 +65,7 @@ export function Header() {
     { label: "All Games", href: "/products" },
     { label: "Leaderboard", href: "/leaderboard" },
     { label: "Community", href: "/community" },
-    { label: "Calendar", href: "/calendar" },
-    { label: "Advertise", href: "/advertise" }
+    { label: "Calendar", href: "/calendar" }
   ]
 
   const navItems = session ? [

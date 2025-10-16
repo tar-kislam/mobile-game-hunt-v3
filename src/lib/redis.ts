@@ -1,24 +1,7 @@
-import { createClient } from 'redis'
+// Redis client configuration - Temporarily disabled
+let redisClient: any = null
 
-// Redis client configuration
-const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
-  socket: {
-    connectTimeout: 5000,
-  },
-})
-
-// Error handling
-redisClient.on('error', (err) => {
-  console.error('Redis Client Error:', err)
-})
-
-redisClient.on('connect', () => {
-  console.log('Redis Client Connected')
-})
-
-// Connect to Redis
-redisClient.connect().catch(console.error)
+console.log('Redis client disabled - using fallback cache')
 
 export { redisClient }
 
@@ -36,6 +19,7 @@ export class CacheService {
 
   async get<T>(key: string): Promise<T | null> {
     try {
+      if (!this.client) return null
       const value = await this.client.get(key)
       return value ? JSON.parse(value) : null
     } catch (error) {
@@ -46,6 +30,7 @@ export class CacheService {
 
   async set(key: string, value: any, ttlSeconds: number = 60): Promise<void> {
     try {
+      if (!this.client) return
       await this.client.setEx(key, ttlSeconds, JSON.stringify(value))
     } catch (error) {
       console.error('Cache set error:', error)
@@ -54,6 +39,7 @@ export class CacheService {
 
   async del(key: string): Promise<void> {
     try {
+      if (!this.client) return
       await this.client.del(key)
     } catch (error) {
       console.error('Cache delete error:', error)
@@ -62,6 +48,7 @@ export class CacheService {
 
   async exists(key: string): Promise<boolean> {
     try {
+      if (!this.client) return false
       const result = await this.client.exists(key)
       return result === 1
     } catch (error) {

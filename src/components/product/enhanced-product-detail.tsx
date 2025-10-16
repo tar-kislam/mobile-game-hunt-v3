@@ -35,6 +35,7 @@ import {
   Building
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import { motion } from 'framer-motion'
 import { PlatformIcons } from '@/components/ui/platform-icons';
 import dynamicImport from 'next/dynamic';
 import { PlaytestClaim } from '@/components/playtest/playtest-claim';
@@ -1065,10 +1066,51 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
             product.socialLinks.linkedin || 
             product.socialLinks.youtube
           ) && (
-            <Card className="rounded-3xl shadow-soft border-2 bg-gradient-to-br from-gray-900/80 via-black/70 to-gray-900/80 backdrop-blur-xl border-gray-800/50 shadow-lg transition-all duration-500 hover:shadow-[0_0_40px_rgba(168,85,247,0.6)] hover:scale-[1.02]">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            >
+            <Card className="rounded-3xl shadow-soft border-2 bg-gradient-to-br from-gray-900/80 via-black/70 to-gray-900/80 backdrop-blur-xl border-gray-800/50 shadow-lg transition-all duration-500 hover:shadow-[0_0_40px_rgba(168,85,247,0.6)] hover:scale-[1.02] relative overflow-hidden">
               <CardHeader className="pb-4">
                 <CardTitle className="text-xl font-semibold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent cursor-pointer hover:from-blue-300 hover:to-purple-400 transition-all duration-300 flex items-center gap-2 group">
-                  <span className="inline-block group-hover:scale-110 transition-transform duration-300">Connect With Us</span>
+                  <motion.span 
+                    className="relative inline-block"
+                    animate={{ 
+                      backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                    }}
+                    style={{
+                      backgroundSize: '200% 200%',
+                      backgroundImage: 'linear-gradient(45deg, #60a5fa, #a855f7, #ec4899, #60a5fa)',
+                    }}
+                    transition={{ 
+                      backgroundPosition: { 
+                        duration: 4, 
+                        repeat: Infinity, 
+                        ease: 'easeInOut' 
+                      } 
+                    }}
+                  >
+                    <span className="inline-block group-hover:scale-110 transition-transform duration-300">Connect With Us</span>
+                    <motion.span
+                      className="absolute left-0 -bottom-1 h-px w-full bg-gradient-to-r from-purple-400 via-blue-400 to-pink-400"
+                      initial={{ scaleX: 0, opacity: 0.7 }}
+                      whileInView={{ scaleX: 1, opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1.0, ease: 'easeOut' }}
+                      style={{ transformOrigin: 'left' }}
+                      animate={{
+                        opacity: [0.7, 1, 0.7],
+                        scaleX: [1, 1.02, 1],
+                      }}
+                      transition={{
+                        duration: 2.5,
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                      }}
+                    />
+                  </motion.span>
                   <svg className="w-5 h-5 text-purple-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
@@ -1151,6 +1193,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                 </div>
               </CardContent>
             </Card>
+            </motion.div>
           )}
 
           {/* Supported Languages Card */}

@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogTrigger, DialogClose, DialogTitle } from "@/components/ui/dialog"
-import { ArrowUpIcon, MessageCircleIcon, ExternalLinkIcon, TrendingUpIcon, ChevronDownIcon } from "lucide-react"
+import { ArrowUpIcon, MessageCircleIcon, ExternalLinkIcon, TrendingUpIcon, ChevronDownIcon, Mail } from "lucide-react"
 import {
   Carousel,
   CarouselContent,
@@ -37,6 +37,7 @@ import { toast } from "sonner"
 import useSWR from 'swr'
 import ShinyText from "@/components/ShinyText"
 import { ClientOnly } from "@/components/ui/client-only"
+import { motion } from "framer-motion"
 import { useNewsletterAutoPopup } from "@/hooks/useNewsletterAutoPopup"
 
 // Fetcher function for SWR
@@ -490,9 +491,48 @@ export default function HomePage() {
     return (
       <Dialog>
         <DialogTrigger asChild>
-          <h3 className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold text-lg mb-4 cursor-pointer">Connect with Us</h3>
+          <motion.h3
+            className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold text-lg mb-4 cursor-pointer relative inline-block"
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.6 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            animate={{ 
+              backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+            }}
+            style={{
+              backgroundSize: '200% 200%',
+              backgroundImage: 'linear-gradient(45deg, #a855f7, #3b82f6, #ec4899, #a855f7)',
+            }}
+            transition={{ 
+              backgroundPosition: { 
+                duration: 3, 
+                repeat: Infinity, 
+                ease: 'easeInOut' 
+              } 
+            }}
+          >
+            Connect with Us
+            <motion.span
+              className="absolute left-0 -bottom-1 h-px w-full bg-gradient-to-r from-purple-400 via-blue-400 to-pink-400"
+              initial={{ scaleX: 0, opacity: 0.7 }}
+              whileInView={{ scaleX: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.9, ease: 'easeOut' }}
+              style={{ transformOrigin: 'left' }}
+              animate={{
+                opacity: [0.7, 1, 0.7],
+                scaleX: [1, 1.05, 1],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+            />
+          </motion.h3>
         </DialogTrigger>
-        <DialogContent showCloseButton={false} className="w-[96vw] sm:w-auto sm:max-w-2xl rounded-none sm:rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 shadow-[0_0_36px_rgba(168,85,247,0.45)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95">
+        <DialogContent showCloseButton={false} className="w-[96vw] sm:w-auto sm:max-w-4xl rounded-none sm:rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 shadow-[0_0_36px_rgba(168,85,247,0.45)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95">
           <DialogTitle className="sr-only">Connect with Us</DialogTitle>
           {/* Close button */}
           <DialogClose asChild>
@@ -506,20 +546,24 @@ export default function HomePage() {
               {rotating[phraseIndex]}
             </span>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 py-2">
-            <a href="https://twitter.com/mobilegamehunt" target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-3 rounded-full px-5 py-2 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-all duration-200 hover:shadow-[0_0_18px_rgba(168,85,247,0.25)] hover:scale-[1.02] w-full">
-              <svg viewBox="0 0 24 24" className="h-4 w-4 text-sky-400 group-hover:text-sky-300" fill="currentColor" aria-hidden="true">
+          <div className="flex flex-wrap gap-2 py-2 justify-center">
+            <a href="https://twitter.com/mobilegamehunt" target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-2 rounded-full px-4 py-3 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-all duration-200 hover:shadow-[0_0_18px_rgba(168,85,247,0.25)] hover:scale-[1.02] min-w-[100px]">
+              <svg viewBox="0 0 24 24" className="h-5 w-5 text-sky-400 group-hover:text-sky-300 flex-shrink-0" fill="currentColor" aria-hidden="true">
                 <path d="M18.244 2H21.5l-7.5 8.59L22.5 22h-6.765l-5.317-6.18L4.756 22H1.5l7.905-9.063L1.5 2h6.873l4.957 5.76L18.244 2zm-1.184 18h2.054L8.21 4H6.123l10.937 16z"/>
               </svg>
-              <span className="text-sm">X</span>
+              <span className="text-sm font-medium">X</span>
             </a>
-            <a href="https://discord.gg/mobilegamehunt" target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-3 rounded-full px-5 py-2 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-all duration-200 hover:shadow-[0_0_18px_rgba(99,102,241,0.25)] hover:scale-[1.02] w-full">
-              <svg viewBox="0 0 24 24" className="h-4 w-4 text-indigo-400 group-hover:text-indigo-300" fill="currentColor" aria-hidden="true"><path d="M20.317 4.369A19.79 19.79 0 0016.558 3c-.2.358-.433.84-.59 1.227a18.27 18.27 0 00-4-.002A8.258 8.258 0 0011.377 3c-1.444.242-2.77.66-3.759 1.37C4.14 7.205 3.26 10.01 3.5 12.77c1.54 1.153 3.03 1.857 4.497 2.322.364-.5.69-1.04.97-1.616-.536-.205-1.05-.462-1.536-.765.13-.097.257-.199.382-.304 2.95 1.38 6.15 1.38 9.09 0 .126.105.253.207.383.304-.486.303-1 .56-1.537.765.28.576.607 1.116.97 1.616 1.47-.465 2.96-1.17 4.5-2.322.296-3.377-.72-6.14-2.422-8.401zM9.75 12.5c-.66 0-1.2-.66-1.2-1.475 0-.814.54-1.475 1.2-1.475s1.2.661 1.2 1.475c0 .815-.54 1.475-1.2 1.475zm4.5 0c-.66 0-1.2-.66-1.2-1.475 0-.814.54-1.475 1.2-1.475s1.2.661 1.2 1.475c0 .815-.54 1.475-1.2 1.475z"/></svg>
-              <span className="text-sm">Discord</span>
+            <a href="https://discord.gg/mobilegamehunt" target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-2 rounded-full px-4 py-3 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-all duration-200 hover:shadow-[0_0_18px_rgba(99,102,241,0.25)] hover:scale-[1.02] min-w-[120px]">
+              <svg viewBox="0 0 24 24" className="h-5 w-5 text-indigo-400 group-hover:text-indigo-300 flex-shrink-0" fill="currentColor" aria-hidden="true"><path d="M20.317 4.369A19.79 19.79 0 0016.558 3c-.2.358-.433.84-.59 1.227a18.27 18.27 0 00-4-.002A8.258 8.258 0 0011.377 3c-1.444.242-2.77.66-3.759 1.37C4.14 7.205 3.26 10.01 3.5 12.77c1.54 1.153 3.03 1.857 4.497 2.322.364-.5.69-1.04.97-1.616-.536-.205-1.05-.462-1.536-.765.13-.097.257-.199.382-.304 2.95 1.38 6.15 1.38 9.09 0 .126.105.253.207.383.304-.486.303-1 .56-1.537.765.28.576.607 1.116.97 1.616 1.47-.465 2.96-1.17 4.5-2.322.296-3.377-.72-6.14-2.422-8.401zM9.75 12.5c-.66 0-1.2-.66-1.2-1.475 0-.814.54-1.475 1.2-1.475s1.2.661 1.2 1.475c0 .815-.54 1.475-1.2 1.475zm4.5 0c-.66 0-1.2-.66-1.2-1.475 0-.814.54-1.475 1.2-1.475s1.2.661 1.2 1.475c0 .815-.54 1.475-1.2 1.475z"/></svg>
+              <span className="text-sm font-medium">Discord</span>
             </a>
-            <a href="https://instagram.com/mobilegamehunt" target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-3 rounded-full px-5 py-2 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-all duration-200 hover:shadow-[0_0_18px_rgba(236,72,153,0.25)] hover:scale-[1.02] w-full">
-              <svg viewBox="0 0 24 24" className="h-4 w-4 text-pink-400 group-hover:text-pink-300" fill="currentColor" aria-hidden="true"><path d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm5 5a5 5 0 100 10 5 5 0 000-10zm6.5.9a1.1 1.1 0 11-2.2 0 1.1 1.1 0 012.2 0z"/></svg>
-              <span className="text-sm">Instagram</span>
+            <a href="https://instagram.com/mobilegamehunt" target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-2 rounded-full px-4 py-3 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-all duration-200 hover:shadow-[0_0_18px_rgba(236,72,153,0.25)] hover:scale-[1.02] min-w-[120px]">
+              <svg viewBox="0 0 24 24" className="h-5 w-5 text-pink-400 group-hover:text-pink-300 flex-shrink-0" fill="currentColor" aria-hidden="true"><path d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm5 5a5 5 0 100 10 5 5 0 000-10zm6.5.9a1.1 1.1 0 11-2.2 0 1.1 1.1 0 012.2 0z"/></svg>
+              <span className="text-sm font-medium">Instagram</span>
+            </a>
+            <a href="mailto:info@mobilegamehunt.com" className="group inline-flex items-center gap-2 rounded-full px-4 py-3 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-all duration-200 hover:shadow-[0_0_18px_rgba(34,197,94,0.25)] hover:scale-[1.02] min-w-[100px]">
+              <Mail className="h-5 w-5 text-green-400 group-hover:text-green-300 flex-shrink-0" />
+              <span className="text-sm font-medium">Email</span>
             </a>
           </div>
         </DialogContent>
