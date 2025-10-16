@@ -144,9 +144,20 @@ const BADGE_CONFIG: Record<BadgeType, BadgeInfo> = {
  */
 async function hasBadgePersisted(userId: string, badgeType: BadgeType): Promise<boolean> {
   try {
+    // Check UserBadge table first (primary persistence)
+    const dbBadge = await prisma.userBadge.findUnique({
+      where: {
+        userId_badgeKey: {
+          userId: userId,
+          badgeKey: badgeType
+        }
+      }
+    })
+    
+    if (dbBadge) return true
+    
+    // Fallback: Check notification table for legacy badges
     const badgeInfo = BADGE_CONFIG[badgeType]
-    // Look for any prior badge-related notification that encodes this badge
-    // in its JSON meta. This acts as an idempotency guard across cache resets.
     const existing = await (prisma as any).notification.findFirst({
       where: {
         userId,
@@ -195,8 +206,13 @@ export async function getAllUserBadges(): Promise<UserBadges[]> {
  */
 export async function getUserBadges(userId: string): Promise<BadgeType[]> {
   try {
-    const allBadges = await getAllUserBadges()
-    const userBadges = allBadges.find(u => u.userId === userId)?.badges || []
+    // Get badges from database (primary source)
+    const dbBadges = await prisma.userBadge.findMany({
+      where: { userId: userId },
+      select: { badgeKey: true }
+    })
+    
+    const userBadges = dbBadges.map(b => b.badgeKey as BadgeType)
     
     // Special handling for Pioneer badge - always include if eligible
     const isPioneerEligible = await checkPioneerEligibility(userId)
@@ -231,6 +247,16 @@ export async function awardBadge(userId: string, badgeType: BadgeType): Promise<
       return false
     }
 
+    // Save badge to database (primary persistence)
+    await prisma.userBadge.create({
+      data: {
+        userId: userId,
+        badgeKey: badgeType
+      }
+    })
+    console.log(`[BADGE SERVICE] Badge ${badgeType} persisted to database for user ${userId}`)
+
+    // Also update Redis cache if available
     const allBadges = await getAllUserBadges()
     const existingUser = allBadges.find(u => u.userId === userId)
     
@@ -245,7 +271,11 @@ export async function awardBadge(userId: string, badgeType: BadgeType): Promise<
       allBadges.push({ userId, badges: [badgeType] })
     }
     
-    await redisClient.set(BADGE_KEY, JSON.stringify(allBadges))
+    if (redisClient) {
+      await redisClient.set(BADGE_KEY, JSON.stringify(allBadges))
+    } else {
+      console.log('[BADGE SERVICE] Redis client not available - badge not persisted to cache')
+    }
     
     // Grant XP reward using the XP system
     const badgeInfo = BADGE_CONFIG[badgeType]
@@ -356,9 +386,15 @@ export async function checkAndAwardBadges(userId: string): Promise<BadgeType[]> 
       }
     }
     
-    // Check Fire Dragon badge (10+ games)
+    // Check Fire Dragon badge (10+ PUBLISHED games)
     if (!currentBadges.includes('FIRE_DRAGON')) {
-      if (userStats._count.products >= 10) {
+      const publishedGamesCount = await prisma.product.count({
+        where: {
+          userId: userId,
+          status: 'PUBLISHED'
+        }
+      })
+      if (publishedGamesCount >= 10) {
         const awarded = await awardBadge(userId, 'FIRE_DRAGON')
         if (awarded) newlyAwardedBadges.push('FIRE_DRAGON')
       }

@@ -175,7 +175,8 @@ export async function GET(
           current = userStats?._count.comments || 0
           break
         case 'games':
-          current = userStats?._count.products || 0
+          // For Fire Dragon badge, only count PUBLISHED games
+          current = publishedGamesCount
           break
         case 'votes':
           current = userStats?._count.votes || 0
