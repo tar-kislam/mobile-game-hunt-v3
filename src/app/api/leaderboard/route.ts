@@ -61,7 +61,10 @@ export async function GET(request: NextRequest) {
 
     // Try to get from cache first
     const cacheKey = LEADERBOARD_KEYS[window.toUpperCase() as keyof typeof LEADERBOARD_KEYS];
-    const cachedData = await redisClient.get(cacheKey);
+    let cachedData = null;
+    if (redisClient) {
+      cachedData = await redisClient.get(cacheKey);
+    }
     
     if (cachedData) {
       const parsed = JSON.parse(cachedData);
@@ -205,7 +208,9 @@ export async function GET(request: NextRequest) {
 
     // Cache the full result
     const ttl = CACHE_TTL[window.toUpperCase() as keyof typeof CACHE_TTL];
-    await redisClient.setEx(cacheKey, ttl, JSON.stringify(responseData));
+    if (redisClient) {
+      await redisClient.setEx(cacheKey, ttl, JSON.stringify(responseData));
+    }
 
     return NextResponse.json({
       ...responseData,
