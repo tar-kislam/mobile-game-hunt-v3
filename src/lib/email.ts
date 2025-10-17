@@ -352,9 +352,9 @@ export async function sendWelcomeEmail(to: string): Promise<{ success: boolean; 
     const mailOptions = {
       from: '"MobileGameHunt" <info@mobilegamehunt.com>',
       to,
-      subject: 'Welcome to Mobile Game Hunt - Let\'s Discover Amazing Games Together!',
+      subject: 'Welcome to Mobile Game Hunt',
       html: htmlContent,
-      text: 'Welcome to Mobile Game Hunt! You\'ve just joined a growing community of mobile gamers, indie developers, and enthusiasts discovering the best new games every week.'
+      text: 'Thanks for joining MobileGameHunt! Visit mobilegamehunt.com to explore new mobile games.'
     }
 
     const result = await transporter.sendMail(mailOptions)

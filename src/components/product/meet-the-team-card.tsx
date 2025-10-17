@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +42,23 @@ interface MeetTheTeamCardProps {
 
 export function MeetTheTeamCard({ makers }: MeetTheTeamCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { data: session } = useSession();
+  const router = useRouter();
+
+  const handleUserClick = (maker: Maker) => {
+    if (!session?.user) {
+      // Redirect to sign-in page with callback URL
+      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
+    
+    // If user is authenticated, proceed with normal navigation
+    if (maker.user?.username) {
+      router.push(`/@${maker.user.username}`);
+    } else if (maker.user?.id) {
+      router.push(`/${maker.user.id}`);
+    }
+  };
 
   // Don't render if no makers
   if (!makers || makers.length === 0) {
@@ -176,12 +195,12 @@ export function MeetTheTeamCard({ makers }: MeetTheTeamCardProps) {
                         <div className="flex items-center gap-2 mb-1">
                           {maker.user ? (
                             // Registered user - clickable name
-                            <Link 
-                              href={maker.user.username ? `/@${maker.user.username}` : `/${maker.user.id}`}
-                              className="font-semibold text-white truncate hover:text-purple-300 transition-colors duration-200"
+                            <button 
+                              onClick={() => handleUserClick(maker)}
+                              className="font-semibold text-white truncate hover:text-purple-300 transition-colors duration-200 text-left"
                             >
                               {maker.user.name || 'Team Member'}
-                            </Link>
+                            </button>
                           ) : (
                             // Non-registered user - non-clickable name
                             <h4 className="font-semibold text-white truncate">

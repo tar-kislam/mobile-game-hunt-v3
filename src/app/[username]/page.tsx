@@ -55,6 +55,15 @@ export default function UsernameProfilePage({ params }: UsernameProfileProps) {
       try {
         setLoading(true)
         const response = await fetch(`/api/user/username/${username}/public`)
+        
+        // Check if response is HTML (redirect to sign-in)
+        const contentType = response.headers.get('content-type')
+        if (contentType && contentType.includes('text/html')) {
+          // This means we got redirected to sign-in page
+          router.push(`/auth/signin?callbackUrl=${encodeURIComponent(window.location.pathname)}`)
+          return
+        }
+        
         if (!response.ok) {
           if (response.status === 404) {
             setUserNotFound(true)
@@ -77,6 +86,11 @@ export default function UsernameProfilePage({ params }: UsernameProfileProps) {
           })
         }
       } catch (err) {
+        // Check if error is due to JSON parsing (HTML response)
+        if (err instanceof Error && err.message.includes('Unexpected token')) {
+          router.push(`/auth/signin?callbackUrl=${encodeURIComponent(window.location.pathname)}`)
+          return
+        }
         setError(err instanceof Error ? err.message : 'An error occurred')
       } finally {
         setLoading(false)
