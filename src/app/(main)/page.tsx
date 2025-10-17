@@ -259,11 +259,11 @@ function MobileGameCard({ game, onVote }: MobileGameCardProps) {
             className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-[0_0_15px_rgba(168,85,247,0.8)] w-full text-sm"
             onClick={(e) => {
               e.preventDefault()
-              window.open(game.url, '_blank', 'noopener,noreferrer')
+              window.location.href = `/product/${game.slug || game.id}`
             }}
           >
             <ExternalLinkIcon className="w-3 h-3 mr-1" />
-            Play Now
+            Learn More
           </Button>
         </CardContent>
       </Card>
