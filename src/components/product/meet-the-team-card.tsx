@@ -46,17 +46,25 @@ export function MeetTheTeamCard({ makers }: MeetTheTeamCardProps) {
   const router = useRouter();
 
   const handleUserClick = (maker: Maker) => {
-    if (!session?.user) {
-      // Redirect to sign-in page with callback URL
-      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
-      return;
-    }
-    
-    // If user is authenticated, proceed with normal navigation
-    if (maker.user?.username) {
-      router.push(`/@${maker.user.username}`);
-    } else if (maker.user?.id) {
-      router.push(`/${maker.user.id}`);
+    try {
+      if (!session?.user) {
+        // Redirect to sign-in page with callback URL
+        const currentPath = window.location.pathname;
+        const callbackUrl = encodeURIComponent(currentPath);
+        router.push(`/auth/signin?callbackUrl=${callbackUrl}`);
+        return;
+      }
+      
+      // If user is authenticated, proceed with normal navigation
+      if (maker.user?.username) {
+        router.push(`/@${maker.user.username}`);
+      } else if (maker.user?.id) {
+        router.push(`/${maker.user.id}`);
+      }
+    } catch (error) {
+      console.error('Error handling user click:', error);
+      // Fallback: redirect to sign-in page
+      router.push('/auth/signin');
     }
   };
 
