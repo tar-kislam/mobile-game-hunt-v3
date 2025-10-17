@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes"
 import { Toaster } from "sonner"
 import { ReactNode, useEffect, useState } from "react"
 import { PageTracking } from "@/components/analytics/PageTracking"
+import { SupportWidget } from "@/components/support/SupportWidget"
 
 interface ProvidersProps {
   children: ReactNode
@@ -35,6 +36,7 @@ export function Providers({ children }: ProvidersProps) {
       >
         <PageTracking />
         {children}
+        <SupportWidget />
         <Toaster 
           theme="dark"
           position="top-right"

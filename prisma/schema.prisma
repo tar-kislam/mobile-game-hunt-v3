@@ -652,3 +652,13 @@ model BadgeDefinition {
   @@index([category])
   @@index([isActive])
 }
+
+model SupportMessage {
+  id        String   @id @default(cuid())
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([createdAt])
+}
