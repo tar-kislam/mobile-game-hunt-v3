@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+// Note: Using a plain img tag for guaranteed local rendering of webp in this spot
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, Send, CheckCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -130,8 +131,15 @@ export function SupportWidget() {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#6c63ff] to-[#8b5cf6] flex items-center justify-center">
-                  <MessageCircle className="h-4 w-4 text-white" />
+                <div className="h-[52px] w-[52px] rounded-lg bg-transparent flex items-center justify-center overflow-hidden">
+                  <img
+                    src="/emojis/contact-logo.webp"
+                    alt="Support"
+                    width={52}
+                    height={52}
+                    className="object-contain select-none pointer-events-none"
+                    draggable={false}
+                  />
                 </div>
                 <div>
                   <h3 className="text-white font-semibold text-lg">Support</h3>
