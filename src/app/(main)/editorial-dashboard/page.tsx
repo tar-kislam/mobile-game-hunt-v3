@@ -65,11 +65,21 @@ export default function EditorialDashboard() {
   const [saving, setSaving] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [campaignPlacement, setCampaignPlacement] = useState<'ALL' | string>('ALL')
+  const [gamesPage, setGamesPage] = useState(1)
+  const [newsletterPage, setNewsletterPage] = useState(1)
+  const [campaignsPage, setCampaignsPage] = useState(1)
+  const ITEMS_PER_PAGE = 10
 
   // Filter products based on search term
   const filteredProducts = products.filter(product =>
     product.title.toLowerCase().includes(searchTerm.toLowerCase())
   )
+  const totalGamesPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE))
+  const paginatedProducts = filteredProducts.slice((gamesPage - 1) * ITEMS_PER_PAGE, gamesPage * ITEMS_PER_PAGE)
+  const totalNewsletterPages = Math.max(1, Math.ceil(newsletterSubscribers.length / ITEMS_PER_PAGE))
+  const paginatedNewsletter = newsletterSubscribers.slice((newsletterPage - 1) * ITEMS_PER_PAGE, newsletterPage * ITEMS_PER_PAGE)
+  const totalCampaignPages = Math.max(1, Math.ceil(campaigns.length / ITEMS_PER_PAGE))
+  const paginatedCampaigns = campaigns.slice((campaignsPage - 1) * ITEMS_PER_PAGE, campaignsPage * ITEMS_PER_PAGE)
 
   // Check admin access
   useEffect(() => {
@@ -272,6 +282,7 @@ export default function EditorialDashboard() {
                   <CardTitle className="text-white flex items-center gap-2">
                     <GamepadIcon className="w-5 h-5" />
                     Featured Games Control
+                    <span className="text-xs text-gray-400">({filteredProducts.length})</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -297,8 +308,8 @@ export default function EditorialDashboard() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredProducts.length > 0 ? (
-                          filteredProducts.map((product) => (
+                        {paginatedProducts.length > 0 ? (
+                          paginatedProducts.map((product) => (
                             <TableRow key={product.id} className="border-gray-700">
                               <TableCell className="text-white font-medium">
                                 {product.title}
@@ -355,6 +366,21 @@ export default function EditorialDashboard() {
                       </TableBody>
                     </Table>
                   </div>
+                  {filteredProducts.length > ITEMS_PER_PAGE && (
+                    <div className="mt-4 flex justify-end">
+                      <div className="flex items-center gap-2">
+                        {Array.from({ length: totalGamesPages }, (_, i) => i + 1).map((p) => (
+                          <button
+                            key={p}
+                            onClick={() => setGamesPage(p)}
+                            className={`h-8 min-w-8 px-2 rounded-md text-sm ${p === gamesPage ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-gray-300 hover:bg-zinc-700'}`}
+                          >
+                            {p}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -366,6 +392,7 @@ export default function EditorialDashboard() {
                     <CardTitle className="text-white flex items-center gap-2">
                       <Mail className="w-5 h-5" />
                       Newsletter Subscribers
+                      <span className="text-xs text-gray-400">({newsletterSubscribers.length})</span>
                     </CardTitle>
                     <Button
                       onClick={handleDownloadCSV}
@@ -386,7 +413,7 @@ export default function EditorialDashboard() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {newsletterSubscribers.map((subscriber) => (
+                        {paginatedNewsletter.map((subscriber) => (
                           <TableRow key={subscriber.id} className="border-gray-700">
                             <TableCell className="text-white">
                               {subscriber.email}
@@ -399,6 +426,21 @@ export default function EditorialDashboard() {
                       </TableBody>
                     </Table>
                   </div>
+                  {newsletterSubscribers.length > ITEMS_PER_PAGE && (
+                    <div className="mt-4 flex justify-end">
+                      <div className="flex items-center gap-2">
+                        {Array.from({ length: totalNewsletterPages }, (_, i) => i + 1).map((p) => (
+                          <button
+                            key={p}
+                            onClick={() => setNewsletterPage(p)}
+                            className={`h-8 min-w-8 px-2 rounded-md text-sm ${p === newsletterPage ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-gray-300 hover:bg-zinc-700'}`}
+                          >
+                            {p}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -409,12 +451,13 @@ export default function EditorialDashboard() {
                   <CardTitle className="text-white flex items-center gap-2">
                     <TrendingUp className="w-5 h-5" />
                     Advertising Campaigns
+                    <span className="text-xs text-gray-400">({campaigns.length})</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4">
-                    {campaigns.length > 0 ? (
-                      campaigns.map((campaign) => (
+                    {paginatedCampaigns.length > 0 ? (
+                      paginatedCampaigns.map((campaign) => (
                         <Card key={campaign.id} className="bg-zinc-800/40 backdrop-blur-md border border-white/5 hover:border-purple-500/30 transition-all duration-200">
                           <CardContent className="p-6">
                             <div className="flex items-start justify-between mb-4">
@@ -475,6 +518,21 @@ export default function EditorialDashboard() {
                       </div>
                     )}
                   </div>
+                  {campaigns.length > ITEMS_PER_PAGE && (
+                    <div className="mt-4 flex justify-end">
+                      <div className="flex items-center gap-2">
+                        {Array.from({ length: totalCampaignPages }, (_, i) => i + 1).map((p) => (
+                          <button
+                            key={p}
+                            onClick={() => setCampaignsPage(p)}
+                            className={`h-8 min-w-8 px-2 rounded-md text-sm ${p === campaignsPage ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-gray-300 hover:bg-zinc-700'}`}
+                          >
+                            {p}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}

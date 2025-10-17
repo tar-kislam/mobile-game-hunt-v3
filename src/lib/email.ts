@@ -1,4 +1,7 @@
 import nodemailer from 'nodemailer'
+import { render } from '@react-email/render'
+import React from 'react'
+import WelcomeEmail from '@/emails/WelcomeEmail'
 
 // SMTP Configuration
 const getTransporter = () => {
@@ -343,15 +346,17 @@ export async function sendWelcomeEmail(to: string): Promise<{ success: boolean; 
       console.error(`[EMAIL] ${error}`)
       return { success: false, error }
     }
-
-    const html = getWelcomeEmailHTML(to)
+    const html = render(React.createElement(WelcomeEmail))
     const from = process.env.SMTP_FROM || 'info@mobilegamehunt.com'
     
+    // Ensure html is a string, not a Promise
+    const htmlContent = await html
+
     const mailOptions = {
       from,
       to,
       subject: '🎮 Welcome to Mobile Game Hunt - Let\'s Discover Amazing Games Together!',
-      html,
+      html: htmlContent,
       headers: {
         'X-Priority': '1',
         'X-MSMail-Priority': 'High',
@@ -360,7 +365,7 @@ export async function sendWelcomeEmail(to: string): Promise<{ success: boolean; 
     }
 
     const result = await transporter.sendMail(mailOptions)
-    console.log(`[EMAIL] Welcome email sent successfully to ${to}. MessageId: ${result.messageId}`)
+    console.log(`[EMAIL] Welcome email sent successfully to ${to}. MessageId: ${result.messageId || 'N/A'}`)
     
     return { success: true }
   } catch (error) {
