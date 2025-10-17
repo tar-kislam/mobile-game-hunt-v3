@@ -14,11 +14,17 @@ export function getTransport() {
   })
 }
 
-export async function sendMail(opts: { to: string; subject: string; html: string; from?: string }) {
+export async function sendMail(opts: { to: string; subject: string; html: string; from?: string; text?: string }) {
   const transport = getTransport()
   if (!transport) return { ok: false, reason: 'not_configured' }
-  const from = opts.from || process.env.MAIL_FROM || 'noreply@mobilegamehunt.app'
-  await transport.sendMail({ from, to: opts.to, subject: opts.subject, html: opts.html })
+  const from = opts.from || '"MobileGameHunt" <info@mobilegamehunt.com>'
+  await transport.sendMail({ 
+    from, 
+    to: opts.to, 
+    subject: opts.subject, 
+    html: opts.html,
+    text: opts.text || opts.html.replace(/<[^>]*>/g, '') // Strip HTML tags for text version
+  })
   return { ok: true }
 }
 

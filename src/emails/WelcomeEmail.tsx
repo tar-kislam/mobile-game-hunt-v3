@@ -7,7 +7,7 @@ const fontFamily = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto
 
 export default function WelcomeEmail() {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'
-  const logoSrc = `${baseUrl}/logo/mgh.png`
+  const logoSrc = 'https://mobilegamehunt.com/logo/mgh.png'
 
   return (
     <Html>

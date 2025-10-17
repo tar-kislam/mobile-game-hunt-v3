@@ -19,10 +19,7 @@ const getTransporter = () => {
     host,
     port,
     secure: process.env.SMTP_SECURE === 'true' || port === 465,
-    auth: { user, pass },
-    tls: {
-      rejectUnauthorized: false
-    }
+    auth: { user, pass }
   })
 }
 
@@ -353,15 +350,11 @@ export async function sendWelcomeEmail(to: string): Promise<{ success: boolean; 
     const htmlContent = await html
 
     const mailOptions = {
-      from,
+      from: '"MobileGameHunt" <info@mobilegamehunt.com>',
       to,
-      subject: '🎮 Welcome to Mobile Game Hunt - Let\'s Discover Amazing Games Together!',
+      subject: 'Welcome to Mobile Game Hunt - Let\'s Discover Amazing Games Together!',
       html: htmlContent,
-      headers: {
-        'X-Priority': '1',
-        'X-MSMail-Priority': 'High',
-        'Importance': 'high'
-      }
+      text: 'Welcome to Mobile Game Hunt! You\'ve just joined a growing community of mobile gamers, indie developers, and enthusiasts discovering the best new games every week.'
     }
 
     const result = await transporter.sendMail(mailOptions)
@@ -549,16 +542,12 @@ export async function sendSupportMessageEmail(fromEmail: string, message: string
     const from = process.env.SMTP_FROM || 'info@mobilegamehunt.com'
     
     const mailOptions = {
-      from,
+      from: '"MobileGameHunt" <info@mobilegamehunt.com>',
       to: 'info@mobilegamehunt.com', // Support messages go to info@mobilegamehunt.com
       subject: `🆘 Support Request from ${fromEmail}`,
       html,
-      replyTo: fromEmail, // Allow direct reply to the user
-      headers: {
-        'X-Priority': '1',
-        'X-MSMail-Priority': 'High',
-        'Importance': 'high'
-      }
+      text: `Support request from: ${fromEmail}\n\nMessage:\n${message}`,
+      replyTo: fromEmail // Allow direct reply to the user
     }
 
     const result = await transporter.sendMail(mailOptions)

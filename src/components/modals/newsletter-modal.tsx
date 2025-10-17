@@ -19,10 +19,25 @@ interface NewsletterModalProps {
 export function NewsletterModal({ isOpen, onClose, onSubscribed, onDismissed }: NewsletterModalProps) {
   const [email, setEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
+  const [isAlreadySubscribed, setIsAlreadySubscribed] = useState(false)
   const brandColor = '#ffffff'
+
+  // Check if email is already subscribed
+  const checkIfAlreadySubscribed = (email: string) => {
+    if (typeof window === 'undefined') return false
+    const subscribedEmails = JSON.parse(localStorage.getItem('newsletter_subscribed') || '[]')
+    return subscribedEmails.includes(email.toLowerCase())
+  }
 
   // Handle close with dismissal tracking
   const handleClose = () => {
+    // Reset states when closing
+    setIsSubmitting(false)
+    setIsSuccess(false)
+    setIsAlreadySubscribed(false)
+    setEmail('')
+    
     if (onDismissed) {
       onDismissed()
     }
@@ -64,6 +79,13 @@ export function NewsletterModal({ isOpen, onClose, onSubscribed, onDismissed }: 
       return
     }
 
+    // Check if already subscribed locally
+    if (checkIfAlreadySubscribed(email)) {
+      setIsAlreadySubscribed(true)
+      toast.warning('This email is already subscribed to our newsletter!')
+      return
+    }
+
     setIsSubmitting(true)
     
     try {
@@ -78,10 +100,19 @@ export function NewsletterModal({ isOpen, onClose, onSubscribed, onDismissed }: 
       const data = await response.json()
 
       if (response.ok) {
+        setIsSuccess(true)
         toast.success(data.message || 'Welcome to the early community! We\'ll be in touch soon.')
         setEmail('')
         
         // Mark as subscribed in localStorage
+        if (typeof window !== 'undefined') {
+          const subscribedEmails = JSON.parse(localStorage.getItem('newsletter_subscribed') || '[]')
+          if (!subscribedEmails.includes(email.toLowerCase())) {
+            subscribedEmails.push(email.toLowerCase())
+            localStorage.setItem('newsletter_subscribed', JSON.stringify(subscribedEmails))
+          }
+        }
+        
         if (onSubscribed) {
           onSubscribed()
         }
@@ -92,8 +123,18 @@ export function NewsletterModal({ isOpen, onClose, onSubscribed, onDismissed }: 
         }, 2000)
       } else {
         if (response.status === 409) {
-          toast.info('You\'re already subscribed to our newsletter!')
-          // Mark as subscribed even if already exists
+          setIsAlreadySubscribed(true)
+          toast.warning('This email is already subscribed to our newsletter!')
+          
+          // Mark as subscribed in localStorage even if already exists
+          if (typeof window !== 'undefined') {
+            const subscribedEmails = JSON.parse(localStorage.getItem('newsletter_subscribed') || '[]')
+            if (!subscribedEmails.includes(email.toLowerCase())) {
+              subscribedEmails.push(email.toLowerCase())
+              localStorage.setItem('newsletter_subscribed', JSON.stringify(subscribedEmails))
+            }
+          }
+          
           if (onSubscribed) {
             onSubscribed()
           }
@@ -258,8 +299,8 @@ export function NewsletterModal({ isOpen, onClose, onSubscribed, onDismissed }: 
                     }}
                   >
                     <ShinyText 
-                      text={isSubmitting ? 'Joining...' : 'Join Now'} 
-                      disabled={isSubmitting} 
+                      text={isSubmitting ? 'Joining...' : isSuccess ? 'Welcome!' : isAlreadySubscribed ? 'Already Subscribed!' : 'Join Now'} 
+                      disabled={isSubmitting || isAlreadySubscribed} 
                       speed={3} 
                       className="cta-button" 
                     />

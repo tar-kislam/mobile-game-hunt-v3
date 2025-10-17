@@ -367,8 +367,16 @@ export default function EditorialDashboard() {
                     </Table>
                   </div>
                   {filteredProducts.length > ITEMS_PER_PAGE && (
-                    <div className="mt-4 flex justify-end">
-                      <div className="flex items-center gap-2">
+                    <div className="mt-6 flex justify-center items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        {gamesPage > 1 && (
+                          <button
+                            onClick={() => setGamesPage(gamesPage - 1)}
+                            className="h-8 px-3 rounded-md text-sm bg-zinc-800 text-gray-300 hover:bg-zinc-700"
+                          >
+                            Previous
+                          </button>
+                        )}
                         {Array.from({ length: totalGamesPages }, (_, i) => i + 1).map((p) => (
                           <button
                             key={p}
@@ -378,7 +386,18 @@ export default function EditorialDashboard() {
                             {p}
                           </button>
                         ))}
+                        {gamesPage < totalGamesPages && (
+                          <button
+                            onClick={() => setGamesPage(gamesPage + 1)}
+                            className="h-8 px-3 rounded-md text-sm bg-zinc-800 text-gray-300 hover:bg-zinc-700"
+                          >
+                            Next
+                          </button>
+                        )}
                       </div>
+                      <span className="text-sm text-gray-400 ml-4">
+                        Page {gamesPage} of {totalGamesPages}
+                      </span>
                     </div>
                   )}
                 </CardContent>
@@ -427,8 +446,16 @@ export default function EditorialDashboard() {
                     </Table>
                   </div>
                   {newsletterSubscribers.length > ITEMS_PER_PAGE && (
-                    <div className="mt-4 flex justify-end">
-                      <div className="flex items-center gap-2">
+                    <div className="mt-6 flex justify-center items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        {newsletterPage > 1 && (
+                          <button
+                            onClick={() => setNewsletterPage(newsletterPage - 1)}
+                            className="h-8 px-3 rounded-md text-sm bg-zinc-800 text-gray-300 hover:bg-zinc-700"
+                          >
+                            Previous
+                          </button>
+                        )}
                         {Array.from({ length: totalNewsletterPages }, (_, i) => i + 1).map((p) => (
                           <button
                             key={p}
@@ -438,7 +465,18 @@ export default function EditorialDashboard() {
                             {p}
                           </button>
                         ))}
+                        {newsletterPage < totalNewsletterPages && (
+                          <button
+                            onClick={() => setNewsletterPage(newsletterPage + 1)}
+                            className="h-8 px-3 rounded-md text-sm bg-zinc-800 text-gray-300 hover:bg-zinc-700"
+                          >
+                            Next
+                          </button>
+                        )}
                       </div>
+                      <span className="text-sm text-gray-400 ml-4">
+                        Page {newsletterPage} of {totalNewsletterPages}
+                      </span>
                     </div>
                   )}
                 </CardContent>
@@ -519,8 +557,16 @@ export default function EditorialDashboard() {
                     )}
                   </div>
                   {campaigns.length > ITEMS_PER_PAGE && (
-                    <div className="mt-4 flex justify-end">
-                      <div className="flex items-center gap-2">
+                    <div className="mt-6 flex justify-center items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        {campaignsPage > 1 && (
+                          <button
+                            onClick={() => setCampaignsPage(campaignsPage - 1)}
+                            className="h-8 px-3 rounded-md text-sm bg-zinc-800 text-gray-300 hover:bg-zinc-700"
+                          >
+                            Previous
+                          </button>
+                        )}
                         {Array.from({ length: totalCampaignPages }, (_, i) => i + 1).map((p) => (
                           <button
                             key={p}
@@ -530,7 +576,18 @@ export default function EditorialDashboard() {
                             {p}
                           </button>
                         ))}
+                        {campaignsPage < totalCampaignPages && (
+                          <button
+                            onClick={() => setCampaignsPage(campaignsPage + 1)}
+                            className="h-8 px-3 rounded-md text-sm bg-zinc-800 text-gray-300 hover:bg-zinc-700"
+                          >
+                            Next
+                          </button>
+                        )}
                       </div>
+                      <span className="text-sm text-gray-400 ml-4">
+                        Page {campaignsPage} of {totalCampaignPages}
+                      </span>
                     </div>
                   )}
                 </CardContent>

@@ -128,6 +128,7 @@ export default withAuth(
           pathname.startsWith('/profile/') ||     // Allow old profile routes for backward compatibility
           pathname.startsWith('/uploads') ||       // Allow public uploads
           pathname.startsWith('/logo') ||          // Allow logo assets
+          pathname.startsWith('/emojis') ||        // Allow emoji assets
           pathname.startsWith('/images') ||        // Allow image assets
           pathname.startsWith('/assets') ||        // Allow asset files
           pathname === '/' ||
@@ -160,6 +161,6 @@ export const config = {
      * - assets folder
      * - Note: Static file extensions handled by path-based exclusions
      */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|public|uploads|logo|images|assets).*)',
+    '/((?!api/auth|_next/static|_next/image|favicon.ico|public|uploads|logo|emojis|images|assets).*)',
   ],
 }

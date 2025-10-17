@@ -139,6 +139,11 @@ export function SupportWidget() {
                     height={52}
                     className="object-contain select-none pointer-events-none"
                     draggable={false}
+                    onError={(e) => {
+                      // Fallback to emoji if image fails to load
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.parentElement!.innerHTML = '<div class="text-white text-2xl">💬</div>';
+                    }}
                   />
                 </div>
                 <div>

@@ -192,8 +192,20 @@ export function UserAvatarTooltip({
             )}
             
             {/* Click to view profile */}
-            <div className="text-xs text-gray-400 text-center pt-2 border-t border-gray-700">
-              Click to view full profile
+            <div className="text-xs text-center pt-2 border-t border-gray-700">
+              <Link 
+                href={userUsername ? `/@${userUsername}` : `/profile/${userId}/public`}
+                className="text-purple-300 hover:text-purple-200 underline transition-colors duration-200"
+                onClick={(e) => {
+                  if (requireAuthOnClick && !session) {
+                    e.preventDefault()
+                    toast.error('Please sign in to view profiles')
+                    return
+                  }
+                }}
+              >
+                Click to view full profile
+              </Link>
             </div>
           </div>
         </TooltipContent>
