@@ -68,6 +68,7 @@ export default function EditorialDashboard() {
   const [gamesPage, setGamesPage] = useState(1)
   const [newsletterPage, setNewsletterPage] = useState(1)
   const [campaignsPage, setCampaignsPage] = useState(1)
+  const [bulkEmailLoading, setBulkEmailLoading] = useState(false)
   const ITEMS_PER_PAGE = 10
 
   // Filter products based on search term
@@ -198,6 +199,49 @@ export default function EditorialDashboard() {
     } catch (error) {
       console.error('Error downloading CSV:', error)
       toast.error('Failed to download CSV')
+    }
+  }
+
+  const handleBulkWelcomeEmail = async () => {
+    if (bulkEmailLoading) return
+    
+    const confirmed = window.confirm(
+      `Are you sure you want to send welcome emails to all ${newsletterSubscribers.length} active subscribers?\n\nThis action cannot be undone.`
+    )
+    
+    if (!confirmed) return
+
+    try {
+      setBulkEmailLoading(true)
+      toast.info('Starting bulk welcome email campaign...')
+      
+      const response = await fetch('/api/admin/newsletter/bulk-welcome', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        toast.success(
+          `Bulk email campaign completed! Sent: ${result.results.sent}/${result.results.total} emails`
+        )
+        
+        if (result.results.failed > 0) {
+          console.warn('Some emails failed:', result.results.errors)
+          toast.warning(`${result.results.failed} emails failed to send. Check console for details.`)
+        }
+      } else {
+        toast.error(result.error || 'Failed to send bulk welcome emails')
+        console.error('Bulk email error:', result)
+      }
+    } catch (error) {
+      console.error('Error sending bulk welcome emails:', error)
+      toast.error('Failed to send bulk welcome emails')
+    } finally {
+      setBulkEmailLoading(false)
     }
   }
 
@@ -413,13 +457,32 @@ export default function EditorialDashboard() {
                       Newsletter Subscribers
                       <span className="text-xs text-gray-400">({newsletterSubscribers.length})</span>
                     </CardTitle>
-                    <Button
-                      onClick={handleDownloadCSV}
-                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download CSV
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleBulkWelcomeEmail}
+                        disabled={bulkEmailLoading || newsletterSubscribers.length === 0}
+                        className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {bulkEmailLoading ? (
+                          <>
+                            <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="w-4 h-4 mr-2" />
+                            Send Welcome Emails
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={handleDownloadCSV}
+                        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download CSV
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>

@@ -82,11 +82,7 @@ export default function WelcomeEmail() {
                 }}
               >
                 <span style={{
-                  background: 'linear-gradient(90deg, #ff7a00 0%, #ff9500 50%, #ffb347 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  color: 'transparent',
+                  color: '#ffffff',
                   fontWeight: '600'
                 }}>
                   Explore Games →
@@ -143,12 +139,83 @@ export default function WelcomeEmail() {
             </Text>
             
             <Text style={{ 
-              margin: '0', 
+              margin: '0 0 15px 0', 
               fontSize: '12px',
               color: '#999999'
             }}>
               Discover amazing mobile games
             </Text>
+            
+            {/* Social Media Links */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              gap: '15px',
+              marginTop: '15px'
+            }}>
+              <a 
+                href="https://x.com/mobilegamehunt" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  width: '32px',
+                  height: '32px',
+                  backgroundColor: '#1a1a1a',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ffffff',
+                  fontSize: '14px',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                𝕏
+              </a>
+              
+              <a 
+                href="https://discord.gg/mobilegamehunt" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  width: '32px',
+                  height: '32px',
+                  backgroundColor: '#5865F2',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ffffff',
+                  fontSize: '14px',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                💬
+              </a>
+              
+              <a 
+                href="https://reddit.com/r/mobilegamehunt" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  width: '32px',
+                  height: '32px',
+                  backgroundColor: '#FF4500',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ffffff',
+                  fontSize: '14px',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                🔗
+              </a>
+            </div>
           </Section>
         </Container>
       </Body>
