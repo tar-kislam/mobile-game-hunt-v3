@@ -77,6 +77,26 @@ export async function notify(
       }
     }
 
+    // Check for duplicate XP notifications within the last 5 seconds
+    if (type === 'xp') {
+      const fiveSecondsAgo = new Date(Date.now() - 5000)
+      const existingXP = await (prisma as any).notification.findFirst({
+        where: {
+          userId,
+          type: 'xp',
+          message,
+          createdAt: {
+            gte: fiveSecondsAgo
+          }
+        }
+      })
+
+      if (existingXP) {
+        console.log(`[NOTIFICATION] Duplicate XP notification prevented for user ${userId}: ${message}`)
+        return existingXP
+      }
+    }
+
     const notification = await (prisma as any).notification.create({
       data: {
         userId,
