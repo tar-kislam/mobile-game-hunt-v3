@@ -34,6 +34,7 @@ interface Product {
   images: string[]
   video?: string | null
   platforms?: string[]
+  slug?: string | null
   iosUrl?: string | null
   androidUrl?: string | null
   socialLinks?: any

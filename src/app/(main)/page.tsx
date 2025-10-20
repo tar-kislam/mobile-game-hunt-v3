@@ -496,7 +496,6 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.6 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
             animate={{ 
               backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
             }}
@@ -505,6 +504,8 @@ export default function HomePage() {
               backgroundImage: 'linear-gradient(45deg, #a855f7, #3b82f6, #ec4899, #a855f7)',
             }}
             transition={{ 
+              duration: 0.5, 
+              ease: 'easeOut',
               backgroundPosition: { 
                 duration: 3, 
                 repeat: Infinity, 
@@ -518,7 +519,6 @@ export default function HomePage() {
               initial={{ scaleX: 0, opacity: 0.7 }}
               whileInView={{ scaleX: 1, opacity: 1 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.9, ease: 'easeOut' }}
               style={{ transformOrigin: 'left' }}
               animate={{
                 opacity: [0.7, 1, 0.7],

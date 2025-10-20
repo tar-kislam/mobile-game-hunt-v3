@@ -189,15 +189,15 @@ export async function GET(
       whereClause = {
         id: id,
         OR: [
-          { status: 'PUBLISHED' },
-          { status: 'DRAFT', userId: session.user.id }
+          { status: 'PUBLISHED' as const },
+          { status: 'DRAFT' as const, userId: session.user.id }
         ]
       }
       console.log('GET /api/products/[id] - Using authenticated where clause')
     } else {
       whereClause = {
         id: id,
-        status: 'PUBLISHED'
+        status: 'PUBLISHED' as const
       }
       console.log('GET /api/products/[id] - Using public where clause')
     }

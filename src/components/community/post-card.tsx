@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Heart, Share2, Copy, Twitter, Linkedin, MessageCircle, Trash2 } from 'lucide-react'
+import { Heart, Share2, Copy, Twitter, Linkedin, MessageCircle, Trash2, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import { PollDisplay } from './enhanced-poll-display'
@@ -53,6 +53,8 @@ export function PostCard({ post, onDelete }: PostCardProps) {
   const [likeCount, setLikeCount] = useState(post._count.likes)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [sharePopoverOpen, setSharePopoverOpen] = useState(false)
+  const [imageModalOpen, setImageModalOpen] = useState(false)
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
   const handleLike = async () => {
     if (!session?.user?.id) {
@@ -183,6 +185,11 @@ export function PostCard({ post, onDelete }: PostCardProps) {
     }
   }
 
+  const handleImageClick = (index: number) => {
+    setSelectedImageIndex(index)
+    setImageModalOpen(true)
+  }
+
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
@@ -285,15 +292,74 @@ export function PostCard({ post, onDelete }: PostCardProps) {
 
           {/* Images */}
           {post.images && post.images.length > 0 && (
-            <div className="grid grid-cols-2 gap-2">
-              {post.images.map((image, index) => (
-                <img
-                  key={index}
-                  src={image}
-                  alt={`Post image ${index + 1}`}
-                  className="w-full h-32 object-cover rounded-lg border border-white/20"
-                />
-              ))}
+            <div className="mt-3">
+              {post.images.length === 1 ? (
+                // Single image - Twitter style large display
+                <div className="relative">
+                  <img
+                    src={post.images[0]}
+                    alt={`Post image`}
+                    className="w-full max-h-96 object-cover rounded-xl border border-white/10 cursor-pointer hover:opacity-95 transition-opacity"
+                    onClick={() => handleImageClick(0)}
+                  />
+                </div>
+              ) : post.images.length === 2 ? (
+                // Two images - side by side
+                <div className="grid grid-cols-2 gap-2">
+                  {post.images.map((image, index) => (
+                    <img
+                      key={index}
+                      src={image}
+                      alt={`Post image ${index + 1}`}
+                      className="w-full h-48 object-cover rounded-xl border border-white/10 cursor-pointer hover:opacity-95 transition-opacity"
+                      onClick={() => handleImageClick(index)}
+                    />
+                  ))}
+                </div>
+              ) : post.images.length === 3 ? (
+                // Three images - one large, two small
+                <div className="grid grid-cols-2 gap-2">
+                  <img
+                    src={post.images[0]}
+                    alt={`Post image 1`}
+                    className="w-full h-48 object-cover rounded-xl border border-white/10 cursor-pointer hover:opacity-95 transition-opacity"
+                    onClick={() => handleImageClick(0)}
+                  />
+                  <div className="grid grid-rows-2 gap-2">
+                    {post.images.slice(1).map((image, index) => (
+                      <img
+                        key={index + 1}
+                        src={image}
+                        alt={`Post image ${index + 2}`}
+                        className="w-full h-23 object-cover rounded-xl border border-white/10 cursor-pointer hover:opacity-95 transition-opacity"
+                        onClick={() => handleImageClick(index + 1)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                // Four or more images - 2x2 grid with more indicator
+                <div className="grid grid-cols-2 gap-2">
+                  {post.images.slice(0, 4).map((image, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={image}
+                        alt={`Post image ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-xl border border-white/10 cursor-pointer hover:opacity-95 transition-opacity"
+                        onClick={() => handleImageClick(index)}
+                      />
+                      {index === 3 && post.images && post.images.length > 4 && (
+                        <div className="absolute inset-0 bg-black/60 rounded-xl flex items-center justify-center cursor-pointer hover:bg-black/70 transition-colors"
+                             onClick={() => handleImageClick(0)}>
+                          <span className="text-white font-semibold text-lg">
+                            +{post.images.length - 4}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -405,6 +471,62 @@ export function PostCard({ post, onDelete }: PostCardProps) {
           </div>
         </div>
       </CardContent>
+
+      {/* Image Modal */}
+      <Dialog open={imageModalOpen} onOpenChange={setImageModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] bg-black/95 border-gray-700 p-0 overflow-hidden">
+          <DialogTitle className="sr-only">
+            Post Image {selectedImageIndex + 1} of {post.images?.length || 1}
+          </DialogTitle>
+          <div className="relative">
+            {/* Close Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setImageModalOpen(false)}
+              className="absolute top-4 right-4 z-10 bg-black/50 hover:bg-black/70 text-white border-0"
+            >
+              <X className="h-6 w-6" />
+            </Button>
+
+            {/* Image Display */}
+            {post.images && post.images.length > 0 && post.images[selectedImageIndex] && (
+              <div className="flex items-center justify-center min-h-[60vh]">
+                <img
+                  src={post.images[selectedImageIndex]}
+                  alt={`Post image ${selectedImageIndex + 1}`}
+                  className="max-w-full max-h-[80vh] object-contain rounded-lg"
+                />
+              </div>
+            )}
+
+            {/* Navigation for multiple images */}
+            {post.images && post.images.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                {post.images.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`w-3 h-3 rounded-full transition-colors ${
+                      index === selectedImageIndex 
+                        ? 'bg-white' 
+                        : 'bg-white/50 hover:bg-white/70'
+                    }`}
+                    aria-label={`View image ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Image Counter */}
+            {post.images && post.images.length > 1 && (
+              <div className="absolute top-4 left-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                {selectedImageIndex + 1} / {post.images.length}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

@@ -18,14 +18,14 @@ export async function GET(
       whereClause = {
         slug: slug,
         OR: [
-          { status: 'PUBLISHED' },
-          { status: 'DRAFT', userId: session.user.id }
+          { status: 'PUBLISHED' as const },
+          { status: 'DRAFT' as const, userId: session.user.id }
         ]
       }
     } else {
       whereClause = {
         slug: slug,
-        status: 'PUBLISHED'
+        status: 'PUBLISHED' as const
       }
     }
     

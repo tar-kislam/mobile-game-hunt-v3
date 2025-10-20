@@ -13,7 +13,7 @@ import { CardDescription } from "@/components/ui/card"
 export default function SubmitPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [submissions, setSubmissions] = useState<Array<{id:string; title:string; status:string; createdAt:string}>>([])
+  const [submissions, setSubmissions] = useState<Array<{id:string; title:string; status:string; createdAt:string; slug?:string}>>([])
 
   const handleGameSubmitted = () => {
     // Redirect to home page after successful submission
@@ -31,7 +31,7 @@ export default function SubmitPage() {
         const list = await fetch(`/api/products?userId=${me.id}`, { cache: 'no-store' })
         const data = await list.json()
         const items = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : []
-        setSubmissions(items.map((p:any)=>({ id: p.id, title: p.title, status: p.status, createdAt: p.createdAt })))
+        setSubmissions(items.map((p:any)=>({ id: p.id, title: p.title, status: p.status, createdAt: p.createdAt, slug: p.slug })))
       } catch {}
     }
     load()

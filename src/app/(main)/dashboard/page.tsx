@@ -24,7 +24,7 @@ const fetcher = (url: string) => fetch(url, { credentials: 'include' }).then((re
 });
 
 
-type DashboardGame = { id: string; title: string; status?: string; thumbnail?: string | null };
+type DashboardGame = { id: string; title: string; status?: string; thumbnail?: string | null; slug?: string | null };
 
 type GameAnalytics = {
   game: { id: string; title: string };
