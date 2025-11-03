@@ -743,7 +743,7 @@ export default function HomePage() {
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold text-lg">Top Rated Games</h3>
                       <Button variant="ghost" size="sm" asChild className="h-auto py-0 px-2 text-xs">
-                        <Link href="/products?filter=top-rated" rel="nofollow">Browse Top Rated Games</Link>
+                        <Link href="/products?filter=top-rated" rel="nofollow">Browse</Link>
                       </Button>
                     </div>
                     {!topRatedData ? (
@@ -772,9 +772,6 @@ export default function HomePage() {
                                 <Link href={`/product/${game.slug || game.id}`} className="truncate hover:underline text-sm font-medium block text-neutral-200">
                                   {game.title}
                                 </Link>
-                                <div className="text-xs text-neutral-400">
-                                  {game.platforms?.map((p: string) => p.toUpperCase()).join(', ') || 'No platforms listed'}
-                                </div>
                               </div>
                             </div>
                             <div className="flex items-center gap-2 text-xs text-neutral-400">
@@ -818,9 +815,6 @@ export default function HomePage() {
                               <Link href={`/product/${game.slug || game.id}`} className="font-medium text-sm hover:underline block text-neutral-200">
                                 {game.title}
                               </Link>
-                              <div className="text-xs text-neutral-400">
-                                {game.platforms?.map((p: string) => p.toUpperCase()).join(', ') || 'No platforms listed'}
-                              </div>
                             </div>
                             <div className="text-xs font-medium text-neutral-400">
                               {game.votes} votes

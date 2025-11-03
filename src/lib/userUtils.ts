@@ -23,17 +23,20 @@ export async function resolveUserId(sessionUser: any): Promise<string | null> {
       })
     }
 
-    // If still not found and this looks like a session ID, try to find any user
-    // This is a fallback for cases where session IDs don't match database IDs
+    // If still not found, avoid using a global fallback user in production
+    // Only allow a fallback in development to ease local testing
     if (!user) {
-      // Get the first available user as a fallback (for development/testing)
-      const fallbackUser = await prisma.user.findFirst({
-        select: { id: true }
-      })
-      if (fallbackUser) {
-        console.warn(`User ID ${sessionUser.id} not found, using fallback user ${fallbackUser.id}`)
-        return fallbackUser.id
+      if (process.env.NODE_ENV === 'development') {
+        const fallbackUser = await prisma.user.findFirst({
+          select: { id: true }
+        })
+        if (fallbackUser) {
+          console.warn(`[DEV ONLY] User ID ${sessionUser.id} not found, using fallback user ${fallbackUser.id}`)
+          return fallbackUser.id
+        }
       }
+      // In production (or if no fallback found), return null so callers can handle properly
+      return null
     }
 
     return user?.id || null
