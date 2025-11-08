@@ -322,7 +322,7 @@ const getWelcomeEmailHTML = (email: string) => {
             
             <div class="social-links">
                 <a href="https://twitter.com/mobilegamehunt" class="social-link">🐦</a>
-                <a href="https://discord.gg/mobilegamehunt" class="social-link">💬</a>
+                <a href="https://discord.gg/zahqtja5e9" class="social-link">💬</a>
                 <a href="https://instagram.com/mobilegamehunt" class="social-link">📷</a>
             </div>
         </div>

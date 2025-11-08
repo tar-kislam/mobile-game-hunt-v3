@@ -87,7 +87,7 @@ async function getActiveSubscribers(testEmail?: string) {
   return subscribers
 }
 
-async function getWeeklyTopGames(): Promise<WeeklyGame[]> {
+export async function getWeeklyTopGames(): Promise<WeeklyGame[]> {
   const oneWeekAgo = subDays(new Date(), 7)
 
   const weeklyVotes = await prisma.vote.groupBy({

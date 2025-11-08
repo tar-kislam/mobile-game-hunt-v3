@@ -175,7 +175,7 @@ export default function WelcomeEmail() {
               </a>
               
               <a 
-                href="https://discord.gg/mobilegamehunt" 
+                href="https://discord.gg/zahqtja5e9" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 style={{
