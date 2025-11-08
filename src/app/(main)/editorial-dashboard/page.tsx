@@ -69,6 +69,8 @@ export default function EditorialDashboard() {
   const [newsletterPage, setNewsletterPage] = useState(1)
   const [campaignsPage, setCampaignsPage] = useState(1)
   const [bulkEmailLoading, setBulkEmailLoading] = useState(false)
+  const [weeklySending, setWeeklySending] = useState(false)
+  const [latestSending, setLatestSending] = useState(false)
   const ITEMS_PER_PAGE = 10
 
   // Filter products based on search term
@@ -242,6 +244,64 @@ export default function EditorialDashboard() {
       toast.error('Failed to send bulk welcome emails')
     } finally {
       setBulkEmailLoading(false)
+    }
+  }
+
+  const handleSendWeeklyTop5 = async () => {
+    if (weeklySending) return
+    const confirmed = window.confirm(
+      `Send Weekly Top 5 to all ${newsletterSubscribers.length} active subscribers?\n\nThis action cannot be undone.`
+    )
+    if (!confirmed) return
+    try {
+      setWeeklySending(true)
+      toast.info('Sending Weekly Top 5 newsletter...')
+      const res = await fetch('/api/newsletter/test-weekly', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}) // no email -> send to all
+      })
+      const data = await res.json()
+      if (res.ok && data?.sent !== undefined) {
+        toast.success(`Weekly Top 5 sent: ${data.sent}/${data.attempted} (failed: ${data.failed})`)
+      } else if (res.ok && data?.ok) {
+        // some endpoints may return ok/result
+        const r = data.result || {}
+        toast.success(`Weekly Top 5 sent: ${r.sent ?? '?'} / ${r.attempted ?? '?'} (failed: ${r.failed ?? '?'})`)
+      } else {
+        toast.error(data?.error || 'Failed to send Weekly Top 5')
+      }
+    } catch (e) {
+      toast.error('Failed to send Weekly Top 5')
+    } finally {
+      setWeeklySending(false)
+    }
+  }
+
+  const handleSendLatestGame = async () => {
+    if (latestSending) return
+    const confirmed = window.confirm(
+      `Send latest published game email to all ${newsletterSubscribers.length} active subscribers?\n\nThis action cannot be undone.`
+    )
+    if (!confirmed) return
+    try {
+      setLatestSending(true)
+      toast.info('Sending latest game newsletter...')
+      const res = await fetch('/api/newsletter/send-latest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      const data = await res.json()
+      const r = data?.result || {}
+      if (res.ok && (r.sent !== undefined || data?.ok)) {
+        toast.success(`Latest game email sent: ${r.sent ?? '?'} / ${r.attempted ?? '?'} (failed: ${r.failed ?? '?'})`)
+      } else {
+        toast.error(data?.error || 'Failed to send latest game email')
+      }
+    } catch (e) {
+      toast.error('Failed to send latest game email')
+    } finally {
+      setLatestSending(false)
     }
   }
 
@@ -457,7 +517,7 @@ export default function EditorialDashboard() {
                       Newsletter Subscribers
                       <span className="text-xs text-gray-400">({newsletterSubscribers.length})</span>
                     </CardTitle>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <Button
                         onClick={handleBulkWelcomeEmail}
                         disabled={bulkEmailLoading || newsletterSubscribers.length === 0}
@@ -481,6 +541,42 @@ export default function EditorialDashboard() {
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Download CSV
+                      </Button>
+                      <Button
+                        onClick={handleSendWeeklyTop5}
+                        disabled={weeklySending || newsletterSubscribers.length === 0}
+                        className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Send weekly Top 5 to all subscribers"
+                      >
+                        {weeklySending ? (
+                          <>
+                            <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            Sending Weekly...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="w-4 h-4 mr-2" />
+                            Send Weekly Top 5
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={handleSendLatestGame}
+                        disabled={latestSending || newsletterSubscribers.length === 0}
+                        className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Send latest published game to all subscribers"
+                      >
+                        {latestSending ? (
+                          <>
+                            <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            Sending Latest...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="w-4 h-4 mr-2" />
+                            Send Latest Game
+                          </>
+                        )}
                       </Button>
                     </div>
                   </div>
