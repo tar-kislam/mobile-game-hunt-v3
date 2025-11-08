@@ -6,6 +6,9 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { ProductFullInput } from '@/lib/schemas/product'
 import { awardXP } from '@/lib/xpService'
+import { sendNewGameEmail } from '@/lib/newsletter'
+
+const PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'
 
 export async function createProductAction(data: ProductFullInput) {
   try {
@@ -140,6 +143,17 @@ export async function createProductAction(data: ProductFullInput) {
     })
 
     console.log('Product created successfully:', product.id)
+
+    try {
+      await sendNewGameEmail({
+        title: product.title,
+        shortPitch: product.tagline || product.description,
+        thumbnail: product.thumbnail || product.image || undefined,
+        link: `${PUBLIC_BASE_URL}/game/${product.slug}`,
+      })
+    } catch (newsletterError) {
+      console.error('[NEWSLETTER] Failed to enqueue new game email:', newsletterError)
+    }
     
     // Award XP for publishing a game
     try {
@@ -513,6 +527,17 @@ export async function submitApprovalAction(data: ProductFullInput) {
       }
     })
 
+    try {
+      await sendNewGameEmail({
+        title: product.title,
+        shortPitch: product.tagline || product.description,
+        thumbnail: product.thumbnail || product.image || undefined,
+        link: `${PUBLIC_BASE_URL}/game/${product.slug}`,
+      })
+    } catch (newsletterError) {
+      console.error('[NEWSLETTER] Failed to enqueue new game email:', newsletterError)
+    }
+
     // Award XP for publishing a game
     try {
       await awardXP(user.id, 'publish_game')
@@ -871,7 +896,16 @@ export async function updateProductAction(productId: string, data: ProductFullIn
     // Check if product exists and belongs to user
     const existingProduct = await prisma.product.findUnique({
       where: { id: productId },
-      select: { userId: true }
+      select: {
+        userId: true,
+        status: true,
+        slug: true,
+        title: true,
+        tagline: true,
+        description: true,
+        thumbnail: true,
+        image: true
+      }
     })
 
     if (!existingProduct) {
@@ -933,6 +967,19 @@ export async function updateProductAction(productId: string, data: ProductFullIn
         ...(publish ? { status: 'PUBLISHED' } : {})
       }
     })
+
+    if (publish && existingProduct.status !== 'PUBLISHED') {
+      try {
+        await sendNewGameEmail({
+          title: updatedProduct.title,
+          shortPitch: updatedProduct.tagline || updatedProduct.description,
+          thumbnail: updatedProduct.thumbnail || updatedProduct.image || undefined,
+          link: `${PUBLIC_BASE_URL}/game/${updatedProduct.slug}`
+        })
+      } catch (newsletterError) {
+        console.error('[NEWSLETTER] Failed to enqueue new game email:', newsletterError)
+      }
+    }
 
     // Update categories (delete existing and create new ones)
     await prisma.productCategory.deleteMany({

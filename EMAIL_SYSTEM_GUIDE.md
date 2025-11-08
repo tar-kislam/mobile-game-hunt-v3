@@ -30,8 +30,11 @@ SMTP_HOST=smtp.your-provider.com
 SMTP_PORT=587
 SMTP_USER=your-email@domain.com
 SMTP_PASS=your-password
-MAIL_FROM=info@mobilegamehunt.com
+SMTP_FROM=info@mobilegamehunt.com
 NEXT_PUBLIC_BASE_URL=https://mobilegamehunt.com
+CRON_ENABLED=true
+# Optional: override cron timezone (defaults to UTC)
+CRON_TIMEZONE=Europe/Berlin
 ```
 
 ### SMTP Providers Tested:
@@ -83,6 +86,25 @@ Content-Type: application/json
   "testType": "send"
 }
 ```
+
+### 4. Weekly Campaign Trigger (Admin Only)
+```bash
+POST /api/newsletter/test-weekly
+Content-Type: application/json
+
+# Optional body to limit send to a single inbox
+{
+  "email": "qa@example.com"
+}
+```
+
+## 📬 Automated Campaigns
+
+- **Welcome Email**: Sent immediately on subscription (existing behavior).
+- **Weekly Top 5 Games**: Automatically scheduled for Mondays at 09:00 (timezone configurable via `CRON_TIMEZONE`). Uses `node-cron` and runs only when `CRON_ENABLED=true`.
+- **New Game Published**: Triggered whenever a product transitions to `PUBLISHED`, including direct publish, submit-for-approval, and publish-on-update flows.
+
+Both campaign templates live in `src/emails/` and can be previewed locally with the existing email preview tooling.
 
 ## 🎨 Email Template Features
 

@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { generateOrganizationJsonLd } from "@/lib/seo";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
+import "@/lib/jobs/registerNewsletterCron";
 
 const dmMono = DM_Mono({
   variable: "--font-dm-mono",

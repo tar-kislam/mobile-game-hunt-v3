@@ -8,6 +8,7 @@ import { awardXP } from "@/lib/xpService"
 import { checkAndAwardBadges } from "@/lib/badgeService"
 import { notifyFollowersOfGameSubmission } from '@/lib/followNotifications'
 import { generateSlug, generateUniqueSlug } from '@/lib/slug'
+import { sendNewGameEmail } from '@/lib/newsletter'
 
 import { z } from "zod"
 
@@ -30,6 +31,8 @@ const hasProfanity = (text: string) => {
   const lower = text.toLowerCase()
   return PROFANITY.some(w => lower.includes(w))
 }
+
+const PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'
 
 // Validation schema for product submission (frontend + backend)
 const createProductSchema = z.object({
@@ -472,6 +475,19 @@ export async function POST(request: NextRequest) {
         }
       }
     })
+
+    if (product.status === 'PUBLISHED') {
+      try {
+        await sendNewGameEmail({
+          title: product.title,
+          shortPitch: product.tagline || product.description,
+          thumbnail: product.thumbnail || product.image || undefined,
+          link: `${PUBLIC_BASE_URL}/game/${product.slug}`
+        })
+      } catch (newsletterError) {
+        console.error('[NEWSLETTER] Failed to enqueue new game email from API:', newsletterError)
+      }
+    }
 
     // Award XP for game submission
     try {
