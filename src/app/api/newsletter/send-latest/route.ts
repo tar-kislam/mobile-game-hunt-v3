@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       title: latest.title,
       shortPitch: latest.tagline || latest.description,
       thumbnail: latest.thumbnail || latest.image || undefined,
-      link: `${baseUrl}/game/${latest.slug}`,
+      link: `${baseUrl}/product/${latest.slug}`,
     })
 
     return NextResponse.json({ ok: true, result })

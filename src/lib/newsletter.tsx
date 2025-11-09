@@ -36,6 +36,16 @@ const defaultImage = `${baseUrl}/logo/mgh-main.png`
 
 const globalTransporterKey = Symbol.for('mgh.newsletterTransporter')
 
+function toAbsoluteUrl(input?: string | null): string {
+  if (!input || input.trim().length === 0) return defaultImage
+  const url = input.trim()
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  if (url.startsWith('//')) return `https:${url}`
+  if (url.startsWith('/')) return `${baseUrl}${url}`
+  // Already some absolute or external scheme; return as-is
+  return url
+}
+
 type ProductRecord = {
   id: string
   title: string
@@ -166,8 +176,8 @@ export async function getWeeklyTopGames(): Promise<WeeklyGame[]> {
     pitch:
       product?.tagline ??
       (product?.description ? `${product.description.slice(0, 140)}${product.description.length > 140 ? '…' : ''}` : ''),
-    image: product?.thumbnail || product?.image || defaultImage,
-    link: `${baseUrl}/game/${product?.slug}`,
+    image: toAbsoluteUrl(product?.thumbnail || product?.image || defaultImage),
+    link: `${baseUrl}/product/${product?.slug}`,
   }))
 }
 
@@ -273,7 +283,7 @@ export async function sendNewGameEmail(data: NewGameEmailData, options: WeeklyTo
       data.shortPitch && data.shortPitch.trim().length > 0
         ? data.shortPitch
         : 'Jump in and see why the community is excited about this new release!'
-    const image = data.thumbnail && data.thumbnail.trim().length > 0 ? data.thumbnail : defaultImage
+    const image = toAbsoluteUrl(data.thumbnail && data.thumbnail.trim().length > 0 ? data.thumbnail : defaultImage)
 
     console.log(`[NEWSLETTER] Preparing to send new game announcement for "${data.title}" to ${recipients.length} subscriber(s)`)
 

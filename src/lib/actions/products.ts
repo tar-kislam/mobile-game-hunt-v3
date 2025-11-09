@@ -149,7 +149,7 @@ export async function createProductAction(data: ProductFullInput) {
         title: product.title,
         shortPitch: product.tagline || product.description,
         thumbnail: product.thumbnail || product.image || undefined,
-        link: `${PUBLIC_BASE_URL}/game/${product.slug}`,
+        link: `${PUBLIC_BASE_URL}/product/${product.slug}`,
       })
     } catch (newsletterError) {
       console.error('[NEWSLETTER] Failed to enqueue new game email:', newsletterError)
@@ -974,7 +974,7 @@ export async function updateProductAction(productId: string, data: ProductFullIn
           title: updatedProduct.title,
           shortPitch: updatedProduct.tagline || updatedProduct.description,
           thumbnail: updatedProduct.thumbnail || updatedProduct.image || undefined,
-          link: `${PUBLIC_BASE_URL}/game/${updatedProduct.slug}`
+          link: `${PUBLIC_BASE_URL}/product/${updatedProduct.slug}`
         })
       } catch (newsletterError) {
         console.error('[NEWSLETTER] Failed to enqueue new game email:', newsletterError)
