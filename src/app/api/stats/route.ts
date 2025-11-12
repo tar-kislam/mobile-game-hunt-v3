@@ -22,10 +22,13 @@ export async function GET() {
       ]).then(([productComments, postComments]) => productComments + postComments)
     ])
 
+    const baselineMembers = 150
+    const baselineReviews = 75
+
     return NextResponse.json({
       games,
-      members,
-      reviews
+      members: baselineMembers + members,
+      reviews: baselineReviews + reviews
     })
   } catch (error) {
     console.error('Stats API error:', error)
