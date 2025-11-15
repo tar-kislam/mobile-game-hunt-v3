@@ -1,5 +1,23 @@
 const { PrismaClient } = require('@prisma/client')
 const bcrypt = require('bcryptjs')
+const path = require('path')
+const fs = require('fs')
+
+// Load .env.local if it exists
+const envPath = path.join(__dirname, '..', '.env.local')
+if (fs.existsSync(envPath)) {
+  const envFile = fs.readFileSync(envPath, 'utf8')
+  envFile.split('\n').forEach(line => {
+    const match = line.match(/^([^=:#]+)=(.*)$/)
+    if (match) {
+      const key = match[1].trim()
+      const value = match[2].trim().replace(/^["']|["']$/g, '')
+      if (!process.env[key]) {
+        process.env[key] = value
+      }
+    }
+  })
+}
 
 async function main() {
   const prisma = new PrismaClient()
