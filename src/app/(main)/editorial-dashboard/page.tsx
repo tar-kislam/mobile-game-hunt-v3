@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Download, GamepadIcon, Mail, Star, MessageCircle, TrendingUp } from 'lucide-react'
+import { Download, GamepadIcon, Mail, Star, MessageCircle, TrendingUp, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import DarkVeil from '@/components/DarkVeil'
 
@@ -34,7 +34,13 @@ interface NewsletterSubscriber {
   createdAt: string
 }
 
-type ActiveSection = 'games' | 'newsletter' | 'campaigns'
+interface User {
+  id: string
+  email: string
+  createdAt: string
+}
+
+type ActiveSection = 'games' | 'newsletter' | 'campaigns' | 'users'
 
 interface Campaign {
   id: string
@@ -61,6 +67,7 @@ export default function EditorialDashboard() {
   const [products, setProducts] = useState<Product[]>([])
   const [newsletterSubscribers, setNewsletterSubscribers] = useState<NewsletterSubscriber[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -68,6 +75,7 @@ export default function EditorialDashboard() {
   const [gamesPage, setGamesPage] = useState(1)
   const [newsletterPage, setNewsletterPage] = useState(1)
   const [campaignsPage, setCampaignsPage] = useState(1)
+  const [usersPage, setUsersPage] = useState(1)
   const [bulkEmailLoading, setBulkEmailLoading] = useState(false)
   const [weeklySending, setWeeklySending] = useState(false)
   const [latestSending, setLatestSending] = useState(false)
@@ -83,6 +91,8 @@ export default function EditorialDashboard() {
   const paginatedNewsletter = newsletterSubscribers.slice((newsletterPage - 1) * ITEMS_PER_PAGE, newsletterPage * ITEMS_PER_PAGE)
   const totalCampaignPages = Math.max(1, Math.ceil(campaigns.length / ITEMS_PER_PAGE))
   const paginatedCampaigns = campaigns.slice((campaignsPage - 1) * ITEMS_PER_PAGE, campaignsPage * ITEMS_PER_PAGE)
+  const totalUsersPages = Math.max(1, Math.ceil(users.length / ITEMS_PER_PAGE))
+  const paginatedUsers = users.slice((usersPage - 1) * ITEMS_PER_PAGE, usersPage * ITEMS_PER_PAGE)
 
   // Check admin access
   useEffect(() => {
@@ -106,10 +116,11 @@ export default function EditorialDashboard() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const [gamesRes, newsletterRes, campaignsRes] = await Promise.all([
+        const [gamesRes, newsletterRes, campaignsRes, usersRes] = await Promise.all([
           fetch('/api/admin/games'),
           fetch('/api/admin/newsletter'),
-          fetch('/api/campaigns')
+          fetch('/api/campaigns'),
+          fetch('/api/admin/users')
         ])
 
         if (gamesRes.ok) {
@@ -131,6 +142,13 @@ export default function EditorialDashboard() {
           setCampaigns(campaignsData.campaigns || [])
         } else {
           toast.error('Failed to load campaigns')
+        }
+
+        if (usersRes.ok) {
+          const usersData = await usersRes.json()
+          setUsers(usersData)
+        } else {
+          toast.error('Failed to load users data')
         }
       } catch (error) {
         toast.error('Failed to load data')
@@ -192,6 +210,39 @@ export default function EditorialDashboard() {
       const a = document.createElement('a')
       a.href = url
       a.download = 'newsletter-subscribers.csv'
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      toast.success('CSV downloaded successfully')
+    } catch (error) {
+      console.error('Error downloading CSV:', error)
+      toast.error('Failed to download CSV')
+    }
+  }
+
+  const handleDownloadUsersCSV = () => {
+    try {
+      // Create CSV header
+      const csvHeader = 'Email,Signup Date\n'
+      
+      // Convert users data to CSV rows
+      const csvRows = users.map(user => {
+        const email = user.email
+        const signupDate = new Date(user.createdAt).toLocaleDateString('de-DE') // Format as DD.MM.YYYY
+        return `${email},${signupDate}`
+      }).join('\n')
+      
+      // Combine header and rows
+      const csvContent = csvHeader + csvRows
+      
+      // Create and trigger download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'users.csv'
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -373,6 +424,18 @@ export default function EditorialDashboard() {
                 >
                   <TrendingUp className="w-4 h-4 mr-2" />
                   Advertising Campaigns
+                </Button>
+                <Button
+                  variant={activeSection === 'users' ? 'default' : 'ghost'}
+                  className={`w-full justify-start ${
+                    activeSection === 'users' 
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700' 
+                      : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  }`}
+                  onClick={() => setActiveSection('users')}
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  All Users
                 </Button>
               </CardContent>
             </Card>
@@ -746,6 +809,87 @@ export default function EditorialDashboard() {
                       </div>
                       <span className="text-sm text-gray-400 ml-4">
                         Page {campaignsPage} of {totalCampaignPages}
+                      </span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {activeSection === 'users' && (
+              <Card className="bg-zinc-900/40 backdrop-blur-md border border-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <Users className="w-5 h-5" />
+                      All Users
+                      <span className="text-xs text-gray-400">({users.length})</span>
+                    </CardTitle>
+                    <div className="flex gap-2 flex-wrap">
+                      <Button
+                        onClick={handleDownloadUsersCSV}
+                        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download CSV
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-gray-700">
+                          <TableHead className="text-gray-300">Email</TableHead>
+                          <TableHead className="text-gray-300">Signup Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedUsers.map((user) => (
+                          <TableRow key={user.id} className="border-gray-700">
+                            <TableCell className="text-white">
+                              {user.email}
+                            </TableCell>
+                            <TableCell className="text-gray-300">
+                              {new Date(user.createdAt).toLocaleDateString()}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {users.length > ITEMS_PER_PAGE && (
+                    <div className="mt-6 flex justify-center items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        {usersPage > 1 && (
+                          <button
+                            onClick={() => setUsersPage(usersPage - 1)}
+                            className="h-8 px-3 rounded-md text-sm bg-zinc-800 text-gray-300 hover:bg-zinc-700"
+                          >
+                            Previous
+                          </button>
+                        )}
+                        {Array.from({ length: totalUsersPages }, (_, i) => i + 1).map((p) => (
+                          <button
+                            key={p}
+                            onClick={() => setUsersPage(p)}
+                            className={`h-8 min-w-8 px-2 rounded-md text-sm ${p === usersPage ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-gray-300 hover:bg-zinc-700'}`}
+                          >
+                            {p}
+                          </button>
+                        ))}
+                        {usersPage < totalUsersPages && (
+                          <button
+                            onClick={() => setUsersPage(usersPage + 1)}
+                            className="h-8 px-3 rounded-md text-sm bg-zinc-800 text-gray-300 hover:bg-zinc-700"
+                          >
+                            Next
+                          </button>
+                        )}
+                      </div>
+                      <span className="text-sm text-gray-400 ml-4">
+                        Page {usersPage} of {totalUsersPages}
                       </span>
                     </div>
                   )}
