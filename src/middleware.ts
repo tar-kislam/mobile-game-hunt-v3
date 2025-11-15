@@ -116,6 +116,7 @@ export default withAuth(
           pathname.startsWith('/api/products/by-slug') || // Allow product by slug API
           pathname.startsWith('/api/community') || // Allow community APIs (routes enforce method-level auth)
           pathname.startsWith('/api/playtest') || // Allow playtest API (route handles auth per method)
+          pathname.startsWith('/api/admin') || // Allow admin API (routes enforce admin role check internally)
           pathname.startsWith('/api/user') ||
           pathname.startsWith('/product') ||       // Added product detail pages
           pathname.startsWith('/user/') ||        // Allow username-based profile pages
