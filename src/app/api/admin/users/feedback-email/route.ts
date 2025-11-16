@@ -14,11 +14,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    // Fetch all users with an email
+    // Fetch all users (email is required in schema, but we filter defensively in JS)
     const users = await prisma.user.findMany({
-      where: {
-        email: { not: null },
-      },
       select: {
         email: true,
         name: true,
