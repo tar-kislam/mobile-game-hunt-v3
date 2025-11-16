@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import ShinyText from "@/components/ShinyText";
 import SplashCursor from "@/components/effects/SplashCursor";
 import Particles from "@/components/effects/Particles";
 import { LegalDisclaimer } from "@/components/legal/LegalDisclaimer";
+import { formatStatNumber } from "@/hooks/useAnimatedCounter";
 import { 
   Rocket, 
   Target, 
@@ -19,10 +21,51 @@ import {
   ThumbsUp,
   MessageSquare,
   Trophy,
-  Zap
+  Zap,
+  Image as ImageIcon,
+  PenTool,
+  RefreshCw
 } from "lucide-react";
 
+interface StatsData {
+  games: number;
+  members: number;
+  reviews: number;
+  dailySubmissions: number;
+}
+
 export default function AboutPage() {
+  const [stats, setStats] = useState<StatsData>({
+    games: 100,
+    members: 1000,
+    reviews: 250,
+    dailySubmissions: 50
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/stats', {
+          cache: 'no-store',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
+
+    fetchStats();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
+  }, []);
   return (
     <div className="min-h-screen bg-background relative">
       {/* Particles Background - Same as Landing Page Hero */}
@@ -127,7 +170,7 @@ export default function AboutPage() {
             <div className="rounded-2xl bg-gradient-to-br from-purple-600/20 via-purple-500/10 to-transparent border border-purple-500/30 p-8 shadow-[0_0_30px_rgba(168,85,247,0.3)] hover:shadow-[0_0_40px_rgba(168,85,247,0.5)] transition-all duration-300 transform hover:scale-105">
               <div className="text-center space-y-4">
                 <div className="text-5xl font-bold text-purple-400">
-                  <ShinyText>100+</ShinyText>
+                  <ShinyText>{formatStatNumber(stats.games)}</ShinyText>
                 </div>
                 <p className="text-gray-300">Curated Games</p>
               </div>
@@ -359,9 +402,6 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto animate-fade-in [animation-delay:1000ms] opacity-0 [animation-fill-mode:forwards]">
           <div className="rounded-2xl bg-gradient-to-br from-gray-900/80 via-gray-900/60 to-purple-900/20 border border-purple-500/30 p-8 md:p-12 shadow-[0_0_40px_rgba(168,85,247,0.3)]">
             <div className="text-center space-y-6">
-              <div className="inline-flex p-4 rounded-2xl bg-purple-500/10 backdrop-blur-sm border border-purple-500/20">
-                <Sparkles className="h-10 w-10 text-purple-400" />
-              </div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold">
                 <ShinyText>How to Stand Out</ShinyText>
               </h2>
@@ -370,26 +410,46 @@ export default function AboutPage() {
               </p>
               
               <div className="grid sm:grid-cols-2 gap-6 pt-6 text-left">
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-lg">📸 High-Quality Media</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                      <ImageIcon className="h-5 w-5 text-purple-400" />
+                    </div>
+                    <h4 className="font-semibold text-lg">High-Quality Media</h4>
+                  </div>
                   <p className="text-sm text-gray-400">
                     Use stunning screenshots and engaging gameplay videos.
                   </p>
                 </div>
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-lg">✍️ Compelling Description</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                      <PenTool className="h-5 w-5 text-purple-400" />
+                    </div>
+                    <h4 className="font-semibold text-lg">Compelling Description</h4>
+                  </div>
                   <p className="text-sm text-gray-400">
                     Tell your game&apos;s story and highlight unique features.
                   </p>
                 </div>
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-lg">💬 Engage with Community</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                      <MessageSquare className="h-5 w-5 text-purple-400" />
+                    </div>
+                    <h4 className="font-semibold text-lg">Engage with Community</h4>
+                  </div>
                   <p className="text-sm text-gray-400">
                     Respond to comments and build relationships with players.
                   </p>
                 </div>
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-lg">🔄 Regular Updates</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                      <RefreshCw className="h-5 w-5 text-purple-400" />
+                    </div>
+                    <h4 className="font-semibold text-lg">Regular Updates</h4>
+                  </div>
                   <p className="text-sm text-gray-400">
                     Keep your game page fresh with news and improvements.
                   </p>
@@ -453,25 +513,25 @@ export default function AboutPage() {
           <div className="pt-12 flex flex-wrap justify-center gap-8 md:gap-12 text-center">
             <div className="space-y-1">
               <div className="text-3xl font-bold text-purple-400">
-                <ShinyText>1K+</ShinyText>
+                <ShinyText>{formatStatNumber(stats.members)}</ShinyText>
               </div>
               <p className="text-sm text-gray-400">Community Members</p>
             </div>
             <div className="space-y-1">
               <div className="text-3xl font-bold text-purple-400">
-                <ShinyText>100+</ShinyText>
+                <ShinyText>{formatStatNumber(stats.games)}</ShinyText>
               </div>
               <p className="text-sm text-gray-400">Curated Games</p>
             </div>
             <div className="space-y-1">
               <div className="text-3xl font-bold text-purple-400">
-                <ShinyText>250+</ShinyText>
+                <ShinyText>{formatStatNumber(stats.reviews)}</ShinyText>
               </div>
               <p className="text-sm text-gray-400">User Reviews</p>
             </div>
             <div className="space-y-1">
               <div className="text-3xl font-bold text-purple-400">
-                <ShinyText>50+</ShinyText>
+                <ShinyText>{formatStatNumber(stats.dailySubmissions)}</ShinyText>
               </div>
               <p className="text-sm text-gray-400">Daily Submissions</p>
             </div>
