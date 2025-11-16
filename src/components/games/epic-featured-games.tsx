@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { subDays } from "date-fns"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -68,10 +69,21 @@ function getMainDisplayImage(game: FeaturedGame): string | null {
 }
 
 export function EpicFeaturedGames({ games, onGameClick }: EpicFeaturedGamesProps) {
+  // Only consider games from the last 14 days for the featured calculation.
+  // If there are no games in this window, fall back to all games so the section
+  // never looks completely empty.
+  const twoWeeksAgo = subDays(new Date(), 14)
+  const recentGames = games.filter((g) => {
+    const createdAt = new Date(g.createdAt)
+    return createdAt >= twoWeeksAgo
+  })
+
+  const sourceGames = recentGames.length > 0 ? recentGames : games
+
   // Apply editorial priority logic first, then leaderboard scoring
   const weights = getScoringWeights()
 
-  const scored = [...games].map((g) => {
+  const scored = [...sourceGames].map((g) => {
     const votes = g._count?.votes || 0
     const comments = g._count?.comments || 0
     const follows = g.follows || 0

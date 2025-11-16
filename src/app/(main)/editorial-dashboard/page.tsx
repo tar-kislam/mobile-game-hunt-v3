@@ -79,6 +79,7 @@ export default function EditorialDashboard() {
   const [bulkEmailLoading, setBulkEmailLoading] = useState(false)
   const [weeklySending, setWeeklySending] = useState(false)
   const [latestSending, setLatestSending] = useState(false)
+  const [usersFeedbackSending, setUsersFeedbackSending] = useState(false)
   const ITEMS_PER_PAGE = 10
 
   // Filter products based on search term
@@ -353,6 +354,46 @@ export default function EditorialDashboard() {
       toast.error('Failed to send latest game email')
     } finally {
       setLatestSending(false)
+    }
+  }
+
+  const handleSendUsersFeedbackEmail = async () => {
+    if (usersFeedbackSending) return
+
+    const confirmed = window.confirm(
+      `Send a short feedback email to all ${users.length} users with an email address?\n\n` +
+      `This message will politely thank them for joining Mobile Game Hunt and ask for feedback about what they like, ` +
+      `what feels confusing, and what they would improve.`
+    )
+
+    if (!confirmed) return
+
+    try {
+      setUsersFeedbackSending(true)
+      toast.info('Sending feedback email to all users...')
+
+      const res = await fetch('/api/admin/users/feedback-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const data = await res.json()
+
+      if (res.ok && data?.success) {
+        const r = data.results || {}
+        toast.success(
+          `Feedback email campaign completed: ${r.sent ?? '?'} / ${r.total ?? '?'} sent (failed: ${r.failed ?? 0}).`,
+        )
+      } else {
+        toast.error(data?.error || 'Failed to send feedback emails')
+      }
+    } catch (error) {
+      console.error('Error sending feedback emails:', error)
+      toast.error('Failed to send feedback emails')
+    } finally {
+      setUsersFeedbackSending(false)
     }
   }
 
@@ -826,6 +867,23 @@ export default function EditorialDashboard() {
                       <span className="text-xs text-gray-400">({users.length})</span>
                     </CardTitle>
                     <div className="flex gap-2 flex-wrap">
+                      <Button
+                        onClick={handleSendUsersFeedbackEmail}
+                        disabled={usersFeedbackSending || users.length === 0}
+                        className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {usersFeedbackSending ? (
+                          <>
+                            <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="w-4 h-4 mr-2" />
+                            Send Feedback Email
+                          </>
+                        )}
+                      </Button>
                       <Button
                         onClick={handleDownloadUsersCSV}
                         className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"

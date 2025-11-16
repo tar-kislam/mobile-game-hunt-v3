@@ -789,9 +789,28 @@ export default function HomePage() {
 
                   {/* Trending This Week Section */}
                   <section className="pb-4">
-                    <div className="flex items-center gap-2 mb-4">
-                      <TrendingUpIcon className="h-5 w-5" />
-                      <h3 className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold text-lg">Trending This Week</h3>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <TrendingUpIcon className="h-5 w-5" />
+                        <h3 className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold text-lg">
+                          Trending This Week
+                        </h3>
+                      </div>
+                      {trendingData?.windowStart && trendingData?.windowEnd && (
+                        <span className="text-[11px] text-neutral-500">
+                          {new Date(trendingData.windowStart).toLocaleDateString(undefined, {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                          })}{' '}
+                          -{' '}
+                          {new Date(trendingData.windowEnd).toLocaleDateString(undefined, {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      )}
                     </div>
                     {!trendingData ? (
                       <div className="space-y-3">

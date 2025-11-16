@@ -561,6 +561,141 @@ export async function sendSupportMessageEmail(fromEmail: string, message: string
   }
 }
 
+// User Feedback Email HTML Template
+const getUserFeedbackEmailHTML = (displayName: string) => {
+  const safeName = displayName || 'there'
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>We'd love your feedback</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: #0b0c10;
+      color: #f5f5f5;
+    }
+    .wrapper {
+      width: 100%;
+      padding: 24px 12px;
+      box-sizing: border-box;
+    }
+    .card {
+      max-width: 640px;
+      margin: 0 auto;
+      background: #11131a;
+      border-radius: 16px;
+      padding: 24px 20px 20px;
+      box-sizing: border-box;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    h1 {
+      font-size: 20px;
+      margin: 0 0 12px 0;
+    }
+    p {
+      font-size: 14px;
+      line-height: 1.6;
+      margin: 0 0 12px 0;
+      color: #d1d5db;
+    }
+    .highlight {
+      color: #f97316;
+      font-weight: 600;
+    }
+    .cta {
+      margin: 20px 0 16px;
+      text-align: left;
+    }
+    .cta-button {
+      display: inline-block;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: linear-gradient(135deg,#7c3aed,#ec4899);
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .footer {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+      <p>Hi <span class="highlight">${safeName}</span>,</p>
+      <p>
+        Thanks again for being part of <span class="highlight">Mobile Game Hunt</span>.
+        We're always trying to make the platform better for players and developers.
+      </p>
+      <p>
+        If you have a moment, we'd love to hear what you enjoy, what feels confusing,
+        or what you think is missing – anything that would help us improve your experience.
+      </p>
+      <div class="cta">
+        <a class="cta-button" href="mailto:info@mobilegamehunt.com?subject=Feedback%20for%20Mobile%20Game%20Hunt">
+          Share your thoughts
+        </a>
+      </div>
+      <p>
+        Short or long, every bit of feedback helps us build a better home for mobile games.
+      </p>
+      <p class="footer">
+        Thank you for being with us,<br/>
+        – The Mobile Game Hunt Team
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `
+}
+
+// Send Feedback Email to a single user
+export async function sendUserFeedbackEmail(to: string, displayName?: string | null): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log(`[EMAIL] Sending user feedback email to: ${to}`)
+
+    const transporter = getTransporter()
+    if (!transporter) {
+      const error = 'SMTP not configured'
+      console.error(`[EMAIL] ${error}`)
+      return { success: false, error }
+    }
+
+    const nameForTemplate = displayName && displayName.trim().length > 0 ? displayName.trim() : to.split('@')[0]
+    const html = getUserFeedbackEmailHTML(nameForTemplate)
+    const from = process.env.SMTP_FROM || 'info@mobilegamehunt.com'
+
+    const mailOptions = {
+      from: '"MobileGameHunt" <info@mobilegamehunt.com>',
+      to,
+      subject: "We'd love your feedback about Mobile Game Hunt",
+      html,
+      text: `Hi ${nameForTemplate},\n\nThanks again for being part of Mobile Game Hunt. We'd love to hear what you enjoy, what feels confusing, or what you think is missing – anything that would help us improve your experience.\n\nYou can simply reply to this email or write to info@mobilegamehunt.com.\n\nThank you for being with us,\n– The Mobile Game Hunt Team`,
+    }
+
+    const result = await transporter.sendMail(mailOptions)
+    console.log(`[EMAIL] User feedback email sent successfully to ${to}. MessageId: ${result.messageId || 'N/A'}`)
+
+    return { success: true }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error(`[EMAIL] Failed to send user feedback email to ${to}:`, errorMessage)
+    return { success: false, error: errorMessage }
+  }
+}
+
 // Test Email Configuration
 export async function testEmailConfiguration(): Promise<{ success: boolean; error?: string }> {
   try {
