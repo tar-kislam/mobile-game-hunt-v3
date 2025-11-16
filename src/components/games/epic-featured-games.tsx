@@ -69,21 +69,14 @@ function getMainDisplayImage(game: FeaturedGame): string | null {
 }
 
 export function EpicFeaturedGames({ games, onGameClick }: EpicFeaturedGamesProps) {
-  // Only consider games from the last 14 days for the featured calculation.
-  // If there are no games in this window, fall back to all games so the section
-  // never looks completely empty.
+  // Prefer games from the last 14 days, but always show up to 5 featured games.
+  // If there are not enough recent games, backfill with older top-scoring titles.
   const twoWeeksAgo = subDays(new Date(), 14)
-  const recentGames = games.filter((g) => {
-    const createdAt = new Date(g.createdAt)
-    return createdAt >= twoWeeksAgo
-  })
-
-  const sourceGames = recentGames.length > 0 ? recentGames : games
 
   // Apply editorial priority logic first, then leaderboard scoring
   const weights = getScoringWeights()
 
-  const scored = [...sourceGames].map((g) => {
+  const scored = [...games].map((g) => {
     const votes = g._count?.votes || 0
     const comments = g._count?.comments || 0
     const follows = g.follows || 0
@@ -98,7 +91,9 @@ export function EpicFeaturedGames({ games, onGameClick }: EpicFeaturedGamesProps
       editorialScore = 1000 // High priority - shows before normal games
     }
     
-    return { game: g, finalScore, editorialScore, votes, comments, follows, views }
+    const createdAt = new Date(g.createdAt)
+    
+    return { game: g, finalScore, editorialScore, votes, comments, follows, views, createdAt }
   })
   .sort((a, b) => {
     // First sort by editorial priority
@@ -112,7 +107,13 @@ export function EpicFeaturedGames({ games, onGameClick }: EpicFeaturedGamesProps
     return b.views - a.views
   })
 
-  const featuredGames = scored.map(s => s.game).slice(0, 6)
+  // Split into recent vs older games
+  const recentScored = scored.filter(s => s.createdAt >= twoWeeksAgo)
+  const olderScored = scored.filter(s => s.createdAt < twoWeeksAgo)
+
+  // Prioritize recent, then older as fallback, always up to 5 items
+  const orderedForFeatured = [...recentScored, ...olderScored]
+  const featuredGames = orderedForFeatured.map(s => s.game).slice(0, 5)
 
   if (featuredGames.length === 0) {
     return null
