@@ -52,7 +52,15 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
       if (u.hostname.includes('youtu.be')) {
         id = u.pathname.replace('/', '')
       } else {
-        id = u.searchParams.get('v') || ''
+        // Handle standard watch URLs and Shorts URLs
+        const vParam = u.searchParams.get('v')
+        if (vParam) {
+          id = vParam
+        } else if (u.pathname.startsWith('/shorts/')) {
+          // Example: https://www.youtube.com/shorts/RNH_f-TOf6A
+          const parts = u.pathname.split('/').filter(Boolean)
+          id = parts[1] || parts[0] || ''
+        }
       }
       return id ? `https://www.youtube.com/embed/${id}` : url
     } catch { return url }
