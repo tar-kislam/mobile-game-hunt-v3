@@ -344,10 +344,25 @@ export default function NewSubmitPage({ productId }: { productId?: string } = {}
 
   const handleStepClick = (stepIndex: number) => {
     const targetStep = (stepIndex + 1) as Step
-    // Allow navigation to completed steps or next step if current step is valid
-    if (completedSteps.includes(step) || validateStep(step) || stepIndex < step) {
+    if (targetStep === step) {
+      return
+    }
+
+    // Always allow navigating backwards
+    if (targetStep < step) {
       setStep(targetStep)
-      // Scroll to top when transitioning to clicked step
+      window.scrollTo({ top: 0, behavior: "smooth" })
+      return
+    }
+
+    const currentStepValid = validateStep(step)
+    const targetStepCompleted = completedSteps.includes(targetStep)
+    const immediateNextStep = Math.min(6, step + 1) as Step
+
+    // Allow moving forward only if the current step is valid and
+    // we're moving to the immediate next step or to another step that was previously completed
+    if (currentStepValid && (targetStep === immediateNextStep || targetStepCompleted)) {
+      setStep(targetStep)
       window.scrollTo({ top: 0, behavior: "smooth" })
     }
   }
@@ -361,9 +376,9 @@ export default function NewSubmitPage({ productId }: { productId?: string } = {}
       case 3:
         return canNextFromStep3
       case 4:
-        return !!form.watch('launchType') && !!form.watch('launchDate') && !!form.watch('monetization') && !!form.watch('engine')
+        return canNextFromStep4
       case 5:
-        return (form.watch('gamificationTags') || []).length >= 1 // Require at least 1 gamification tag
+        return canNextFromStep5 // Require at least 1 gamification tag
       case 6:
         return completionPercentage === 100
       default:
@@ -566,15 +581,23 @@ export default function NewSubmitPage({ productId }: { productId?: string } = {}
   const tags = form.watch('tags') || []
   const categories = form.watch('categories') || []
   const platforms = form.watch('platforms') || []
-  const canNextFromStep1 = nameLen > 0 && nameLen <= 40 && taglineLen > 0 && taglineLen <= 60 && descLen >= 260 && tags.length >= 1 && tags.length <= 3 && categories.length >= 1 && categories.length <= 3 && platforms.length >= 1 && !titleExists?.exists && !iosExists && !androidExists
+  const hasAppStoreUrl = !!form.watch('iosUrl') || !!form.watch('androidUrl')
+  const isSoftLaunch = form.watch('launchType') === 'SOFT_LAUNCH'
+  const softLaunchCountries = form.watch('softLaunchCountries') || []
+  const hasSoftLaunchCoverage = !isSoftLaunch || softLaunchCountries.length > 0
+  const hasLaunchBasics = !!form.watch('launchType') && !!form.watch('launchDate') && !!form.watch('monetization') && !!form.watch('engine')
+  const canNextFromStep1 = nameLen > 0 && nameLen <= 40 && taglineLen > 0 && taglineLen <= 60 && descLen >= 260 && tags.length >= 1 && tags.length <= 3 && categories.length >= 1 && categories.length <= 3 && platforms.length >= 1 && hasAppStoreUrl && !titleExists?.exists && !iosExists && !androidExists
   const canNextFromStep2 = !!form.watch('thumbnail') && (form.watch('gallery') || []).length >= 1
   const canNextFromStep3 = (form.watch('makers') || []).length >= 1
+  const canNextFromStep4 = hasLaunchBasics && hasSoftLaunchCoverage
+  const canNextFromStep5 = (form.watch('gamificationTags') || []).length >= 1
 
   // Checklist validation functions
   const checklistValidation = {
     title: !!form.watch('title') && form.watch('title').length > 0,
     tagline: !!form.watch('tagline') && form.watch('tagline').length > 0,
     description: !!form.watch('description') && form.watch('description').length >= 260,
+    appUrls: hasAppStoreUrl,
     thumbnail: !!form.watch('thumbnail'),
     gallery: (form.watch('gallery') || []).length >= 1,
     tags: (form.watch('tags') || []).length >= 1,
@@ -585,6 +608,7 @@ export default function NewSubmitPage({ productId }: { productId?: string } = {}
     launchDate: !!form.watch('launchDate'),
     monetization: !!form.watch('monetization'),
     engine: !!form.watch('engine'),
+    softLaunchCountries: hasSoftLaunchCoverage,
     termsAccepted: !!form.watch('termsAccepted'),
     confirmImagesOwned: !!form.watch('confirmImagesOwned')
   }
@@ -601,14 +625,13 @@ export default function NewSubmitPage({ productId }: { productId?: string } = {}
     if (canNextFromStep1) newCompletedSteps.push(1)
     if (canNextFromStep2) newCompletedSteps.push(2)
     if (canNextFromStep3) newCompletedSteps.push(3)
-    if (!!form.watch('launchType') && !!form.watch('launchDate') && !!form.watch('monetization') && !!form.watch('engine')) {
+    if (canNextFromStep4) {
       newCompletedSteps.push(4)
     }
-    // Step 5 is optional, so we don't mark it as completed automatically
     if (completionPercentage === 100) newCompletedSteps.push(6)
     
     setCompletedSteps(newCompletedSteps)
-  }, [canNextFromStep1, canNextFromStep2, canNextFromStep3, form.watch('launchType'), form.watch('launchDate'), form.watch('monetization'), form.watch('engine'), completionPercentage])
+  }, [canNextFromStep1, canNextFromStep2, canNextFromStep3, canNextFromStep4, completionPercentage])
 
   // Platform options for multi-select
   const platformOptions = PLATFORMS.map(p => ({
@@ -2061,7 +2084,9 @@ export default function NewSubmitPage({ productId }: { productId?: string } = {}
                         disabled={
                           (step===1 && !canNextFromStep1) || 
                           (step===2 && !canNextFromStep2) || 
-                          (step===3 && !canNextFromStep3)
+                          (step===3 && !canNextFromStep3) ||
+                          (step===4 && !canNextFromStep4) ||
+                          (step===5 && !canNextFromStep5)
                         }
                       >
                         Next step: {
