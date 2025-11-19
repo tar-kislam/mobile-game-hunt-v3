@@ -11,7 +11,7 @@ import {
   CarouselPrevious,
   type CarouselApi
 } from "@/components/ui/carousel"
-import { PlayIcon } from "lucide-react"
+import { PlayIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
 
 interface MediaCarouselProps {
@@ -31,6 +31,7 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
     src: string
     type: "image" | "gif"
     orientation: "portrait" | "landscape" | "square"
+    mediaIndex: number
   }
   const [fullscreenMedia, setFullscreenMedia] = useState<FullscreenMedia | null>(null)
   
@@ -173,35 +174,68 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
     }
   }, [fullscreenMedia])
 
-  const handleMediaClick = (media: { type: string; src: string }) => {
-    if (media.type === "image" || media.type === "gif") {
-      const initialOrientation: FullscreenMedia["orientation"] = "landscape"
-      const basePayload: FullscreenMedia = { src: media.src, type: media.type as "image" | "gif", orientation: initialOrientation }
-      setFullscreenMedia(basePayload)
+  const openFullscreenMedia = (mediaIndex: number) => {
+    const media = mediaItems[mediaIndex]
+    if (!media || (media.type !== "image" && media.type !== "gif")) return
 
-      if (typeof window !== "undefined") {
-        const probe = new window.Image()
-        probe.onload = () => {
-          const { naturalWidth, naturalHeight } = probe
-          const orientation: FullscreenMedia["orientation"] =
-            naturalWidth === naturalHeight
-              ? "square"
-              : naturalHeight > naturalWidth
-                ? "portrait"
-                : "landscape"
+    const basePayload: FullscreenMedia = {
+      src: media.src,
+      type: media.type,
+      orientation: "landscape",
+      mediaIndex
+    }
+    setFullscreenMedia(basePayload)
 
-          setFullscreenMedia((current) => {
-            if (!current || current.src !== media.src) return current
-            return { ...current, orientation }
-          })
-        }
-        probe.onerror = () => {
-          setFullscreenMedia((current) => current)
-        }
-        probe.src = media.src
+    if (typeof window !== "undefined") {
+      const probe = new window.Image()
+      probe.onload = () => {
+        const { naturalWidth, naturalHeight } = probe
+        const orientation: FullscreenMedia["orientation"] =
+          naturalWidth === naturalHeight
+            ? "square"
+            : naturalHeight > naturalWidth
+              ? "portrait"
+              : "landscape"
+
+        setFullscreenMedia(current => {
+          if (!current || current.mediaIndex !== mediaIndex) return current
+          return { ...current, orientation }
+        })
       }
+      probe.onerror = () => {}
+      probe.src = media.src
     }
   }
+
+  const handleMediaClick = (media: { type: string; src: string }, index: number) => {
+    if (media.type === "image" || media.type === "gif") {
+      openFullscreenMedia(index)
+    }
+  }
+
+  const findNextMediaIndex = (startIndex: number, direction: 1 | -1): number | null => {
+    const total = mediaItems.length
+    if (total === 0) return null
+    let idx = startIndex
+    for (let i = 0; i < total; i++) {
+      idx = (idx + direction + total) % total
+      const candidate = mediaItems[idx]
+      if (candidate && (candidate.type === "image" || candidate.type === "gif")) {
+        return idx
+      }
+    }
+    return null
+  }
+
+  const stepFullscreen = (direction: 1 | -1) => {
+    if (!fullscreenMedia) return
+    const nextIndex = findNextMediaIndex(fullscreenMedia.mediaIndex, direction)
+    if (nextIndex !== null && nextIndex !== fullscreenMedia.mediaIndex) {
+      openFullscreenMedia(nextIndex)
+    }
+  }
+
+  const fullscreenEligibleCount = mediaItems.filter(item => item.type === "image" || item.type === "gif").length
 
   const fullscreenOrientation = fullscreenMedia?.orientation ?? "landscape"
   const fullscreenContainerClass =
@@ -255,7 +289,7 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
                 ) : media.type === 'gif' ? (
                   <div
                     className={`relative w-full h-full group cursor-zoom-in ${phoneBackdropClass}`}
-                    onClick={() => handleMediaClick(media)}
+                    onClick={() => handleMediaClick(media, index)}
                   >
                     <div className={phoneInnerClass}>
                       {media.src.startsWith('/') ? (
@@ -289,7 +323,7 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
                 ) : media.type === 'image' ? (
                   <div
                     className={`relative w-full h-full group cursor-zoom-in ${phoneBackdropClass}`}
-                    onClick={() => handleMediaClick(media)}
+                    onClick={() => handleMediaClick(media, index)}
                   >
                     <div className={phoneInnerClass}>
                       {media.src.startsWith('/') ? (
@@ -407,6 +441,7 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
               exit={{ scale: 0.97, opacity: 0 }}
               transition={{ type: "spring", stiffness: 220, damping: 18 }}
               className={fullscreenContainerClass}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/5 via-white/0 to-white/5 blur-xl opacity-30 pointer-events-none" />
               <div className="relative flex items-center justify-center w-full h-full rounded-3xl border border-white/15 bg-black/60 backdrop-blur-md p-4">
@@ -427,6 +462,31 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
                       className="object-contain"
                     />
                   </div>
+                )}
+
+                {fullscreenEligibleCount > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        stepFullscreen(-1)
+                      }}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 p-3 text-white transition-colors"
+                    >
+                      <ChevronLeftIcon className="w-5 h-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        stepFullscreen(1)
+                      }}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 p-3 text-white transition-colors"
+                    >
+                      <ChevronRightIcon className="w-5 h-5" />
+                    </button>
+                  </>
                 )}
               </div>
             </motion.div>
