@@ -642,12 +642,12 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                     
                     {/* Input area with integrated Tron-style button */}
                     <div className="relative border border-cyan-500/30 rounded-lg bg-black/40 overflow-hidden group/input focus-within:border-cyan-400/60 transition-all duration-300">
-                      <Textarea
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        placeholder="What do you think? Share your thoughts..."
+                  <Textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="What do you think? Share your thoughts..."
                         className="w-full pr-16 min-h-[120px] bg-transparent border-0 text-white placeholder:text-gray-500 focus:ring-0 focus:outline-none resize-none"
-                      />
+                  />
                       
                       {/* Tron-style integrated button */}
                       <div className="absolute bottom-2 right-2">
@@ -669,7 +669,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                           {/* Icon with neon effect */}
                           <Send className="relative z-10 w-4 h-4 text-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.5)] transition-all duration-300 group-hover/btn:text-cyan-300 group-hover/btn:drop-shadow-[0_0_8px_rgba(6,182,212,0.8)] group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
                           <span className="sr-only">Post Comment</span>
-                        </Button>
+                  </Button>
                       </div>
                       
                       {/* Bottom accent line that extends from button */}

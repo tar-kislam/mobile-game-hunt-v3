@@ -47,3 +47,4 @@ export async function getProductViewSummary(gameId: string, days = 30) {
   }
 }
 
+
