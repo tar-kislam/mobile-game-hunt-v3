@@ -27,7 +27,12 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
   const [current, setCurrent] = useState(0)
   const [count, setCount] = useState(0)
   const [isPortraitMedia, setIsPortraitMedia] = useState(false)
-  const [fullscreenMedia, setFullscreenMedia] = useState<{ src: string; type: "image" | "gif" } | null>(null)
+  type FullscreenMedia = {
+    src: string
+    type: "image" | "gif"
+    orientation: "portrait" | "landscape" | "square"
+  }
+  const [fullscreenMedia, setFullscreenMedia] = useState<FullscreenMedia | null>(null)
   
   // Helpers
   const isValidImageUrl = (url: string): boolean => {
@@ -170,9 +175,41 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
 
   const handleMediaClick = (media: { type: string; src: string }) => {
     if (media.type === "image" || media.type === "gif") {
-      setFullscreenMedia({ src: media.src, type: media.type })
+      const initialOrientation: FullscreenMedia["orientation"] = "landscape"
+      const basePayload: FullscreenMedia = { src: media.src, type: media.type as "image" | "gif", orientation: initialOrientation }
+      setFullscreenMedia(basePayload)
+
+      if (typeof window !== "undefined") {
+        const probe = new window.Image()
+        probe.onload = () => {
+          const { naturalWidth, naturalHeight } = probe
+          const orientation: FullscreenMedia["orientation"] =
+            naturalWidth === naturalHeight
+              ? "square"
+              : naturalHeight > naturalWidth
+                ? "portrait"
+                : "landscape"
+
+          setFullscreenMedia((current) => {
+            if (!current || current.src !== media.src) return current
+            return { ...current, orientation }
+          })
+        }
+        probe.onerror = () => {
+          setFullscreenMedia((current) => current)
+        }
+        probe.src = media.src
+      }
     }
   }
+
+  const fullscreenOrientation = fullscreenMedia?.orientation ?? "landscape"
+  const fullscreenContainerClass =
+    fullscreenOrientation === "portrait"
+      ? "relative w-full max-w-[420px] h-[90vh]"
+      : fullscreenOrientation === "square"
+        ? "relative w-full max-w-4xl h-[85vh]"
+        : "relative w-full max-w-5xl h-[75vh]"
 
   const cardAspectClass = "aspect-video"
   const phoneBackdropClass = shouldUsePhoneLayout
@@ -365,29 +402,33 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
             onClick={() => setFullscreenMedia(null)}
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
+              initial={{ scale: 0.97, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 260, damping: 20 }}
-              className="w-full max-w-4xl"
+              exit={{ scale: 0.97, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 220, damping: 18 }}
+              className={fullscreenContainerClass}
             >
-              {fullscreenMedia.src.startsWith('/') ? (
-                <img
-                  src={fullscreenMedia.src}
-                  alt={`${title} fullscreen`}
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <Image
-                  src={fullscreenMedia.src}
-                  alt={`${title} fullscreen`}
-                  width={1600}
-                  height={900}
-                  className="w-full h-full object-contain"
-                  sizes="100vw"
-                  priority
-                />
-              )}
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/5 via-white/0 to-white/5 blur-xl opacity-30 pointer-events-none" />
+              <div className="relative flex items-center justify-center w-full h-full rounded-3xl border border-white/15 bg-black/60 backdrop-blur-md p-4">
+                {fullscreenMedia.src.startsWith('/') ? (
+                  <img
+                    src={fullscreenMedia.src}
+                    alt={`${title} fullscreen`}
+                    className="max-h-full max-w-full object-contain"
+                  />
+                ) : (
+                  <div className="relative w-full h-full">
+                    <Image
+                      src={fullscreenMedia.src}
+                      alt={`${title} fullscreen`}
+                      fill
+                      sizes="100vw"
+                      priority
+                      className="object-contain"
+                    />
+                  </div>
+                )}
+              </div>
             </motion.div>
           </motion.div>
         )}
