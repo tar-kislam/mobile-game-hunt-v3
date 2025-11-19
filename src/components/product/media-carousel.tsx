@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Image from "next/image"
-import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { 
   Carousel, 
@@ -12,7 +11,8 @@ import {
   CarouselPrevious,
   type CarouselApi
 } from "@/components/ui/carousel"
-import { ChevronLeftIcon, ChevronRightIcon, PlayIcon } from "lucide-react"
+import { PlayIcon } from "lucide-react"
+import { AnimatePresence, motion } from "framer-motion"
 
 interface MediaCarouselProps {
   images: string[]
@@ -26,6 +26,8 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
   const [api, setApi] = useState<CarouselApi>()
   const [current, setCurrent] = useState(0)
   const [count, setCount] = useState(0)
+  const [isPortraitMedia, setIsPortraitMedia] = useState(false)
+  const [fullscreenMedia, setFullscreenMedia] = useState<{ src: string; type: "image" | "gif" } | null>(null)
   
   // Helpers
   const isValidImageUrl = (url: string): boolean => {
@@ -71,6 +73,16 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
 
   // Get valid gallery images
   const validImages = (images || []).filter(img => img && img.trim() !== '' && isValidImageUrl(img))
+
+  const primaryImageSrc = useMemo(() => {
+    if (validImages.length > 0) {
+      return validImages[0]
+    }
+    if (mainImage && mainImage.trim() !== '' && isValidImageUrl(mainImage)) {
+      return mainImage
+    }
+    return null
+  }, [validImages, mainImage])
   
   // Add first gallery image as main image (if available)
   if (validImages.length > 0) {
@@ -118,6 +130,59 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
 
   const goToSlide = (index: number) => api?.scrollTo(index)
 
+  // Measure primary image orientation
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (!primaryImageSrc) {
+      setIsPortraitMedia(false)
+      return
+    }
+    const img = new window.Image()
+    const handleLoad = () => {
+      setIsPortraitMedia(img.naturalHeight > img.naturalWidth)
+    }
+    img.onload = handleLoad
+    img.onerror = () => setIsPortraitMedia(false)
+    img.src = primaryImageSrc
+    return () => {
+      img.onload = null
+      img.onerror = null
+    }
+  }, [primaryImageSrc])
+
+  const shouldUsePhoneLayout = isPortraitMedia
+
+  useEffect(() => {
+    if (!fullscreenMedia) return
+    const previousOverflow = document.body.style.overflow
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setFullscreenMedia(null)
+      }
+    }
+    document.body.style.overflow = "hidden"
+    window.addEventListener("keydown", handleKeydown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener("keydown", handleKeydown)
+    }
+  }, [fullscreenMedia])
+
+  const handleMediaClick = (media: { type: string; src: string }) => {
+    if (media.type === "image" || media.type === "gif") {
+      setFullscreenMedia({ src: media.src, type: media.type })
+    }
+  }
+
+  const cardAspectClass = "aspect-video"
+  const phoneBackdropClass = shouldUsePhoneLayout
+    ? "flex items-center justify-center h-full w-full px-10"
+    : ""
+  const phoneInnerClass = shouldUsePhoneLayout
+    ? "relative mx-auto aspect-[9/16] h-full max-h-[520px] w-full max-w-[320px] rounded-[28px] overflow-hidden border border-white/10 bg-black shadow-[0_10px_40px_rgba(0,0,0,0.55)]"
+    : "relative w-full h-full"
+  const imageFitClass = shouldUsePhoneLayout ? "object-contain" : "object-cover"
+
   return (
     <div className="w-full space-y-4">
       {/* Main Media Carousel */}
@@ -125,7 +190,9 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
         <CarouselContent>
           {mediaItems.map((media, index) => (
             <CarouselItem key={index}>
-              <Card className="relative aspect-video overflow-hidden rounded-2xl bg-gradient-to-br from-purple-100 to-blue-100 dark:from-gray-800 dark:to-gray-900">
+              <Card
+                className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-100 to-blue-100 dark:from-gray-800 dark:to-gray-900 ${cardAspectClass}`}
+              >
                 {media.type === 'youtube' ? (
                   <div className="relative w-full h-full">
                     <iframe
@@ -149,65 +216,73 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
                     <div className="absolute top-4 left-4"><span className="bg-black/70 text-white px-2 py-1 rounded-lg text-xs font-medium">Video</span></div>
                   </div>
                 ) : media.type === 'gif' ? (
-                  <div className="relative w-full h-full group">
-                    {media.src.startsWith('/') ? (
-                      <img
-                        src={media.src}
-                        alt={`${title} - Gameplay GIF`}
-                        className="w-full h-full object-cover"
-                        onError={(e)=>{(e.currentTarget as HTMLImageElement).src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='24'%3E%F0%9F%8E%AE%20Gameplay%20GIF%3C/text%3E%3C/svg%3E"}}
-                      />
-                    ) : (
-                      <Image
-                        src={media.src}
-                        alt={`${title} - Gameplay GIF`}
-                        width={800}
-                        height={600}
-                        loading="lazy"
-                        className="object-cover transition-transform duration-300 group-hover:scale-105 w-full h-full"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
-                        placeholder="blur"
-                        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          ;(target as any).onerror = null
-                          target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='24'%3E%F0%9F%8E%AE%20Gameplay%20GIF%3C/text%3E%3C/svg%3E"
-                        }}
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                    <div className="absolute top-4 left-4"><span className="bg-black/70 text-white px-2 py-1 rounded-lg text-xs font-medium">Gameplay GIF</span></div>
+                  <div
+                    className={`relative w-full h-full group cursor-zoom-in ${phoneBackdropClass}`}
+                    onClick={() => handleMediaClick(media)}
+                  >
+                    <div className={phoneInnerClass}>
+                      {media.src.startsWith('/') ? (
+                        <img
+                          src={media.src}
+                          alt={`${title} - Gameplay GIF`}
+                          className={`absolute inset-0 w-full h-full ${imageFitClass}`}
+                          onError={(e)=>{(e.currentTarget as HTMLImageElement).src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='24'%3E%F0%9F%8E%AE%20Gameplay%20GIF%3C/text%3E%3C/svg%3E"}}
+                        />
+                      ) : (
+                        <Image
+                          src={media.src}
+                          alt={`${title} - Gameplay GIF`}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
+                          loading="lazy"
+                          className={`${imageFitClass} transition-transform duration-300 group-hover:scale-105`}
+                          placeholder="blur"
+                          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            ;(target as any).onerror = null
+                            target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='24'%3E%F0%9F%8E%AE%20Gameplay%20GIF%3C/text%3E%3C/svg%3E"
+                          }}
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                      <div className="absolute top-4 left-4"><span className="bg-black/70 text-white px-2 py-1 rounded-lg text-xs font-medium">Gameplay GIF</span></div>
+                    </div>
                   </div>
                 ) : media.type === 'image' ? (
-                  <div className="relative w-full h-full group">
-                    {media.src.startsWith('/') ? (
-                      <img
-                        src={media.src}
-                        alt={`${title} - Image ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        onError={(e)=>{(e.currentTarget as HTMLImageElement).src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='24'%3E%F0%9F%8E%AE%20Game%20Image%3C/text%3E%3C/svg%3E"}}
-                      />
-                    ) : (
-                      <Image
-                        src={media.src}
-                        alt={`${title} - Image ${index + 1}`}
-                        width={800}
-                        height={600}
-                        loading={index === 0 ? "eager" : "lazy"}
-                        className="object-cover transition-transform duration-300 group-hover:scale-105 w-full h-full"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
-                        priority={index === 0}
-                        quality={85}
-                        placeholder="blur"
-                        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          ;(target as any).onerror = null
-                          target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='24'%3E%F0%9F%8E%AE%20Game%20Image%3C/text%3E%3C/svg%3E"
-                        }}
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                  <div
+                    className={`relative w-full h-full group cursor-zoom-in ${phoneBackdropClass}`}
+                    onClick={() => handleMediaClick(media)}
+                  >
+                    <div className={phoneInnerClass}>
+                      {media.src.startsWith('/') ? (
+                        <img
+                          src={media.src}
+                          alt={`${title} - Image ${index + 1}`}
+                          className={`absolute inset-0 w-full h-full ${imageFitClass}`}
+                          onError={(e)=>{(e.currentTarget as HTMLImageElement).src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='24'%3E%F0%9F%8E%AE%20Game%20Image%3C/text%3E%3C/svg%3E"}}
+                        />
+                      ) : (
+                        <Image
+                          src={media.src}
+                          alt={`${title} - Image ${index + 1}`}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
+                          loading={index === 0 ? "eager" : "lazy"}
+                          priority={index === 0}
+                          quality={85}
+                          className={`${imageFitClass} transition-transform duration-300 group-hover:scale-105`}
+                          placeholder="blur"
+                          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            ;(target as any).onerror = null
+                            target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='24'%3E%F0%9F%8E%AE%20Game%20Image%3C/text%3E%3C/svg%3E"
+                          }}
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                    </div>
                   </div>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
@@ -279,6 +354,44 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
           </div>
         </div>
       )}
+
+      <AnimatePresence>
+        {fullscreenMedia && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 cursor-zoom-out"
+            onClick={() => setFullscreenMedia(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20 }}
+              className="w-full max-w-4xl"
+            >
+              {fullscreenMedia.src.startsWith('/') ? (
+                <img
+                  src={fullscreenMedia.src}
+                  alt={`${title} fullscreen`}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <Image
+                  src={fullscreenMedia.src}
+                  alt={`${title} fullscreen`}
+                  width={1600}
+                  height={900}
+                  className="w-full h-full object-contain"
+                  sizes="100vw"
+                  priority
+                />
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
