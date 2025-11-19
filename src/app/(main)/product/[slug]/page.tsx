@@ -10,6 +10,7 @@ import dynamicImport from 'next/dynamic'
 import { ChevronLeftIcon } from 'lucide-react'
 import Link from 'next/link'
 import { generateProductJsonLd, generateBreadcrumbJsonLd } from '@/lib/seo'
+import { getProductViewSummary } from '@/lib/metrics/getProductViews'
 
 // Dynamic import for large component to improve initial load
 const EnhancedProductDetail = dynamicImport(
@@ -123,6 +124,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound()
   }
 
+  const viewSummary = await getProductViewSummary(productData.id)
+
   // Convert Date objects to strings for the component
   const product = {
     ...productData,
@@ -134,6 +137,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     promoExpiry: productData.promoExpiry?.toISOString() || null,
     playtestExpiry: productData.playtestExpiry?.toISOString() || null,
     languages: productData.languages ? (typeof productData.languages === 'string' ? JSON.parse(productData.languages) : productData.languages) : null,
+    viewCount: viewSummary.totalViews
   }
 
   // Get session for vote status

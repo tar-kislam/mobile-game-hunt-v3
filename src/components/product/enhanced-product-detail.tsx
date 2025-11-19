@@ -139,6 +139,7 @@ interface Product {
   }> | null;
   studioName?: string | null;
   countries?: string[] | null;
+  viewCount?: number;
 }
 
 interface EnhancedProductDetailProps {
@@ -152,6 +153,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
   const [isNotifying, setIsNotifying] = useState(false);
   const [followCount, setFollowCount] = useState(product.follows);
   const [clickCount, setClickCount] = useState(product.clicks);
+  const [viewCount, setViewCount] = useState(product.viewCount ?? product.clicks);
   const [newComment, setNewComment] = useState('');
   const [comments, setComments] = useState<any[]>([]);
   const [productVotes, setProductVotes] = useState(product._count.votes);
@@ -216,6 +218,24 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
       }).catch(() => {})
     }
   }, [product?.id])
+
+  // Fetch view count from metrics table (same as dashboard)
+  useEffect(() => {
+    const fetchViewCount = async () => {
+      try {
+        const response = await fetch(`/api/products/${product.id}/views`);
+        if (response.ok) {
+          const data = await response.json();
+          const totalViews = data.totalViews ?? product.clicks;
+          setViewCount(totalViews);
+        }
+      } catch (error) {
+        console.warn('Failed to fetch view count from metrics:', error);
+        // Keep using product.clicks as fallback
+      }
+    };
+    fetchViewCount();
+  }, [product.id, product.clicks])
 
 
   const checkFollowStatus = async () => {
@@ -611,18 +631,53 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
             <CardContent className="space-y-6">
               {/* Add Comment */}
               {session ? (
-                <div className="space-y-3">
-                  <Textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="What do you think? Share your thoughts..."
-                    className="rounded-xl border-border focus:ring-2 focus:ring-ring min-h-[100px]"
-                  />
-                  <div className="flex justify-end">
-                  <Button onClick={handleCommentSubmit} className="rounded-full px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                    <Send className="w-4 h-4 mr-2" />
-                    Post Comment
-                  </Button>
+                <div className="group relative">
+                  {/* Tron-style container with grid lines effect */}
+                  <div className="relative rounded-lg border border-cyan-500/30 bg-gradient-to-br from-gray-900/50 to-black/80 p-4 shadow-[0_0_20px_rgba(6,182,212,0.15)] transition-all duration-300 hover:border-cyan-400/50 hover:shadow-[0_0_30px_rgba(6,182,212,0.25)]">
+                    {/* Animated corner accents */}
+                    <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-cyan-400/60 opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-cyan-400/60 opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-cyan-400/60 opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-cyan-400/60 opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
+                    
+                    {/* Input area with integrated Tron-style button */}
+                    <div className="relative border border-cyan-500/30 rounded-lg bg-black/40 overflow-hidden group/input focus-within:border-cyan-400/60 transition-all duration-300">
+                      <Textarea
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="What do you think? Share your thoughts..."
+                        className="w-full pr-16 min-h-[120px] bg-transparent border-0 text-white placeholder:text-gray-500 focus:ring-0 focus:outline-none resize-none"
+                      />
+                      
+                      {/* Tron-style integrated button */}
+                      <div className="absolute bottom-2 right-2">
+                        <Button
+                          onClick={handleCommentSubmit}
+                          disabled={!newComment.trim()}
+                          aria-label="Post comment"
+                          className="group/btn relative h-9 w-9 rounded border border-cyan-500/60 bg-black/80 backdrop-blur-sm transition-all duration-300 hover:border-cyan-400 hover:bg-black/90 disabled:opacity-30 disabled:cursor-not-allowed overflow-hidden"
+                        >
+                          {/* Tron corner accents */}
+                          <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-cyan-400/80 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
+                          <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-cyan-400/80 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
+                          <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-cyan-400/80 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
+                          <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-cyan-400/80 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
+                          
+                          {/* Subtle inner glow */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
+                          
+                          {/* Icon with neon effect */}
+                          <Send className="relative z-10 w-4 h-4 text-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.5)] transition-all duration-300 group-hover/btn:text-cyan-300 group-hover/btn:drop-shadow-[0_0_8px_rgba(6,182,212,0.8)] group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
+                          <span className="sr-only">Post Comment</span>
+                        </Button>
+                      </div>
+                      
+                      {/* Bottom accent line that extends from button */}
+                      <div className="absolute bottom-0 right-12 left-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/0 to-cyan-400/30 group-hover/input:via-cyan-400/40 transition-all duration-500" />
+                    </div>
+                    
+                    {/* Bottom accent line that animates on focus */}
+                    <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400/0 to-transparent group-hover:via-cyan-400/60 transition-all duration-500" />
                   </div>
                 </div>
               ) : (
@@ -944,7 +999,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                 <div className="flex items-center gap-2">
                   <Eye className="w-4 h-4 text-green-400" />
                   <span className="text-gray-600 dark:text-gray-400">Views</span>
-                  <span className="font-semibold">{clickCount}</span>
+                  <span className="font-semibold">{viewCount}</span>
                 </div>
               </div>
               

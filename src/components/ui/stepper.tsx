@@ -1,4 +1,4 @@
-import React, { useState, Children, useRef, useLayoutEffect, HTMLAttributes, ReactNode } from 'react';
+import React, { useState, Children, useRef, useLayoutEffect, useEffect, HTMLAttributes, ReactNode } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 
 interface StepperProps extends HTMLAttributes<HTMLDivElement> {
@@ -46,6 +46,15 @@ export default function Stepper({
   const isCompleted = currentStep > totalSteps;
   const isLastStep = currentStep === totalSteps;
 
+  // Sync internal state with initialStep prop changes (for smooth transitions)
+  useEffect(() => {
+    if (initialStep !== currentStep && initialStep >= 1 && initialStep <= totalSteps) {
+      const newDirection = initialStep > currentStep ? 1 : -1;
+      setDirection(newDirection);
+      setCurrentStep(initialStep);
+    }
+  }, [initialStep, currentStep, totalSteps]);
+
   const updateStep = (newStep: number) => {
     setCurrentStep(newStep);
     if (newStep > totalSteps) {
@@ -76,13 +85,13 @@ export default function Stepper({
 
   return (
     <div
-      className="flex min-h-full flex-1 flex-col items-center justify-center p-4"
+      className="flex min-h-full flex-1 flex-col items-center justify-center p-2 sm:p-3 md:p-4"
       {...rest}
     >
       <div
-        className={`mx-auto w-full max-w-4xl rounded-2xl shadow-xl bg-gray-800/50 border border-purple-500/20 ${stepCircleContainerClassName}`}
+        className={`mx-auto w-full max-w-4xl rounded-xl sm:rounded-2xl shadow-xl bg-gray-800/50 border border-purple-500/20 ${stepCircleContainerClassName}`}
       >
-        <div className={`${stepContainerClassName} flex w-full items-center p-6`}>
+        <div className={`${stepContainerClassName} flex w-full items-center p-3 sm:p-4 md:p-6`}>
           {stepsArray.map((_, index) => {
             const stepNumber = index + 1;
             const isNotLastStep = index < totalSteps - 1;
@@ -124,7 +133,7 @@ export default function Stepper({
         </StepContentWrapper>
 
         {!isCompleted && (
-          <div className={`px-6 pb-6 ${footerClassName}`}>
+          <div className={`px-6 pb-6 ${footerClassName} hidden md:block`}>
             <div className={`mt-6 flex ${currentStep !== 1 ? 'justify-between' : 'justify-end'}`}>
               {currentStep !== 1 && (
                 <button
@@ -242,7 +251,7 @@ interface StepProps {
 }
 
 export function Step({ children }: StepProps) {
-  return <div className="px-6 py-8">{children}</div>;
+  return <div className="px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-8">{children}</div>;
 }
 
 interface StepIndicatorProps {
@@ -275,14 +284,14 @@ function StepIndicator({ step, currentStep, onClickStep, disableStepIndicators =
           complete: { scale: 1, backgroundColor: '#8b5cf6', color: '#3b82f6' }
         }}
         transition={{ duration: 0.3 }}
-        className="flex h-10 w-10 items-center justify-center rounded-full font-semibold border-2 border-gray-600"
+        className="flex h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 items-center justify-center rounded-full font-semibold border-2 border-gray-600"
       >
         {status === 'complete' ? (
-          <CheckIcon className="h-5 w-5 text-white" />
+          <CheckIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-white" />
         ) : status === 'active' ? (
-          <div className="h-4 w-4 rounded-full bg-white" />
+          <div className="h-2.5 w-2.5 sm:h-3 sm:w-3 md:h-4 md:w-4 rounded-full bg-white" />
         ) : (
-          <span className="text-sm text-gray-300">{step}</span>
+          <span className="text-xs sm:text-xs md:text-sm text-gray-300">{step}</span>
         )}
       </motion.div>
     </motion.div>
@@ -300,7 +309,7 @@ function StepConnector({ isComplete }: StepConnectorProps) {
   };
 
   return (
-    <div className="relative mx-4 h-0.5 flex-1 overflow-hidden rounded bg-gray-600">
+    <div className="relative mx-1.5 sm:mx-2 md:mx-4 h-0.5 flex-1 overflow-hidden rounded bg-gray-600">
       <motion.div
         className="absolute left-0 top-0 h-full"
         variants={lineVariants}
