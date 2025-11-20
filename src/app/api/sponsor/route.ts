@@ -24,6 +24,13 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const gameId = searchParams.get('gameId')
     const now = Date.now()
+    if (!redisClient) {
+      return NextResponse.json(
+        gameId
+          ? { sponsored: false, sponsor: null, cacheDisabled: true }
+          : { sponsors: [], cacheDisabled: true },
+      )
+    }
     const raw = await redisClient.get(KEY_ALL)
     const list: SponsorRecord[] = raw ? JSON.parse(raw) : []
     const active = list.filter(r => now >= r.startsAt && now <= r.endsAt)
@@ -42,6 +49,9 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions as any)
     if (!session || (session as any).user?.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    if (!redisClient) {
+      return NextResponse.json({ error: 'Sponsorship cache is disabled' }, { status: 503 })
     }
     const schema = z.object({
       gameId: z.string().min(1),

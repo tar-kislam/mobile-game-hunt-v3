@@ -121,6 +121,18 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'mobilegamehunt.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.mobilegamehunt.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 
