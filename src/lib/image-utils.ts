@@ -34,13 +34,12 @@ export function getSiteBaseUrl() {
   return DEFAULT_BASE_URL;
 }
 
-export function toAbsoluteUrl(
-  pathOrUrl?: string | null,
-  fallback: string = FALLBACK_OG_IMAGE,
-) {
+const isBrowser = typeof window !== "undefined";
+
+export function toAbsoluteUrl(pathOrUrl?: string | null, fallback: string = FALLBACK_OG_IMAGE) {
   const candidate = pathOrUrl?.trim();
   if (!candidate) {
-    return `${DEFAULT_BASE_URL}${ensureLeadingSlash(fallback)}`;
+    return isBrowser ? ensureLeadingSlash(fallback) : `${DEFAULT_BASE_URL}${ensureLeadingSlash(fallback)}`;
   }
 
   if (/^https?:\/\//i.test(candidate)) {
@@ -52,10 +51,11 @@ export function toAbsoluteUrl(
   }
 
   if (candidate.startsWith("/")) {
-    return `${DEFAULT_BASE_URL}${candidate}`;
+    return isBrowser ? candidate : `${DEFAULT_BASE_URL}${candidate}`;
   }
 
-  return `${DEFAULT_BASE_URL}/${candidate}`;
+  const withLeadingSlash = ensureLeadingSlash(candidate);
+  return isBrowser ? withLeadingSlash : `${DEFAULT_BASE_URL}${withLeadingSlash}`;
 }
 
 export function getGameImageUrl(
