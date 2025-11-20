@@ -9,6 +9,7 @@ import { checkAndAwardBadges } from "@/lib/badgeService"
 import { notifyFollowersOfGameSubmission } from '@/lib/followNotifications'
 import { generateSlug, generateUniqueSlug } from '@/lib/slug'
 import { sendNewGameEmail } from '@/lib/newsletter'
+import { getProductsViewSummary } from "@/lib/metrics/getProductViews"
 
 import { z } from "zod"
 
@@ -287,6 +288,8 @@ export async function GET(request: NextRequest) {
       },
     })
 
+    const totalViewsMap = await getProductsViewSummary(products.map(product => product.id))
+
     // Calculate scores and add time-window counts
     const productsWithScores = products.map(product => {
       const votesInWindowCount = votesMap.get(product.id) || 0
@@ -303,6 +306,7 @@ export async function GET(request: NextRequest) {
 
       return {
         ...product,
+        totalViews: totalViewsMap[product.id] ?? product.clicks,
         votesInWindow: votesInWindowCount,
         followsInWindow: followsInWindowCount,
         clicksInWindow: clicksInWindowCount,

@@ -22,6 +22,7 @@ interface Game {
   createdAt: string
   releaseAt?: string | null
   clicks: number
+  totalViews?: number
   _count: {
     votes: number
     comments: number
@@ -183,7 +184,7 @@ export function GogGameCard({ game, onVote }: GogGameCardProps) {
               {/* Views Count */}
               <div className="flex items-center space-x-1">
                 <Eye className="w-3 h-3" />
-                <span>{game.clicks}</span>
+                <span>{typeof game.totalViews === "number" ? game.totalViews : game.clicks}</span>
               </div>
             </div>
 

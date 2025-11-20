@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 
-const VIEW_TYPES = [
+export const VIEW_TYPES = [
   'INTERNAL',
   'view',
   'IOS',
@@ -45,6 +45,38 @@ export async function getProductViewSummary(gameId: string, days = 30) {
     totalViews,
     since
   }
+}
+
+export async function getProductsViewSummary(gameIds: string[], days = 30) {
+  if (!gameIds.length) {
+    return {}
+  }
+
+  const since = new Date()
+  since.setDate(since.getDate() - days)
+
+  const metrics = await prisma.metric.groupBy({
+    by: ['gameId'],
+    where: {
+      gameId: {
+        in: gameIds
+      },
+      timestamp: {
+        gte: since
+      },
+      type: {
+        in: VIEW_TYPES as unknown as ViewType[]
+      }
+    },
+    _count: {
+      _all: true
+    }
+  })
+
+  return metrics.reduce<Record<string, number>>((acc, item) => {
+    acc[item.gameId] = item._count._all ?? 0
+    return acc
+  }, {})
 }
 
 

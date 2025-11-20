@@ -318,7 +318,9 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
       {/* Main Media Carousel */}
       <Carousel setApi={setApi} className="w-full">
         <CarouselContent>
-          {mediaItems.map((media, index) => (
+          {mediaItems.map((media, index) => {
+            const isPortraitImage = shouldUsePhoneLayoutForIndex(index)
+            return (
             <CarouselItem key={index}>
               <Card
                 className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-100 to-blue-100 dark:from-gray-800 dark:to-gray-900 ${cardAspectClass}`}
@@ -350,22 +352,25 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
                     className="relative w-full h-full group cursor-zoom-in"
                     onClick={() => handleMediaClick(media, index)}
                   >
-                    <div className="relative w-full h-full">
+                    <div className={`relative w-full h-full flex items-center justify-center ${isPortraitImage ? 'bg-gradient-to-b from-black/70 via-black to-black/90' : 'bg-gradient-to-b from-black/60 via-black/70 to-black/80'}`}>
                     {media.src.startsWith('/') ? (
                       <img
                         src={media.src}
                         alt={`${title} - Gameplay GIF`}
-                          className={`absolute inset-0 w-full h-full ${shouldUsePhoneLayoutForIndex(index) ? 'object-cover' : 'object-cover'}`}
+                        style={{ objectFit: "contain", width: "auto", height: "100%" }}
+                          className="max-h-full"
                         onError={(e)=>{(e.currentTarget as HTMLImageElement).src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='24'%3E%F0%9F%8E%AE%20Gameplay%20GIF%3C/text%3E%3C/svg%3E"}}
                       />
                     ) : (
                       <Image
                         src={media.src}
                         alt={`${title} - Gameplay GIF`}
-                          fill
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
+                        width={1200}
+                        height={1200}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
                         loading="lazy"
-                          className={`${shouldUsePhoneLayoutForIndex(index) ? 'object-cover' : 'object-cover'} transition-transform duration-300 group-hover:scale-105`}
+                        style={{ objectFit: "contain", width: "auto", height: "100%" }}
+                          className="max-h-full transition-transform duration-300 group-hover:scale-105"
                         placeholder="blur"
                         blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                         onError={(e) => {
@@ -384,24 +389,27 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
                     className="relative w-full h-full group cursor-zoom-in"
                     onClick={() => handleMediaClick(media, index)}
                   >
-                    <div className="relative w-full h-full">
+                    <div className={`relative w-full h-full flex items-center justify-center ${isPortraitImage ? 'bg-gradient-to-b from-black/70 via-black to-black/90' : 'bg-gradient-to-b from-black/60 via-black/70 to-black/80'}`}>
                     {media.src.startsWith('/') ? (
                       <img
                         src={media.src}
                         alt={`${title} - Image ${index + 1}`}
-                          className={`absolute inset-0 w-full h-full ${shouldUsePhoneLayoutForIndex(index) ? 'object-cover' : 'object-cover'}`}
+                        style={{ objectFit: "contain", width: "auto", height: "100%" }}
+                          className="max-h-full"
                         onError={(e)=>{(e.currentTarget as HTMLImageElement).src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%236b7280' font-size='24'%3E%F0%9F%8E%AE%20Game%20Image%3C/text%3E%3C/svg%3E"}}
                       />
                     ) : (
                       <Image
                         src={media.src}
                         alt={`${title} - Image ${index + 1}`}
-                          fill
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
+                        width={1200}
+                        height={1200}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
                         loading={index === 0 ? "eager" : "lazy"}
                         priority={index === 0}
                         quality={85}
-                          className={`${shouldUsePhoneLayoutForIndex(index) ? 'object-cover' : 'object-cover'} transition-transform duration-300 group-hover:scale-105`}
+                        style={{ objectFit: "contain", width: "auto", height: "100%" }}
+                          className="max-h-full transition-transform duration-300 group-hover:scale-105"
                         placeholder="blur"
                         blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                         onError={(e) => {
@@ -424,7 +432,7 @@ export function MediaCarousel({ images, video, mainImage, title, gameplayGifUrl 
                 )}
               </Card>
             </CarouselItem>
-          ))}
+          )})}
         </CarouselContent>
         {count > 1 && (<>
           <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white border-0 w-10 h-10" />

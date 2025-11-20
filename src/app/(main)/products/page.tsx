@@ -29,6 +29,7 @@ interface Game {
   createdAt: string
   releaseAt?: string | null
   clicks: number
+  totalViews?: number
   editorChoice?: boolean
   languages?: any
   monetization?: string

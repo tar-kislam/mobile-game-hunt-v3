@@ -59,6 +59,31 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get('user-agent') || ''
     const geoInfo = detectGeoInfo(ipAddress, userAgent)
 
+    // Prevent duplicate view metrics from the same authenticated user
+    if (
+      validUserId &&
+      (type === 'view' || type === 'INTERNAL')
+    ) {
+      const existingViewMetric = await prisma.metric.findFirst({
+        where: {
+          gameId,
+          userId: validUserId,
+          type: {
+            in: ['view', 'INTERNAL']
+          }
+        },
+        select: { id: true }
+      })
+
+      if (existingViewMetric) {
+        return NextResponse.json({
+          success: true,
+          skipped: true,
+          message: 'View already recorded for this user'
+        })
+      }
+    }
+
     // Create metric record
     const metric = await prisma.metric.create({
       data: {
