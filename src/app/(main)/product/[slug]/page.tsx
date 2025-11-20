@@ -11,6 +11,7 @@ import { ChevronLeftIcon } from 'lucide-react'
 import Link from 'next/link'
 import { generateProductJsonLd, generateBreadcrumbJsonLd } from '@/lib/seo'
 import { getProductViewSummary } from '@/lib/metrics/getProductViews'
+import { getGameImageUrl, getSiteBaseUrl } from '@/lib/image-utils'
 
 // Dynamic import for large component to improve initial load
 const EnhancedProductDetail = dynamicImport(
@@ -235,9 +236,10 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   
   if (!product) return { title: 'Game not found' }
   
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mobilegamehunt.com'
+  const baseUrl = getSiteBaseUrl()
   const productUrl = `${baseUrl}/product/${slug}`
-  const ogImage = product.thumbnail || `${baseUrl}/api/og?title=${encodeURIComponent(product.title)}`
+  const ogImage = `${productUrl}/opengraph-image`
+  const thumbnailUrl = getGameImageUrl(product.thumbnail || product.image)
   
   // Extract tag names for SEO
   const tagNames = product.tags?.map(pt => pt.tag.name) || []
@@ -301,7 +303,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     "name": product.title,
     "description": product.description,
     "url": productUrl,
-    "image": ogImage,
+    "image": thumbnailUrl,
     "operatingSystem": product.platforms,
     "genre": normalizedTags,
     "applicationCategory": "Game",
@@ -325,7 +327,12 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
       title,
       description,
       url: productUrl,
-      images: [{ url: ogImage }],
+      images: [{
+        url: ogImage,
+        width: 1200,
+        height: 630,
+        alt: `${product.title} gameplay snapshot`,
+      }],
       type: 'website',
       siteName: 'Mobile Game Hunt',
       ...(tagNames.length > 0 && {
@@ -345,6 +352,8 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     },
     other: {
       'article:tag': tagNames.join(','),
+      'og:image:secure_url': ogImage,
+      'og:image:alt': `${product.title} gameplay snapshot`,
       'application/ld+json': JSON.stringify(structuredData)
     }
   }

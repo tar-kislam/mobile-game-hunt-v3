@@ -4,10 +4,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Heart, MessageCircle, ExternalLink, Calendar, Eye } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
 import { PlatformIcons } from "@/components/ui/platform-icons"
 import { formatDistanceToNow } from "date-fns"
+import { GameCoverImage } from "@/components/games/game-cover-image"
 
 interface Game {
   id: string
@@ -79,35 +79,13 @@ export function GogGameCard({ game, onVote }: GogGameCardProps) {
     <Link href={`/product/${game.slug}`}>
       <Card className="group h-full flex flex-col bg-transparent hover:bg-card/20 transition-all duration-300 border-0 hover:border-purple-500/30 rounded-lg overflow-hidden hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/20 products-font">
         {/* Game Cover Image - GOG Style */}
-        <div className="relative aspect-[3/4] bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden rounded-lg">
-          {coverImage ? (
-            <Image
-              src={coverImage}
-              alt={game.title}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-              unoptimized={true}
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.style.display = 'none';
-                if (e.currentTarget.parentElement) {
-                  const fallback = e.currentTarget.parentElement.querySelector('.fallback-icon');
-                  if (fallback) {
-                    (fallback as HTMLElement).style.display = 'flex';
-                  }
-                }
-              }}
-            />
-          ) : null}
-          
-          {/* Fallback icon */}
-          <div className={`fallback-icon w-full h-full flex items-center justify-center ${coverImage ? 'hidden' : ''}`}>
-            <div>
-              <img src="/logo/logo-gamepad.webp" alt="Game" className="w-16 h-16" />
-            </div>
-          </div>
-          
+        <GameCoverImage
+          src={coverImage}
+          alt={game.title}
+          sizes="(max-width: 768px) 90vw, (max-width: 1200px) 40vw, 25vw"
+          containerClassName="aspect-[3/4]"
+          imageClassName="group-hover:scale-105"
+        >
           {/* Platform Icons - Top Left */}
           <div className="absolute top-2 left-2">
             <PlatformIcons 
@@ -145,7 +123,7 @@ export function GogGameCard({ game, onVote }: GogGameCardProps) {
           >
             <ExternalLink className="w-4 h-4" />
           </Button>
-        </div>
+        </GameCoverImage>
 
         {/* Game Info - GOG Style */}
         <CardContent className="flex-1 p-3 space-y-2">

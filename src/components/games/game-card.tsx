@@ -4,9 +4,9 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ArrowUpRight, Heart, MessageCircle, ExternalLink } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
 import { PlatformIcons } from "@/components/ui/platform-icons"
+import { GameCoverImage } from "@/components/games/game-cover-image"
 import { getAuthorLabel } from "@/lib/author"
 // import { formatDistanceToNow } from "date-fns" // Temporarily commented
 
@@ -76,39 +76,18 @@ export function GameCard({ game, onVote, showAuthor = true, footer }: GameCardPr
     window.open(game.url, '_blank', 'noopener,noreferrer')
   }
 
+  const mainImage = getMainDisplayImage(game)
+
   return (
     <Card className="group h-full flex flex-col bg-card hover:shadow-medium transition-all duration-300 border border-white/10 shadow-lg rounded-2xl overflow-hidden hover:scale-[1.02] hover:shadow-black/20">
       {/* Game Image */}
-      <div className="relative aspect-video bg-gradient-to-br from-purple-100 to-blue-100 overflow-hidden">
-        {getMainDisplayImage(game) ? (
-          <Image
-            src={getMainDisplayImage(game) as string}
-            alt={game.title}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            unoptimized={true}
-            onError={(e) => {
-              // Prevent infinite retries
-              e.currentTarget.onerror = null;
-              // Hide broken image and show fallback
-              e.currentTarget.style.display = 'none';
-              if (e.currentTarget.parentElement) {
-                const fallback = e.currentTarget.parentElement.querySelector('.fallback-icon');
-                if (fallback) {
-                  (fallback as HTMLElement).style.display = 'flex';
-                }
-              }
-            }}
-          />
-        ) : null}
-        {/* Fallback icon - always present but hidden when image loads */}
-        <div className={`fallback-icon w-full h-full flex items-center justify-center ${getMainDisplayImage(game) ? 'hidden' : ''}`}>
-          <div>
-            <img src="/logo/logo-gamepad.webp" alt="Game" className="w-16 h-16" />
-          </div>
-        </div>
-        
+      <GameCoverImage
+        src={mainImage}
+        alt={game.title}
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 33vw"
+        containerClassName="relative aspect-video bg-gradient-to-br from-purple-100 to-blue-100 overflow-hidden"
+        imageClassName="object-cover group-hover:scale-105 transition-transform duration-300"
+      >
         {/* Platform Icons */}
         <div className="absolute top-2 left-2">
           <PlatformIcons 
@@ -127,7 +106,7 @@ export function GameCard({ game, onVote, showAuthor = true, footer }: GameCardPr
         >
           <ExternalLink className="w-4 h-4" />
         </Button>
-      </div>
+      </GameCoverImage>
 
       <CardContent className="flex-1 p-4 space-y-3">
         {/* Title and Tagline */}

@@ -561,6 +561,12 @@ export default function HomePage() {
               <svg viewBox="0 0 24 24" className="h-5 w-5 text-pink-400 group-hover:text-pink-300 flex-shrink-0" fill="currentColor" aria-hidden="true"><path d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm5 5a5 5 0 100 10 5 5 0 000-10zm6.5.9a1.1 1.1 0 11-2.2 0 1.1 1.1 0 012.2 0z"/></svg>
               <span className="text-sm font-medium">Instagram</span>
             </a>
+            <a href="https://www.tiktok.com/@mobilegamehunt" target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-2 rounded-full px-4 py-3 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-all duration-200 hover:shadow-[0_0_18px_rgba(45,212,191,0.25)] hover:scale-[1.02] min-w-[120px]">
+              <svg viewBox="0 0 24 24" className="h-5 w-5 text-cyan-300 group-hover:text-cyan-200 flex-shrink-0" fill="currentColor" aria-hidden="true">
+                <path d="M19.5 7.25c-1.31-.25-2.5-.9-3.42-1.86A6.44 6.44 0 0114.75 3H12v12.19a1.78 1.78 0 01-3.06 1.23 1.81 1.81 0 01-.44-1.2 1.77 1.77 0 011.78-1.77c.24 0 .48.05.72.13V10.2c-.24-.02-.48-.03-.72-.03A4.83 4.83 0 005.44 15a4.78 4.78 0 007.06 4.19 4.8 4.8 0 002.75-4.31v-4.2a9.08 9.08 0 004.25 1.14V7.25z"/>
+              </svg>
+              <span className="text-sm font-medium">TikTok</span>
+            </a>
             <a href="mailto:info@mobilegamehunt.com" className="group inline-flex items-center gap-2 rounded-full px-4 py-3 border border-white/10 bg-gray-900/40 hover:bg-gray-900/70 transition-all duration-200 hover:shadow-[0_0_18px_rgba(34,197,94,0.25)] hover:scale-[1.02] min-w-[100px]">
               <Mail className="h-5 w-5 text-green-400 group-hover:text-green-300 flex-shrink-0" />
               <span className="text-sm font-medium">Email</span>

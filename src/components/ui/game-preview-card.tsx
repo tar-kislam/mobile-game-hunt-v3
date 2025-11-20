@@ -3,8 +3,8 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PLATFORMS } from '@/components/ui/platform-icons'
-import Image from 'next/image'
 import { useState, useEffect } from 'react'
+import { GameCoverImage } from '@/components/games/game-cover-image'
 
 interface Category {
   id: string
@@ -67,23 +67,15 @@ export function GamePreviewCard({
     <Card className="rounded-xl border-0 bg-gradient-to-br from-gray-900/50 to-gray-800/50 backdrop-blur-sm shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-[1.02] group">
       <CardContent className="p-0">
         <div className="relative">
-          {thumbnail ? (
-            <div className="relative h-48 w-full overflow-hidden rounded-t-xl">
-              <Image
-                src={thumbnail}
-                alt={title}
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            </div>
-          ) : (
-            <div className="h-48 w-full bg-gradient-to-br from-gray-700 to-gray-800 rounded-t-xl flex items-center justify-center">
-              <div>
-                <img src="/logo/logo-gamepad.webp" alt="Game" className="w-10 h-10" />
-              </div>
-            </div>
-          )}
+          <GameCoverImage
+            src={thumbnail}
+            alt={title}
+            containerClassName="relative h-48 w-full overflow-hidden rounded-t-xl"
+            imageClassName="transition-transform duration-300 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, 33vw"
+          >
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          </GameCoverImage>
           
           <div className="absolute top-3 left-3">
             <Badge variant="secondary" className="bg-black/50 text-white border-0">

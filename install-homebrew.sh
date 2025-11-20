@@ -62,3 +62,4 @@ echo "Sonraki adım: Colima kurulumu için './setup-docker.sh' çalıştırın"
 
 
 
+

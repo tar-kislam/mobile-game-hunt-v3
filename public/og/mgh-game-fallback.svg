@@ -1,0 +1,49 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#05050f"/>
+      <stop offset="45%" stop-color="#111133"/>
+      <stop offset="100%" stop-color="#061b2b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#00d8ff"/>
+      <stop offset="50%" stop-color="#7b61ff"/>
+      <stop offset="100%" stop-color="#00ffa3"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="20" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <circle cx="1040" cy="90" r="220" fill="#0a1f3a" opacity="0.35"/>
+  <circle cx="160" cy="540" r="260" fill="#081229" opacity="0.4"/>
+
+  <g filter="url(#glow)" opacity="0.8">
+    <path d="M160 140 L1040 140" stroke="url(#accent)" stroke-width="4" stroke-linecap="round" stroke-dasharray="12 18"/>
+    <path d="M160 490 L1040 490" stroke="url(#accent)" stroke-width="4" stroke-linecap="round" stroke-dasharray="16 24"/>
+  </g>
+
+  <text x="160" y="280" fill="#7b61ff" font-family="Orbitron, 'DM Mono', 'Segoe UI', sans-serif" font-size="28" letter-spacing="8">MOBILE GAME HUNT</text>
+  <text x="160" y="350" fill="#f8fafc" font-family="'DM Mono', 'Segoe UI', sans-serif" font-size="86" font-weight="600" letter-spacing="4">
+    FEATURED GAME
+  </text>
+  <text x="160" y="410" fill="#cbd5f5" font-family="'DM Mono', 'Segoe UI', sans-serif" font-size="30" letter-spacing="3">
+    SHOWCASE YOUR BEST SHOTS
+  </text>
+
+  <rect x="770" y="200" width="270" height="270" rx="36" stroke="url(#accent)" stroke-width="4" opacity="0.6"/>
+  <rect x="800" y="230" width="270" height="270" rx="36" fill="rgba(0,0,0,0.35)" stroke="rgba(255,255,255,0.15)" />
+  <text x="935" y="370" text-anchor="middle" fill="#94a3b8" font-family="'DM Mono', 'Segoe UI', sans-serif" font-size="20" letter-spacing="4">
+    SNAPSHOT
+  </text>
+  <text x="935" y="410" text-anchor="middle" fill="#00d8ff" font-family="'DM Mono', 'Segoe UI', sans-serif" font-size="18" letter-spacing="6">
+    PREVIEW
+  </text>
+</svg>
+

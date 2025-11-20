@@ -6,13 +6,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Heart, Play } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { getAuthorLabel } from "@/lib/author"
 import ShinyText from "@/components/ShinyText"
 import { calculateFinalScore, getScoringWeights } from "@/lib/leaderboardConfig"
 import { PlatformIcons } from "@/components/ui/platform-icons"
+import { GameCoverImage } from "@/components/games/game-cover-image"
 
 interface FeaturedGame {
   id: string
@@ -173,20 +173,15 @@ function EpicFeaturedLayout({ games, onGameClick }: EpicFeaturedLayoutProps) {
                     : "hover:scale-105 hover:shadow-lg"
                 )}
               >
-                {game.thumbnail ? (
-                  <Image
-                    src={game.thumbnail}
-                    alt={game.title}
-                    width={80}
-                    height={80}
-                    className="w-full h-full object-cover"
-                    unoptimized={true}
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-2xl">
-                    <img src="/logo/logo-gamepad.webp" alt="Game" className="w-6 h-6" />
-                  </div>
-                )}
+                <GameCoverImage
+                  src={game.thumbnail}
+                  alt={game.title}
+                  width={80}
+                  height={80}
+                  fill={false}
+                  containerClassName="w-full h-full"
+                  imageClassName="w-full h-full object-cover"
+                />
               </button>
             ))}
           </div>
@@ -254,26 +249,16 @@ function EpicHeroCard({ game, isMobile = false }: EpicHeroCardProps) {
         isMobile ? "h-[400px]" : "h-[500px]"
       )}>
         {/* Background Image */}
-        <div className="absolute inset-0">
-          {mainImage ? (
-            <Image
-              src={mainImage}
-              alt={game.title}
-              fill
-              className="object-cover transition-transform duration-700 group-hover:scale-110"
-              sizes={isMobile ? "100vw" : "(max-width: 1024px) 66vw, 50vw"}
-              unoptimized={true}
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-600 flex items-center justify-center">
-              <div>
-                <img src="/logo/logo-gamepad.webp" alt="Game" className="w-32 h-32" />
-              </div>
-            </div>
-          )}
+        <GameCoverImage
+          src={mainImage}
+          alt={game.title}
+          sizes={isMobile ? "100vw" : "(max-width: 1024px) 66vw, 50vw"}
+          containerClassName="absolute inset-0"
+          imageClassName="object-cover transition-transform duration-700 group-hover:scale-110"
+        >
           {/* Epic Games style gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-        </div>
+        </GameCoverImage>
 
         {/* Content Overlay */}
         <CardContent className="relative z-10 p-6 md:p-8 h-full flex flex-col justify-end text-white">
@@ -337,22 +322,13 @@ function EpicSideCard({ game, onClick, isSelected }: EpicSideCardProps) {
       onClick={onClick}
     >
       {/* Game Thumbnail - Square */}
-      <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100 flex-shrink-0">
-        {game.thumbnail ? (
-          <Image
-            src={game.thumbnail}
-            alt={game.title}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-110"
-            sizes="64px"
-            unoptimized={true}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-xl">
-            <img src="/logo/logo-gamepad.webp" alt="Game" className="w-6 h-6" />
-          </div>
-        )}
-      </div>
+      <GameCoverImage
+        src={game.thumbnail}
+        alt={game.title}
+        sizes="64px"
+        containerClassName="relative w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100 flex-shrink-0"
+        imageClassName="object-cover transition-transform duration-300 group-hover:scale-110"
+      />
 
       {/* Game Info */}
       <div className="flex-1 min-w-0 flex items-center">

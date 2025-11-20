@@ -4,10 +4,10 @@ import { useMemo, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Star, Play, Smartphone, Monitor } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { PlatformIcons } from "@/components/ui/platform-icons"
+import { GameCoverImage } from "@/components/games/game-cover-image"
 
 interface FeaturedGame {
   id: string
@@ -131,26 +131,15 @@ function HeroGameCard({ game, onClick }: HeroGameCardProps) {
     <Link href={`/product/${game.slug}`} className="block group h-full">
       <Card className="overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 hover:shadow-2xl transition-all duration-300 border-0 shadow-lg rounded-3xl group-hover:scale-[1.02] h-full relative">
         {/* Background Image */}
-        <div className="absolute inset-0">
-          {game.thumbnail || game.image ? (
-            <Image
-              src={game.thumbnail || (game.image as string)}
-              alt={game.title}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-              sizes="(max-width: 768px) 100vw, 60vw"
-              unoptimized={true}
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
-              <div>
-                <img src="/logo/logo-gamepad.webp" alt="Game" className="w-32 h-32" />
-              </div>
-            </div>
-          )}
-          {/* Dark overlay */}
+        <GameCoverImage
+          src={game.thumbnail || game.image}
+          alt={game.title}
+          sizes="(max-width: 768px) 100vw, 60vw"
+          containerClassName="absolute inset-0 rounded-3xl"
+          imageClassName="object-cover transition-transform duration-300 group-hover:scale-105"
+        >
           <div className="absolute inset-0 bg-black/40" />
-        </div>
+        </GameCoverImage>
 
         {/* Content */}
         <CardContent className="relative z-10 p-6 h-full flex flex-col justify-end text-white">
@@ -228,22 +217,13 @@ function SideGameCard({ game, onClick, onHover, isSelected, compact = false }: S
       className="w-full h-[84px] lg:h-[92px] rounded-3xl bg-[hsla(0,0%,12%,0.7)] hover:bg-[hsla(0,0%,12%,0.9)] transition shadow-[0_0_0_1px_hsla(0,0%,100%,0.06)_inset] flex items-center gap-3 px-3"
     >
       {/* Thumbnail */}
-      <div className="relative w-12 h-12 rounded-2xl overflow-hidden flex-shrink-0 bg-muted">
-        {game.thumbnail || game.image ? (
-          <Image
-            src={game.thumbnail || (game.image as string)}
-            alt={game.title}
-            fill
-            className="object-cover"
-            sizes="48px"
-            unoptimized={true}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <img src="/logo/logo-gamepad.webp" alt="Game" className="w-6 h-6" />
-          </div>
-        )}
-      </div>
+      <GameCoverImage
+        src={game.thumbnail || game.image}
+        alt={game.title}
+        sizes="48px"
+        containerClassName="relative w-12 h-12 rounded-2xl overflow-hidden flex-shrink-0 bg-muted"
+        imageClassName="object-cover"
+      />
 
       {/* Text */}
       <div className="min-w-0 flex-1">

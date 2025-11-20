@@ -3,6 +3,7 @@ import { DM_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { generateOrganizationJsonLd } from "@/lib/seo";
+import { FALLBACK_OG_IMAGE, getSiteBaseUrl, toAbsoluteUrl } from "@/lib/image-utils";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import "@/lib/jobs/registerNewsletterCron";
 
@@ -13,6 +14,9 @@ const dmMono = DM_Mono({
   style: ["normal", "italic"],
 });
 
+const SITE_URL = getSiteBaseUrl();
+const DEFAULT_OG_IMAGE = toAbsoluteUrl(FALLBACK_OG_IMAGE);
+
 // Load Underdog font from Google Fonts
 const underdogFont = {
   fontFamily: '"Underdog", cursive',
@@ -21,6 +25,7 @@ const underdogFont = {
 // TASA Explorer will be loaded via CSS import since it's not available in next/font/google
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Mobile Game Hunt - Discover the Best Mobile Games",
   description: "Discover and showcase the best mobile games. Connect with developers, share your favorites and stay updated with the latest releases in mobile gaming.",
   keywords: "mobile games, app discovery, game reviews, mobile gaming, indie games, game developers",
@@ -35,13 +40,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: process.env.NEXT_PUBLIC_BASE_URL || "https://mobilegamehunt.com",
+    url: SITE_URL,
     siteName: "Mobile Game Hunt",
     title: "Mobile Game Hunt - Discover the Best Mobile Games",
     description: "Discover and showcase the best mobile games. Connect with developers, share your favorites and stay updated with the latest releases in mobile gaming.",
     images: [
       {
-        url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://mobilegamehunt.com"}/logo/mgh.png`,
+        url: DEFAULT_OG_IMAGE,
         width: 1200,
         height: 630,
         alt: "Mobile Game Hunt - Discover the Best Mobile Games",
@@ -54,10 +59,10 @@ export const metadata: Metadata = {
     creator: "@mobilegamehunt",
     title: "Mobile Game Hunt - Discover the Best Mobile Games",
     description: "Discover and showcase the best mobile games. Connect with developers, share your favorites and stay updated with the latest releases in mobile gaming.",
-    images: [`${process.env.NEXT_PUBLIC_BASE_URL || "https://mobilegamehunt.com"}/logo/mgh.png`],
+    images: [DEFAULT_OG_IMAGE],
   },
   alternates: {
-    canonical: process.env.NEXT_PUBLIC_BASE_URL || "https://mobilegamehunt.com",
+    canonical: SITE_URL,
   },
 };
 
