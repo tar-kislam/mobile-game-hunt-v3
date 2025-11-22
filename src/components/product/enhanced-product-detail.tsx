@@ -58,11 +58,14 @@ import { UserAvatarTooltip } from '@/components/ui/user-avatar-tooltip'
 import { ProductTags } from './product-tags'
 import { MeetTheTeamCard } from './meet-the-team-card';
 import { AboutGameSection } from './about-game-section';
+import { ShareGameModal } from '@/components/modals/share-game-modal';
+import { useShareGamePopup } from '@/hooks/useShareGamePopup';
 
 interface Product {
   id: string;
   title: string;
   tagline?: string | null;
+  slug?: string;
   description: string;
   url: string;
   image?: string | null;
@@ -159,6 +162,26 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
   const [productVotes, setProductVotes] = useState(product._count.votes);
   const [isProductUpvoted, setIsProductUpvoted] = useState(hasVoted);
   const [recommended, setRecommended] = useState<any[]>([])
+
+  // Check if current user is the owner of this game
+  const isOwner = session?.user?.id === product.user.id
+
+  // Share popup logic
+  const { shouldShow, markDontShowAgain } = useShareGamePopup({
+    gameId: product.id,
+    isOwner,
+    enabled: !!session?.user?.id,
+    delayMs: 2000, // Show after 2 seconds
+  })
+
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false)
+
+  // Show share popup when conditions are met
+  useEffect(() => {
+    if (shouldShow && isOwner) {
+      setIsShareModalOpen(true)
+    }
+  }, [shouldShow, isOwner])
 
   // Track product view in Google Analytics
   useEffect(() => {
@@ -1350,6 +1373,18 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
           <PlaytestClaim gameId={product.id} gameTitle={product.title} />
         </div>
       </div>
+
+      {/* Share Game Modal */}
+      <ShareGameModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        gameTitle={product.title}
+        gameUrl={`https://mobilegamehunt.com/product/${product.slug || product.id}`}
+        shortPitch={product.tagline || null}
+        thumbnail={product.thumbnail || product.image || null}
+        gameId={product.id}
+        onDontShowAgain={markDontShowAgain}
+      />
     </div>
   );
 }

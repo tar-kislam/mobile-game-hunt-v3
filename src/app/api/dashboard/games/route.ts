@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
         slug: true,
         status: true,
         thumbnail: true,
+        tagline: true,
         images: true,
         createdAt: true,
       },
@@ -33,6 +34,7 @@ export async function GET(req: NextRequest) {
       slug: g.slug,
       status: g.status ?? 'PUBLISHED',
       thumbnail: g.thumbnail,
+      tagline: g.tagline,
     }))
 
     return NextResponse.json({ games: result })

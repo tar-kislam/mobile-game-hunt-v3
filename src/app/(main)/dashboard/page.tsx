@@ -16,6 +16,8 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { Pen, Trash2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { ShareGameModal } from '@/components/modals/share-game-modal';
+import { useShareGamePopup } from '@/hooks/useShareGamePopup';
 
 // Fetcher function for SWR
 const fetcher = (url: string) => fetch(url, { credentials: 'include' }).then((res) => {
@@ -24,7 +26,7 @@ const fetcher = (url: string) => fetch(url, { credentials: 'include' }).then((re
 });
 
 
-type DashboardGame = { id: string; title: string; status?: string; thumbnail?: string | null; slug?: string | null };
+type DashboardGame = { id: string; title: string; status?: string; thumbnail?: string | null; slug?: string | null; tagline?: string | null };
 
 type GameAnalytics = {
   game: { id: string; title: string };
@@ -50,6 +52,25 @@ export default function DashboardPage() {
   const [selectedGameId, setSelectedGameId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  // Get latest game for sharing (or first game if available)
+  const latestGame = games.length > 0 ? games[0] : null;
+
+  // Share popup logic - show for dashboard if user has games
+  const { shouldShow, markDontShowAgain } = useShareGamePopup({
+    gameId: latestGame?.id,
+    isOwner: !!session?.user?.id && games.length > 0,
+    enabled: !!session?.user?.id && games.length > 0 && !!latestGame?.id,
+    delayMs: 2000, // Show after 2 seconds
+  });
+
+  // Show share popup when conditions are met
+  useEffect(() => {
+    if (shouldShow && games.length > 0 && latestGame) {
+      setIsShareModalOpen(true);
+    }
+  }, [shouldShow, games.length, latestGame]);
 
   // SWR hook for analytics data with real-time updates
   const { data: analyticsData, error: analyticsError, isLoading: analyticsLoading } = useSWR(
@@ -492,6 +513,20 @@ export default function DashboardPage() {
             </Card>
         </div> */}
       </div>
+
+      {/* Share Game Modal */}
+      {latestGame && (
+        <ShareGameModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          gameTitle={latestGame.title}
+          gameUrl={latestGame.slug ? `https://mobilegamehunt.com/product/${latestGame.slug}` : `https://mobilegamehunt.com/product/${latestGame.id}`}
+          shortPitch={latestGame.tagline || null}
+          thumbnail={latestGame.thumbnail || null}
+          gameId={latestGame.id}
+          onDontShowAgain={markDontShowAgain}
+        />
+      )}
     </div>
     </>
   );

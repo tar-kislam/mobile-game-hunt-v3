@@ -10,7 +10,8 @@ import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Download, GamepadIcon, Mail, Star, MessageCircle, TrendingUp, Users } from 'lucide-react'
+import { Download, GamepadIcon, Mail, Star, MessageCircle, TrendingUp, Users, List } from 'lucide-react'
+import { SocialPlatformIcon } from '@/components/ui/social-platform-icons'
 import { toast } from 'sonner'
 import DarkVeil from '@/components/DarkVeil'
 
@@ -40,7 +41,7 @@ interface User {
   createdAt: string
 }
 
-type ActiveSection = 'games' | 'newsletter' | 'campaigns' | 'users'
+type ActiveSection = 'games' | 'newsletter' | 'campaigns' | 'users' | 'submitted-games'
 
 interface Campaign {
   id: string
@@ -60,6 +61,29 @@ interface Campaign {
   }
 }
 
+interface SubmittedGame {
+  id: string
+  title: string
+  tagline: string | null
+  slug: string
+  socialLinks: {
+    website: string | null
+    discord: string | null
+    twitter: string | null
+    tiktok: string | null
+    instagram: string | null
+    reddit: string | null
+    facebook: string | null
+    linkedin: string | null
+    youtube: string | null
+  }
+  storeLinks: {
+    ios: string | null
+    android: string | null
+    website: string | null
+  }
+}
+
 export default function EditorialDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -68,6 +92,7 @@ export default function EditorialDashboard() {
   const [newsletterSubscribers, setNewsletterSubscribers] = useState<NewsletterSubscriber[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [users, setUsers] = useState<User[]>([])
+  const [submittedGames, setSubmittedGames] = useState<SubmittedGame[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -76,6 +101,7 @@ export default function EditorialDashboard() {
   const [newsletterPage, setNewsletterPage] = useState(1)
   const [campaignsPage, setCampaignsPage] = useState(1)
   const [usersPage, setUsersPage] = useState(1)
+  const [submittedGamesPage, setSubmittedGamesPage] = useState(1)
   const [bulkEmailLoading, setBulkEmailLoading] = useState(false)
   const [weeklySending, setWeeklySending] = useState(false)
   const [latestSending, setLatestSending] = useState(false)
@@ -94,6 +120,8 @@ export default function EditorialDashboard() {
   const paginatedCampaigns = campaigns.slice((campaignsPage - 1) * ITEMS_PER_PAGE, campaignsPage * ITEMS_PER_PAGE)
   const totalUsersPages = Math.max(1, Math.ceil(users.length / ITEMS_PER_PAGE))
   const paginatedUsers = users.slice((usersPage - 1) * ITEMS_PER_PAGE, usersPage * ITEMS_PER_PAGE)
+  const totalSubmittedGamesPages = Math.max(1, Math.ceil(submittedGames.length / ITEMS_PER_PAGE))
+  const paginatedSubmittedGames = submittedGames.slice((submittedGamesPage - 1) * ITEMS_PER_PAGE, submittedGamesPage * ITEMS_PER_PAGE)
 
   // Check admin access
   useEffect(() => {
@@ -117,11 +145,12 @@ export default function EditorialDashboard() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const [gamesRes, newsletterRes, campaignsRes, usersRes] = await Promise.all([
+        const [gamesRes, newsletterRes, campaignsRes, usersRes, submittedGamesRes] = await Promise.all([
           fetch('/api/admin/games'),
           fetch('/api/admin/newsletter'),
           fetch('/api/campaigns'),
-          fetch('/api/admin/users')
+          fetch('/api/admin/users'),
+          fetch('/api/admin/submitted-games')
         ])
 
         if (gamesRes.ok) {
@@ -150,6 +179,13 @@ export default function EditorialDashboard() {
           setUsers(usersData)
         } else {
           toast.error('Failed to load users data')
+        }
+
+        if (submittedGamesRes.ok) {
+          const submittedGamesData = await submittedGamesRes.json()
+          setSubmittedGames(submittedGamesData)
+        } else {
+          toast.error('Failed to load submitted games')
         }
       } catch (error) {
         toast.error('Failed to load data')
@@ -477,6 +513,18 @@ export default function EditorialDashboard() {
                 >
                   <Users className="w-4 h-4 mr-2" />
                   All Users
+                </Button>
+                <Button
+                  variant={activeSection === 'submitted-games' ? 'default' : 'ghost'}
+                  className={`w-full justify-start ${
+                    activeSection === 'submitted-games' 
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700' 
+                      : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  }`}
+                  onClick={() => setActiveSection('submitted-games')}
+                >
+                  <List className="w-4 h-4 mr-2" />
+                  Submitted Games Overview
                 </Button>
               </CardContent>
             </Card>
@@ -948,6 +996,229 @@ export default function EditorialDashboard() {
                       </div>
                       <span className="text-sm text-gray-400 ml-4">
                         Page {usersPage} of {totalUsersPages}
+                      </span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {activeSection === 'submitted-games' && (
+              <Card className="bg-zinc-900/40 backdrop-blur-md border border-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <List className="w-5 h-5" />
+                    Submitted Games Overview
+                    <span className="text-xs text-gray-400">({submittedGames.length})</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-gray-700">
+                          <TableHead className="text-gray-300">Title</TableHead>
+                          <TableHead className="text-gray-300">Tagline</TableHead>
+                          <TableHead className="text-gray-300">Social Profiles</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedSubmittedGames.length > 0 ? (
+                          paginatedSubmittedGames.map((game) => (
+                            <TableRow 
+                              key={game.id} 
+                              className="border-gray-700 hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                              onClick={() => window.open(`/product/${game.slug}`, '_blank')}
+                            >
+                              <TableCell className="text-white font-medium">
+                                <div className="truncate max-w-xs" title={game.title}>
+                                  {game.title}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-gray-300">
+                                <div className="truncate max-w-md" title={game.tagline || ''}>
+                                  {game.tagline || <span className="text-gray-500">—</span>}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {game.socialLinks.twitter && (
+                                    <a
+                                      href={game.socialLinks.twitter}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="hover:opacity-80 transition-opacity"
+                                      title="Twitter/X"
+                                    >
+                                      <SocialPlatformIcon platform="twitter" size={20} className="text-gray-300 hover:text-white" />
+                                    </a>
+                                  )}
+                                  {game.socialLinks.tiktok && (
+                                    <a
+                                      href={game.socialLinks.tiktok}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="hover:opacity-80 transition-opacity"
+                                      title="TikTok"
+                                    >
+                                      <SocialPlatformIcon platform="tiktok" size={20} className="text-gray-300 hover:text-white" />
+                                    </a>
+                                  )}
+                                  {game.socialLinks.instagram && (
+                                    <a
+                                      href={game.socialLinks.instagram}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="hover:opacity-80 transition-opacity"
+                                      title="Instagram"
+                                    >
+                                      <SocialPlatformIcon platform="instagram" size={20} className="text-gray-300 hover:text-white" />
+                                    </a>
+                                  )}
+                                  {game.socialLinks.discord && (
+                                    <a
+                                      href={game.socialLinks.discord}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="hover:opacity-80 transition-opacity"
+                                      title="Discord"
+                                    >
+                                      <SocialPlatformIcon platform="discord" size={20} className="text-gray-300 hover:text-white" />
+                                    </a>
+                                  )}
+                                  {game.socialLinks.youtube && (
+                                    <a
+                                      href={game.socialLinks.youtube}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="hover:opacity-80 transition-opacity"
+                                      title="YouTube"
+                                    >
+                                      <SocialPlatformIcon platform="youtube" size={20} className="text-gray-300 hover:text-white" />
+                                    </a>
+                                  )}
+                                  {game.socialLinks.facebook && (
+                                    <a
+                                      href={game.socialLinks.facebook}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="hover:opacity-80 transition-opacity"
+                                      title="Facebook"
+                                    >
+                                      <SocialPlatformIcon platform="facebook" size={20} className="text-gray-300 hover:text-white" />
+                                    </a>
+                                  )}
+                                  {game.socialLinks.reddit && (
+                                    <a
+                                      href={game.socialLinks.reddit}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="hover:opacity-80 transition-opacity"
+                                      title="Reddit"
+                                    >
+                                      <SocialPlatformIcon platform="reddit" size={20} className="text-gray-300 hover:text-white" />
+                                    </a>
+                                  )}
+                                  {game.socialLinks.linkedin && (
+                                    <a
+                                      href={game.socialLinks.linkedin}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="hover:opacity-80 transition-opacity"
+                                      title="LinkedIn"
+                                    >
+                                      <SocialPlatformIcon platform="linkedin" size={20} className="text-gray-300 hover:text-white" />
+                                    </a>
+                                  )}
+                                  {game.socialLinks.website && (
+                                    <a
+                                      href={game.socialLinks.website}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="hover:opacity-80 transition-opacity"
+                                      title="Website"
+                                    >
+                                      <SocialPlatformIcon platform="website" size={20} className="text-gray-300 hover:text-white" />
+                                    </a>
+                                  )}
+                                  {game.storeLinks.ios && (
+                                    <a
+                                      href={game.storeLinks.ios}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="hover:opacity-80 transition-opacity"
+                                      title="App Store"
+                                    >
+                                      <SocialPlatformIcon platform="ios" size={20} className="text-gray-300 hover:text-white" />
+                                    </a>
+                                  )}
+                                  {game.storeLinks.android && (
+                                    <a
+                                      href={game.storeLinks.android}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="hover:opacity-80 transition-opacity"
+                                      title="Google Play"
+                                    >
+                                      <SocialPlatformIcon platform="android" size={20} className="text-gray-300 hover:text-white" />
+                                    </a>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow className="border-gray-700">
+                            <TableCell colSpan={3} className="text-center text-gray-400 py-8">
+                              No games found
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {submittedGames.length > ITEMS_PER_PAGE && (
+                    <div className="mt-6 flex justify-center items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        {submittedGamesPage > 1 && (
+                          <button
+                            onClick={() => setSubmittedGamesPage(submittedGamesPage - 1)}
+                            className="h-8 px-3 rounded-md text-sm bg-zinc-800 text-gray-300 hover:bg-zinc-700"
+                          >
+                            Previous
+                          </button>
+                        )}
+                        {Array.from({ length: totalSubmittedGamesPages }, (_, i) => i + 1).map((p) => (
+                          <button
+                            key={p}
+                            onClick={() => setSubmittedGamesPage(p)}
+                            className={`h-8 min-w-8 px-2 rounded-md text-sm ${p === submittedGamesPage ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-gray-300 hover:bg-zinc-700'}`}
+                          >
+                            {p}
+                          </button>
+                        ))}
+                        {submittedGamesPage < totalSubmittedGamesPages && (
+                          <button
+                            onClick={() => setSubmittedGamesPage(submittedGamesPage + 1)}
+                            className="h-8 px-3 rounded-md text-sm bg-zinc-800 text-gray-300 hover:bg-zinc-700"
+                          >
+                            Next
+                          </button>
+                        )}
+                      </div>
+                      <span className="text-sm text-gray-400 ml-4">
+                        Page {submittedGamesPage} of {totalSubmittedGamesPages}
                       </span>
                     </div>
                   )}
