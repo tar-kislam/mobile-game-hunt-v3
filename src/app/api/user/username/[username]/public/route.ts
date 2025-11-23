@@ -51,6 +51,7 @@ export async function GET(
       select: {
         id: true,
         title: true,
+        slug: true,
         tagline: true,
         thumbnail: true,
         platforms: true,
