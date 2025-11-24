@@ -175,8 +175,8 @@ export function PostCommentsInline({ postId, isOpen, onCommentAdded }: PostComme
           <>
             <CommentTree
               comments={comments}
-              postId={postId}
-              onReplyRequest={handleReplyRequest}
+                  postId={postId}
+                  onReplyRequest={handleReplyRequest}
               variant="inline"
             />
             {hasMore && (

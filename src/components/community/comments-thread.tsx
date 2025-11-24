@@ -137,11 +137,11 @@ export function CommentsThread({ postId }: CommentsThreadProps) {
         <div className="space-y-4">
           <CommentTree
             comments={comments}
-            postId={postId}
-            onReplyRequest={handleReplyRequest}
+                postId={postId}
+                onReplyRequest={handleReplyRequest}
             variant="detail"
           />
-
+          
           {/* Load More */}
           {hasMore && (
             <div className="text-center py-4">

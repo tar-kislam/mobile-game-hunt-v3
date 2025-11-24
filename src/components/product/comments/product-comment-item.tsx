@@ -276,6 +276,17 @@ export function ProductCommentItem({
             )}
 
             <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+              <div>
+                <UpvoteButton
+                  initialVotes={localComment.upvoteCount}
+                  isUpvoted={localComment.isUpvoted}
+                  onVoteChange={async () => {
+                    await handleUpvote()
+                  }}
+                  size="sm"
+                  variant="ghost"
+                />
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
@@ -291,17 +302,6 @@ export function ProductCommentItem({
                 <MessageCircle className="h-4 w-4" />
                 <span>Reply</span>
               </Button>
-              <div>
-                <UpvoteButton
-                  initialVotes={localComment.upvoteCount}
-                  isUpvoted={localComment.isUpvoted}
-                  onVoteChange={async () => {
-                    await handleUpvote()
-                  }}
-                  size="sm"
-                  variant="ghost"
-                />
-              </div>
               <Button
                 variant="ghost"
                 size="sm"

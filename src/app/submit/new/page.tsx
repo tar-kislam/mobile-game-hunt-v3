@@ -41,7 +41,6 @@ import { SubmitLayout } from '@/components/submit/submit-layout'
 import { SubmitStepHeader } from '@/components/submit/submit-step-header'
 import { SubmitStepNavigation } from '@/components/submit/submit-step-navigation'
 import { SubmitChecklistCard } from '@/components/submit/submit-checklist-card'
-import { Header } from '@/components/layout/header'
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6
 
@@ -713,7 +712,6 @@ export default function NewSubmitPage({ productId }: { productId?: string } = {}
     return (
       <TooltipProvider>
     <div className="min-h-screen relative">
-      <Header />
           {/* Performance-Optimized Particle Background */}
           <div className="fixed inset-0 z-0 bg-gradient-to-br from-black via-[#121225] to-[#050509]">
             {/* Particle-like dots using CSS */}

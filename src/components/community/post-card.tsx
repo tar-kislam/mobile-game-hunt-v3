@@ -243,9 +243,9 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <DialogTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
                 className="text-cyan-200/70 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                         >
                           <Trash2 className="h-4 w-4" />
