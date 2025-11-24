@@ -4,35 +4,19 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CommentComposer, CommentComposerHandle } from './comment-composer'
-import { CommentItem } from './comment-item'
-import { RepliesList } from './replies-list'
-
-interface Comment {
-  id: string
-  content: string
-  createdAt: string
-  user: {
-    id: string
-    name: string
-    username?: string
-    image?: string
-  }
-  _count?: {
-    children: number
-  }
-}
+import { CommentTree } from './comment-tree'
+import type { CommunityCommentNode } from './types'
 
 interface PostCommentsInlineProps {
   postId: string
   isOpen: boolean
   onCommentAdded?: () => void
-  focusKey?: number
 }
 
 const COMMENTS_LIMIT = 20
 
-export function PostCommentsInline({ postId, isOpen, onCommentAdded, focusKey = 0 }: PostCommentsInlineProps) {
-  const [comments, setComments] = useState<Comment[]>([])
+export function PostCommentsInline({ postId, isOpen, onCommentAdded }: PostCommentsInlineProps) {
+  const [comments, setComments] = useState<CommunityCommentNode[]>([])
   const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -42,7 +26,6 @@ export function PostCommentsInline({ postId, isOpen, onCommentAdded, focusKey = 
   const composerRef = useRef<CommentComposerHandle>(null)
   const composerContainerRef = useRef<HTMLDivElement>(null)
   const [replyTarget, setReplyTarget] = useState<{ commentId: string; displayName: string } | null>(null)
-  const [replyRefreshKey, setReplyRefreshKey] = useState(0)
 
   const resetState = useCallback(() => {
     setComments([])
@@ -108,14 +91,6 @@ export function PostCommentsInline({ postId, isOpen, onCommentAdded, focusKey = 
   }, [fetchComments, initialized, isOpen])
 
   useEffect(() => {
-    if (!isOpen) return
-    if (focusKey > 0) {
-      const timeout = setTimeout(() => composerRef.current?.focus(), 120)
-      return () => clearTimeout(timeout)
-    }
-  }, [focusKey, isOpen])
-
-  useEffect(() => {
     if (!isOpen) {
       setReplyTarget(null)
     }
@@ -134,9 +109,6 @@ export function PostCommentsInline({ postId, isOpen, onCommentAdded, focusKey = 
   const handleCommentSuccess = () => {
     onCommentAdded?.()
     fetchComments(false)
-    if (replyTarget) {
-      setReplyRefreshKey((key) => key + 1)
-    }
     setReplyTarget(null)
   }
 
@@ -144,7 +116,7 @@ export function PostCommentsInline({ postId, isOpen, onCommentAdded, focusKey = 
     setReplyTarget(null)
   }
 
-  const handleReplyRequest = (comment: Comment) => {
+  const handleReplyRequest = (comment: CommunityCommentNode) => {
     const displayName = comment.user.username || comment.user.name || 'user'
     const mention = `@${comment.user.username || comment.user.name || 'user'} `
     setReplyTarget({
@@ -201,30 +173,12 @@ export function PostCommentsInline({ postId, isOpen, onCommentAdded, focusKey = 
           </div>
         ) : (
           <>
-            {comments.map((comment) => (
-              <div
-                key={comment.id}
-                className="rounded-2xl border border-cyan-500/10 bg-[#060b1a]/60 p-4 shadow-[0_0_16px_rgba(14,165,233,0.08)] transition-all duration-300 hover:border-cyan-400/40"
-              >
-                <CommentItem
-                  comment={comment}
-                  postId={postId}
-                  showReplies
-                  onReplyRequest={handleReplyRequest}
-                />
-
-                {comment._count && comment._count.children > 0 && (
-                  <RepliesList
-                    parentId={comment.id}
-                    postId={postId}
-                    initialCount={comment._count.children}
-                    onReplyRequest={handleReplyRequest}
-                    refreshKey={replyRefreshKey}
-                  />
-                )}
-              </div>
-            ))}
-
+            <CommentTree
+              comments={comments}
+              postId={postId}
+              onReplyRequest={handleReplyRequest}
+              variant="inline"
+            />
             {hasMore && (
               <div className="pt-2">
                 <Button

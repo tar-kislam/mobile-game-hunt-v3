@@ -358,7 +358,7 @@ export async function POST(
     }
 
     const upvotedSet = new Set<string>()
-    const serialized = serializeComment(createdComment, upvotedSet)
+    const serialized = serializeProductComment(createdComment, upvotedSet)
 
     return NextResponse.json(serialized, { status: 201 })
   } catch (error) {

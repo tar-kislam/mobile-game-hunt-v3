@@ -42,7 +42,6 @@ interface CommunityFeedProps {
 export function CommunityFeed({ posts, currentUserId, onTagClick, onToggleLike, onDeletePost }: CommunityFeedProps) {
   const [items, setItems] = useState<Post[]>(posts)
   const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({})
-  const [focusMap, setFocusMap] = useState<Record<string, number>>({})
 
   const handleDeletePost = (postId: string) => {
     setItems((prev) => prev.filter((post) => post.id !== postId))
@@ -58,18 +57,6 @@ export function CommunityFeed({ posts, currentUserId, onTagClick, onToggleLike, 
     setExpandedMap((prev) => ({
       ...prev,
       [postId]: !prev[postId]
-    }))
-  }
-
-  const handleReplyRequest = (postId: string) => {
-    setExpandedMap((prev) => ({
-      ...prev,
-      [postId]: true
-    }))
-
-    setFocusMap((prev) => ({
-      ...prev,
-      [postId]: (prev[postId] || 0) + 1
     }))
   }
 
@@ -99,8 +86,6 @@ export function CommunityFeed({ posts, currentUserId, onTagClick, onToggleLike, 
           isCommentsOpen={Boolean(expandedMap[post.id])}
           onToggleComments={() => handleToggleComments(post.id)}
           onCommentAdded={() => handleCommentAdded(post.id)}
-          onReplyRequest={() => handleReplyRequest(post.id)}
-          focusKey={focusMap[post.id] || 0}
         />
       ))}
     </div>

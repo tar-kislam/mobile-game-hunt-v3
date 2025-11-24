@@ -8,30 +8,13 @@ import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
-
-interface Comment {
-  id: string
-  content: string
-  createdAt: string
-  updatedAt?: string
-  isDeleted?: boolean
-  user: {
-    id: string
-    name: string
-    username?: string
-    image?: string
-  }
-  _count?: {
-    children: number
-  }
-}
+import type { CommunityCommentNode } from './types'
 
 interface CommentItemProps {
-  comment: Comment
+  comment: CommunityCommentNode
   postId: string
-  showReplies?: boolean
   onUpdate?: () => void
-  onReplyRequest?: (comment: Comment) => void
+  onReplyRequest?: (comment: CommunityCommentNode) => void
 }
 
 // Highlight mentions in comment content
@@ -72,7 +55,7 @@ function highlightMentions(text: string): React.ReactNode {
   return parts.length > 0 ? <>{parts}</> : text
 }
 
-export function CommentItem({ comment, postId, showReplies = false, onUpdate, onReplyRequest }: CommentItemProps) {
+export function CommentItem({ comment, postId, onUpdate, onReplyRequest }: CommentItemProps) {
   const { data: session } = useSession()
   const [isLiked, setIsLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(0)

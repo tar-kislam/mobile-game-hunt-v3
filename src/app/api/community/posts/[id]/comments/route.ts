@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { Prisma } from '@prisma/client'
 import { parseMentions, resolveMentions } from '@/lib/mentions'
 
 const querySchema = z.object({
@@ -16,6 +17,23 @@ const bodySchema = z.object({
   content: z.string().min(1).max(500).trim(),
   parentId: z.string().optional()
 })
+
+const COMMENT_PAGE_SIZE = 20
+const MAX_REPLY_DEPTH = 4
+
+const commentInclude = {
+  user: {
+    select: { id: true, name: true, username: true, image: true }
+  }
+}
+
+type PostCommentWithUser = Prisma.PostCommentGetPayload<{
+  include: typeof commentInclude
+}>
+
+interface CommentTreeNode extends PostCommentWithUser {
+  replies: CommentTreeNode[]
+}
 
 // Rate limiting: max 10 comments per minute per user
 const RATE_LIMIT_COMMENTS_PER_MINUTE = 10
@@ -54,7 +72,7 @@ export async function GET(
   }
 
   const { preview, limit, cursor, order } = parsed.data
-  const take = preview === 'true' ? (limit ?? 3) : (limit ?? 20)
+  const take = preview === 'true' ? (limit ?? 3) : (limit ?? COMMENT_PAGE_SIZE)
   const orderBy = { createdAt: order === 'latest' ? 'desc' : 'asc' } as const
 
   try {
@@ -68,40 +86,15 @@ export async function GET(
       orderBy,
       take,
       ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
-      include: {
-        user: {
-          select: { id: true, name: true, username: true, image: true }
-        },
-        _count: {
-          select: {
-            children: {
-              where: {
-                isDeleted: false,
-                status: 'visible'
-              }
-            }
-          }
-        },
-        ...(preview === 'true' ? {
-          children: {
-            take: 2,
-            orderBy: { createdAt: 'asc' },
-            where: {
-              isDeleted: false,
-              status: 'visible'
-            },
-            include: {
-              user: {
-                select: { id: true, name: true, username: true, image: true }
-              }
-            }
-          }
-        } : {})
-      }
+      include: commentInclude
     })
 
+    const topLevelIds = topLevel.map((comment) => comment.id)
+    const replies = await fetchRepliesRecursively(postId, topLevelIds)
+    const commentTree = buildCommentTree(topLevel, replies)
+
     const nextCursor = topLevel.length === take ? topLevel[topLevel.length - 1].id : null
-    return NextResponse.json({ comments: topLevel, nextCursor })
+    return NextResponse.json({ comments: commentTree, nextCursor })
   } catch (e) {
     console.error('[POST COMMENTS][GET] error', e)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -280,5 +273,68 @@ export async function POST(
     console.error('[POST COMMENTS][POST] error', e)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
+}
+
+async function fetchRepliesRecursively(
+  postId: string,
+  parentIds: string[],
+  depth = 1
+): Promise<PostCommentWithUser[]> {
+  if (parentIds.length === 0 || depth > MAX_REPLY_DEPTH) {
+    return []
+  }
+
+  const replies = await prisma.postComment.findMany({
+    where: {
+      postId,
+      parentId: { in: parentIds },
+      isDeleted: false,
+      status: 'visible'
+    },
+    orderBy: { createdAt: 'asc' },
+    include: commentInclude
+  })
+
+  if (replies.length === 0) {
+    return []
+  }
+
+  const childReplies = await fetchRepliesRecursively(
+    postId,
+    replies.map((reply) => reply.id),
+    depth + 1
+  )
+
+  return [...replies, ...childReplies]
+}
+
+function buildCommentTree(
+  topLevel: PostCommentWithUser[],
+  replies: PostCommentWithUser[]
+): CommentTreeNode[] {
+  const nodeMap = new Map<string, CommentTreeNode>()
+
+  for (const comment of [...topLevel, ...replies]) {
+    nodeMap.set(comment.id, { ...comment, replies: [] })
+  }
+
+  const orderedTopLevel = topLevel
+    .map((comment) => nodeMap.get(comment.id))
+    .filter((node): node is CommentTreeNode => Boolean(node))
+
+  const orderedReplies = [...replies].sort(
+    (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+  )
+
+  for (const reply of orderedReplies) {
+    if (!reply.parentId) continue
+    const parentNode = nodeMap.get(reply.parentId)
+    const currentNode = nodeMap.get(reply.id)
+    if (parentNode && currentNode) {
+      parentNode.replies.push(currentNode)
+    }
+  }
+
+  return orderedTopLevel
 }
 

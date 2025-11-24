@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Heart, Share2, Copy, Twitter, Linkedin, MessageCircle, Trash2, X, ExternalLink } from 'lucide-react'
+import { Heart, Share2, Copy, Twitter, Linkedin, MessageCircle, Trash2, X, SquareArrowOutUpRight } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import { PollDisplay } from './enhanced-poll-display'
@@ -52,11 +52,9 @@ interface PostCardProps {
   isCommentsOpen?: boolean
   onToggleComments?: () => void
   onCommentAdded?: () => void
-  onReplyRequest?: () => void
-  focusKey?: number
 }
 
-export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComments, onCommentAdded, onReplyRequest, focusKey = 0 }: PostCardProps) {
+export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComments, onCommentAdded }: PostCardProps) {
   const { data: session } = useSession()
   const router = useRouter()
   const [isLiked, setIsLiked] = useState(false)
@@ -162,19 +160,6 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
     setSharePopoverOpen(false)
   }
 
-  const handleInlineReplyRequest = () => {
-    if (!session?.user?.id) {
-      toast.error('Please sign in to reply')
-      router.push('/auth/signin?callbackUrl=/community')
-      return
-    }
-    if (onReplyRequest) {
-      onReplyRequest()
-    } else {
-      router.push(`/community/post/${post.id}#comments`)
-    }
-  }
-
   const handleDelete = async () => {
     if (!session) {
       toast.error('Please sign in to delete posts')
@@ -229,8 +214,12 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
   }
 
   return (
-    <Card className="bg-card/50 border-white/10 backdrop-blur-sm" data-post-id={post.id}>
-      <CardContent className="p-4">
+    <Card
+      className="relative overflow-hidden border border-cyan-500/25 bg-gradient-to-br from-[#010208]/98 via-[#010910]/95 to-[#010305]/98 shadow-[0_0_50px_rgba(0,247,255,0.12)]"
+      data-post-id={post.id}
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(9,202,244,0.25),_transparent_55%)] opacity-50" />
+      <CardContent className="relative z-10 p-5">
         <div className="space-y-4">
           {/* Post Header */}
           <div className="flex items-center justify-between">
@@ -243,8 +232,8 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
                 requireAuthOnClick
               />
               <div>
-                <p className="font-medium text-gray-200">{post.user.name}</p>
-                <p className="text-sm text-gray-400">{formatTimeAgo(post.createdAt)}</p>
+                <p className="font-medium text-cyan-50">{post.user.name}</p>
+                <p className="text-sm text-cyan-300/70">{formatTimeAgo(post.createdAt)}</p>
               </div>
             </div>
             {/* Delete button - only show for post owner */}
@@ -254,10 +243,10 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <DialogTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-cyan-200/70 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -298,7 +287,7 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
 
           {/* Post Content */}
           {post.content && (
-            <div className="text-gray-200 whitespace-pre-wrap break-words">
+            <div className="text-cyan-100 whitespace-pre-wrap break-words text-[15px] leading-relaxed">
               {post.content}
             </div>
           )}
@@ -307,7 +296,7 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
           {post.hashtags && post.hashtags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {post.hashtags.map((hashtag, index) => (
-                <Badge key={index} variant="secondary" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+                <Badge key={index} variant="secondary" className="bg-cyan-400/10 text-cyan-200 border-cyan-500/40">
                   #{hashtag}
                 </Badge>
               ))}
@@ -323,7 +312,7 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
                   <img
                     src={post.images[0]}
                     alt={`Post image`}
-                    className="w-full max-h-96 object-cover rounded-xl border border-white/10 cursor-pointer hover:opacity-95 transition-opacity"
+                    className="w-full max-h-96 object-cover rounded-xl border border-cyan-500/30 cursor-pointer hover:opacity-95 transition-opacity"
                     onClick={() => handleImageClick(0)}
                   />
                 </div>
@@ -335,7 +324,7 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
                       key={index}
                       src={image}
                       alt={`Post image ${index + 1}`}
-                      className="w-full h-48 object-cover rounded-xl border border-white/10 cursor-pointer hover:opacity-95 transition-opacity"
+                      className="w-full h-48 object-cover rounded-xl border border-cyan-500/30 cursor-pointer hover:opacity-95 transition-opacity"
                       onClick={() => handleImageClick(index)}
                     />
                   ))}
@@ -346,7 +335,7 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
                   <img
                     src={post.images[0]}
                     alt={`Post image 1`}
-                    className="w-full h-48 object-cover rounded-xl border border-white/10 cursor-pointer hover:opacity-95 transition-opacity"
+                    className="w-full h-48 object-cover rounded-xl border border-cyan-500/30 cursor-pointer hover:opacity-95 transition-opacity"
                     onClick={() => handleImageClick(0)}
                   />
                   <div className="grid grid-rows-2 gap-2">
@@ -355,7 +344,7 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
                         key={index + 1}
                         src={image}
                         alt={`Post image ${index + 2}`}
-                        className="w-full h-23 object-cover rounded-xl border border-white/10 cursor-pointer hover:opacity-95 transition-opacity"
+                        className="w-full h-23 object-cover rounded-xl border border-cyan-500/30 cursor-pointer hover:opacity-95 transition-opacity"
                         onClick={() => handleImageClick(index + 1)}
                       />
                     ))}
@@ -369,7 +358,7 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
                       <img
                         src={image}
                         alt={`Post image ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-xl border border-white/10 cursor-pointer hover:opacity-95 transition-opacity"
+                        className="w-full h-32 object-cover rounded-xl border border-cyan-500/30 cursor-pointer hover:opacity-95 transition-opacity"
                         onClick={() => handleImageClick(index)}
                       />
                       {index === 3 && post.images && post.images.length > 4 && (
@@ -410,15 +399,15 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
           )}
 
           {/* Post Actions */}
-          <div className="flex items-center justify-between pt-2 border-t border-gray-700">
-            <div className="flex items-center space-x-6">
+          <div className="flex items-center justify-between pt-3 border-t border-cyan-500/25">
+            <div className="flex items-center flex-wrap gap-3">
               {/* Like Button */}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleLike}
-                className={`flex items-center space-x-2 transition-colors ${
-                  isLiked ? 'text-red-500 hover:text-red-600' : 'text-gray-400 hover:text-red-500'
+                className={`flex items-center space-x-2 rounded-full bg-transparent transition-all hover:bg-cyan-500/15 ${
+                  isLiked ? 'text-rose-400 hover:text-rose-300' : 'text-cyan-200/80 hover:text-rose-200'
                 }`}
               >
                 <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
@@ -436,26 +425,18 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
                     router.push(`/community/post/${post.id}#comments`)
                   }
                 }}
-                className={`flex items-center space-x-2 transition-colors ${
-                  isCommentsOpen ? 'text-blue-400 hover:text-blue-500' : 'text-gray-400 hover:text-blue-500'
+                className={`flex items-center space-x-2 rounded-full px-4 transition-all ${
+                  isCommentsOpen
+                    ? 'text-cyan-100 bg-cyan-500/20 hover:bg-cyan-500/30'
+                    : 'text-cyan-200/70 hover:text-cyan-100 hover:bg-cyan-500/15'
                 }`}
                 aria-expanded={isCommentsOpen}
                 aria-controls={`post-${post.id}-comments`}
               >
                 <MessageCircle className="h-5 w-5" />
-                <span className="text-sm">
+                <span className="text-sm tracking-wide">
                   {isCommentsOpen ? 'Hide comments' : 'Comments'} ({commentCount})
                 </span>
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleInlineReplyRequest}
-                className="flex items-center space-x-2 text-gray-400 hover:text-cyan-300 transition-colors"
-              >
-                <MessageCircle className="h-5 w-5" />
-                <span className="text-sm">Reply</span>
               </Button>
 
               {/* Open in new page */}
@@ -463,10 +444,10 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
                 asChild
                 variant="ghost"
                 size="sm"
-                className="hidden sm:flex items-center space-x-2 text-gray-400 hover:text-gray-200 transition-colors"
+                className="hidden sm:flex items-center space-x-2 text-cyan-200/80 hover:text-white transition-colors rounded-full px-4 hover:bg-cyan-500/15"
               >
                 <Link href={`/community/post/${post.id}`}>
-                  <ExternalLink className="h-4 w-4" />
+                  <SquareArrowOutUpRight className="h-4 w-4" />
                   <span className="text-sm">Open thread</span>
                 </Link>
               </Button>
@@ -477,7 +458,7 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="flex items-center space-x-2 text-gray-400 hover:text-green-500 transition-colors"
+                    className="flex items-center space-x-2 text-cyan-200/70 hover:text-green-300 transition-colors rounded-full px-4 hover:bg-cyan-500/15"
                   >
                     <Share2 className="h-5 w-5" />
                     <span className="text-sm">Share</span>
@@ -602,7 +583,6 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
           postId={post.id}
           isOpen={isCommentsOpen}
           onCommentAdded={onCommentAdded}
-          focusKey={focusKey}
         />
       </div>
     </Card>

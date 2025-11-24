@@ -3,31 +3,16 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { CommentItem } from './comment-item'
 import { CommentComposer, CommentComposerHandle } from './comment-composer'
-import { RepliesList } from './replies-list'
-
-interface Comment {
-  id: string
-  content: string
-  createdAt: string
-  user: {
-    id: string
-    name: string
-    username?: string
-    image?: string
-  }
-  _count?: {
-    children: number
-  }
-}
+import { CommentTree } from './comment-tree'
+import type { CommunityCommentNode } from './types'
 
 interface CommentsThreadProps {
   postId: string
 }
 
 export function CommentsThread({ postId }: CommentsThreadProps) {
-  const [comments, setComments] = useState<Comment[]>([])
+  const [comments, setComments] = useState<CommunityCommentNode[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
@@ -35,7 +20,6 @@ export function CommentsThread({ postId }: CommentsThreadProps) {
   const composerRef = useRef<CommentComposerHandle>(null)
   const composerContainerRef = useRef<HTMLDivElement>(null)
   const [replyTarget, setReplyTarget] = useState<{ commentId: string; displayName: string } | null>(null)
-  const [replyRefreshKey, setReplyRefreshKey] = useState(0)
 
   const fetchComments = async (loadMore = false) => {
     try {
@@ -81,9 +65,6 @@ export function CommentsThread({ postId }: CommentsThreadProps) {
 
   const handleCommentSuccess = () => {
     fetchComments(false)
-    if (replyTarget) {
-      setReplyRefreshKey((key) => key + 1)
-    }
     setReplyTarget(null)
   }
 
@@ -91,7 +72,7 @@ export function CommentsThread({ postId }: CommentsThreadProps) {
     setReplyTarget(null)
   }
 
-  const handleReplyRequest = (comment: Comment) => {
+  const handleReplyRequest = (comment: CommunityCommentNode) => {
     const displayName = comment.user.username || comment.user.name || 'user'
     const mention = `@${comment.user.username || comment.user.name || 'user'} `
     setReplyTarget({
@@ -154,28 +135,13 @@ export function CommentsThread({ postId }: CommentsThreadProps) {
         </div>
       ) : (
         <div className="space-y-4">
-          {comments.map((comment) => (
-            <div key={comment.id} className="bg-card/50 border-white/10 backdrop-blur-sm rounded-xl p-4">
-              <CommentItem
-                comment={comment}
-                postId={postId}
-                showReplies={true}
-                onReplyRequest={handleReplyRequest}
-              />
-              
-              {/* Replies */}
-              {comment._count && comment._count.children > 0 && (
-                <RepliesList
-                  parentId={comment.id}
-                  postId={postId}
-                  initialCount={comment._count.children}
-                  onReplyRequest={handleReplyRequest}
-                  refreshKey={replyRefreshKey}
-                />
-              )}
-            </div>
-          ))}
-          
+          <CommentTree
+            comments={comments}
+            postId={postId}
+            onReplyRequest={handleReplyRequest}
+            variant="detail"
+          />
+
           {/* Load More */}
           {hasMore && (
             <div className="text-center py-4">
