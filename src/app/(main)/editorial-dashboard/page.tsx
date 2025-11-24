@@ -10,10 +10,21 @@ import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Download, GamepadIcon, Mail, Star, MessageCircle, TrendingUp, Users, List } from 'lucide-react'
+import { Download, GamepadIcon, Mail, Star, MessageCircle, TrendingUp, Users, List, Share2 } from 'lucide-react'
 import { SocialPlatformIcon } from '@/components/ui/social-platform-icons'
 import { toast } from 'sonner'
 import DarkVeil from '@/components/DarkVeil'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from '@/components/ui/alert-dialog'
 
 interface Product {
   id: string
@@ -102,10 +113,11 @@ export default function EditorialDashboard() {
   const [campaignsPage, setCampaignsPage] = useState(1)
   const [usersPage, setUsersPage] = useState(1)
   const [submittedGamesPage, setSubmittedGamesPage] = useState(1)
-  const [bulkEmailLoading, setBulkEmailLoading] = useState(false)
   const [weeklySending, setWeeklySending] = useState(false)
   const [latestSending, setLatestSending] = useState(false)
   const [usersFeedbackSending, setUsersFeedbackSending] = useState(false)
+  const [socialPromoDialogOpen, setSocialPromoDialogOpen] = useState(false)
+  const [socialPromoSending, setSocialPromoSending] = useState(false)
   const ITEMS_PER_PAGE = 10
 
   // Filter products based on search term
@@ -430,6 +442,34 @@ export default function EditorialDashboard() {
       toast.error('Failed to send feedback emails')
     } finally {
       setUsersFeedbackSending(false)
+    }
+  }
+
+  const handleSendSocialPromoEmail = async () => {
+    if (socialPromoSending) return
+
+    try {
+      setSocialPromoSending(true)
+      const response = await fetch('/api/editorial/emails/send-social-promo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || 'Failed to send social media promo email')
+      }
+
+      toast.success('Social media promo email has been queued for all users.')
+      setSocialPromoDialogOpen(false)
+    } catch (error) {
+      console.error('[SOCIAL PROMO EMAIL] error', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to send social media promo email')
+    } finally {
+      setSocialPromoSending(false)
     }
   }
 
@@ -939,6 +979,46 @@ export default function EditorialDashboard() {
                         <Download className="w-4 h-4 mr-2" />
                         Download CSV
                       </Button>
+                      <AlertDialog open={socialPromoDialogOpen} onOpenChange={setSocialPromoDialogOpen}>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            disabled={users.length === 0}
+                            className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Share2 className="w-4 h-4 mr-2" />
+                            Send Social Media Promo Email
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-zinc-900 border border-white/10 text-white">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Send Social Media Promo Email to all users?</AlertDialogTitle>
+                            <AlertDialogDescription className="text-gray-300">
+                              This will send a personalized email about our social channels to every registered user.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="bg-transparent border border-white/20 text-white hover:bg-white/10">
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction asChild>
+                              <Button
+                                onClick={handleSendSocialPromoEmail}
+                                disabled={socialPromoSending}
+                                className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50"
+                              >
+                                {socialPromoSending ? (
+                                  <>
+                                    <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                    Sending...
+                                  </>
+                                ) : (
+                                  'Send to all users'
+                                )}
+                              </Button>
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </CardHeader>

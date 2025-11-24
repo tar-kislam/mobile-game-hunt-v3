@@ -696,6 +696,203 @@ export async function sendUserFeedbackEmail(to: string, displayName?: string | n
   }
 }
 
+export const getDisplayNameForUser = (user: { name?: string | null; username?: string | null; email: string }) => {
+  if (user.name && user.name.trim().length > 0) {
+    return user.name.trim()
+  }
+  if (user.username && user.username.trim().length > 0) {
+    return user.username.trim()
+  }
+  return user.email.split('@')[0]
+}
+
+const getSocialPromoEmailHTML = (displayName: string) => {
+  const safeName = displayName || 'there'
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Let's stay connected on social media</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #05060a;
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      color: #f3f4f6;
+    }
+    .wrapper {
+      width: 100%;
+      background: linear-gradient(135deg, #030712 0%, #111827 100%);
+      padding: 24px 0;
+    }
+    .container {
+      width: 100%;
+      max-width: 620px;
+      margin: 0 auto;
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 16px;
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      padding: 40px;
+      box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.35);
+    }
+    h1 {
+      margin: 0 0 16px;
+      font-size: 24px;
+      color: #e0e7ff;
+      text-align: center;
+    }
+    p {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #cbd5f5;
+      margin-bottom: 18px;
+    }
+    .hi {
+      font-weight: 600;
+      color: #f3f4f6;
+    }
+    .section {
+      margin: 28px 0;
+      padding: 20px;
+      border-radius: 14px;
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #93c5fd;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .social-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .social-item {
+      margin-bottom: 12px;
+      font-size: 15px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 16px;
+      border-radius: 9999px;
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      color: #e0f2fe;
+      text-decoration: none;
+      font-weight: 500;
+      margin-right: 12px;
+    }
+    .link {
+      color: #93c5fd;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 32px;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+    @media (max-width: 600px) {
+      .container {
+        padding: 28px 20px;
+      }
+      .pill {
+        display: inline-block;
+        margin-bottom: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="container">
+      <h1>Let’s stay connected on social media 💜</h1>
+      <p class="hi">Hi ${safeName},</p>
+      <p>
+        Thank you for being part of the MobileGameHunt community and supporting indie mobile games. 🙌
+        We're starting to share more discoveries, dev stories, and behind-the-scenes updates on our social channels —
+        and we'd love to have you there as well.
+      </p>
+      <div class="section">
+        <div class="section-title">Follow & support MobileGameHunt</div>
+        <ul class="social-list">
+          <li class="social-item">
+            <span class="pill">X (Twitter)</span> <span>@mobilegamehunt</span>
+          </li>
+          <li class="social-item">
+            <span class="pill">Instagram</span> <span>@mobilegamehunt</span>
+          </li>
+          <li class="social-item">
+            <span class="pill">TikTok</span> <span>@mobilegamehunt</span>
+          </li>
+        </ul>
+      </div>
+      <div class="section" style="margin-top: 18px;">
+        <ul class="social-list">
+          <li class="social-item">
+            <a class="link" href="https://www.reddit.com/r/MobileGameHunt/" target="_blank" rel="noopener noreferrer">Reddit – r/MobileGameHunt</a>
+          </li>
+          <li class="social-item">
+            <a class="link" href="https://discord.gg/zahqtja5e9" target="_blank" rel="noopener noreferrer">Discord – Join our server</a>
+          </li>
+        </ul>
+      </div>
+      <p>
+        A simple follow, like, or share helps a lot more than it seems.
+        It’s one of the best ways to help indie games get discovered by more players.
+      </p>
+      <p>
+        Thanks again for being with us — we really appreciate your support. 💜
+      </p>
+      <p class="hi">Best,<br/>The MobileGameHunt Team</p>
+      <div class="footer">
+        You're receiving this email because you joined MobileGameHunt.<br/>
+        You can update preferences or unsubscribe anytime.
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `
+}
+
+export async function sendSocialPromoEmail(to: string, displayName: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log(`[EMAIL] Sending social promo email to: ${to}`)
+    const transporter = getTransporter()
+    if (!transporter) {
+      const error = 'SMTP not configured'
+      console.error('[EMAIL]', error)
+      return { success: false, error }
+    }
+
+    const name = displayName && displayName.trim().length > 0 ? displayName.trim() : to.split('@')[0]
+    const html = getSocialPromoEmailHTML(name)
+    const mailOptions = {
+      from: '"MobileGameHunt" <info@mobilegamehunt.com>',
+      to,
+      subject: "Let’s stay connected on social media 💜",
+      html
+    }
+
+    const result = await transporter.sendMail(mailOptions)
+    console.log(`[EMAIL] Social promo email sent to ${to}. MessageId: ${result.messageId || 'N/A'}`)
+    return { success: true }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error(`[EMAIL] Failed to send social promo email to ${to}:`, errorMessage)
+    return { success: false, error: errorMessage }
+  }
+}
 // Test Email Configuration
 export async function testEmailConfiguration(): Promise<{ success: boolean; error?: string }> {
   try {
