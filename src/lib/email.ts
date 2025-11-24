@@ -795,6 +795,14 @@ const getSocialPromoEmailHTML = (displayName: string) => {
       text-decoration: none;
       font-weight: 600;
     }
+    .icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      margin-right: 8px;
+    }
     .footer {
       text-align: center;
       margin-top: 32px;
@@ -815,10 +823,10 @@ const getSocialPromoEmailHTML = (displayName: string) => {
 <body>
   <div class="wrapper">
     <div class="container">
-      <h1>Let’s stay connected on social media 💜</h1>
+      <h1>Let's stay connected on social media</h1>
       <p class="hi">Hi ${safeName},</p>
       <p>
-        Thank you for being part of the MobileGameHunt community and supporting indie mobile games. 🙌
+        Thank you for being part of the MobileGameHunt community and supporting indie mobile games.
         We're starting to share more discoveries, dev stories, and behind-the-scenes updates on our social channels —
         and we'd love to have you there as well.
       </p>
@@ -826,23 +834,41 @@ const getSocialPromoEmailHTML = (displayName: string) => {
         <div class="section-title">Follow & support MobileGameHunt</div>
         <ul class="social-list">
           <li class="social-item">
-            <span class="pill">X (Twitter)</span> <span>@mobilegamehunt</span>
+            <a class="pill" href="https://twitter.com/mobilegamehunt" target="_blank" rel="noopener noreferrer">
+              <span class="icon">𝕏</span>
+              X (Twitter)
+            </a>
+            <span>@mobilegamehunt</span>
           </li>
           <li class="social-item">
-            <span class="pill">Instagram</span> <span>@mobilegamehunt</span>
+            <a class="pill" href="https://instagram.com/mobilegamehunt" target="_blank" rel="noopener noreferrer">
+              <span class="icon">📸</span>
+              Instagram
+            </a>
+            <span>@mobilegamehunt</span>
           </li>
           <li class="social-item">
-            <span class="pill">TikTok</span> <span>@mobilegamehunt</span>
+            <a class="pill" href="https://www.tiktok.com/@mobilegamehunt" target="_blank" rel="noopener noreferrer">
+              <span class="icon">🎵</span>
+              TikTok
+            </a>
+            <span>@mobilegamehunt</span>
           </li>
         </ul>
       </div>
       <div class="section" style="margin-top: 18px;">
         <ul class="social-list">
           <li class="social-item">
-            <a class="link" href="https://www.reddit.com/r/MobileGameHunt/" target="_blank" rel="noopener noreferrer">Reddit – r/MobileGameHunt</a>
+            <a class="link" href="https://www.reddit.com/r/MobileGameHunt/" target="_blank" rel="noopener noreferrer">
+              <span class="icon">👽</span>
+              Reddit – r/MobileGameHunt
+            </a>
           </li>
           <li class="social-item">
-            <a class="link" href="https://discord.gg/zahqtja5e9" target="_blank" rel="noopener noreferrer">Discord – Join our server</a>
+            <a class="link" href="https://discord.gg/zahqtja5e9" target="_blank" rel="noopener noreferrer">
+              <span class="icon">💬</span>
+              Discord – Join our server
+            </a>
           </li>
         </ul>
       </div>
@@ -851,7 +877,7 @@ const getSocialPromoEmailHTML = (displayName: string) => {
         It’s one of the best ways to help indie games get discovered by more players.
       </p>
       <p>
-        Thanks again for being with us — we really appreciate your support. 💜
+        Thanks again for being with us — we really appreciate your support.
       </p>
       <p class="hi">Best,<br/>The MobileGameHunt Team</p>
       <div class="footer">
