@@ -68,13 +68,13 @@ export function GamePreviewCard({
       <CardContent className="p-0">
         <div className="relative">
           <GameCoverImage
-            src={thumbnail}
-            alt={title}
+                src={thumbnail}
+                alt={title}
             containerClassName="relative h-48 w-full overflow-hidden rounded-t-xl"
             imageClassName="transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 768px) 100vw, 33vw"
           >
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           </GameCoverImage>
           
           <div className="absolute top-3 left-3">

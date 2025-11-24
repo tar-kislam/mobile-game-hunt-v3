@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { OriginalPostCard } from '@/components/community/OriginalPostCard'
 import { PostActionBar } from '@/components/community/PostActionBar'
+import { CommentsThread } from '@/components/community/comments-thread'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,7 +26,8 @@ async function getPost(id: string) {
         },
         _count: {
           select: {
-            likes: true
+            likes: true,
+            comments: true
           }
         }
       }
@@ -76,9 +78,14 @@ export default async function PostPage({ params }: PostPageProps) {
           <PostActionBar 
             postId={id}
             likeCount={post._count?.likes ?? 0}
+            commentCount={post._count?.comments ?? 0}
           />
         </div>
 
+        {/* Comments Section */}
+        <div id="comments" className="mt-6">
+          <CommentsThread postId={id} />
+        </div>
       </div>
     </div>
   )

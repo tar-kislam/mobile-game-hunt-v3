@@ -19,6 +19,12 @@ function formatNotificationMessage(notification: Notification): string {
       const badgeName = meta?.badgeName || 'Badge'
       const xpReward = meta?.xpReward || 0
       return `🎖️ Badge Earned! ${badgeName} +${xpReward} XP`
+    case 'COMMENT_ON_PRODUCT':
+      return message || '💬 Someone commented on your game'
+    case 'REPLY_TO_COMMENT':
+      return message || '↩️ Someone replied to your comment'
+    case 'MENTION_IN_COMMENT':
+      return message || '🔔 You were mentioned in a comment'
     
     case 'xp':
       const xpAmount = meta?.xpAmount || 0

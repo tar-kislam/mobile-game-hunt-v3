@@ -17,7 +17,6 @@ import {
   MessageCircle,
   Eye,
   Download,
-  Send,
   ArrowUpIcon,
   Globe,
   Twitter,
@@ -34,13 +33,12 @@ import {
   Linkedin,
   Building
 } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
 import { motion } from 'framer-motion'
 import { PlatformIcons } from '@/components/ui/platform-icons';
 import dynamicImport from 'next/dynamic';
 import { PlaytestClaim } from '@/components/playtest/playtest-claim';
 import { UpvoteButton } from '@/components/ui/upvote-button';
-import { Comment } from '@/components/ui/comment';
+import { ProductCommentsThread } from '@/components/product/comments/product-comments-thread';
 
 // Dynamic imports for heavy components
 const MediaCarousel = dynamicImport(() => import('./media-carousel').then(mod => ({ default: mod.MediaCarousel })), {
@@ -63,6 +61,7 @@ import { useShareGamePopup } from '@/hooks/useShareGamePopup';
 
 interface Product {
   id: string;
+  slug: string;
   title: string;
   tagline?: string | null;
   slug?: string;
@@ -157,8 +156,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
   const [followCount, setFollowCount] = useState(product.follows);
   const [clickCount, setClickCount] = useState(product.clicks);
   const [viewCount, setViewCount] = useState(product.viewCount ?? product.clicks);
-  const [newComment, setNewComment] = useState('');
-  const [comments, setComments] = useState<any[]>([]);
+  const [commentCount, setCommentCount] = useState(product._count.comments);
   const [productVotes, setProductVotes] = useState(product._count.votes);
   const [isProductUpvoted, setIsProductUpvoted] = useState(hasVoted);
   const [recommended, setRecommended] = useState<any[]>([])
@@ -224,7 +222,6 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
     if (session?.user?.id) {
       checkFollowStatus();
     }
-    fetchComments();
     // Set current URL on client side
     setCurrentUrl(window.location.href);
     
@@ -420,53 +417,6 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
     toast.info('Redeem functionality coming soon!');
   };
 
-  const fetchComments = async () => {
-    try {
-      const response = await fetch(`/api/products/${product.id}/comments`);
-      if (response.ok) {
-        const data = await response.json();
-        setComments(data);
-      } else {
-        toast.error('Failed to fetch comments');
-      }
-    } catch (error) {
-      console.error('Error fetching comments:', error);
-      toast.error('Failed to load comments');
-    }
-  };
-
-  const handleCommentSubmit = async () => {
-    if (!session) {
-      toast.error('Please sign in to comment');
-      return;
-    }
-
-    if (!newComment.trim()) {
-      toast.error('Comment cannot be empty');
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/products/${product.id}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: newComment })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setComments(prev => [data, ...prev]);
-        setNewComment('');
-        toast.success('Comment posted!');
-      } else {
-        toast.error('Failed to post comment');
-      }
-    } catch (error) {
-      console.error('Error posting comment:', error);
-      toast.error('Failed to post comment');
-    }
-  };
-
   const handleProductVote = async (newVoteCount: number, isUpvoted: boolean) => {
     if (!session) {
       toast.error('Please sign in to vote');
@@ -506,38 +456,6 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
         setIsProductUpvoted(hasVoted);
       }, 1000);
     }
-  };
-
-  const handleCommentVote = (commentId: string, newVoteCount: number, isUpvoted: boolean) => {
-    // Update comment votes in local state
-    setComments(prev => prev.map(comment => 
-      comment.id === commentId 
-        ? { ...comment, _count: { ...comment._count, votes: newVoteCount } }
-        : comment
-    ));
-  };
-
-  const handleCommentReply = (commentId: string) => {
-    // Focus on comment input and add @username
-    const comment = comments.find(c => c.id === commentId);
-    if (comment) {
-      setNewComment(`@${comment.user.name || 'Anonymous'} `);
-      // Focus on textarea
-      const textarea = document.querySelector('textarea');
-      if (textarea) {
-        textarea.focus();
-      }
-    }
-  };
-
-  const handleCommentReport = (commentId: string) => {
-    toast.info('Report functionality coming soon!');
-  };
-
-  const handleCommentShare = (commentId: string) => {
-    const commentUrl = `${window.location.href}#comment-${commentId}`;
-    navigator.clipboard.writeText(commentUrl);
-    toast.success('Comment link copied to clipboard!');
   };
 
 
@@ -648,88 +566,16 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
           <Card className="rounded-3xl shadow-soft border-2 mt-6">
             <CardHeader>
               <h2 className="text-xl font-semibold">
-                Comments ({product._count.comments})
+                Comments ({commentCount})
               </h2>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Add Comment */}
-              {session ? (
-                <div className="group relative">
-                  {/* Tron-style container with grid lines effect */}
-                  <div className="relative rounded-lg border border-cyan-500/30 bg-gradient-to-br from-gray-900/50 to-black/80 p-4 shadow-[0_0_20px_rgba(6,182,212,0.15)] transition-all duration-300 hover:border-cyan-400/50 hover:shadow-[0_0_30px_rgba(6,182,212,0.25)]">
-                    {/* Animated corner accents */}
-                    <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-cyan-400/60 opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
-                    <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-cyan-400/60 opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
-                    <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-cyan-400/60 opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
-                    <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-cyan-400/60 opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
-                    
-                    {/* Input area with integrated Tron-style button */}
-                    <div className="relative border border-cyan-500/30 rounded-lg bg-black/40 overflow-hidden group/input focus-within:border-cyan-400/60 transition-all duration-300">
-                  <Textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="What do you think? Share your thoughts..."
-                        className="w-full pr-16 min-h-[120px] bg-transparent border-0 text-white placeholder:text-gray-500 focus:ring-0 focus:outline-none resize-none"
-                  />
-                      
-                      {/* Tron-style integrated button */}
-                      <div className="absolute bottom-2 right-2">
-                        <Button
-                          onClick={handleCommentSubmit}
-                          disabled={!newComment.trim()}
-                          aria-label="Post comment"
-                          className="group/btn relative h-9 w-9 rounded border border-cyan-500/60 bg-black/80 backdrop-blur-sm transition-all duration-300 hover:border-cyan-400 hover:bg-black/90 disabled:opacity-30 disabled:cursor-not-allowed overflow-hidden"
-                        >
-                          {/* Tron corner accents */}
-                          <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-cyan-400/80 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
-                          <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-cyan-400/80 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
-                          <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-cyan-400/80 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
-                          <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-cyan-400/80 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
-                          
-                          {/* Subtle inner glow */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
-                          
-                          {/* Icon with neon effect */}
-                          <Send className="relative z-10 w-4 h-4 text-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.5)] transition-all duration-300 group-hover/btn:text-cyan-300 group-hover/btn:drop-shadow-[0_0_8px_rgba(6,182,212,0.8)] group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
-                          <span className="sr-only">Post Comment</span>
-                  </Button>
-                      </div>
-                      
-                      {/* Bottom accent line that extends from button */}
-                      <div className="absolute bottom-0 right-12 left-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/0 to-cyan-400/30 group-hover/input:via-cyan-400/40 transition-all duration-500" />
-                    </div>
-                    
-                    {/* Bottom accent line that animates on focus */}
-                    <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400/0 to-transparent group-hover:via-cyan-400/60 transition-all duration-500" />
-                  </div>
-                </div>
-              ) : (
-                <div className="p-4 border border-dashed border-muted-foreground/30 rounded-xl text-center">
-                  <p className="text-muted-foreground mb-2">Join the conversation</p>
-                  <Button className="rounded-full px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">Sign in to comment</Button>
-                </div>
-              )}
-
-              {/* Comments List */}
-              <div className="space-y-4">
-                {comments.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    No comments yet. Be the first to share your thoughts!
-                  </p>
-                ) : (
-                  comments.map((comment) => (
-                    <Comment
-                      key={comment.id}
-                      comment={comment}
-                      isAuthenticated={!!session}
-                      onVoteChange={handleCommentVote}
-                      onReply={handleCommentReply}
-                      onReport={handleCommentReport}
-                      onShare={handleCommentShare}
-                    />
-                  ))
-                )}
-              </div>
+              <ProductCommentsThread
+                productId={product.id}
+                productSlug={product.slug ?? null}
+                initialCount={product._count.comments}
+                onCountChange={setCommentCount}
+              />
             </CardContent>
           </Card>
         </div>
@@ -1017,7 +863,7 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
                 <div className="flex items-center gap-2">
                   <MessageCircle className="w-4 h-4 text-blue-400" />
                   <span className="text-gray-600 dark:text-gray-400">Comments</span>
-                  <span className="font-semibold">{product._count.comments}</span>
+                  <span className="font-semibold">{commentCount}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Eye className="w-4 h-4 text-green-400" />

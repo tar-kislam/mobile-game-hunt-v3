@@ -56,6 +56,8 @@ model User {
   level                Int                 @default(1)
   xp                   Int                 @default(0)
   passwordHash         String?             @db.VarChar(255)
+  communityDailyPostCount Int              @default(0)
+  communityLastPostDate  DateTime?
   accounts             Account[]
   adRequests           AdRequest[]
   advertiseCampaigns   AdvertiseCampaign[]
@@ -73,6 +75,8 @@ model User {
   postComments         PostComment[]
   products             Product[]
   comments             ProductComment[]
+  commentMentions      CommentMention[] @relation("CommentMentions")
+  productCommentMentions ProductCommentMention[] @relation("ProductCommentMentions")
   productMakers        ProductMaker[]
   sessions             Session[]
   studios              Studio[]
@@ -212,10 +216,17 @@ model ProductComment {
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
   votes     CommentVote[]
+  mentions  ProductCommentMention[]
+  isDeleted Boolean          @default(false)
+  status    String           @default("visible")
   parent    ProductComment?  @relation("ProductCommentReplies", fields: [parentId], references: [id])
   replies   ProductComment[] @relation("ProductCommentReplies")
   product   Product          @relation(fields: [productId], references: [id])
   user      User             @relation(fields: [userId], references: [id])
+
+  @@index([productId, createdAt])
+  @@index([parentId])
+  @@index([status])
 }
 
 model CommentVote {
@@ -223,10 +234,24 @@ model CommentVote {
   userId    String
   commentId String
   createdAt DateTime       @default(now())
+  value     Int            @default(1)
   comment   ProductComment @relation(fields: [commentId], references: [id])
   user      User           @relation(fields: [userId], references: [id])
 
   @@unique([userId, commentId])
+}
+
+model ProductCommentMention {
+  id              String         @id @default(cuid())
+  commentId       String
+  mentionedUserId String
+  createdAt       DateTime       @default(now())
+  comment         ProductComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  mentionedUser   User           @relation("ProductCommentMentions", fields: [mentionedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, mentionedUserId])
+  @@index([commentId])
+  @@index([mentionedUserId])
 }
 
 model Notification {
@@ -234,16 +259,38 @@ model Notification {
   userId    String
   createdAt DateTime @default(now())
   message   String
-  type      String
+  type      String   // COMMENT_ON_POST, REPLY_TO_COMMENT, MENTION_IN_COMMENT, etc.
   title     String?
   meta      Json?
   link      String?
   icon      String?
   read      Boolean  @default(false)
+  postId    String?  // Related post
+  productId String?
+  commentId String?  // Related comment
+  actorId   String?  // User who performed the action
   user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId, createdAt])
   @@index([userId, read])
+  @@index([postId])
+  @@index([productId])
+  @@index([commentId])
+  @@index([actorId])
+  @@index([type])
+}
+
+model CommentMention {
+  id             String       @id @default(cuid())
+  commentId      String
+  mentionedUserId String
+  createdAt      DateTime     @default(now())
+  comment        PostComment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  mentionedUser  User         @relation("CommentMentions", fields: [mentionedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, mentionedUserId])
+  @@index([commentId])
+  @@index([mentionedUserId])
 }
 
 model PressKit {
@@ -402,15 +449,20 @@ model PostComment {
   parentId  String?  // nullable for top-level comments
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  isDeleted Boolean  @default(false)
+  status    String   @default("visible") // visible, hidden, flagged
 
   post      Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   parent    PostComment? @relation("PostCommentToPostComment", fields: [parentId], references: [id])
   children  PostComment[] @relation("PostCommentToPostComment")
+  mentions  CommentMention[]
 
   @@index([postId, createdAt])
   @@index([parentId])
   @@index([userId, createdAt])
+  @@index([isDeleted])
+  @@index([status])
 }
 
 model Poll {

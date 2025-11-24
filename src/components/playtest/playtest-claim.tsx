@@ -337,8 +337,10 @@ export function PlaytestClaim({ gameId, gameTitle }: PlaytestClaimProps) {
           <Key className="w-5 h-5 text-primary" />
           Playtest Available
         </CardTitle>
-        <CardDescription>
-          Get early access to {gameTitle}
+        <CardDescription asChild>
+          <div>
+            Get early access to {gameTitle}
+          </div>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

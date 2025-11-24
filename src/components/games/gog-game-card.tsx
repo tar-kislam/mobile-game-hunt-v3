@@ -80,8 +80,8 @@ export function GogGameCard({ game, onVote }: GogGameCardProps) {
       <Card className="group h-full flex flex-col bg-transparent hover:bg-card/20 transition-all duration-300 border-0 hover:border-purple-500/30 rounded-lg overflow-hidden hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/20 products-font">
         {/* Game Cover Image - GOG Style */}
         <GameCoverImage
-          src={coverImage}
-          alt={game.title}
+              src={coverImage}
+              alt={game.title}
           sizes="(max-width: 768px) 90vw, (max-width: 1200px) 40vw, 25vw"
           containerClassName="aspect-[3/4]"
           imageClassName="group-hover:scale-105"

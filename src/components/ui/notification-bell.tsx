@@ -47,6 +47,12 @@ function formatNotificationMessage(notification: Notification) {
       const badgeName = meta?.badgeName || 'Badge'
       const xpReward = meta?.xpReward || 0
       return `🎖️ Badge Earned! ${badgeName} +${xpReward} XP`
+    case 'COMMENT_ON_PRODUCT':
+      return message || '💬 Someone commented on your game'
+    case 'REPLY_TO_COMMENT':
+      return message || '↩️ Someone replied to your comment'
+    case 'MENTION_IN_COMMENT':
+      return message || '🔔 You were mentioned in a comment'
     
     case 'xp':
       const xpAmount = meta?.xpAmount || 0
@@ -94,7 +100,13 @@ function getNotificationIcon(type: string, icon?: string) {
     case 'vote':
       return <ThumbsUp className="h-4 w-4 text-purple-500" />
     case 'comment':
+    case 'COMMENT_ON_POST':
+    case 'COMMENT_ON_PRODUCT':
       return <MessageCircle className="h-4 w-4 text-blue-500" />
+    case 'REPLY_TO_COMMENT':
+      return <MessageCircle className="h-4 w-4 text-blue-400" />
+    case 'MENTION_IN_COMMENT':
+      return <MessageCircle className="h-4 w-4 text-purple-500" />
     case 'system':
       return <Bell className="h-4 w-4 text-gray-500" />
     case 'welcome':
@@ -203,7 +215,21 @@ export function NotificationBell({ className }: NotificationBellProps) {
                       className={`p-3 cursor-pointer hover:bg-purple-500/10 ${
                         !notification.read ? 'bg-purple-500/5' : ''
                       }`}
-                      onClick={() => markAsRead(notification.id)}
+                      onClick={() => {
+                        markAsRead(notification.id)
+                        // Navigate to post if link exists
+                        if (notification.link) {
+                          window.location.href = notification.link
+                        } else if (notification.meta?.postId) {
+                          window.location.href = `/community/post/${notification.meta.postId}${
+                            notification.meta.commentId ? `#comment-${notification.meta.commentId}` : ''
+                          }`
+                        } else if (notification.meta?.productId) {
+                          window.location.href = `/product/${notification.meta.productSlug ?? notification.meta.productId}${
+                            notification.meta.commentId ? `#comment-${notification.meta.commentId}` : ''
+                          }`
+                        }
+                      }}
                     >
                       <div className="flex items-start space-x-3 flex-1">
                         <div className="flex-shrink-0 mt-0.5">

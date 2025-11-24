@@ -21,10 +21,11 @@ interface RepliesListProps {
   parentId: string
   postId: string
   initialCount?: number
-  onReplyAdded?: () => void
+  onReplyRequest?: (comment: Comment) => void
+  refreshKey?: number
 }
 
-export function RepliesList({ parentId, postId, initialCount = 0, onReplyAdded }: RepliesListProps) {
+export function RepliesList({ parentId, postId, initialCount = 0, onReplyRequest, refreshKey }: RepliesListProps) {
   const [replies, setReplies] = useState<Comment[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -73,10 +74,11 @@ export function RepliesList({ parentId, postId, initialCount = 0, onReplyAdded }
     fetchReplies(true)
   }
 
-  const handleReplyAdded = () => {
-    fetchReplies(false) // Refresh the list
-    onReplyAdded?.()
-  }
+  useEffect(() => {
+    if (showReplies && refreshKey) {
+      fetchReplies(false)
+    }
+  }, [refreshKey, showReplies])
 
   if (initialCount === 0) {
     return null
@@ -119,7 +121,7 @@ export function RepliesList({ parentId, postId, initialCount = 0, onReplyAdded }
                     comment={reply}
                     postId={postId}
                     showReplies={false}
-                    onReplySuccess={handleReplyAdded}
+                    onReplyRequest={onReplyRequest}
                   />
                 ))}
               </div>

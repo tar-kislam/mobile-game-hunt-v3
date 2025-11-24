@@ -11,13 +11,15 @@ import { handleShareAction } from '@/lib/xp-system'
 interface PostActionBarProps {
   postId: string
   likeCount: number
+  commentCount?: number
   isLiked?: boolean
   onLikeUpdate?: (liked: boolean, newCount: number) => void
 }
 
 export function PostActionBar({ 
   postId, 
-  likeCount, 
+  likeCount,
+  commentCount = 0,
   isLiked = false,
   onLikeUpdate 
 }: PostActionBarProps) {
@@ -121,20 +123,39 @@ export function PostActionBar({
     setSharePopoverOpen(false)
   }
 
+  const handleCommentClick = () => {
+    if (typeof window !== 'undefined') {
+      window.location.href = `/community/post/${postId}#comments`
+    }
+  }
+
   return (
     <div className="flex items-center justify-between px-4 py-3">
-      {/* Like Button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleLike}
-        className={`flex items-center space-x-2 transition-colors ${
-          localIsLiked ? 'text-red-500 hover:text-red-600' : 'text-muted-foreground hover:text-red-500'
-        }`}
-      >
-        <Heart className={`h-5 w-5 ${localIsLiked ? 'fill-current' : ''}`} />
-        <span className="text-sm">{localLikeCount}</span>
-      </Button>
+      <div className="flex items-center space-x-4">
+        {/* Like Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleLike}
+          className={`flex items-center space-x-2 transition-colors ${
+            localIsLiked ? 'text-red-500 hover:text-red-600' : 'text-muted-foreground hover:text-red-500'
+          }`}
+        >
+          <Heart className={`h-5 w-5 ${localIsLiked ? 'fill-current' : ''}`} />
+          <span className="text-sm">{localLikeCount}</span>
+        </Button>
+
+        {/* Comment Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleCommentClick}
+          className="flex items-center space-x-2 text-muted-foreground hover:text-blue-500 transition-colors"
+        >
+          <MessageCircle className="h-5 w-5" />
+          <span className="text-sm">{commentCount}</span>
+        </Button>
+      </div>
 
       {/* Share Button with Popover */}
       <Popover open={sharePopoverOpen} onOpenChange={setSharePopoverOpen}>

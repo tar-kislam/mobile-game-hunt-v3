@@ -83,7 +83,7 @@ export function GameCard({ game, onVote, showAuthor = true, footer }: GameCardPr
       {/* Game Image */}
       <GameCoverImage
         src={mainImage}
-        alt={game.title}
+            alt={game.title}
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 33vw"
         containerClassName="relative aspect-video bg-gradient-to-br from-purple-100 to-blue-100 overflow-hidden"
         imageClassName="object-cover group-hover:scale-105 transition-transform duration-300"

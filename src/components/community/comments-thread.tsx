@@ -1,13 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CommentItem } from './comment-item'
-import { CommentComposer } from './comment-composer'
+import { CommentComposer, CommentComposerHandle } from './comment-composer'
 import { RepliesList } from './replies-list'
-import { useSession } from 'next-auth/react'
-import { toast } from 'sonner'
 
 interface Comment {
   id: string
@@ -29,13 +27,15 @@ interface CommentsThreadProps {
 }
 
 export function CommentsThread({ postId }: CommentsThreadProps) {
-  const { data: session } = useSession()
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
   const [cursor, setCursor] = useState<string | null>(null)
-  const [showComposer, setShowComposer] = useState(false)
+  const composerRef = useRef<CommentComposerHandle>(null)
+  const composerContainerRef = useRef<HTMLDivElement>(null)
+  const [replyTarget, setReplyTarget] = useState<{ commentId: string; displayName: string } | null>(null)
+  const [replyRefreshKey, setReplyRefreshKey] = useState(0)
 
   const fetchComments = async (loadMore = false) => {
     try {
@@ -51,7 +51,7 @@ export function CommentsThread({ postId }: CommentsThreadProps) {
         params.set('cursor', cursor)
       }
       
-      const response = await fetch(`/api/posts/${postId}/comments?${params}`)
+      const response = await fetch(`/api/community/posts/${postId}/comments?${params}`)
       
       if (!response.ok) {
         throw new Error('Failed to fetch comments')
@@ -80,13 +80,31 @@ export function CommentsThread({ postId }: CommentsThreadProps) {
   }
 
   const handleCommentSuccess = () => {
-    fetchComments(false) // Refresh the list
-    setShowComposer(false)
+    fetchComments(false)
+    if (replyTarget) {
+      setReplyRefreshKey((key) => key + 1)
+    }
+    setReplyTarget(null)
   }
 
-  const handleReplySuccess = () => {
-    // Refresh to get updated counts
-    fetchComments(false)
+  const handleReplyCancel = () => {
+    setReplyTarget(null)
+  }
+
+  const handleReplyRequest = (comment: Comment) => {
+    const displayName = comment.user.username || comment.user.name || 'user'
+    const mention = `@${comment.user.username || comment.user.name || 'user'} `
+    setReplyTarget({
+      commentId: comment.id,
+      displayName
+    })
+
+    composerContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const existing = composerRef.current?.getContent().trim()
+    if (!existing) {
+      composerRef.current?.setContent(mention)
+    }
+    composerRef.current?.focus()
   }
 
   useEffect(() => {
@@ -128,30 +146,6 @@ export function CommentsThread({ postId }: CommentsThreadProps) {
 
   return (
     <div className="space-y-6">
-      {/* Comment Composer */}
-      <div className="bg-card/50 border-white/10 backdrop-blur-sm rounded-xl p-4">
-        {!session?.user?.id ? (
-          <div className="text-center py-4">
-            <p className="text-gray-400">Please sign in to comment</p>
-          </div>
-        ) : !showComposer ? (
-          <Button
-            onClick={() => setShowComposer(true)}
-            className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white"
-          >
-            Add a comment...
-          </Button>
-        ) : (
-          <CommentComposer
-            postId={postId}
-            parentId={null}
-            onSuccess={handleCommentSuccess}
-            placeholder="Share your thoughts..."
-            autoFocus
-          />
-        )}
-      </div>
-
       {/* Comments List */}
       {comments.length === 0 ? (
         <div className="text-center py-8">
@@ -166,7 +160,7 @@ export function CommentsThread({ postId }: CommentsThreadProps) {
                 comment={comment}
                 postId={postId}
                 showReplies={true}
-                onReplySuccess={handleReplySuccess}
+                onReplyRequest={handleReplyRequest}
               />
               
               {/* Replies */}
@@ -175,7 +169,8 @@ export function CommentsThread({ postId }: CommentsThreadProps) {
                   parentId={comment.id}
                   postId={postId}
                   initialCount={comment._count.children}
-                  onReplyAdded={handleReplySuccess}
+                  onReplyRequest={handleReplyRequest}
+                  refreshKey={replyRefreshKey}
                 />
               )}
             </div>
@@ -196,6 +191,18 @@ export function CommentsThread({ postId }: CommentsThreadProps) {
           )}
         </div>
       )}
+
+      <div ref={composerContainerRef} className="bg-card/50 border-white/10 backdrop-blur-sm rounded-xl p-4">
+        <CommentComposer
+          ref={composerRef}
+          postId={postId}
+          parentId={replyTarget?.commentId ?? null}
+          replyToName={replyTarget?.displayName}
+          onSuccess={handleCommentSuccess}
+          onCancel={handleReplyCancel}
+          placeholder={replyTarget ? 'Write your reply...' : 'Share your thoughts...'}
+        />
+      </div>
     </div>
   )
 }

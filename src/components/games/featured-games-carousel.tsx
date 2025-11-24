@@ -133,8 +133,8 @@ function HeroGameCard({ game, onClick }: HeroGameCardProps) {
         {/* Background Image */}
         <GameCoverImage
           src={game.thumbnail || game.image}
-          alt={game.title}
-          sizes="(max-width: 768px) 100vw, 60vw"
+              alt={game.title}
+              sizes="(max-width: 768px) 100vw, 60vw"
           containerClassName="absolute inset-0 rounded-3xl"
           imageClassName="object-cover transition-transform duration-300 group-hover:scale-105"
         >
@@ -219,8 +219,8 @@ function SideGameCard({ game, onClick, onHover, isSelected, compact = false }: S
       {/* Thumbnail */}
       <GameCoverImage
         src={game.thumbnail || game.image}
-        alt={game.title}
-        sizes="48px"
+            alt={game.title}
+            sizes="48px"
         containerClassName="relative w-12 h-12 rounded-2xl overflow-hidden flex-shrink-0 bg-muted"
         imageClassName="object-cover"
       />

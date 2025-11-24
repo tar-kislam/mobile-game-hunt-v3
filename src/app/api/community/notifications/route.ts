@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       where.read = false
     }
 
-    // Get notifications
+    // Get notifications with related data
     const notifications = await prisma.notification.findMany({
       where,
       include: {
@@ -52,6 +52,55 @@ export async function GET(request: NextRequest) {
       take: limit
     })
 
+    // Enrich notifications with actor and post/comment data
+    const enrichedNotifications = await Promise.all(
+      notifications.map(async (notification) => {
+        const enriched: any = {
+          ...notification,
+          actor: null,
+          post: null,
+          comment: null
+        }
+
+        // Get actor info if actorId exists
+        if (notification.actorId) {
+          const actor = await prisma.user.findUnique({
+            where: { id: notification.actorId },
+            select: { id: true, name: true, username: true, image: true }
+          })
+          enriched.actor = actor
+        }
+
+        // Get post preview if postId exists
+        if (notification.postId) {
+          const post = await prisma.post.findUnique({
+            where: { id: notification.postId },
+            select: {
+              id: true,
+              content: true,
+              createdAt: true
+            }
+          })
+          enriched.post = post
+        }
+
+        // Get comment preview if commentId exists
+        if (notification.commentId) {
+          const comment = await prisma.postComment.findUnique({
+            where: { id: notification.commentId },
+            select: {
+              id: true,
+              content: true,
+              createdAt: true
+            }
+          })
+          enriched.comment = comment
+        }
+
+        return enriched
+      })
+    )
+
     const total = await prisma.notification.count({ where })
 
     // Get unread count
@@ -63,7 +112,7 @@ export async function GET(request: NextRequest) {
     })
 
     return NextResponse.json({
-      notifications,
+      notifications: enrichedNotifications,
       unreadCount,
       pagination: {
         page,

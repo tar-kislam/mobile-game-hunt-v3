@@ -46,7 +46,16 @@ export function CreatePostBox({ userId }: CreatePostBoxProps) {
   const emojiPickerRef = useRef<HTMLDivElement>(null)
   
   // Post limit hook
-  const { canPost, remaining, used, limit, getStatusMessage, getProgressPercentage, isLoading: limitLoading } = usePostLimit()
+  const { 
+    canPost, 
+    remaining, 
+    used, 
+    limit, 
+    getStatusMessage, 
+    getProgressPercentage, 
+    isLoading: limitLoading,
+    refreshLimit
+  } = usePostLimit()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -104,6 +113,11 @@ export function CreatePostBox({ userId }: CreatePostBoxProps) {
 
       if (!response.ok) {
         const errorData = await response.json()
+        if (errorData.code === 'DAILY_POST_LIMIT_REACHED') {
+          toast.error(errorData.message || 'Daily post limit reached. Try again tomorrow!')
+          refreshLimit()
+          return
+        }
         throw new Error(errorData.error || 'Failed to create post')
       }
 
@@ -117,6 +131,7 @@ export function CreatePostBox({ userId }: CreatePostBoxProps) {
       // Immediately refresh the feed so the new post appears on Latest
       try { router.refresh() } catch {}
       try { window.dispatchEvent(new CustomEvent('community:post-created', { detail: created })) } catch {}
+      refreshLimit()
     } catch (error) {
       console.error('Error creating post:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to create post. Please try again.')
@@ -275,6 +290,11 @@ export function CreatePostBox({ userId }: CreatePostBoxProps) {
 
       if (!response.ok) {
         const errorData = await response.json()
+        if (errorData.code === 'DAILY_POST_LIMIT_REACHED') {
+          toast.error(errorData.message || 'Daily post limit reached. Try again tomorrow!')
+          refreshLimit()
+          return
+        }
         throw new Error(errorData.error || 'Failed to create post with poll')
       }
 
@@ -292,6 +312,7 @@ export function CreatePostBox({ userId }: CreatePostBoxProps) {
       // Refresh and dispatch events
       try { router.refresh() } catch {}
       try { window.dispatchEvent(new CustomEvent('community:post-created', { detail: post })) } catch {}
+      refreshLimit()
     } catch (error) {
       console.error('Error creating post with poll:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to create post with poll. Please try again.')

@@ -174,14 +174,14 @@ function EpicFeaturedLayout({ games, onGameClick }: EpicFeaturedLayoutProps) {
                 )}
               >
                 <GameCoverImage
-                  src={game.thumbnail}
-                  alt={game.title}
-                  width={80}
-                  height={80}
+                    src={game.thumbnail}
+                    alt={game.title}
+                    width={80}
+                    height={80}
                   fill={false}
                   containerClassName="w-full h-full"
                   imageClassName="w-full h-full object-cover"
-                />
+                  />
               </button>
             ))}
           </div>
@@ -250,9 +250,9 @@ function EpicHeroCard({ game, isMobile = false }: EpicHeroCardProps) {
       )}>
         {/* Background Image */}
         <GameCoverImage
-          src={mainImage}
-          alt={game.title}
-          sizes={isMobile ? "100vw" : "(max-width: 1024px) 66vw, 50vw"}
+              src={mainImage}
+              alt={game.title}
+              sizes={isMobile ? "100vw" : "(max-width: 1024px) 66vw, 50vw"}
           containerClassName="absolute inset-0"
           imageClassName="object-cover transition-transform duration-700 group-hover:scale-110"
         >
@@ -323,9 +323,9 @@ function EpicSideCard({ game, onClick, isSelected }: EpicSideCardProps) {
     >
       {/* Game Thumbnail - Square */}
       <GameCoverImage
-        src={game.thumbnail}
-        alt={game.title}
-        sizes="64px"
+            src={game.thumbnail}
+            alt={game.title}
+            sizes="64px"
         containerClassName="relative w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100 flex-shrink-0"
         imageClassName="object-cover transition-transform duration-300 group-hover:scale-110"
       />

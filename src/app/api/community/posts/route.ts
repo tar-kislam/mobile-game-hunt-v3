@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache'
 import { notifyFollowersOfCommunityPost } from '@/lib/followNotifications'
 import { handlePostCreation } from '@/lib/xp-system'
 import { Prisma } from '@prisma/client'
+import { evaluateDailyQuota } from '@/lib/community/quota'
 
 // Configuration constants
 export const DAILY_POST_LIMIT = 3
@@ -22,7 +23,13 @@ export async function POST(request: NextRequest) {
     // Verify user exists in database (should always exist due to auth callback)
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { id: true, name: true, email: true }
+      select: { 
+        id: true, 
+        name: true, 
+        email: true,
+        communityDailyPostCount: true,
+        communityLastPostDate: true
+      }
     })
 
     if (!user) {
@@ -30,26 +37,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Check daily post limit (24 hours from now)
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
-    const postsToday = await prisma.post.count({
-      where: {
-        userId: session.user.id,
-        createdAt: { gte: twentyFourHoursAgo }
-      }
-    })
+    const quota = evaluateDailyQuota(
+      user.communityDailyPostCount,
+      user.communityLastPostDate,
+      DAILY_POST_LIMIT,
+      new Date()
+    )
 
-    if (postsToday >= DAILY_POST_LIMIT) {
+    if (quota.needsReset) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          communityDailyPostCount: 0,
+          communityLastPostDate: quota.todayStart
+        }
+      })
+    }
+
+    const postsToday = quota.needsReset ? 0 : quota.used
+
+    if (!quota.canPost) {
       console.log(`[COMMUNITY][CREATE] Daily post limit reached for user ${session.user.id}: ${postsToday}/${DAILY_POST_LIMIT}`)
       return NextResponse.json(
         { 
+          code: 'DAILY_POST_LIMIT_REACHED',
           error: 'Daily post limit reached',
           message: `You've reached your daily limit of ${DAILY_POST_LIMIT} posts. Keep engaging — tomorrow you can post again!`,
           limit: DAILY_POST_LIMIT,
           used: postsToday,
-          resetTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+          remaining: quota.remaining,
+          resetTime: quota.nextReset.toISOString()
         },
-        { status: 429 } // Too Many Requests
+        { status: 429 }
       )
     }
 
@@ -174,6 +193,14 @@ export async function POST(request: NextRequest) {
         }
       })
       console.log('[COMMUNITY][CREATE] Post created successfully:', post.id)
+
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: {
+          communityDailyPostCount: { increment: 1 },
+          communityLastPostDate: quota.todayStart
+        }
+      })
 
       // Award XP for creating a post
       try {

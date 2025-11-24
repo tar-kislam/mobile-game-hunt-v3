@@ -176,9 +176,15 @@ export function ShareGameModal({
               </div>
               
               {/* Enhanced Subtitle */}
-              <DialogDescription className="text-center text-gray-300 text-sm sm:text-base space-y-1">
-                <p>Share your game and profile with one click to get more players and feedback from the indie community.</p>
-                <p className="text-gray-400 text-xs sm:text-sm">Games that are actively shared are much more likely to get playtests and feedback.</p>
+              <DialogDescription asChild>
+                <div className="text-center text-gray-300 text-sm sm:text-base space-y-1">
+                  <p className="leading-relaxed">
+                    Share your game and profile with one click to get more players and feedback from the indie community.
+                  </p>
+                  <p className="text-gray-400 text-xs sm:text-sm leading-relaxed">
+                    Games that are actively shared are much more likely to get playtests and feedback.
+                  </p>
+                </div>
               </DialogDescription>
             </DialogHeader>
 

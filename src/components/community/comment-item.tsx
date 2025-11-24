@@ -3,15 +3,18 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { UserAvatarTooltip } from '@/components/ui/user-avatar-tooltip'
-import { Heart, MessageCircle, Share } from 'lucide-react'
+import { Heart, MessageCircle, Share, Edit2, Trash2, X, Check } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
-// import { CommentComposer } from './comment-composer'
+import { Textarea } from '@/components/ui/textarea'
+import Link from 'next/link'
 
 interface Comment {
   id: string
   content: string
   createdAt: string
+  updatedAt?: string
+  isDeleted?: boolean
   user: {
     id: string
     name: string
@@ -27,14 +30,58 @@ interface CommentItemProps {
   comment: Comment
   postId: string
   showReplies?: boolean
-  onReplySuccess?: () => void
+  onUpdate?: () => void
+  onReplyRequest?: (comment: Comment) => void
 }
 
-export function CommentItem({ comment, postId, showReplies = false, onReplySuccess }: CommentItemProps) {
+// Highlight mentions in comment content
+function highlightMentions(text: string): React.ReactNode {
+  if (!text) return text
+
+  const mentionRegex = /@([a-zA-Z0-9_-]{1,30})/g
+  const parts: React.ReactNode[] = []
+  let lastIndex = 0
+  let match
+
+  while ((match = mentionRegex.exec(text)) !== null) {
+    // Add text before mention
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index))
+    }
+
+    // Add mention as link
+    const username = match[1]
+    parts.push(
+      <Link
+        key={match.index}
+        href={`/${username}`}
+        className="text-blue-500 hover:text-blue-400 hover:underline font-medium"
+      >
+        @{username}
+      </Link>
+    )
+
+    lastIndex = match.index + match[0].length
+  }
+
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex))
+  }
+
+  return parts.length > 0 ? <>{parts}</> : text
+}
+
+export function CommentItem({ comment, postId, showReplies = false, onUpdate, onReplyRequest }: CommentItemProps) {
   const { data: session } = useSession()
-  const [showReplyComposer, setShowReplyComposer] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(0)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editContent, setEditContent] = useState(comment.content)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const isOwner = session?.user?.id === comment.user.id
+  const isDeleted = comment.isDeleted
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString)
@@ -55,7 +102,78 @@ export function CommentItem({ comment, postId, showReplies = false, onReplySucce
       toast.error('Please sign in to reply')
       return
     }
-    setShowReplyComposer(!showReplyComposer)
+    if (onReplyRequest) {
+      onReplyRequest(comment)
+    } else {
+      toast.info('Open this thread to reply')
+    }
+  }
+
+  const handleEdit = () => {
+    setIsEditing(true)
+    setEditContent(comment.content)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editContent.trim()) {
+      toast.error('Comment cannot be empty')
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/community/comments/${comment.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: editContent.trim()
+        }),
+      })
+
+      if (response.ok) {
+        toast.success('Comment updated')
+        setIsEditing(false)
+        onUpdate?.()
+      } else {
+        const errorData = await response.json()
+        toast.error(errorData.error || 'Failed to update comment')
+      }
+    } catch (error) {
+      console.error('Error updating comment:', error)
+      toast.error('Failed to update comment')
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+    setEditContent(comment.content)
+  }
+
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this comment?')) {
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/community/comments/${comment.id}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        toast.success('Comment deleted')
+        onUpdate?.()
+      } else {
+        const errorData = await response.json()
+        toast.error(errorData.error || 'Failed to delete comment')
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error)
+      toast.error('Failed to delete comment')
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   const handleLikeClick = () => {
@@ -72,18 +190,22 @@ export function CommentItem({ comment, postId, showReplies = false, onReplySucce
       toast.error('Please sign in to share comments')
       return
     }
-    // TODO: Implement share functionality
-    toast.info('Share functionality coming soon')
+    const url = `${window.location.origin}/community/post/${postId}#comment-${comment.id}`
+    navigator.clipboard.writeText(url)
+    toast.success('Comment link copied to clipboard!')
   }
 
-  const handleReplySuccess = () => {
-    setShowReplyComposer(false)
-    onReplySuccess?.()
+  if (isDeleted) {
+    return (
+      <div className="p-4 text-muted-foreground italic">
+        This comment was deleted
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-3">
-      <article className="p-4 hover:bg-muted/30 transition-colors">
+    <div className="space-y-3 group">
+      <article className="relative rounded-2xl border border-cyan-500/10 bg-gradient-to-br from-[#050914]/85 via-[#050914]/70 to-[#071022]/80 p-4 shadow-[0_0_18px_rgba(14,165,233,0.08)] transition-all duration-300 group-hover:border-cyan-400/50 group-hover:shadow-[0_0_26px_rgba(14,165,233,0.2)]">
         <div className="flex space-x-3">
           <div className="flex-shrink-0">
             <UserAvatarTooltip
@@ -99,15 +221,57 @@ export function CommentItem({ comment, postId, showReplies = false, onReplySucce
               <div className="flex items-center space-x-1">
                 <span className="font-semibold text-foreground text-[15px]">{comment.user.name}</span>
                 {comment.user.username && (
-                  <span className="text-muted-foreground text-[15px]">@{comment.user.username}</span>
+                  <Link href={`/${comment.user.username}`} className="text-muted-foreground text-[15px] hover:text-blue-500">
+                    @{comment.user.username}
+                  </Link>
                 )}
                 <span className="text-muted-foreground text-[15px]">·</span>
                 <span className="text-muted-foreground text-[15px]">{formatTimeAgo(comment.createdAt)}</span>
+                {comment.updatedAt && comment.updatedAt !== comment.createdAt && (
+                  <>
+                    <span className="text-muted-foreground text-[15px]">·</span>
+                    <span className="text-muted-foreground text-xs italic">edited</span>
+                  </>
+                )}
               </div>
               
-              <p className="text-foreground text-[15px] leading-relaxed break-words">
-                {comment.content}
-              </p>
+              {isEditing ? (
+                <div className="space-y-2">
+                  <Textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="bg-transparent border border-border text-foreground min-h-[80px]"
+                    maxLength={500}
+                  />
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">{editContent.length}/500</span>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCancelEdit}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleSaveEdit}
+                        disabled={!editContent.trim()}
+                        className="bg-blue-500 hover:bg-blue-600 text-white"
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Save
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-foreground text-[15px] leading-relaxed break-words">
+                  {highlightMentions(comment.content)}
+                </p>
+              )}
               
               <div className="flex items-center space-x-6 text-muted-foreground pt-2">
                 <Button
@@ -140,25 +304,33 @@ export function CommentItem({ comment, postId, showReplies = false, onReplySucce
                 >
                   <Share className="h-5 w-5" />
                 </Button>
+
+                {isOwner && !isEditing && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleEdit}
+                      className="flex items-center space-x-2 hover:text-blue-500 transition-colors p-1 h-auto"
+                    >
+                      <Edit2 className="h-5 w-5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                      className="flex items-center space-x-2 hover:text-red-500 transition-colors p-1 h-auto"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
         </div>
       </article>
-      
-      {/* Inline Reply Composer - TEMPORARILY REMOVED */}
-      {/* {showReplyComposer && (
-        <div className="ml-11 border-l-2 border-border/40 pl-4">
-          <CommentComposer
-            postId={postId}
-            parentId={comment.id}
-            onSuccess={handleReplySuccess}
-            placeholder={`Reply to ${comment.user.name}...`}
-            replyToName={comment.user.username || comment.user.name}
-            autoFocus
-          />
-        </div>
-      )} */}
     </div>
   )
 }

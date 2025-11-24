@@ -36,9 +36,41 @@ import { GamePreviewCard } from '@/components/ui/game-preview-card'
 import { ScheduleLaunchModal } from '@/components/ui/schedule-launch-modal'
 import { LanguageSelector } from '@/components/ui/language-selector'
 import { SubmitStepper, MobileSubmitStepper } from '@/components/ui/submit-stepper'
-import Particles from '@/components/effects/Particles'
+import { Form } from '@/components/ui/form'
+import { SubmitLayout } from '@/components/submit/submit-layout'
+import { SubmitStepHeader } from '@/components/submit/submit-step-header'
+import { SubmitStepNavigation } from '@/components/submit/submit-step-navigation'
+import { SubmitChecklistCard } from '@/components/submit/submit-checklist-card'
+import { Header } from '@/components/layout/header'
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6
+
+const SUBMIT_STEPS: { title: string; subtitle: string }[] = [
+  {
+    title: 'Core game info',
+    subtitle: 'Share the essentials—title, short pitch, description, stores and categories.'
+  },
+  {
+    title: 'Media & assets',
+    subtitle: 'Upload thumbnails, screenshots and any supporting videos or demos.'
+  },
+  {
+    title: 'Team & makers',
+    subtitle: 'Credit yourself and collaborators so players know who built the experience.'
+  },
+  {
+    title: 'Launch details',
+    subtitle: 'Set launch types, dates, countries and technical information.'
+  },
+  {
+    title: 'Community & extras',
+    subtitle: 'Add socials, playtests, sponsorship info and gamification tags.'
+  },
+  {
+    title: 'Review & submit',
+    subtitle: 'Confirm required fields, preview your card and submit for approval.'
+  }
+]
 
 export default function NewSubmitPage({ productId }: { productId?: string } = {}) {
   const { data: session, status } = useSession()
@@ -680,7 +712,8 @@ export default function NewSubmitPage({ productId }: { productId?: string } = {}
 
     return (
       <TooltipProvider>
-        <div className="min-h-screen relative">
+    <div className="min-h-screen relative">
+      <Header />
           {/* Performance-Optimized Particle Background */}
           <div className="fixed inset-0 z-0 bg-gradient-to-br from-black via-[#121225] to-[#050509]">
             {/* Particle-like dots using CSS */}

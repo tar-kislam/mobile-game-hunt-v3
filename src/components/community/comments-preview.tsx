@@ -113,7 +113,6 @@ export function CommentsPreview({ postId, limit = 3, onCommentAdded }: CommentsP
             comment={comment}
             postId={postId}
             showReplies={false}
-            onReplySuccess={handleCommentAdded}
           />
         ))}
       </div>

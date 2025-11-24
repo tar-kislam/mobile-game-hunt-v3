@@ -1033,12 +1033,12 @@ export default function EditorialDashboard() {
                               <TableCell className="text-white font-medium">
                                 <div className="truncate max-w-xs" title={game.title}>
                                   {game.title}
-                                </div>
+          </div>
                               </TableCell>
                               <TableCell className="text-gray-300">
                                 <div className="truncate max-w-md" title={game.tagline || ''}>
                                   {game.tagline || <span className="text-gray-500">—</span>}
-                                </div>
+        </div>
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-2 flex-wrap">

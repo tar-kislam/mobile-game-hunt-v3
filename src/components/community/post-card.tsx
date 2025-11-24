@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { UserAvatarTooltip } from '@/components/ui/user-avatar-tooltip'
@@ -8,11 +10,12 @@ import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Heart, Share2, Copy, Twitter, Linkedin, MessageCircle, Trash2, X } from 'lucide-react'
+import { Heart, Share2, Copy, Twitter, Linkedin, MessageCircle, Trash2, X, ExternalLink } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import { PollDisplay } from './enhanced-poll-display'
 import { handleShareAction } from '@/lib/xp-system'
+import { PostCommentsInline } from './post-comments-inline'
 
 interface Post {
   id: string
@@ -27,6 +30,7 @@ interface Post {
   }
   _count: {
     likes: number
+    comments?: number
   }
   poll?: {
     id: string
@@ -45,16 +49,23 @@ interface Post {
 interface PostCardProps {
   post: Post
   onDelete?: (postId: string) => void
+  isCommentsOpen?: boolean
+  onToggleComments?: () => void
+  onCommentAdded?: () => void
+  onReplyRequest?: () => void
+  focusKey?: number
 }
 
-export function PostCard({ post, onDelete }: PostCardProps) {
+export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComments, onCommentAdded, onReplyRequest, focusKey = 0 }: PostCardProps) {
   const { data: session } = useSession()
+  const router = useRouter()
   const [isLiked, setIsLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(post._count.likes)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [sharePopoverOpen, setSharePopoverOpen] = useState(false)
   const [imageModalOpen, setImageModalOpen] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  const commentCount = post._count.comments || 0
 
   const handleLike = async () => {
     if (!session?.user?.id) {
@@ -149,6 +160,19 @@ export function PostCard({ post, onDelete }: PostCardProps) {
     }
     
     setSharePopoverOpen(false)
+  }
+
+  const handleInlineReplyRequest = () => {
+    if (!session?.user?.id) {
+      toast.error('Please sign in to reply')
+      router.push('/auth/signin?callbackUrl=/community')
+      return
+    }
+    if (onReplyRequest) {
+      onReplyRequest()
+    } else {
+      router.push(`/community/post/${post.id}#comments`)
+    }
   }
 
   const handleDelete = async () => {
@@ -401,6 +425,52 @@ export function PostCard({ post, onDelete }: PostCardProps) {
                 <span className="text-sm">{likeCount}</span>
               </Button>
 
+              {/* Comment Toggle */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (onToggleComments) {
+                    onToggleComments()
+                  } else {
+                    router.push(`/community/post/${post.id}#comments`)
+                  }
+                }}
+                className={`flex items-center space-x-2 transition-colors ${
+                  isCommentsOpen ? 'text-blue-400 hover:text-blue-500' : 'text-gray-400 hover:text-blue-500'
+                }`}
+                aria-expanded={isCommentsOpen}
+                aria-controls={`post-${post.id}-comments`}
+              >
+                <MessageCircle className="h-5 w-5" />
+                <span className="text-sm">
+                  {isCommentsOpen ? 'Hide comments' : 'Comments'} ({commentCount})
+                </span>
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleInlineReplyRequest}
+                className="flex items-center space-x-2 text-gray-400 hover:text-cyan-300 transition-colors"
+              >
+                <MessageCircle className="h-5 w-5" />
+                <span className="text-sm">Reply</span>
+              </Button>
+
+              {/* Open in new page */}
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="hidden sm:flex items-center space-x-2 text-gray-400 hover:text-gray-200 transition-colors"
+              >
+                <Link href={`/community/post/${post.id}`}>
+                  <ExternalLink className="h-4 w-4" />
+                  <span className="text-sm">Open thread</span>
+                </Link>
+              </Button>
+
               {/* Share Button with Popover */}
               <Popover open={sharePopoverOpen} onOpenChange={setSharePopoverOpen}>
                 <PopoverTrigger asChild>
@@ -527,6 +597,14 @@ export function PostCard({ post, onDelete }: PostCardProps) {
           </div>
         </DialogContent>
       </Dialog>
+      <div id={`post-${post.id}-comments`}>
+        <PostCommentsInline
+          postId={post.id}
+          isOpen={isCommentsOpen}
+          onCommentAdded={onCommentAdded}
+          focusKey={focusKey}
+        />
+      </div>
     </Card>
   )
 }
