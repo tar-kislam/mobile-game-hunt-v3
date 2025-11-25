@@ -706,163 +706,183 @@ export const getDisplayNameForUser = (user: { name?: string | null; username?: s
   return user.email.split('@')[0]
 }
 
-const SOCIAL_ICON_DATA = {
-  x: 'data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjMEVBNUU5IiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+WDwvdGl0bGU+PHBhdGggZD0iTTE0LjIzNCAxMC4xNjIgMjIuOTc3IDBoLTIuMDcybC03LjU5MSA4LjgyNEw3LjI1MSAwSC4yNThsOS4xNjggMTMuMzQzTC4yNTggMjRIMi4zM2w4LjAxNi05LjMxOEwxNi43NDkgMjRoNi45OTN6bS0yLjgzNyAzLjI5OS0uOTI5LTEuMzI5TDMuMDc2IDEuNTZoMy4xODJsNS45NjUgOC41MzIuOTI5IDEuMzI5IDcuNzU0IDExLjA5aC0zLjE4MnoiLz48L3N2Zz4=',
-  instagram: 'data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjZmZmZmZmIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+SW5zdGFncmFtPC90aXRsZT48cGF0aCBkPSJNNy4wMzAxLjA4NGMtMS4yNzY4LjA2MDItMi4xNDg3LjI2NC0yLjkxMS41NjM0LS43ODg4LjMwNzUtMS40NTc1LjcyLTIuMTIyOCAxLjM4NzctLjY2NTIuNjY3Ny0xLjA3NSAxLjMzNjgtMS4zODAyIDIuMTI3LS4yOTU0Ljc2MzgtLjQ5NTYgMS42MzY1LS41NTIgMi45MTQtLjA1NjQgMS4yNzc1LS4wNjg5IDEuNjg4Mi0uMDYyNiA0Ljk0Ny4wMDYyIDMuMjU4Ni4wMjA2IDMuNjY3MS4wODI1IDQuOTQ3My4wNjEgMS4yNzY1LjI2NCAyLjE0ODIuNTYzNSAyLjkxMDcuMzA4Ljc4ODkuNzIgMS40NTczIDEuMzg4IDIuMTIyOC42Njc5LjY2NTUgMS4zMzY1IDEuMDc0MyAyLjEyODUgMS4zOC43NjMyLjI5NSAxLjYzNjEuNDk2MSAyLjkxMzQuNTUyIDEuMjc3My4wNTYgMS42ODg0LjA2OSA0Ljk0NjIuMDYyNyAzLjI1NzgtLjAwNjIgMy42NjgtLjAyMDcgNC45NDc4LS4wODE0IDEuMjgtLjA2MDcgMi4xNDctLjI2NTIgMi45MDk4LS41NjMzLjc4ODktLjMwODYgMS40NTc4LS43MiAyLjEyMjgtMS4zODgxLjY2NS0uNjY4MiAxLjA3NDUtMS4zMzc4IDEuMzc5NS0yLjEyODQuMjk1Ny0uNzYzMi40OTY2LTEuNjM2LjU1Mi0yLjkxMjQuMDU2LTEuMjgwOS4wNjkyLTEuNjg5OC4wNjMtNC45NDgtLjAwNjMtMy4yNTgzLS4wMjEtMy42NjY4LS4wODE3LTQuOTQ2NS0uMDYwNy0xLjI3OTctLjI2NC0yLjE0ODctLjU2MzMtMi45MTE3LS4zMDg0LS43ODg5LS43Mi0xLjQ1NjgtMS4zODc2LTIuMTIyOEMyMS4yOTgyIDEuMzMgMjAuNjI4LjkyMDggMTkuODM3OC42MTY1IDE5LjA3NC4zMjEgMTguMjAxNy4xMTk3IDE2LjkyNDQuMDY0NSAxNS42NDcxLjAwOTMgMTUuMjM2LS4wMDUgMTEuOTc3LjAwMTQgOC43MTguMDA3NiA4LjMxLjAyMTUgNy4wMzAxLjA4M1pNMTIgOC42MDY0QTIuOTk5NSAyLjk5OTUgMCAxMDkuMDAwNSA2LjYwNjQgMi45OTk1IDAgMDAxMiA4LjYwNjRaTTE4LjM5IDQuMTQ0YTEuNDQgMS40NCAwIDEwMi44OCAwIDEuNDQgMS40NCAwIDAwLTIuODggMFonLz48L3N2Zz4=',
-  tiktok: 'data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjMDBmNmZmIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+VGlrVG9rPC90aXRsZT48cGF0aCBkPSJNMTIuNTI1LjAyYzEuMzEtLjAyIDIuNjEtLjAxIDMuOTEtLjAyLjA4IDEuNTMuNjMgMy4wOSAxLjc1IDQuMTcgMS4xMiAxLjExIDIuNyAxLjYyIDQuMjQgMS43OXY0LjAzYy0xLjQ0LS4wNS0yLjg5LS4zNS00LjItLjk3LS41Ny0uMjYtMS4xLS41OS0xLjYyLS45My0uMDEgMi45Mi4wMSA1Ljg0LS4wMiA4Ljc1LS4wOCAxLjQtLjU0IDIuNzktMS4zNSAzLjk0LTEuMzEgMS45Mi0zLjU4IDMuMTctNS45MSAzLjIxLTEuNDMuMDgtMi44Ni0uMzEtNC4wOC0xLjAzLTIuMDItMS4xOS0zLjQ0LTMuMzctMy42NS01LjcxLS4wMi0uNS0uMDMtMS0uMDEtMS40OS4xOC0xLjkgMS4xMi0zLjcyIDIuNTgtNC45NiAxLjY2LTEuNDQgMy45OC0yLjEzIDYuMTUtMS43Mi4wMiAxLjQ4LS4wNCAyLjk2LS4wNCA0LjQ0LS45OS0uMzItMi4xNS0uMjMtMy4wMi4zNy0uNjMuNDEtMS4xMSAxLjA0LTEuMzYgMS43NS0uMjEuNTEtLjE1IDEuMDctLjE0IDEuNjEuMjQgMS42NCAxLjgyIDMuMDIgMy41IDIuODcgMS4xMi0uMDEgMi4xOS0uNjYgMi43Ny0xLjYxLjE5LS4zMy40LS42Ny40MS0xLjA2LjEtMS43OS4wNi0zLjU3LjA3LTUuMzYuMDEtNC4wMy0uMDEtOC4wNS4wMi0xMi4wN3oiLz48L3N2Zz4=',
-  reddit: 'data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjZmY0NTAwIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+UmVkZGl0PC90aXRsZT48cGF0aCBkPSJNMTIgMEM1LjM3MyAwIDAgNS4zNzMgMCAxMmMwIDMuMzE0IDEuMzQzIDYuMzE0IDMuNTE1IDguNDg1bC0yLjI4NiAyLjI4NkMuNzc1IDIzLjIyNSAxLjA5NyAyNCAxLjczOCAyNEgxMmM2LjYyNyAwIDEyLTUuMzczIDEyLTEyUzE4LjYyNyAwIDEyIDBabTQuMzg4IDMuMTk5YzEuMTA0IDAgMS45OTkuODk1IDEuOTk5IDEuOTk5IDAgMS4xMDUtLjg5NSAyLTEuOTk5IDItLjk0NiAwLTEuNzM5LS42NTctMS45NDctMS41Mzl2LjAwMmMtMS4xNDcuMTYyLTIuMDMyIDEuMTUtMi4wMzIgMi4zNDF2LjAwN2MxLjc3Ni4wNjcgMy40LjU2NyA0LjY4NiAxLjM2My40NzMtLjM2MyAxLjA2NC0uNTggMS43MDctLjU4IDEuNTQ3IDAgMi44MDIgMS4yNTQgMi44MDIgMi44MDIgMCAxLjExNy0uNjU1IDIuMDgxLTEuNjAxIDIuNTMxLS4wODggMy4yNTYtMy42MzcgNS44NzYtNy45OTcgNS44NzYtNC4zNjEgMC03LjkwNS0yLjYxNy03Ljk5OC01Ljg3LS45NTQtLjQ0Ny0xLjYxNC0xLjQxNS0xLjYxNC0yLjUzOCAwLTEuNTQ4IDEuMjU1LTIuODAyIDIuODAzLTIuODAyLjY0NSAwIDEuMjM5LjIxOCAxLjcxMi41ODUgMS4yNzUtLjc5IDIuODgxLTEuMjkxIDQuNjQtMS4zNjV2LS4wMWMwLTEuNjYzIDEuMjYzLTMuMDM0IDIuODgtMy4yMDcuMTg4LS45MTEuOTkzLTEuNTk1IDEuOTU5LTEuNTk1Wm0tOC4wODUgOC4zNzZjLS43ODQgMC0xLjQ1OS43OC0xLjUwNiAxLjc5Ny0uMDQ3IDEuMDE2LjY0IDEuNDI5IDEuNDI2IDEuNDI5Ljc4NiAwIDEuMzcxLS4zNjkgMS40MTgtMS4zODUuMDQ3LTEuMDE3LS41NTMtMS44NDEtMS4zMzgtMS44NDFabTcuNDA2IDBjLS43ODYgMC0xLjM4NS44MjQtMS4zMzggMS44NDEuMDQ3IDEuMDE3LjYzNCAxLjM4NSAxLjQxOCAxLjM4NS43ODUgMCAxLjQ3My0uNDEzIDEuNDI2LTEuNDI5LS4wNDYtMS4wMTctLjcyMS0xLjc5Ny0xLjUwNi0xLjc5N1ptLTMuNzAzIDQuMDEzYy0uOTc0IDAtMS45MDcuMDQ4LTIuNzcuMTM1LS4xNDcuMDE1LS4yNDEuMTY4LS4xODMuMzA1LjQ4MyAxLjE1NCAxLjYyMiAxLjk2NCAyLjk1MyAxLjk2NCAxLjMzIDAgMi40Ny0uODEgMi45NTMtMS45NjQuMDU3LS4xMzctLjAzNy0uMjktLjE4NC0uMzA1LS44NjMtLjA4Ny0xLjc5NS0uMTM1LTIuNzY5LS4xMzVaIi8+PC9zdmc+',
-  discord: 'data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjNTg2NUYyIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+RGlzY29yZDwvdGl0bGU+PHBhdGggZD0iTTIwLjMxNyA0LjM2OThhMTkuNzkxMyAxOS43OTEzIDAgMDAtNC44ODUxLTEuNTE1Mi4wNzQxLjA3NDEgMCAwMC0uMDc4NS4wMzcxYy0uMjExLjM3NTMtLjQ0NDcuODY0OC0uNjA4MyAxLjI0OTUtMS44NDQ3LS4yNzYyLTMuNjgtLjI3NjItNS40ODY4IDAtLjE2MzYtLjM5MzMtLjQwNTgtLjg3NDItLjYxNzctMS4yNDk1YS4wNzcuMDc3IDAgMDAtLjA3ODUtLjAzNyAxOS43MzYzIDE5LjczNjMgMCAwMC00Ljg4NTIgMS41MTUuMDY5OS4wNjk5IDAgMDAtLjAzMjEuMDI3N0MuNTMzNCA5LjA0NTgtLjMxOSAxMy41Nzk5LjA5OTIgMTguMDU3OGEuMDgyNC4wODI0IDAgMDAuMDMxMi4wNTYxYzIuMDUyOCAxLjUwNzYgNC4wNDEzIDIuNDIyOCA1Ljk5MjkgMy4wMjk0YS4wNzc3LjA3NzcgMCAwMC4wODQyLS4wMjc2Yy40NjE2LS42MzA0Ljg3MzEtMS4yOTUyIDEuMjI2LTEuOTk0MmEuMDc2LjA3NiAwIDAwLS4wNDE2LS4xMDU3Yy0uNjUyOC0uMjQ3Ni0xLjI3NDMtLjU0OTUtMS44NzIyLS44OTIzYS4wNzcuMDc3IDAgMDEtLjAwNzYtLjEyNzdjLjEyNTgtLjA5NDMuMjUxNy0uMTkyMy4zNzE4LS4yOTE0YS4wNzQzLjA3NDMgMCAwMS4wNzc2LS4wMTA1YzMuOTI3OCAxLjc5MzMgOC4xOCAxLjc5MzMgMTIuMDYxNCAwYS4wNzM5LjA3MzkgMCAwMS4wNzg1LjAwOTVjLjEyMDIuMDk5LjI0Ni4xOTgxLjM3MjguMjkyNGEuMDc3LjA3NyAwIDAxLS4wMDY2LjEyNzYgMTIuMjk4NiAxMi4yOTg2IDAgMDEtMS44NzMuODkxNC4wNzY2LjA3NjYgMCAwMC0uMDQwNy4xMDY3Yy4zNjA0LjY5OC43NzE5IDEuMzYyOCAxLjIyNSAxLjk5MzJhLjA3Ni4wNzYgMCAwMC4wODQyLjAyODZjMS45NjEtLjYwNjcgMy45NDk1LTEuNTIxOSA2LjAwMjMtMy4wMjk0YS4wNzcuMDc3IDAgMDAuMDMxMy0uMDU1MmMuNTAwNC01LjE3Ny0uODM4Mi05LjY3MzktMy41NDg1LTEzLjY2MDRhLjA2MS4wNjEgMCAwMC0uMDMxMi0uMDI4NnpNOC4wMiAxNS4zMzEyYy0xLjE4MjUgMC0yLjE1NjktMS4wODU3LTIuMTU2OS0yLjQxOSAwLTEuMzMzMi45NTU1LTIuNDE4OSAyLjE1Ny0yLjQxODkgMS4yMTA4IDAgMi4xNzU3IDEuMDk1MiAyLjE1NjggMi40MTkgMCAxLjMzMzItLjk1NTUgMi40MTg5LTIuMTU2OSAyLjQxODl6bTcuOTc0OCAwYy0xLjE4MjUgMC0yLjE1NjktMS4wODU3LTIuMTU2OS0yLjQxOSAwLTEuMzMzMi45NTU0LTIuNDE4OSAyLjE1NjktMi40MTg5IDEuMjEwOCAwIDIuMTc1NyAxLjA5NTIgMi4xNTY4IDIuNDE5IDAgMS4zMzMyLS45NDYgMi40MTg5LTIuMTU2OCAyLjQxODlaIi8+PC9zdmc+'
+const SOCIAL_ICON_URLS = {
+  x: 'https://cdn.simpleicons.org/x/0EA5E9',
+  instagram: 'https://cdn.simpleicons.org/instagram/E1306C',
+  tiktok: 'https://cdn.simpleicons.org/tiktok/25F4EE',
+  reddit: 'https://cdn.simpleicons.org/reddit/FF4500',
+  discord: 'https://cdn.simpleicons.org/discord/5865F2',
 }
 
 
 export const getSocialPromoEmailHTML = (displayName: string) => {
-  const safeName = displayName || 'there'
+  const safeName = displayName?.trim() || 'there'
   return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Let's stay connected on social media</title>
+  <title>MobileGameHunt – Connect with us</title>
   <style>
     body {
       margin: 0;
       padding: 0;
-      background: #05060a;
+      background: #01030a;
       font-family: 'Inter', 'Segoe UI', sans-serif;
-      color: #f3f4f6;
+      color: #eef4ff;
     }
     .wrapper {
       width: 100%;
-      background: linear-gradient(135deg, #030712 0%, #111827 100%);
-      padding: 24px 0;
+      background: radial-gradient(circle at 20% 20%, #0b1a2b, #01030a 70%);
+      padding: 32px 0;
     }
     .container {
-      width: 100%;
-      max-width: 620px;
+      max-width: 640px;
       margin: 0 auto;
-      background: rgba(15, 23, 42, 0.95);
-      border-radius: 16px;
-      border: 1px solid rgba(59, 130, 246, 0.2);
-      padding: 40px;
-      box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.35);
+      background: rgba(2, 10, 22, 0.95);
+      border-radius: 24px;
+      border: 1px solid rgba(58, 207, 255, 0.3);
+      padding: 40px 44px;
+      box-shadow: 0 25px 60px rgba(0, 202, 255, 0.18), inset 0 0 45px rgba(0, 255, 255, 0.04);
+      position: relative;
+      overflow: hidden;
     }
-    h1 {
-      margin: 0 0 16px;
-      font-size: 24px;
-      color: #e0e7ff;
-      text-align: center;
+    .container::before {
+      content: '';
+      position: absolute;
+      inset: 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(147, 197, 253, 0.08);
+      pointer-events: none;
     }
-    p {
-      font-size: 15px;
-      line-height: 1.7;
-      color: #cbd5f5;
+    .pill {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(14, 165, 233, 0.15);
+      color: #7dd3fc;
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
       margin-bottom: 18px;
     }
-    .hi {
-      font-weight: 600;
-      color: #f3f4f6;
+    h1 {
+      margin: 0 0 12px;
+      font-size: 26px;
+      color: #fefefe;
+      text-shadow: 0 0 12px rgba(14, 165, 233, 0.25);
     }
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-      margin: 28px 0;
-    }
-    .card {
-      border-radius: 18px;
-      padding: 20px;
-      background: radial-gradient(circle at top, rgba(6,182,212,0.15), rgba(15,23,42,0.85));
-      border: 1px solid rgba(59,130,246,0.3);
-      box-shadow: inset 0 0 20px rgba(56,189,248,0.15), 0 10px 25px rgba(2,6,23,0.7);
-    }
-    .card-title {
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      font-size: 13px;
-      color: #7dd3fc;
-      margin-bottom: 12px;
-    }
-    .account {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px;
-      background: rgba(15,23,42,0.7);
-      border: 1px solid rgba(59,130,246,0.2);
-      border-radius: 14px;
-      margin-bottom: 12px;
-    }
-    .account-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: #e0f2fe;
+    p {
+      margin: 0 0 16px;
+      line-height: 1.7;
+      color: #c5d8ff;
       font-size: 15px;
     }
-    .account-handle {
-      font-size: 13px;
-      color: #94a3b8;
+    .grid {
+      margin-top: 32px;
+      border-radius: 20px;
+      border: 1px solid rgba(14, 165, 233, 0.25);
+      background: rgba(4, 13, 27, 0.75);
+      overflow: hidden;
     }
-    .account-button {
-      text-decoration: none;
-      background: linear-gradient(120deg, rgba(14,165,233,0.9), rgba(14,165,233,0.6));
-      padding: 8px 14px;
-      border-radius: 999px;
-      color: #03111f;
-      font-weight: 600;
-      font-size: 13px;
-      box-shadow: 0 8px 20px rgba(14,165,233,0.25);
+    .section {
+      padding: 28px 24px 10px;
+      position: relative;
     }
-    .subtle-card {
-      border-radius: 18px;
-      padding: 20px;
-      background: rgba(15,23,42,0.65);
-      border: 1px dashed rgba(148,163,184,0.4);
+    .section + .section {
+      border-top: 1px solid rgba(59, 130, 246, 0.15);
     }
-    .subtle-card a {
-      color: #93c5fd;
-      text-decoration: none;
-      font-weight: 600;
+    .section h2 {
+      font-size: 15px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      margin: 0 0 18px;
+      color: #5ee7ff;
+    }
+    .social-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 0;
+      border-top: 1px solid rgba(148, 163, 184, 0.15);
+    }
+    .social-row:first-of-type {
+      border-top: none;
     }
     .social-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-      display: inline-flex;
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: linear-gradient(145deg, rgba(15, 118, 255, 0.25), rgba(0, 0, 0, 0.4));
+      border: 1px solid rgba(14, 165, 233, 0.45);
+      display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(15,23,42,0.8);
-      border: 1px solid rgba(59,130,246,0.4);
-      box-shadow: inset 0 0 8px rgba(59,130,246,0.35);
-      padding: 4px;
+      box-shadow: inset 0 0 12px rgba(59, 130, 246, 0.35);
     }
     .social-icon img {
-      width: 18px;
-      height: 18px;
+      width: 26px;
+      height: 26px;
       display: block;
     }
-    @media (max-width: 600px) {
-      .container {
-        padding: 28px 20px;
-      }
-      .card-grid {
-        grid-template-columns: 1fr;
-      }
+    .social-meta {
+      flex: 1;
     }
-    .footer {
-      text-align: center;
-      margin-top: 32px;
+    .social-meta strong {
+      display: block;
+      font-size: 15px;
+      color: #f8fbff;
+    }
+    .social-meta span {
+      display: block;
       font-size: 13px;
       color: #94a3b8;
+      margin-top: 4px;
     }
-    @media (max-width: 600px) {
+    .cta {
+      text-decoration: none;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #010308;
+      background: linear-gradient(120deg, #22d3ee, #3b82f6);
+      box-shadow: 0 10px 25px rgba(59, 130, 246, 0.35);
+      white-space: nowrap;
+    }
+    .cta--ghost {
+      background: transparent;
+      border: 1px solid rgba(125, 211, 252, 0.8);
+      color: #7dd3fc;
+    }
+    .note {
+      margin-top: 28px;
+      padding: 18px 20px;
+      border-radius: 16px;
+      border: 1px dashed rgba(148, 163, 184, 0.6);
+      color: #9fb5d3;
+      font-size: 13px;
+      background: rgba(4, 13, 27, 0.7);
+    }
+    .footer {
+      margin-top: 32px;
+      font-size: 12px;
+      color: #7c8aaa;
+      text-align: center;
+      line-height: 1.6;
+    }
+    @media (max-width: 640px) {
       .container {
-        padding: 28px 20px;
+        padding: 32px 24px;
       }
-      .pill {
-        display: inline-block;
-        margin-bottom: 8px;
+      .social-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .cta {
+        width: 100%;
+        text-align: center;
       }
     }
   </style>
@@ -870,95 +890,80 @@ export const getSocialPromoEmailHTML = (displayName: string) => {
 <body>
   <div class="wrapper">
     <div class="container">
-      <h1>Let's stay connected on social media</h1>
-      <p class="hi">Hi ${safeName},</p>
+      <span class="pill">Stay tuned</span>
+      <h1>Let's meet on your favorite channels</h1>
+      <p>Hi ${safeName},</p>
       <p>
         Thank you for being part of the MobileGameHunt community and supporting mobile games.
         We’ve started sharing more frequent updates, early finds, and community highlights there and we’d love to have you join us.
         Your support genuinely boosts the visibility of indie games across the entire community.
       </p>
-      <div class="card-grid">
-        <div class="card">
-          <div class="card-title">Daily updates</div>
-          <div class="account">
-            <div>
-              <div class="account-info">
-                <span class="social-icon">
-                  <img src="${SOCIAL_ICON_DATA.x}" alt="X logo" />
-                </span>
-                <strong>X (Twitter)</strong>
-              </div>
-              <div class="account-handle">@mobilegamehunt</div>
+      <div class="grid">
+        <div class="section">
+          <h2>Daily Broadcasts</h2>
+          <div class="social-row">
+            <div class="social-icon">
+              <img src="${SOCIAL_ICON_URLS.x}" alt="X logo" />
             </div>
-            <a class="account-button" href="https://twitter.com/mobilegamehunt" target="_blank" rel="noopener noreferrer">Follow</a>
+            <div class="social-meta">
+              <strong>X (Twitter)</strong>
+              <span>@mobilegamehunt</span>
+            </div>
+            <a class="cta" href="https://twitter.com/mobilegamehunt" target="_blank" rel="noopener noreferrer">Follow</a>
           </div>
-          <div class="account">
-            <div>
-              <div class="account-info">
-                <span class="social-icon">
-                  <img src="${SOCIAL_ICON_DATA.instagram}" alt="Instagram logo" />
-                </span>
-                <strong>Instagram</strong>
-              </div>
-              <div class="account-handle">@mobilegamehunt</div>
+          <div class="social-row">
+            <div class="social-icon">
+              <img src="${SOCIAL_ICON_URLS.instagram}" alt="Instagram logo" />
             </div>
-            <a class="account-button" href="https://instagram.com/mobilegamehunt" target="_blank" rel="noopener noreferrer">Follow</a>
+            <div class="social-meta">
+              <strong>Instagram</strong>
+              <span>@mobilegamehunt</span>
+            </div>
+            <a class="cta" href="https://instagram.com/mobilegamehunt" target="_blank" rel="noopener noreferrer">Follow</a>
           </div>
-          <div class="account">
-            <div>
-              <div class="account-info">
-                <span class="social-icon">
-                  <img src="${SOCIAL_ICON_DATA.tiktok}" alt="TikTok logo" />
-                </span>
-                <strong>TikTok</strong>
-              </div>
-              <div class="account-handle">@mobilegamehunt</div>
+          <div class="social-row">
+            <div class="social-icon">
+              <img src="${SOCIAL_ICON_URLS.tiktok}" alt="TikTok logo" />
             </div>
-            <a class="account-button" href="https://www.tiktok.com/@mobilegamehunt" target="_blank" rel="noopener noreferrer">Follow</a>
+            <div class="social-meta">
+              <strong>TikTok</strong>
+              <span>@mobilegamehunt</span>
+            </div>
+            <a class="cta" href="https://www.tiktok.com/@mobilegamehunt" target="_blank" rel="noopener noreferrer">Follow</a>
           </div>
         </div>
-        <div class="card">
-          <div class="card-title">Community hangouts</div>
-          <div class="account">
-            <div>
-              <div class="account-info">
-                <span class="social-icon">
-                  <img src="${SOCIAL_ICON_DATA.reddit}" alt="Reddit logo" />
-                </span>
-                <strong>Reddit</strong>
-              </div>
-              <div class="account-handle">r/MobileGameHunt</div>
+        <div class="section">
+          <h2>Community Hangouts</h2>
+          <div class="social-row">
+            <div class="social-icon">
+              <img src="${SOCIAL_ICON_URLS.reddit}" alt="Reddit logo" />
             </div>
-            <a class="account-button" href="https://www.reddit.com/r/MobileGameHunt/" target="_blank" rel="noopener noreferrer">Join</a>
-          </div>
-          <div class="account">
-            <div>
-              <div class="account-info">
-                <span class="social-icon">
-                  <img src="${SOCIAL_ICON_DATA.discord}" alt="Discord logo" />
-                </span>
-                <strong>Discord</strong>
-              </div>
-              <div class="account-handle">Indie dev community</div>
+            <div class="social-meta">
+              <strong>Reddit</strong>
+              <span>r/MobileGameHunt</span>
             </div>
-            <a class="account-button" href="https://discord.gg/zahqtja5e9" target="_blank" rel="noopener noreferrer">Join server</a>
+            <a class="cta cta--ghost" href="https://www.reddit.com/r/MobileGameHunt/" target="_blank" rel="noopener noreferrer">Join</a>
           </div>
-          <div class="subtle-card">
-            Prefer email updates? Reply to this message anytime and we’ll keep you in the loop.
+          <div class="social-row">
+            <div class="social-icon">
+              <img src="${SOCIAL_ICON_URLS.discord}" alt="Discord logo" />
+            </div>
+            <div class="social-meta">
+              <strong>Discord</strong>
+              <span>Indie dev community</span>
+            </div>
+            <a class="cta cta--ghost" href="https://discord.gg/zahqtja5e9" target="_blank" rel="noopener noreferrer">Join server</a>
           </div>
         </div>
       </div>
-      <p>
-        A simple follow, like, or share helps a lot more than it seems.
-        It’s one of the best ways to help indie games get discovered by more players.
-      </p>
-      <p>
-        Thanks again for being with us — we really appreciate your support.
-      </p>
-      <p class="hi">Best,<br/>The MobileGameHunt Team</p>
+      <div class="note">
+        Prefer inbox updates? Just reply to this email anytime and we’ll keep you in the loop.
+        Every follow, like, or share helps indie teams reach more players. Thanks for being here with us.
+      </div>
+      <p style="margin-top: 24px;">— The MobileGameHunt Team</p>
       <div class="footer">
         You're receiving this email because you joined MobileGameHunt.<br/>
-        You can update preferences or unsubscribe anytime.
+        Update preferences or unsubscribe anytime.
       </div>
     </div>
   </div>
