@@ -10,10 +10,11 @@ import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Download, GamepadIcon, Mail, Star, MessageCircle, TrendingUp, Users, List, Share2 } from 'lucide-react'
+import { Download, GamepadIcon, Mail, Star, MessageCircle, TrendingUp, Users, List, Share2, Trash2 } from 'lucide-react'
 import { SocialPlatformIcon } from '@/components/ui/social-platform-icons'
 import { toast } from 'sonner'
 import DarkVeil from '@/components/DarkVeil'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -121,6 +122,12 @@ export default function EditorialDashboard() {
   const [socialPromoSending, setSocialPromoSending] = useState(false)
   const [newsletterSocialDialogOpen, setNewsletterSocialDialogOpen] = useState(false)
   const [newsletterSocialSending, setNewsletterSocialSending] = useState(false)
+  const [newsletterDeleteTarget, setNewsletterDeleteTarget] = useState<NewsletterSubscriber | null>(null)
+  const [newsletterDeleteLoading, setNewsletterDeleteLoading] = useState(false)
+  const [newsletterDeleteError, setNewsletterDeleteError] = useState<string | null>(null)
+  const [userDeleteTarget, setUserDeleteTarget] = useState<User | null>(null)
+  const [userDeleteLoading, setUserDeleteLoading] = useState(false)
+  const [userDeleteError, setUserDeleteError] = useState<string | null>(null)
   const safeNewsletterSubscribers = Array.isArray(newsletterSubscribers) ? newsletterSubscribers : []
   const ITEMS_PER_PAGE = 10
 
@@ -305,6 +312,90 @@ export default function EditorialDashboard() {
     } catch (error) {
       console.error('Error downloading CSV:', error)
       toast.error('Failed to download CSV')
+    }
+  }
+
+  const handleCancelNewsletterDelete = () => {
+    if (newsletterDeleteLoading) return
+    setNewsletterDeleteTarget(null)
+    setNewsletterDeleteError(null)
+  }
+
+  const handleCancelUserDelete = () => {
+    if (userDeleteLoading) return
+    setUserDeleteTarget(null)
+    setUserDeleteError(null)
+  }
+
+  const removeNewsletterFromState = (id: string) => {
+    setNewsletterSubscribers(prev => {
+      const updated = prev.filter(subscriber => subscriber.id !== id)
+      setNewsletterPage(currentPage => {
+        const totalPages =
+          updated.length === 0 ? 1 : Math.max(1, Math.ceil(updated.length / ITEMS_PER_PAGE))
+        return Math.min(currentPage, totalPages)
+      })
+      return updated
+    })
+  }
+
+  const removeUserFromState = (id: string) => {
+    setUsers(prev => {
+      const updated = prev.filter(user => user.id !== id)
+      setUsersPage(currentPage => {
+        const totalPages =
+          updated.length === 0 ? 1 : Math.max(1, Math.ceil(updated.length / ITEMS_PER_PAGE))
+        return Math.min(currentPage, totalPages)
+      })
+      return updated
+    })
+  }
+
+  const handleConfirmNewsletterDelete = async () => {
+    if (!newsletterDeleteTarget) return
+    setNewsletterDeleteError(null)
+    setNewsletterDeleteLoading(true)
+    const targetId = newsletterDeleteTarget.id
+    try {
+      const response = await fetch(`/api/admin/newsletter/${targetId}`, {
+        method: 'DELETE'
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || 'Failed to delete subscriber')
+      }
+      removeNewsletterFromState(targetId)
+      toast.success('Subscriber deleted successfully.')
+      setNewsletterDeleteTarget(null)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete subscriber'
+      setNewsletterDeleteError(message)
+    } finally {
+      setNewsletterDeleteLoading(false)
+    }
+  }
+
+  const handleConfirmUserDelete = async () => {
+    if (!userDeleteTarget) return
+    setUserDeleteError(null)
+    setUserDeleteLoading(true)
+    const targetId = userDeleteTarget.id
+    try {
+      const response = await fetch(`/api/admin/users/${targetId}`, {
+        method: 'DELETE'
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || 'Failed to delete user')
+      }
+      removeUserFromState(targetId)
+      toast.success('User deleted successfully.')
+      setUserDeleteTarget(null)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete user'
+      setUserDeleteError(message)
+    } finally {
+      setUserDeleteLoading(false)
     }
   }
 
@@ -836,26 +927,49 @@ export default function EditorialDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-gray-700">
-                          <TableHead className="text-gray-300">Email</TableHead>
-                          <TableHead className="text-gray-300">Signup Date</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedNewsletter.map((subscriber) => (
-                          <TableRow key={subscriber.id} className="border-gray-700">
-                            <TableCell className="text-white">
-                              {subscriber.email}
-                            </TableCell>
-                            <TableCell className="text-gray-300">
-                              {new Date(subscriber.createdAt).toLocaleDateString()}
-                            </TableCell>
+                    <TooltipProvider delayDuration={120}>
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="border-gray-700">
+                            <TableHead className="text-gray-300">Email</TableHead>
+                            <TableHead className="text-gray-300">Signup Date</TableHead>
+                            <TableHead className="text-right text-gray-300">Actions</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedNewsletter.map((subscriber) => (
+                            <TableRow key={subscriber.id} className="border-gray-700">
+                              <TableCell className="text-white">
+                                {subscriber.email}
+                              </TableCell>
+                              <TableCell className="text-gray-300">
+                                {new Date(subscriber.createdAt).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="text-red-400 hover:text-white hover:bg-red-500/10"
+                                      onClick={() => {
+                                        setNewsletterDeleteTarget(subscriber)
+                                        setNewsletterDeleteError(null)
+                                      }}
+                                      disabled={newsletterDeleteLoading}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                      <span className="sr-only">Delete subscriber</span>
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Delete this email</TooltipContent>
+                                </Tooltip>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TooltipProvider>
                   </div>
                   {safeNewsletterSubscribers.length > ITEMS_PER_PAGE && (
                     <div className="mt-6 flex justify-center items-center gap-2">
@@ -1085,26 +1199,49 @@ export default function EditorialDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-gray-700">
-                          <TableHead className="text-gray-300">Email</TableHead>
-                          <TableHead className="text-gray-300">Signup Date</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedUsers.map((user) => (
-                          <TableRow key={user.id} className="border-gray-700">
-                            <TableCell className="text-white">
-                              {user.email}
-                            </TableCell>
-                            <TableCell className="text-gray-300">
-                              {new Date(user.createdAt).toLocaleDateString()}
-                            </TableCell>
+                    <TooltipProvider delayDuration={120}>
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="border-gray-700">
+                            <TableHead className="text-gray-300">Email</TableHead>
+                            <TableHead className="text-gray-300">Signup Date</TableHead>
+                            <TableHead className="text-right text-gray-300">Actions</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedUsers.map((user) => (
+                            <TableRow key={user.id} className="border-gray-700">
+                              <TableCell className="text-white">
+                                {user.email}
+                              </TableCell>
+                              <TableCell className="text-gray-300">
+                                {new Date(user.createdAt).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="text-red-400 hover:text-white hover:bg-red-500/10"
+                                      onClick={() => {
+                                        setUserDeleteTarget(user)
+                                        setUserDeleteError(null)
+                                      }}
+                                      disabled={userDeleteLoading}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                      <span className="sr-only">Delete user</span>
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Delete this user</TooltipContent>
+                                </Tooltip>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TooltipProvider>
                   </div>
                   {users.length > ITEMS_PER_PAGE && (
                     <div className="mt-6 flex justify-center items-center gap-2">
@@ -1370,6 +1507,97 @@ export default function EditorialDashboard() {
           </div>
         </div>
       </div>
+      <AlertDialog open={!!newsletterDeleteTarget} onOpenChange={(open) => {
+        if (!open) {
+          handleCancelNewsletterDelete()
+        }
+      }}>
+        <AlertDialogContent className="bg-zinc-900 border border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this email?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-300 space-y-2">
+              <p>
+                This will remove{' '}
+                <span className="text-white font-semibold break-all">{newsletterDeleteTarget?.email}</span>{' '}
+                from the newsletter subscriber list. They will no longer receive newsletters.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {newsletterDeleteError && (
+            <p className="text-sm text-red-400">{newsletterDeleteError}</p>
+          )}
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel
+              className="bg-transparent border border-white/20 text-white hover:bg-white/10"
+              onClick={handleCancelNewsletterDelete}
+              disabled={newsletterDeleteLoading}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmNewsletterDelete}
+              disabled={newsletterDeleteLoading || !newsletterDeleteTarget}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {newsletterDeleteLoading ? (
+                <>
+                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!userDeleteTarget} onOpenChange={(open) => {
+        if (!open) {
+          handleCancelUserDelete()
+        }
+      }}>
+        <AlertDialogContent className="bg-zinc-900 border border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this user?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-300 space-y-2">
+              <p>
+                This will permanently remove{' '}
+                <span className="text-white font-semibold break-all">{userDeleteTarget?.email}</span> from MobileGameHunt.
+              </p>
+              <p>They will lose access to their account and any related features.</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {userDeleteError && (
+            <p className="text-sm text-red-400">{userDeleteError}</p>
+          )}
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel
+              className="bg-transparent border border-white/20 text-white hover:bg-white/10"
+              onClick={handleCancelUserDelete}
+              disabled={userDeleteLoading}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmUserDelete}
+              disabled={userDeleteLoading || !userDeleteTarget}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {userDeleteLoading ? (
+                <>
+                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

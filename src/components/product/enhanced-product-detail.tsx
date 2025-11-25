@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { trackGameView } from '@/lib/analytics';
 import { Button } from '@/components/ui/button';
@@ -58,6 +58,8 @@ import { MeetTheTeamCard } from './meet-the-team-card';
 import { AboutGameSection } from './about-game-section';
 import { ShareGameModal } from '@/components/modals/share-game-modal';
 import { useShareGamePopup } from '@/hooks/useShareGamePopup';
+import { useDevicePlatform } from '@/hooks/useDevicePlatform';
+import { resolvePlayTarget } from '@/lib/get-play-target';
 
 interface Product {
   id: string;
@@ -187,6 +189,8 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
   }, [product.id, product.title])
   const [currentUrl, setCurrentUrl] = useState('')
   const [isPromoExpanded, setIsPromoExpanded] = useState(false)
+  const devicePlatform = useDevicePlatform()
+  const playTarget = useMemo(() => resolvePlayTarget(product, devicePlatform), [product, devicePlatform])
 
   // Track product detail page view
   const trackProductView = async () => {
@@ -308,6 +312,11 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
   };
 
   const handlePlayNow = async () => {
+    if (!playTarget) {
+      toast.error('No playable link available yet.')
+      return
+    }
+
     // Track click metric
     try {
       await fetch('/api/metrics/click', {
@@ -316,15 +325,15 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
         body: JSON.stringify({ 
           gameId: product.id, 
           type: 'play',
-          referrer: window.location.href
+          referrer: window.location.href,
+          platform: playTarget.trackingType
         })
-      });
+      })
     } catch (error) {
-      console.error('Error tracking metric:', error);
+      console.error('Error tracking metric:', error)
     }
 
-    // Open game URL
-    window.open(product.url, '_blank', 'noopener,noreferrer');
+    window.open(playTarget.url, '_blank', 'noopener,noreferrer')
   };
 
   const handleShare = async () => {
@@ -730,7 +739,9 @@ export function EnhancedProductDetail({ product, hasVoted, session }: EnhancedPr
               <div className="space-y-3">
                 <Button 
                   onClick={handlePlayNow}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105"
+                  disabled={!playTarget}
+                  title={!playTarget ? 'No playable link available yet' : undefined}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <Play className="w-5 h-5 mr-2" />
                   Play Now
