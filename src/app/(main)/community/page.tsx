@@ -5,7 +5,6 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
-import { CommunityFeed } from '@/components/community/community-feed'
 import { CommunityFeedContainer } from '@/components/community/CommunityFeedContainer'
 import { TrendingTopicsWrapper } from '@/components/community/trending-topics-wrapper'
 import { CommunitySidebar } from '@/components/community/community-sidebar'
@@ -17,44 +16,9 @@ import { Button } from '@/components/ui/button'
 export default async function CommunityPage() {
   const session = await getServerSession(authOptions)
   
-  // Fetch posts with user data
-  let posts = []
   let trendingTopics = []
   
   try {
-    posts = await prisma.post.findMany({
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
-          }
-        },
-        likes: true,
-        poll: {
-          include: {
-            options: {
-              include: {
-                _count: {
-                  select: { votes: true }
-                }
-              }
-            }
-          }
-        },
-        _count: {
-          select: {
-            likes: true,
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: 20
-    })
-
     // Fetch trending topics (most used hashtags in posts)
     const trendingTags = await prisma.post.findMany({
       select: {
@@ -89,7 +53,6 @@ export default async function CommunityPage() {
       .map(([tag]) => `#${tag}`)
   } catch (error) {
     console.error('Error fetching community data:', error)
-    posts = []
     trendingTopics = ['#IndieDev', '#PixelArt', '#GameDev', '#MobileGames', '#Unity']
   }
 

@@ -6,90 +6,116 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { CommunityFeed } from './community-feed'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
+import { Loader2 } from 'lucide-react'
 
 type SortFilter = 'latest' | 'trending'
 
+type FeedState = {
+  items: any[]
+  nextCursor: string | null
+  loading: boolean
+  loadingMore: boolean
+  error?: string | null
+}
+
+const EMPTY_FEED: FeedState = {
+  items: [],
+  nextCursor: null,
+  loading: false,
+  loadingMore: false,
+  error: null
+}
+
+const PAGE_SIZE = 10
+
 export function CommunityFeedContainer() {
-  const [allPosts, setAllPosts] = useState<any[]>([]) // Store all posts for filtering
-  const [loading, setLoading] = useState<boolean>(true)
   const [sort, setSort] = useState<SortFilter>('latest')
-  const [hashtag, setHashtag] = useState<string | undefined>(undefined)
-  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [hashtag, setHashtag] = useState<string | undefined>()
+  const [searchQuery, setSearchQuery] = useState('')
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const fetchPosts = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams()
-      params.set('filter', sort)
-      if (hashtag) params.set('hashtag', hashtag)
-      const res = await fetch(`/api/community/posts?${params.toString()}`, { cache: 'no-store' })
-      const data = await res.json()
-      const list = Array.isArray(data) ? data : (data.posts || [])
-      setAllPosts(list) // Store all posts
-    } catch (e) {
-      console.error('Failed to load posts', e)
-      setAllPosts([])
-    } finally {
-      setLoading(false)
-    }
-  }, [sort, hashtag])
+  const [feeds, setFeeds] = useState<Record<SortFilter, FeedState>>({
+    latest: { ...EMPTY_FEED, loading: true },
+    trending: { ...EMPTY_FEED }
+  })
 
-  useEffect(() => {
-    fetchPosts()
-  }, [fetchPosts])
+  const activeFeed = feeds[sort]
 
-  // Filter posts based on search query
-  const filteredPosts = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return allPosts
-    }
-
-    const query = searchQuery.toLowerCase().trim()
-    return allPosts.filter(post => {
-      // Search in post content
-      if (post.content?.toLowerCase().includes(query)) {
-        return true
-      }
-
-      // Search in hashtags
-      if (post.hashtags && Array.isArray(post.hashtags)) {
-        if (post.hashtags.some((tag: string) => 
-          tag.toLowerCase().includes(query) || 
-          tag.toLowerCase().includes(`#${query}`)
-        )) {
-          return true
-        }
-      }
-
-      // Search in user name
-      if (post.user?.name?.toLowerCase().includes(query)) {
-        return true
-      }
-
-      // Search in username
-      if (post.user?.username?.toLowerCase().includes(query)) {
-        return true
-      }
-
-      return false
-    })
-  }, [allPosts, searchQuery])
-
-  // Sync hashtag with URL (?hashtag=...)
-  useEffect(() => {
+  const syncTagFromUrl = useCallback(() => {
     const tag = searchParams?.get('tag') || searchParams?.get('hashtag') || undefined
     setHashtag(tag || undefined)
   }, [searchParams])
 
-  // Listen for create events and prepend optimistically
+  useEffect(() => {
+    syncTagFromUrl()
+  }, [syncTagFromUrl])
+
+  const fetchPage = useCallback(
+    async (filter: SortFilter, cursor?: string | null, reset?: boolean) => {
+      setFeeds((prev) => ({
+        ...prev,
+        [filter]: {
+          ...(reset ? EMPTY_FEED : prev[filter]),
+          loading: !cursor,
+          loadingMore: Boolean(cursor),
+          error: null
+        }
+      }))
+
+      try {
+        const params = new URLSearchParams()
+        params.set('filter', filter)
+        params.set('limit', String(PAGE_SIZE))
+        if (hashtag) params.set('hashtag', hashtag)
+        if (cursor) params.set('cursor', cursor)
+
+        const res = await fetch(`/api/community/posts?${params.toString()}`, { cache: 'no-store' })
+        if (!res.ok) {
+          const err = await res.json().catch(() => null)
+          throw new Error(err?.error || 'Failed to load posts')
+        }
+        const data = await res.json()
+        const incoming = Array.isArray(data.items) ? data.items : []
+
+        setFeeds((prev) => ({
+          ...prev,
+          [filter]: {
+            items: cursor && !reset ? [...prev[filter].items, ...incoming] : incoming,
+            nextCursor: data.nextCursor || null,
+            loading: false,
+            loadingMore: false,
+            error: null
+          }
+        }))
+      } catch (error) {
+        setFeeds((prev) => ({
+          ...prev,
+          [filter]: {
+            ...prev[filter],
+            loading: false,
+            loadingMore: false,
+            error: error instanceof Error ? error.message : 'Failed to load posts'
+          }
+        }))
+      }
+    },
+    [hashtag]
+  )
+
+  useEffect(() => {
+    fetchPage(sort, undefined, true)
+  }, [sort, hashtag, fetchPage])
+
   useEffect(() => {
     const handler = (e: any) => {
       const created = e?.detail
-      if (created?.id) {
-        setAllPosts(prev => [created, ...prev])
-      }
+      if (!created?.id) return
+      setFeeds((prev) => ({
+        latest: { ...prev.latest, items: [created, ...prev.latest.items] },
+        trending: { ...prev.trending, items: [created, ...prev.trending.items] }
+      }))
     }
     if (typeof window !== 'undefined') {
       window.addEventListener('community:post-created', handler as EventListener)
@@ -97,13 +123,10 @@ export function CommunityFeedContainer() {
     }
   }, [])
 
-  // Listen for search keyword clicks
   useEffect(() => {
     const handler = (e: any) => {
       const keyword = e?.detail
-      if (keyword) {
-        handleTagClick(keyword.replace('#', ''))
-      }
+      if (keyword) handleTagClick(keyword.replace('#', ''))
     }
     if (typeof window !== 'undefined') {
       window.addEventListener('community:search-keyword', handler as EventListener)
@@ -111,19 +134,12 @@ export function CommunityFeedContainer() {
     }
   }, [])
 
-  // Listen for simple search events from TrendingTopicsWrapper
   useEffect(() => {
     const searchHandler = (e: any) => {
       const query = e?.detail
-      if (query) {
-        setSearchQuery(query)
-      }
+      if (query) setSearchQuery(query)
     }
-    
-    const clearHandler = () => {
-      setSearchQuery('')
-    }
-    
+    const clearHandler = () => setSearchQuery('')
     if (typeof window !== 'undefined') {
       window.addEventListener('community:simple-search', searchHandler as EventListener)
       window.addEventListener('community:simple-search-clear', clearHandler as EventListener)
@@ -135,7 +151,7 @@ export function CommunityFeedContainer() {
   }, [])
 
   const handleTagClick = (tag: string) => {
-    setHashtag(tag)
+    setHashtag(tag || undefined)
     const sp = new URLSearchParams(Array.from(searchParams?.entries?.() || []))
     if (tag) {
       sp.set('tag', tag)
@@ -154,52 +170,92 @@ export function CommunityFeedContainer() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ postId })
       })
-      fetchPosts()
-    } catch (e) {
-      console.error('Failed to toggle like', e)
+      fetchPage(sort, undefined, true)
+    } catch (error) {
+      console.error('Failed to toggle like', error)
     }
   }
 
+  const filteredItems = useMemo(() => {
+    if (!searchQuery.trim()) return activeFeed.items
+    const query = searchQuery.toLowerCase().trim()
+    return activeFeed.items.filter((post) => {
+      if (post.content?.toLowerCase().includes(query)) return true
+      if (post.user?.name?.toLowerCase().includes(query)) return true
+      if (post.user?.username?.toLowerCase().includes(query)) return true
+      if (post.hashtags && Array.isArray(post.hashtags)) {
+        return post.hashtags.some((tag: string) => {
+          const lc = tag.toLowerCase()
+          return lc.includes(query) || lc.includes(`#${query}`)
+        })
+      }
+      return false
+    })
+  }, [activeFeed.items, searchQuery])
+
+  const handleLoadMore = () => {
+    if (!activeFeed.nextCursor || activeFeed.loadingMore) return
+    fetchPage(sort, activeFeed.nextCursor)
+  }
+
+  const showLoadMore = Boolean(activeFeed.nextCursor || activeFeed.loadingMore || activeFeed.error)
+
   return (
     <div className="space-y-4">
-      {/* Main Feed - Filtered in place */}
-      <>
-        <Tabs value={sort} onValueChange={(v) => setSort(v as SortFilter)}>
-          <TabsList className="bg-background/40 border border-white/10">
-            <TabsTrigger value="latest">Latest</TabsTrigger>
-            <TabsTrigger value="trending">Trending</TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <Tabs value={sort} onValueChange={(value) => setSort(value as SortFilter)}>
+        <TabsList className="bg-background/40 border border-white/10">
+          <TabsTrigger value="latest">Latest</TabsTrigger>
+          <TabsTrigger value="trending">Trending</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
-        {hashtag && (
-          <div className="flex items-center justify-between">
-            <Badge variant="secondary" className="bg-blue-500/20 text-blue-300 border-blue-500/30">Showing posts for #{hashtag}</Badge>
-            <button
-              className="text-sm text-muted-foreground hover:text-foreground underline"
-              onClick={() => handleTagClick('')}
-            >
-              Clear
-            </button>
-          </div>
-        )}
+      {hashtag && (
+        <div className="flex items-center justify-between">
+          <Badge variant="secondary" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+            Showing posts for #{hashtag}
+          </Badge>
+          <button className="text-sm underline text-muted-foreground hover:text-foreground" onClick={() => handleTagClick('')}>
+            Clear
+          </button>
+        </div>
+      )}
 
-        {loading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-40 w-full rounded-xl" />
-            <Skeleton className="h-40 w-full rounded-xl" />
-          </div>
-        ) : filteredPosts.length > 0 ? (
-          <CommunityFeed posts={filteredPosts} onTagClick={handleTagClick} onToggleLike={handleToggleLike} />
-        ) : searchQuery.trim() ? (
-          <div className="text-center text-muted-foreground py-8">
-            No results found.
-          </div>
-        ) : (
-          <CommunityFeed posts={allPosts} onTagClick={handleTagClick} onToggleLike={handleToggleLike} />
-        )}
-      </>
+      {activeFeed.loading && !activeFeed.items.length ? (
+        <div className="space-y-4">
+          <Skeleton className="h-40 w-full rounded-xl" />
+          <Skeleton className="h-40 w-full rounded-xl" />
+        </div>
+      ) : filteredItems.length > 0 ? (
+        <>
+          <CommunityFeed posts={filteredItems} onTagClick={handleTagClick} onToggleLike={handleToggleLike} />
+          {showLoadMore && (
+            <div className="flex flex-col items-center space-y-2 mt-6">
+              {activeFeed.error && <p className="text-sm text-red-400">{activeFeed.error}</p>}
+              <Button
+                onClick={handleLoadMore}
+                disabled={!activeFeed.nextCursor || activeFeed.loadingMore}
+                className="w-full sm:w-auto"
+                variant="secondary"
+              >
+                {activeFeed.loadingMore ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : activeFeed.nextCursor ? (
+                  'Show more posts'
+                ) : (
+                  'No more posts'
+                )}
+              </Button>
+            </div>
+          )}
+        </>
+      ) : searchQuery.trim() ? (
+        <div className="text-center text-muted-foreground py-8">No results found.</div>
+      ) : (
+        <div className="text-center text-muted-foreground py-8">No posts yet.</div>
+      )}
     </div>
   )
 }
-
-

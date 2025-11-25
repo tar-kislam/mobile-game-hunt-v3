@@ -188,8 +188,8 @@ export function CommentItem({ comment, postId, onUpdate, onReplyRequest }: Comme
 
   return (
     <div className="space-y-3 group">
-      <article className="relative rounded-2xl border border-cyan-500/10 bg-gradient-to-br from-[#050914]/85 via-[#050914]/70 to-[#071022]/80 p-4 shadow-[0_0_18px_rgba(14,165,233,0.08)] transition-all duration-300 group-hover:border-cyan-400/50 group-hover:shadow-[0_0_26px_rgba(14,165,233,0.2)]">
-        <div className="flex space-x-3">
+      <article className="relative rounded-2xl border border-cyan-500/10 bg-gradient-to-br from-[#050914]/85 via-[#050914]/70 to-[#071022]/80 p-4 md:p-5 shadow-[0_0_18px_rgba(14,165,233,0.08)] transition-all duration-300 group-hover:border-cyan-400/50 group-hover:shadow-[0_0_26px_rgba(14,165,233,0.2)]">
+        <div className="flex flex-col gap-3 sm:flex-row sm:space-x-3 sm:gap-0">
           <div className="flex-shrink-0">
             <UserAvatarTooltip
               userId={comment.user.id}
@@ -201,18 +201,18 @@ export function CommentItem({ comment, postId, onUpdate, onReplyRequest }: Comme
           
           <div className="flex-1 min-w-0">
             <div className="space-y-3">
-              <div className="flex items-center space-x-1">
-                <span className="font-semibold text-foreground text-[15px]">{comment.user.name}</span>
+              <div className="flex flex-wrap items-center gap-1 text-sm md:text-[15px]">
+                <span className="font-semibold text-foreground">{comment.user.name}</span>
                 {comment.user.username && (
-                  <Link href={`/${comment.user.username}`} className="text-muted-foreground text-[15px] hover:text-blue-500">
+                  <Link href={`/${comment.user.username}`} className="text-muted-foreground hover:text-blue-500">
                     @{comment.user.username}
                   </Link>
                 )}
-                <span className="text-muted-foreground text-[15px]">·</span>
-                <span className="text-muted-foreground text-[15px]">{formatTimeAgo(comment.createdAt)}</span>
+                <span className="text-muted-foreground">·</span>
+                <span className="text-muted-foreground">{formatTimeAgo(comment.createdAt)}</span>
                 {comment.updatedAt && comment.updatedAt !== comment.createdAt && (
                   <>
-                    <span className="text-muted-foreground text-[15px]">·</span>
+                    <span className="text-muted-foreground">·</span>
                     <span className="text-muted-foreground text-xs italic">edited</span>
                   </>
                 )}
@@ -256,12 +256,12 @@ export function CommentItem({ comment, postId, onUpdate, onReplyRequest }: Comme
                 </p>
               )}
               
-              <div className="flex items-center space-x-6 text-muted-foreground pt-2">
+              <div className="flex flex-wrap items-center gap-3 text-muted-foreground pt-2">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleReplyClick}
-                  className="flex items-center space-x-2 hover:text-blue-500 transition-colors p-1 h-auto"
+                  className="flex items-center space-x-2 rounded-full px-3 py-2 hover:text-blue-400 transition-colors min-h-[40px]"
                 >
                   <MessageCircle className="h-5 w-5" />
                   <span className="text-sm">Reply</span>
@@ -271,7 +271,7 @@ export function CommentItem({ comment, postId, onUpdate, onReplyRequest }: Comme
                   variant="ghost"
                   size="sm"
                   onClick={handleLikeClick}
-                  className={`flex items-center space-x-2 transition-colors p-1 h-auto ${
+                  className={`flex items-center space-x-2 rounded-full px-3 py-2 transition-colors min-h-[40px] ${
                     isLiked ? 'text-red-500 hover:text-red-600' : 'hover:text-red-500'
                   }`}
                 >
@@ -283,7 +283,7 @@ export function CommentItem({ comment, postId, onUpdate, onReplyRequest }: Comme
                   variant="ghost"
                   size="sm"
                   onClick={handleShareClick}
-                  className="flex items-center space-x-2 hover:text-green-500 transition-colors p-1 h-auto"
+                  className="flex items-center space-x-2 rounded-full px-3 py-2 hover:text-green-400 transition-colors min-h-[40px]"
                 >
                   <Share className="h-5 w-5" />
                 </Button>
@@ -294,7 +294,7 @@ export function CommentItem({ comment, postId, onUpdate, onReplyRequest }: Comme
                       variant="ghost"
                       size="sm"
                       onClick={handleEdit}
-                      className="flex items-center space-x-2 hover:text-blue-500 transition-colors p-1 h-auto"
+                    className="flex items-center space-x-2 rounded-full px-3 py-2 hover:text-blue-400 transition-colors min-h-[40px]"
                     >
                       <Edit2 className="h-5 w-5" />
                     </Button>
@@ -303,7 +303,7 @@ export function CommentItem({ comment, postId, onUpdate, onReplyRequest }: Comme
                       size="sm"
                       onClick={handleDelete}
                       disabled={isDeleting}
-                      className="flex items-center space-x-2 hover:text-red-500 transition-colors p-1 h-auto"
+                    className="flex items-center space-x-2 rounded-full px-3 py-2 hover:text-red-400 transition-colors min-h-[40px]"
                     >
                       <Trash2 className="h-5 w-5" />
                     </Button>

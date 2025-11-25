@@ -25,8 +25,8 @@ export function CommentTree({
   const connectorClass =
     depth > 0
       ? variant === 'inline'
-        ? 'ml-6 border-l border-cyan-500/25 pl-4'
-        : 'ml-6 border-l border-border/40 pl-4'
+        ? 'relative ml-3 pl-3 border-l border-cyan-500/25 md:ml-6 md:pl-4'
+        : 'relative ml-3 pl-3 border-l border-border/40 md:ml-6 md:pl-4'
       : ''
 
   return (

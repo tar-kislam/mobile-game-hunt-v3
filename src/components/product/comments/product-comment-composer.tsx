@@ -103,7 +103,7 @@ export function ProductCommentComposer({
       {replyToName && (
         <p className="text-sm text-muted-foreground">Replying to <span className="text-blue-400">@{replyToName}</span></p>
       )}
-      <div className="flex space-x-3 relative z-10">
+      <div className="flex flex-col gap-3 relative z-10 sm:flex-row sm:space-x-3 sm:gap-0">
         <UserAvatarTooltip
           userId={session.user.id}
           userName={session.user.name || 'User'}
@@ -120,9 +120,9 @@ export function ProductCommentComposer({
             maxLength={1000}
             disabled={isSubmitting}
           />
-          <div className="flex items-center justify-between text-xs text-cyan-300/80">
+          <div className="flex flex-col gap-3 text-xs text-cyan-300/80 sm:flex-row sm:items-center sm:justify-between">
             <span className="tracking-widest">{content.length}/1000</span>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-2">
               {content && (
                 <Button
                   variant="ghost"

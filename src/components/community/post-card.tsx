@@ -222,7 +222,7 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
       <CardContent className="relative z-10 p-5">
         <div className="space-y-4">
           {/* Post Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center space-x-3">
               <UserAvatarTooltip
                 userId={post.user.id}
@@ -399,8 +399,8 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
           )}
 
           {/* Post Actions */}
-          <div className="flex items-center justify-between pt-3 border-t border-cyan-500/25">
-            <div className="flex items-center flex-wrap gap-3">
+          <div className="flex flex-col gap-3 pt-3 border-t border-cyan-500/25 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap gap-3 w-full md:w-auto md:items-center">
               {/* Like Button */}
               <Button
                 variant="ghost"
@@ -444,7 +444,18 @@ export function PostCard({ post, onDelete, isCommentsOpen = false, onToggleComme
                 asChild
                 variant="ghost"
                 size="sm"
-                className="hidden sm:flex items-center space-x-2 text-cyan-200/80 hover:text-white transition-colors rounded-full px-4 hover:bg-cyan-500/15"
+                className="flex items-center space-x-2 text-cyan-200/80 hover:text-white transition-colors rounded-full px-4 hover:bg-cyan-500/15 md:hidden"
+              >
+                <Link href={`/community/post/${post.id}`}>
+                  <SquareArrowOutUpRight className="h-4 w-4" />
+                  <span className="text-sm">Open thread</span>
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="hidden md:flex items-center space-x-2 text-cyan-200/80 hover:text-white transition-colors rounded-full px-4 hover:bg-cyan-500/15"
               >
                 <Link href={`/community/post/${post.id}`}>
                   <SquareArrowOutUpRight className="h-4 w-4" />

@@ -278,14 +278,14 @@ export async function GET(request: NextRequest) {
       limit: searchParams.get('limit') ?? undefined,
       filter: searchParams.get('filter') ?? undefined,
       hashtag: searchParams.get('hashtag') ?? tagParam,
+      cursor: searchParams.get('cursor') ?? undefined
     })
     const validatedQuery = parsed.success
       ? parsed.data
-      : { page: '1', limit: '20', filter: 'latest', hashtag: undefined as string | undefined }
+      : { page: '1', limit: '20', filter: 'latest', hashtag: undefined as string | undefined, cursor: undefined as string | undefined }
 
-    const page = parseInt(validatedQuery.page)
     const limit = parseInt(validatedQuery.limit)
-    const skip = (page - 1) * limit
+    const cursor = validatedQuery.cursor || undefined
 
     // Build where clause
     let where: any = {}
@@ -315,10 +315,8 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    // Show all posts to everyone (no published field exists, all posts are public)
-    // Authors can see their own posts, but everyone sees all posts
     const posts = await prisma.post.findMany({
-      where: where,
+      where,
       include: {
         user: {
           select: {
@@ -346,26 +344,22 @@ export async function GET(request: NextRequest) {
         }
       },
       orderBy,
-      skip,
-      take: limit
+      take: limit + 1,
+      ...(cursor
+        ? { cursor: { id: cursor }, skip: 1 }
+        : {})
     })
 
-    // No extra filtering needed; stored normalized
-
-    const total = await prisma.post.count({ where: where })
+    const hasMore = posts.length > limit
+    const items = hasMore ? posts.slice(0, limit) : posts
 
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`[COMMUNITY][FEED] user=${session?.user?.id || 'anon'} count=${posts.length} filter=${validatedQuery.filter} hashtag=${validatedQuery.hashtag || ''}`)
+      console.log(`[COMMUNITY][FEED] user=${session?.user?.id || 'anon'} count=${items.length} cursor=${cursor || 'none'} filter=${validatedQuery.filter} hashtag=${validatedQuery.hashtag || ''}`)
     }
 
     return NextResponse.json({
-      posts,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit)
-      }
+      items,
+      nextCursor: hasMore ? items[items.length - 1].id : null
     })
   } catch (error) {
     console.error('Error fetching posts:', error)

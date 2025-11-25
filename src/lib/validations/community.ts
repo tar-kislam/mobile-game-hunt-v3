@@ -25,10 +25,11 @@ export const toggleLikeSchema = z.object({
 
 // Posts query schema
 export const postsQuerySchema = z.object({
-  page: z.string().optional().default('1'),
+  page: z.string().optional().default('1'), // kept for backward compatibility
   limit: z.string().optional().default('20'),
   filter: z.enum(['latest', 'trending']).optional().default('latest'),
   hashtag: z.string().optional(),
+  cursor: z.string().optional(),
 })
 
 // User posts query schema

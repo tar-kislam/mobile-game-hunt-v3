@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
-import { MessageCircle, Edit2, Trash2, Share2 } from 'lucide-react'
+import { MessageCircle, Edit2, Trash2, Share2, ArrowBigUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { UserAvatarTooltip } from '@/components/ui/user-avatar-tooltip'
 import { ProductCommentComposer } from './product-comment-composer'
@@ -75,7 +75,7 @@ export function ProductCommentItem({
   }, [comment])
 
   const isOwner = session?.user?.id === localComment.user?.id
-  const borderClasses = depth > 0 ? 'border-l border-white/5 pl-4 ml-4' : ''
+  const borderClasses = depth > 0 ? 'border-l border-white/5 pl-3 ml-3 sm:pl-4 sm:ml-4' : ''
 
   const formattedTimestamp = useMemo(() => {
     const date = new Date(localComment.createdAt)
@@ -219,7 +219,7 @@ export function ProductCommentItem({
   return (
     <div className={`space-y-4 ${borderClasses}`} id={`comment-${localComment.id}`}>
       <div className="rounded-2xl border border-white/5 bg-white/5 p-4">
-        <div className="flex items-start space-x-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:space-x-3 sm:gap-0">
           <UserAvatarTooltip
             userId={localComment.user?.id || ''}
             userName={localComment.user?.name || 'User'}
@@ -227,7 +227,7 @@ export function ProductCommentItem({
             size="sm"
           />
           <div className="flex-1">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 text-sm md:text-base">
               <span className="font-semibold">{localComment.user?.name || 'Anonymous'}</span>
               {localComment.user?.username && (
                 <Link
@@ -276,7 +276,7 @@ export function ProductCommentItem({
             )}
 
             <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-              <div>
+              <div className="hidden md:flex min-h-[40px]">
                 <UpvoteButton
                   initialVotes={localComment.upvoteCount}
                   isUpvoted={localComment.isUpvoted}
@@ -290,7 +290,7 @@ export function ProductCommentItem({
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex items-center space-x-2 px-2 text-muted-foreground hover:text-blue-400"
+                className="hidden md:flex items-center space-x-2 rounded-full px-3 py-2 text-muted-foreground hover:text-blue-400"
                 onClick={() => {
                   if (!session?.user?.id) {
                     toast.error('Please sign in to reply')
@@ -306,7 +306,7 @@ export function ProductCommentItem({
                 variant="ghost"
                 size="sm"
                 onClick={handleShare}
-                className="flex items-center space-x-2 px-2 text-muted-foreground hover:text-green-400"
+                className="hidden md:flex items-center space-x-2 rounded-full px-3 py-2 text-muted-foreground hover:text-green-400"
               >
                 <Share2 className="h-4 w-4" />
                 <span>Share</span>
@@ -317,21 +317,82 @@ export function ProductCommentItem({
                     variant="ghost"
                     size="sm"
                     onClick={() => setIsEditing(true)}
-                    className="px-2 text-muted-foreground hover:text-blue-400"
+                    className="hidden md:flex rounded-full px-3 py-2 text-muted-foreground hover:text-blue-400"
                   >
                     <Edit2 className="h-4 w-4" />
+                    <span>Edit</span>
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className="px-2 text-muted-foreground hover:text-red-400"
+                    className="hidden md:flex rounded-full px-3 py-2 text-muted-foreground hover:text-red-400"
                   >
                     <Trash2 className="h-4 w-4" />
+                    <span>Delete</span>
                   </Button>
                 </>
               )}
+            </div>
+
+            <div className="mt-3 flex w-full items-center gap-3 md:hidden">
+              <div className="flex items-center gap-3 overflow-hidden w-full">
+                <button
+                  type="button"
+                  aria-label="Upvote"
+                  onClick={() => {
+                    handleUpvote()
+                  }}
+                  className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold transition-all flex-shrink-0 ${
+                    localComment.isUpvoted
+                      ? 'bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]'
+                      : 'border border-white/20 text-white/80 bg-white/5'
+                  }`}
+                >
+                  <ArrowBigUp className={`h-4 w-4 ${localComment.isUpvoted ? 'text-white' : 'text-white/80'}`} />
+                  <span>{localComment.upvoteCount}</span>
+                </button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Reply"
+                  onClick={() => {
+                    if (!session?.user?.id) {
+                      toast.error('Please sign in to reply')
+                      return
+                    }
+                    setShowReplyComposer((prev) => !prev)
+                  }}
+                  className="rounded-full h-10 w-10 text-muted-foreground hover:text-blue-400 flex-shrink-0"
+                >
+                  <MessageCircle className="h-5 w-5" />
+                </Button>
+                {/* Share icon hidden on mobile per new requirement */}
+                {isOwner && !isEditing && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Edit comment"
+                      onClick={() => setIsEditing(true)}
+                      className="rounded-full h-10 w-10 text-muted-foreground hover:text-blue-400 flex-shrink-0"
+                    >
+                      <Edit2 className="h-5 w-5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Delete comment"
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                      className="rounded-full h-10 w-10 text-muted-foreground hover:text-red-400 flex-shrink-0"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>

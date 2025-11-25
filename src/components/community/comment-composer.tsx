@@ -170,7 +170,7 @@ export const CommentComposer = forwardRef<CommentComposerHandle, CommentComposer
       )}
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-        <div className="flex space-x-3 px-4">
+        <div className="flex flex-col gap-3 px-4 sm:flex-row sm:space-x-3 sm:gap-0">
           <div className="flex-shrink-0">
             <UserAvatarTooltip
               userId={session.user.id}
@@ -201,14 +201,14 @@ export const CommentComposer = forwardRef<CommentComposerHandle, CommentComposer
               <p className="text-sm text-red-500">{errors.content.message}</p>
             )}
             
-            <div className="flex items-center justify-between pt-2">
-              <div className="flex items-center space-x-4">
+            <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                 <div className="text-sm text-muted-foreground">
                   {characterCount}/500
                 </div>
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex flex-wrap items-center justify-end gap-2">
                 <Button
                   type="button"
                   variant="ghost"
