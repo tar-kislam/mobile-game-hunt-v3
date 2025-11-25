@@ -118,6 +118,7 @@ export default function EditorialDashboard() {
   const [usersFeedbackSending, setUsersFeedbackSending] = useState(false)
   const [socialPromoDialogOpen, setSocialPromoDialogOpen] = useState(false)
   const [socialPromoSending, setSocialPromoSending] = useState(false)
+  const safeNewsletterSubscribers = Array.isArray(newsletterSubscribers) ? newsletterSubscribers : []
   const ITEMS_PER_PAGE = 10
 
   // Filter products based on search term
@@ -126,8 +127,8 @@ export default function EditorialDashboard() {
   )
   const totalGamesPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE))
   const paginatedProducts = filteredProducts.slice((gamesPage - 1) * ITEMS_PER_PAGE, gamesPage * ITEMS_PER_PAGE)
-  const totalNewsletterPages = Math.max(1, Math.ceil(newsletterSubscribers.length / ITEMS_PER_PAGE))
-  const paginatedNewsletter = newsletterSubscribers.slice((newsletterPage - 1) * ITEMS_PER_PAGE, newsletterPage * ITEMS_PER_PAGE)
+  const totalNewsletterPages = Math.max(1, Math.ceil(safeNewsletterSubscribers.length / ITEMS_PER_PAGE))
+  const paginatedNewsletter = safeNewsletterSubscribers.slice((newsletterPage - 1) * ITEMS_PER_PAGE, newsletterPage * ITEMS_PER_PAGE)
   const totalCampaignPages = Math.max(1, Math.ceil(campaigns.length / ITEMS_PER_PAGE))
   const paginatedCampaigns = campaigns.slice((campaignsPage - 1) * ITEMS_PER_PAGE, campaignsPage * ITEMS_PER_PAGE)
   const totalUsersPages = Math.max(1, Math.ceil(users.length / ITEMS_PER_PAGE))
@@ -244,7 +245,7 @@ export default function EditorialDashboard() {
       const csvHeader = 'Email,Signup Date\n'
       
       // Convert newsletter subscribers data to CSV rows
-      const csvRows = newsletterSubscribers.map(subscriber => {
+      const csvRows = safeNewsletterSubscribers.map(subscriber => {
         const email = subscriber.email
         const signupDate = new Date(subscriber.createdAt).toLocaleDateString('de-DE') // Format as DD.MM.YYYY
         return `${email},${signupDate}`
@@ -308,7 +309,7 @@ export default function EditorialDashboard() {
     if (bulkEmailLoading) return
     
     const confirmed = window.confirm(
-      `Are you sure you want to send welcome emails to all ${newsletterSubscribers.length} active subscribers?\n\nThis action cannot be undone.`
+      `Are you sure you want to send welcome emails to all ${safeNewsletterSubscribers.length} active subscribers?\n\nThis action cannot be undone.`
     )
     
     if (!confirmed) return
@@ -350,7 +351,7 @@ export default function EditorialDashboard() {
   const handleSendWeeklyTop5 = async () => {
     if (weeklySending) return
     const confirmed = window.confirm(
-      `Send Weekly Top 5 to all ${newsletterSubscribers.length} active subscribers?\n\nThis action cannot be undone.`
+      `Send Weekly Top 5 to all ${safeNewsletterSubscribers.length} active subscribers?\n\nThis action cannot be undone.`
     )
     if (!confirmed) return
     try {
@@ -381,7 +382,7 @@ export default function EditorialDashboard() {
   const handleSendLatestGame = async () => {
     if (latestSending) return
     const confirmed = window.confirm(
-      `Send latest published game email to all ${newsletterSubscribers.length} active subscribers?\n\nThis action cannot be undone.`
+      `Send latest published game email to all ${safeNewsletterSubscribers.length} active subscribers?\n\nThis action cannot be undone.`
     )
     if (!confirmed) return
     try {
@@ -707,12 +708,12 @@ export default function EditorialDashboard() {
                     <CardTitle className="text-white flex items-center gap-2">
                       <Mail className="w-5 h-5" />
                       Newsletter Subscribers
-                      <span className="text-xs text-gray-400">({newsletterSubscribers.length})</span>
+                      <span className="text-xs text-gray-400">({safeNewsletterSubscribers.length})</span>
                     </CardTitle>
                     <div className="flex gap-2 flex-wrap">
                       <Button
                         onClick={handleBulkWelcomeEmail}
-                        disabled={bulkEmailLoading || newsletterSubscribers.length === 0}
+                        disabled={bulkEmailLoading || safeNewsletterSubscribers.length === 0}
                         className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {bulkEmailLoading ? (
@@ -736,7 +737,7 @@ export default function EditorialDashboard() {
                       </Button>
                       <Button
                         onClick={handleSendWeeklyTop5}
-                        disabled={weeklySending || newsletterSubscribers.length === 0}
+                        disabled={weeklySending || safeNewsletterSubscribers.length === 0}
                         className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Send weekly Top 5 to all subscribers"
                       >
@@ -754,7 +755,7 @@ export default function EditorialDashboard() {
                       </Button>
                       <Button
                         onClick={handleSendLatestGame}
-                        disabled={latestSending || newsletterSubscribers.length === 0}
+                        disabled={latestSending || safeNewsletterSubscribers.length === 0}
                         className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Send latest published game to all subscribers"
                       >
@@ -796,7 +797,7 @@ export default function EditorialDashboard() {
                       </TableBody>
                     </Table>
                   </div>
-                  {newsletterSubscribers.length > ITEMS_PER_PAGE && (
+                  {safeNewsletterSubscribers.length > ITEMS_PER_PAGE && (
                     <div className="mt-6 flex justify-center items-center gap-2">
                       <div className="flex items-center gap-1">
                         {newsletterPage > 1 && (
