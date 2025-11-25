@@ -113,11 +113,14 @@ export default function EditorialDashboard() {
   const [campaignsPage, setCampaignsPage] = useState(1)
   const [usersPage, setUsersPage] = useState(1)
   const [submittedGamesPage, setSubmittedGamesPage] = useState(1)
+  const [bulkEmailLoading, setBulkEmailLoading] = useState(false)
   const [weeklySending, setWeeklySending] = useState(false)
   const [latestSending, setLatestSending] = useState(false)
   const [usersFeedbackSending, setUsersFeedbackSending] = useState(false)
   const [socialPromoDialogOpen, setSocialPromoDialogOpen] = useState(false)
   const [socialPromoSending, setSocialPromoSending] = useState(false)
+  const [newsletterSocialDialogOpen, setNewsletterSocialDialogOpen] = useState(false)
+  const [newsletterSocialSending, setNewsletterSocialSending] = useState(false)
   const safeNewsletterSubscribers = Array.isArray(newsletterSubscribers) ? newsletterSubscribers : []
   const ITEMS_PER_PAGE = 10
 
@@ -348,6 +351,51 @@ export default function EditorialDashboard() {
     }
   }
 
+  const sendSocialPromoEmailMutation = async (target: 'users' | 'newsletter') => {
+    try {
+      const response = await fetch('/api/editorial/emails/send-social-promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target })
+      })
+      const data = await response.json()
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || 'Failed to send emails')
+      }
+      toast.success(`Social promo emails sent to ${target === 'users' ? 'all users' : 'newsletter subscribers'}`)
+    } catch (error) {
+      console.error('[SOCIAL PROMO EMAIL] send error', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to send social promo emails')
+      throw error
+    }
+  }
+
+  const handleSendUsersSocialPromo = async () => {
+    if (socialPromoSending) return
+    setSocialPromoDialogOpen(false)
+    try {
+      setSocialPromoSending(true)
+      await sendSocialPromoEmailMutation('users')
+    } catch {
+      // toast already handled
+    } finally {
+      setSocialPromoSending(false)
+    }
+  }
+
+  const handleSendNewsletterSocialPromo = async () => {
+    if (newsletterSocialSending) return
+    setNewsletterSocialDialogOpen(false)
+    try {
+      setNewsletterSocialSending(true)
+      await sendSocialPromoEmailMutation('newsletter')
+    } catch {
+      // toast already handled
+    } finally {
+      setNewsletterSocialSending(false)
+    }
+  }
+
   const handleSendWeeklyTop5 = async () => {
     if (weeklySending) return
     const confirmed = window.confirm(
@@ -443,34 +491,6 @@ export default function EditorialDashboard() {
       toast.error('Failed to send feedback emails')
     } finally {
       setUsersFeedbackSending(false)
-    }
-  }
-
-  const handleSendSocialPromoEmail = async () => {
-    if (socialPromoSending) return
-
-    try {
-      setSocialPromoSending(true)
-      const response = await fetch('/api/editorial/emails/send-social-promo', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || !data?.success) {
-        throw new Error(data?.error || 'Failed to send social media promo email')
-      }
-
-      toast.success('Social media promo email has been queued for all users.')
-      setSocialPromoDialogOpen(false)
-    } catch (error) {
-      console.error('[SOCIAL PROMO EMAIL] error', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to send social media promo email')
-    } finally {
-      setSocialPromoSending(false)
     }
   }
 
@@ -711,6 +731,46 @@ export default function EditorialDashboard() {
                       <span className="text-xs text-gray-400">({safeNewsletterSubscribers.length})</span>
                     </CardTitle>
                     <div className="flex gap-2 flex-wrap">
+                    <AlertDialog open={newsletterSocialDialogOpen} onOpenChange={setNewsletterSocialDialogOpen}>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          disabled={newsletterSocialSending || safeNewsletterSubscribers.length === 0}
+                          className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Share2 className="w-4 h-4 mr-2" />
+                          Send Social Promo
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="bg-zinc-900 border border-white/10 text-white">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Send Social Media Promo Email to newsletter subscribers?</AlertDialogTitle>
+                          <AlertDialogDescription className="text-gray-300">
+                            This will email every active newsletter subscriber about our social channels.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel className="bg-transparent border border-white/20 text-white hover:bg-white/10">
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction asChild>
+                            <Button
+                              onClick={handleSendNewsletterSocialPromo}
+                              disabled={newsletterSocialSending}
+                              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50"
+                            >
+                              {newsletterSocialSending ? (
+                                <>
+                                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                  Sending...
+                                </>
+                              ) : (
+                                'Send to subscribers'
+                              )}
+                            </Button>
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                       <Button
                         onClick={handleBulkWelcomeEmail}
                         disabled={bulkEmailLoading || safeNewsletterSubscribers.length === 0}
@@ -1003,7 +1063,7 @@ export default function EditorialDashboard() {
                             </AlertDialogCancel>
                             <AlertDialogAction asChild>
                               <Button
-                                onClick={handleSendSocialPromoEmail}
+                                onClick={handleSendUsersSocialPromo}
                                 disabled={socialPromoSending}
                                 className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50"
                               >

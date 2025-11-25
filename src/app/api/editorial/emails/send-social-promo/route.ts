@@ -12,15 +12,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    const users = await prisma.user.findMany({
-      select: {
-        email: true,
-        name: true,
-        username: true
-      }
-    })
+    const body = await request.json().catch(() => ({}))
+    const target: 'users' | 'newsletter' = body?.target === 'newsletter' ? 'newsletter' : 'users'
 
-    const recipients = users.filter((user) => Boolean(user.email))
+    let recipients: Array<{ email: string; name?: string | null; username?: string | null }> = []
+
+    if (target === 'newsletter') {
+      const newsletterModel = (prisma as any).newsletterSubscription
+      if (!newsletterModel) {
+        return NextResponse.json({ error: 'Newsletter subscriptions not available' }, { status: 400 })
+      }
+      const subs = await newsletterModel.findMany({
+        select: {
+          email: true
+        }
+      })
+      recipients = subs
+        .filter((sub: { email?: string | null }) => Boolean(sub.email))
+        .map((sub: { email?: string | null }) => ({
+          email: sub.email as string,
+          name: null,
+          username: null
+        }))
+    } else {
+      const users = await prisma.user.findMany({
+        select: {
+          email: true,
+          name: true,
+          username: true
+        }
+      })
+      recipients = users.filter((user) => Boolean(user.email)) as Array<{ email: string; name?: string | null; username?: string | null }>
+    }
 
     const results = {
       total: recipients.length,
