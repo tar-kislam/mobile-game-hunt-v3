@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -39,6 +39,8 @@ export function ProductCommentsThread({
   const [hasMore, setHasMore] = useState(false)
   const [commentCount, setCommentCount] = useState(initialCount)
   const [error, setError] = useState<string | null>(null)
+  const composerContainerRef = useRef<HTMLDivElement>(null)
+  const hasLoadedSuccessfullyRef = useRef(false)
 
   function applyCount(value: number | ((prev: number) => number)) {
     setCommentCount((prev) => {
@@ -77,15 +79,21 @@ export function ProductCommentsThread({
         setCursor(data.nextCursor)
         setHasMore(Boolean(data.nextCursor))
         applyCount(data.totalCount)
+        hasLoadedSuccessfullyRef.current = true
       } catch (err) {
         console.error('[PRODUCT COMMENTS][FETCH] error', err)
-        setError('Failed to load comments')
-        toast.error('Failed to load comments')
+        const suppressError = !hasLoadedSuccessfullyRef.current && initialCount === 0
+        if (suppressError) {
+          setError(null)
+        } else {
+          setError('Failed to load comments')
+          toast.error('Failed to load comments')
+        }
       } finally {
         setLoading(false)
       }
     },
-    [productId, applyCount]
+    [productId, applyCount, initialCount]
   )
 
   useEffect(() => {
@@ -110,6 +118,15 @@ export function ProductCommentsThread({
     applyCount((prev) => Math.max(0, prev - 1))
   }
 
+  const scrollToComposer = () => {
+    if (!composerContainerRef.current) return
+    composerContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const textarea = composerContainerRef.current.querySelector('textarea')
+    if (textarea instanceof HTMLTextAreaElement) {
+      textarea.focus()
+    }
+  }
+
   const renderSkeleton = () => (
     <div className="space-y-4">
       {Array.from({ length: 3 }).map((_, index) => (
@@ -129,7 +146,9 @@ export function ProductCommentsThread({
 
   return (
     <div className="space-y-6">
-      <ProductCommentComposer productId={productId} onSuccess={handleTopLevelSuccess} />
+      <div ref={composerContainerRef}>
+        <ProductCommentComposer productId={productId} onSuccess={handleTopLevelSuccess} />
+      </div>
 
       {loading && comments.length === 0 && renderSkeleton()}
 
@@ -140,8 +159,17 @@ export function ProductCommentsThread({
       )}
 
       {!loading && comments.length === 0 && !error && (
-        <div className="rounded-xl border border-white/5 bg-white/5 p-8 text-center text-sm text-muted-foreground">
-          No comments yet. Be the first to share your thoughts!
+        <div className="rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-[#040b16]/90 via-[#050d1c]/85 to-[#040b16]/90 p-8 text-center text-sm text-cyan-100 shadow-[0_0_30px_rgba(59,130,246,0.15)] space-y-3">
+          <p className="text-lg font-semibold text-white">Share your first thought</p>
+          <p className="text-cyan-200">
+            Kick off the discussion by sharing what stands out about this product.
+          </p>
+          <Button
+            onClick={scrollToComposer}
+            className="mt-2 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white"
+          >
+            Start the conversation
+          </Button>
         </div>
       )}
 

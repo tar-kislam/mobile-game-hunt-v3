@@ -706,7 +706,7 @@ export const getDisplayNameForUser = (user: { name?: string | null; username?: s
   return user.email.split('@')[0]
 }
 
-const getSocialPromoEmailHTML = (displayName: string) => {
+export const getSocialPromoEmailHTML = (displayName: string) => {
   const safeName = displayName || 'there'
   return `
 <!DOCTYPE html>
@@ -754,54 +754,92 @@ const getSocialPromoEmailHTML = (displayName: string) => {
       font-weight: 600;
       color: #f3f4f6;
     }
-    .section {
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
       margin: 28px 0;
+    }
+    .card {
+      border-radius: 18px;
       padding: 20px;
-      border-radius: 14px;
-      background: rgba(59, 130, 246, 0.08);
-      border: 1px solid rgba(99, 102, 241, 0.2);
+      background: radial-gradient(circle at top, rgba(6,182,212,0.15), rgba(15,23,42,0.85));
+      border: 1px solid rgba(59,130,246,0.3);
+      box-shadow: inset 0 0 20px rgba(56,189,248,0.15), 0 10px 25px rgba(2,6,23,0.7);
     }
-    .section-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #93c5fd;
-      margin-bottom: 12px;
+    .card-title {
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-    .social-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    .social-item {
+      letter-spacing: 0.12em;
+      font-size: 13px;
+      color: #7dd3fc;
       margin-bottom: 12px;
+    }
+    .account {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: rgba(15,23,42,0.7);
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 14px;
+      margin-bottom: 12px;
+    }
+    .account-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #e0f2fe;
       font-size: 15px;
     }
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      padding: 10px 16px;
-      border-radius: 9999px;
-      background: rgba(59, 130, 246, 0.12);
-      border: 1px solid rgba(59, 130, 246, 0.25);
-      color: #e0f2fe;
-      text-decoration: none;
-      font-weight: 500;
-      margin-right: 12px;
+    .account-handle {
+      font-size: 13px;
+      color: #94a3b8;
     }
-    .link {
+    .account-button {
+      text-decoration: none;
+      background: linear-gradient(120deg, rgba(14,165,233,0.9), rgba(14,165,233,0.6));
+      padding: 8px 14px;
+      border-radius: 999px;
+      color: #03111f;
+      font-weight: 600;
+      font-size: 13px;
+      box-shadow: 0 8px 20px rgba(14,165,233,0.25);
+    }
+    .subtle-card {
+      border-radius: 18px;
+      padding: 20px;
+      background: rgba(15,23,42,0.65);
+      border: 1px dashed rgba(148,163,184,0.4);
+    }
+    .subtle-card a {
       color: #93c5fd;
       text-decoration: none;
       font-weight: 600;
     }
-    .icon {
+    .social-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      background: rgba(15,23,42,0.8);
+      border: 1px solid rgba(59,130,246,0.4);
+      box-shadow: inset 0 0 8px rgba(59,130,246,0.35);
+      padding: 4px;
+    }
+    .social-icon img {
       width: 18px;
       height: 18px;
-      margin-right: 8px;
+      display: block;
+    }
+    @media (max-width: 600px) {
+      .container {
+        padding: 28px 20px;
+      }
+      .card-grid {
+        grid-template-columns: 1fr;
+      }
     }
     .footer {
       text-align: center;
@@ -826,51 +864,80 @@ const getSocialPromoEmailHTML = (displayName: string) => {
       <h1>Let's stay connected on social media</h1>
       <p class="hi">Hi ${safeName},</p>
       <p>
-        Thank you for being part of the MobileGameHunt community and supporting indie mobile games.
-        We're starting to share more discoveries, dev stories, and behind-the-scenes updates on our social channels —
-        and we'd love to have you there as well.
+        Thank you for being part of the MobileGameHunt community and supporting mobile games.
+        We’ve started sharing more frequent updates, early finds, and community highlights there and we’d love to have you join us.
+        Your support genuinely boosts the visibility of indie games across the entire community.
       </p>
-      <div class="section">
-        <div class="section-title">Follow & support MobileGameHunt</div>
-        <ul class="social-list">
-          <li class="social-item">
-            <a class="pill" href="https://twitter.com/mobilegamehunt" target="_blank" rel="noopener noreferrer">
-              <span class="icon">𝕏</span>
-              X (Twitter)
-            </a>
-            <span>@mobilegamehunt</span>
-          </li>
-          <li class="social-item">
-            <a class="pill" href="https://instagram.com/mobilegamehunt" target="_blank" rel="noopener noreferrer">
-              <span class="icon">📸</span>
-              Instagram
-            </a>
-            <span>@mobilegamehunt</span>
-          </li>
-          <li class="social-item">
-            <a class="pill" href="https://www.tiktok.com/@mobilegamehunt" target="_blank" rel="noopener noreferrer">
-              <span class="icon">🎵</span>
-              TikTok
-            </a>
-            <span>@mobilegamehunt</span>
-          </li>
-        </ul>
-      </div>
-      <div class="section" style="margin-top: 18px;">
-        <ul class="social-list">
-          <li class="social-item">
-            <a class="link" href="https://www.reddit.com/r/MobileGameHunt/" target="_blank" rel="noopener noreferrer">
-              <span class="icon">👽</span>
-              Reddit – r/MobileGameHunt
-            </a>
-          </li>
-          <li class="social-item">
-            <a class="link" href="https://discord.gg/zahqtja5e9" target="_blank" rel="noopener noreferrer">
-              <span class="icon">💬</span>
-              Discord – Join our server
-            </a>
-          </li>
-        </ul>
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-title">Daily updates</div>
+          <div class="account">
+            <div>
+              <div class="account-info">
+                <span class="social-icon">
+                  <img src="https://cdn.simpleicons.org/x/0EA5E9" alt="X logo" />
+                </span>
+                <strong>X (Twitter)</strong>
+              </div>
+              <div class="account-handle">@mobilegamehunt</div>
+            </div>
+            <a class="account-button" href="https://twitter.com/mobilegamehunt" target="_blank" rel="noopener noreferrer">Follow</a>
+          </div>
+          <div class="account">
+            <div>
+              <div class="account-info">
+                <span class="social-icon">
+                  <img src="https://cdn.simpleicons.org/instagram/ffffff" alt="Instagram logo" />
+                </span>
+                <strong>Instagram</strong>
+              </div>
+              <div class="account-handle">@mobilegamehunt</div>
+            </div>
+            <a class="account-button" href="https://instagram.com/mobilegamehunt" target="_blank" rel="noopener noreferrer">Follow</a>
+          </div>
+          <div class="account">
+            <div>
+              <div class="account-info">
+                <span class="social-icon">
+                  <img src="https://cdn.simpleicons.org/tiktok/00f6ff" alt="TikTok logo" />
+                </span>
+                <strong>TikTok</strong>
+              </div>
+              <div class="account-handle">@mobilegamehunt</div>
+            </div>
+            <a class="account-button" href="https://www.tiktok.com/@mobilegamehunt" target="_blank" rel="noopener noreferrer">Follow</a>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Community hangouts</div>
+          <div class="account">
+            <div>
+              <div class="account-info">
+                <span class="social-icon">
+                  <img src="https://cdn.simpleicons.org/reddit/ff4500" alt="Reddit logo" />
+                </span>
+                <strong>Reddit</strong>
+              </div>
+              <div class="account-handle">r/MobileGameHunt</div>
+            </div>
+            <a class="account-button" href="https://www.reddit.com/r/MobileGameHunt/" target="_blank" rel="noopener noreferrer">Join</a>
+          </div>
+          <div class="account">
+            <div>
+              <div class="account-info">
+                <span class="social-icon">
+                  <img src="https://cdn.simpleicons.org/discord/5865F2" alt="Discord logo" />
+                </span>
+                <strong>Discord</strong>
+              </div>
+              <div class="account-handle">Indie dev community</div>
+            </div>
+            <a class="account-button" href="https://discord.gg/zahqtja5e9" target="_blank" rel="noopener noreferrer">Join server</a>
+          </div>
+          <div class="subtle-card">
+            Prefer email updates? Reply to this message anytime and we’ll keep you in the loop.
+          </div>
+        </div>
       </div>
       <p>
         A simple follow, like, or share helps a lot more than it seems.
