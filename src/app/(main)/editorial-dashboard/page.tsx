@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Download, GamepadIcon, Mail, Star, MessageCircle, TrendingUp, Users, List, Share2, Trash2 } from 'lucide-react'
+import { Download, GamepadIcon, Mail, Star, MessageCircle, TrendingUp, Users, List, Share2, Trash2, TestTube } from 'lucide-react'
 import { SocialPlatformIcon } from '@/components/ui/social-platform-icons'
 import { toast } from 'sonner'
 import DarkVeil from '@/components/DarkVeil'
@@ -53,7 +53,7 @@ interface User {
   createdAt: string
 }
 
-type ActiveSection = 'games' | 'newsletter' | 'campaigns' | 'users' | 'submitted-games'
+type ActiveSection = 'games' | 'newsletter' | 'campaigns' | 'users' | 'submitted-games' | 'test'
 
 interface Campaign {
   id: string
@@ -128,6 +128,8 @@ export default function EditorialDashboard() {
   const [userDeleteTarget, setUserDeleteTarget] = useState<User | null>(null)
   const [userDeleteLoading, setUserDeleteLoading] = useState(false)
   const [userDeleteError, setUserDeleteError] = useState<string | null>(null)
+  const [testEmail, setTestEmail] = useState('')
+  const [testEmailLoading, setTestEmailLoading] = useState(false)
   const safeNewsletterSubscribers = Array.isArray(newsletterSubscribers) ? newsletterSubscribers : []
   const ITEMS_PER_PAGE = 10
 
@@ -585,6 +587,47 @@ export default function EditorialDashboard() {
     }
   }
 
+  const handleAddTestEmail = async () => {
+    if (!testEmail || testEmailLoading) return
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(testEmail)) {
+      toast.error('Invalid email format')
+      return
+    }
+
+    try {
+      setTestEmailLoading(true)
+      const res = await fetch('/api/admin/newsletter/test-add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: testEmail }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok && data?.success) {
+        toast.success(`Test email "${testEmail}" added successfully`)
+        setTestEmail('')
+        // Refresh newsletter subscribers list
+        const newsletterRes = await fetch('/api/admin/newsletter')
+        if (newsletterRes.ok) {
+          const newsletterData = await newsletterRes.json()
+          setNewsletterSubscribers(newsletterData)
+        }
+      } else {
+        toast.error(data?.error || 'Failed to add test email')
+      }
+    } catch (error) {
+      console.error('Error adding test email:', error)
+      toast.error('Failed to add test email')
+    } finally {
+      setTestEmailLoading(false)
+    }
+  }
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center relative">
@@ -677,6 +720,18 @@ export default function EditorialDashboard() {
                 >
                   <List className="w-4 h-4 mr-2" />
                   Submitted Games Overview
+                </Button>
+                <Button
+                  variant={activeSection === 'test' ? 'default' : 'ghost'}
+                  className={`w-full justify-start ${
+                    activeSection === 'test' 
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700' 
+                      : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  }`}
+                  onClick={() => setActiveSection('test')}
+                >
+                  <TestTube className="w-4 h-4 mr-2" />
+                  Test
                 </Button>
               </CardContent>
             </Card>
@@ -1500,6 +1555,224 @@ export default function EditorialDashboard() {
                       </span>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            )}
+
+            {activeSection === 'test' && (
+              <Card className="bg-zinc-900/40 backdrop-blur-md border border-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <TestTube className="w-5 h-5" />
+                    Test Email Management
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Add Test Email Section */}
+                  <div className="bg-zinc-800/40 p-4 rounded-lg border border-white/5">
+                    <h3 className="text-white font-semibold mb-3">Add Test Email</h3>
+                    <div className="flex gap-2">
+                      <Input
+                        type="email"
+                        placeholder="Enter email address..."
+                        value={testEmail}
+                        onChange={(e) => setTestEmail(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !testEmailLoading) {
+                            handleAddTestEmail()
+                          }
+                        }}
+                        className="flex-1 bg-zinc-800/50 border-zinc-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-purple-500/20 focus:ring-2 rounded-lg"
+                        disabled={testEmailLoading}
+                      />
+                      <Button
+                        onClick={handleAddTestEmail}
+                        disabled={!testEmail || testEmailLoading}
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {testEmailLoading ? (
+                          <>
+                            <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            Adding...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="w-4 h-4 mr-2" />
+                            Add Email
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    <p className="text-gray-400 text-sm mt-2">
+                      Add an email address to the newsletter subscription list for testing purposes. No welcome email will be sent.
+                    </p>
+                  </div>
+
+                  {/* All Email Buttons Section */}
+                  <div className="bg-zinc-800/40 p-4 rounded-lg border border-white/5">
+                    <h3 className="text-white font-semibold mb-4">Email Campaign Actions</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {/* Newsletter Subscribers Actions */}
+                      <div className="space-y-2">
+                        <h4 className="text-gray-300 text-sm font-medium mb-2">Newsletter Subscribers</h4>
+                        <AlertDialog open={newsletterSocialDialogOpen} onOpenChange={setNewsletterSocialDialogOpen}>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              disabled={newsletterSocialSending || safeNewsletterSubscribers.length === 0}
+                              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <Share2 className="w-4 h-4 mr-2" />
+                              Send Social Promo
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="bg-zinc-900 border border-white/10 text-white">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Send Social Media Promo Email to newsletter subscribers?</AlertDialogTitle>
+                              <AlertDialogDescription className="text-gray-300">
+                                This will email every active newsletter subscriber about our social channels.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="bg-transparent border border-white/20 text-white hover:bg-white/10">
+                                Cancel
+                              </AlertDialogCancel>
+                              <AlertDialogAction asChild>
+                                <Button
+                                  onClick={handleSendNewsletterSocialPromo}
+                                  disabled={newsletterSocialSending}
+                                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50"
+                                >
+                                  {newsletterSocialSending ? (
+                                    <>
+                                      <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                      Sending...
+                                    </>
+                                  ) : (
+                                    'Send to subscribers'
+                                  )}
+                                </Button>
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                        <Button
+                          onClick={handleBulkWelcomeEmail}
+                          disabled={bulkEmailLoading || safeNewsletterSubscribers.length === 0}
+                          className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {bulkEmailLoading ? (
+                            <>
+                              <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                              Sending...
+                            </>
+                          ) : (
+                            <>
+                              <Mail className="w-4 h-4 mr-2" />
+                              Send Welcome Emails
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          onClick={handleSendWeeklyTop5}
+                          disabled={weeklySending || safeNewsletterSubscribers.length === 0}
+                          className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Send weekly Top 5 to all subscribers"
+                        >
+                          {weeklySending ? (
+                            <>
+                              <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                              Sending Weekly...
+                            </>
+                          ) : (
+                            <>
+                              <Mail className="w-4 h-4 mr-2" />
+                              Send Weekly Top 5
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          onClick={handleSendLatestGame}
+                          disabled={latestSending || safeNewsletterSubscribers.length === 0}
+                          className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Send latest published game to all subscribers"
+                        >
+                          {latestSending ? (
+                            <>
+                              <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                              Sending Latest...
+                            </>
+                          ) : (
+                            <>
+                              <Mail className="w-4 h-4 mr-2" />
+                              Send Latest Game
+                            </>
+                          )}
+                        </Button>
+                      </div>
+
+                      {/* Users Actions */}
+                      <div className="space-y-2">
+                        <h4 className="text-gray-300 text-sm font-medium mb-2">All Users</h4>
+                        <Button
+                          onClick={handleSendUsersFeedbackEmail}
+                          disabled={usersFeedbackSending || users.length === 0}
+                          className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {usersFeedbackSending ? (
+                            <>
+                              <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                              Sending...
+                            </>
+                          ) : (
+                            <>
+                              <Mail className="w-4 h-4 mr-2" />
+                              Send Feedback Email
+                            </>
+                          )}
+                        </Button>
+                        <AlertDialog open={socialPromoDialogOpen} onOpenChange={setSocialPromoDialogOpen}>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              disabled={users.length === 0}
+                              className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <Share2 className="w-4 h-4 mr-2" />
+                              Send Social Media Promo Email
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="bg-zinc-900 border border-white/10 text-white">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Send Social Media Promo Email to all users?</AlertDialogTitle>
+                              <AlertDialogDescription className="text-gray-300">
+                                This will send a personalized email about our social channels to every registered user.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="bg-transparent border border-white/20 text-white hover:bg-white/10">
+                                Cancel
+                              </AlertDialogCancel>
+                              <AlertDialogAction asChild>
+                                <Button
+                                  onClick={handleSendUsersSocialPromo}
+                                  disabled={socialPromoSending}
+                                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50"
+                                >
+                                  {socialPromoSending ? (
+                                    <>
+                                      <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                      Sending...
+                                    </>
+                                  ) : (
+                                    'Send to all users'
+                                  )}
+                                </Button>
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             )}
