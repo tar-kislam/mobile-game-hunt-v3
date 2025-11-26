@@ -42,12 +42,15 @@ export function ProductCommentsThread({
   const composerContainerRef = useRef<HTMLDivElement>(null)
   const hasLoadedSuccessfullyRef = useRef(false)
 
-  function applyCount(value: number | ((prev: number) => number)) {
-    setCommentCount((prev) => {
-      const next = typeof value === 'function' ? (value as (prev: number) => number)(prev) : value
-      return next
-    })
-  }
+  const applyCount = useCallback(
+    (value: number | ((prev: number) => number)) => {
+      setCommentCount((prev) => {
+        const next = typeof value === 'function' ? (value as (prev: number) => number)(prev) : value
+        return next
+      })
+    },
+    []
+  )
 
   useEffect(() => {
     onCountChange?.(commentCount)

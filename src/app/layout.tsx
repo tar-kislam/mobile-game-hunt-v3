@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Mono } from "next/font/google";
+import { DM_Mono, Orbitron } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { generateOrganizationJsonLd } from "@/lib/seo";
@@ -15,15 +15,14 @@ const dmMono = DM_Mono({
   style: ["normal", "italic"],
 });
 
+const orbitron = Orbitron({
+  variable: "--font-orbitron",
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+});
+
 const SITE_URL = getSiteBaseUrl();
 const DEFAULT_OG_IMAGE = toAbsoluteUrl(FALLBACK_OG_IMAGE);
-
-// Load Underdog font from Google Fonts
-const underdogFont = {
-  fontFamily: '"Underdog", cursive',
-};
-
-// TASA Explorer will be loaded via CSS import since it's not available in next/font/google
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -82,10 +81,6 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         
         {/* Performance: Async font loading */}
-        <link 
-          href="https://fonts.googleapis.com/css2?family=Epunda+Slab:ital,wght@0,300..900;1,300..900&family=Orbitron:wght@400..900&family=Quantico:ital,wght@0,400;0,700;1,400;1,700&family=Sansation:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Underdog&display=swap" 
-          rel="stylesheet" 
-        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -94,7 +89,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${dmMono.variable} antialiased dark`}
+        className={`${dmMono.variable} ${orbitron.variable} antialiased dark`}
       >
         <GoogleAnalytics />
         <Providers>

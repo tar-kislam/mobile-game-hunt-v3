@@ -4,3 +4,5 @@ ALTER TABLE "User"
   ADD COLUMN "communityLastPostDate" TIMESTAMP(3);
 
 
+
+

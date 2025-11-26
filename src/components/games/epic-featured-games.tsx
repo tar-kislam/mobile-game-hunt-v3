@@ -126,7 +126,7 @@ export function EpicFeaturedGames({ games, onGameClick }: EpicFeaturedGamesProps
   return (
     <section className="w-full max-w-full overflow-hidden">
       <div className="flex items-center justify-between mb-6 w-full">
-        <h2 className="text-2xl font-bold flex items-center gap-2" style={{ fontFamily: '"Epunda Slab", serif', fontWeight: 600 }}>
+        <h2 className="text-2xl font-bold flex items-center gap-2 font-orbitron">
           <ShinyText>Featured Games</ShinyText>
         </h2>
       </div>
@@ -332,14 +332,14 @@ function EpicSideCard({ game, onClick, isSelected }: EpicSideCardProps) {
 
       {/* Game Info */}
       <div className="flex-1 min-w-0 flex items-center">
-        <h3 className={cn(
-          "font-bold text-base transition-colors line-clamp-2",
-          "tracking-wide",
-          isSelected 
-            ? "text-white" 
-            : "text-gray-200 group-hover:text-white"
-        )}
-        style={{ fontFamily: '"Sansation", sans-serif' }}
+        <h3
+          className={cn(
+            "font-bold text-base transition-colors line-clamp-2",
+            "tracking-wide",
+            isSelected 
+              ? "text-white" 
+              : "text-gray-200 group-hover:text-white"
+          )}
         >
           {game.title}
         </h3>

@@ -339,7 +339,7 @@ export default function ProductsPage() {
       <Head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Epunda+Slab:ital,wght@0,300..900;1,300..900&family=Funnel+Display:wght@300..800&family=Lexend:wght@100..900&family=Orbitron:wght@400..900&family=Quantico:ital,wght@0,400;0,700;1,400;1,700&family=Sansation:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Underdog&display=swap" rel="stylesheet" />
+        {/* Orbitron is now loaded via next/font in the root layout */}
       </Head>
       <div className="container mx-auto px-4 py-8">
         {/* Search Bar - GOG Style */}

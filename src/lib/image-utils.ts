@@ -13,6 +13,10 @@ const OPTIMIZED_HOSTS = new Set([
   "vercel.app",
   // App store + known sources (match next.config.ts)
   "play-lh.googleusercontent.com",
+  "lh3.googleusercontent.com",
+  "lh4.googleusercontent.com",
+  "lh5.googleusercontent.com",
+  "lh6.googleusercontent.com",
   "is1-ssl.mzstatic.com",
   "is2-ssl.mzstatic.com",
   "is3-ssl.mzstatic.com",

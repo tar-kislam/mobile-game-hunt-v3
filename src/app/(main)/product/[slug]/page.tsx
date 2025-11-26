@@ -238,8 +238,8 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   
   const baseUrl = getSiteBaseUrl()
   const productUrl = `${baseUrl}/product/${slug}`
-  const ogImage = `${productUrl}/opengraph-image`
-  const thumbnailUrl = getGameImageUrl(product.thumbnail || product.image)
+  const thumbnailUrl = getGameImageUrl(product.thumbnail)
+  const ogImage = thumbnailUrl
   
   // Extract tag names for SEO
   const tagNames = product.tags?.map(pt => pt.tag.name) || []

@@ -181,7 +181,6 @@ export default function DashboardPage() {
         <title>Dashboard | Mobile Game Hunt</title>
         <meta name="description" content="Manage your mobile games, track analytics, and monitor performance on Mobile Game Hunt dashboard." />
         <meta name="robots" content="noindex,nofollow" />
-        <link rel="canonical" href={`${process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'}/dashboard`} />
       </Head>
       <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)]">
         <div className="container mx-auto px-4 py-8">

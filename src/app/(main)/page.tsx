@@ -359,6 +359,8 @@ interface Game {
   }
 }
 
+import { getSiteBaseUrl } from "@/lib/image-utils"
+
 export default function HomePage() {
   const [games, setGames] = useState<Game[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -583,7 +585,12 @@ export default function HomePage() {
         <title>Mobile Game Hunt - Discover the Best Mobile Games</title>
         <meta name="description" content="Discover and showcase the best mobile games. Connect with developers, share your favorites and stay updated with the latest releases in mobile gaming." />
         <meta name="keywords" content="mobile games, app discovery, game reviews, mobile gaming, indie games, game developers" />
-        <link rel="canonical" href={process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'} />
+        {typeof window !== "undefined" && (
+          <link
+            rel="canonical"
+            href={getSiteBaseUrl()}
+          />
+        )}
       </Head>
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 max-w-full overflow-hidden">
@@ -607,7 +614,7 @@ export default function HomePage() {
             {/* All Games */}
             <section className="w-full max-w-full overflow-hidden">
               <div className="mb-6">
-                <h2 className="text-2xl font-bold mb-4" style={{ fontFamily: '"Epunda Slab", serif', fontWeight: 600 }}>
+                <h2 className="text-2xl font-bold mb-4 font-orbitron">
                   <ShinyText>Discover Games</ShinyText>
                 </h2>
                 

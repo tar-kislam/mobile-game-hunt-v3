@@ -215,7 +215,6 @@ export default function NotificationsPage() {
         <title>Notifications | Mobile Game Hunt</title>
         <meta name="description" content="Stay updated with your latest notifications, badges, XP progress, and community activity on Mobile Game Hunt." />
         <meta name="robots" content="noindex,nofollow" />
-        <link rel="canonical" href={`${process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'}/notifications`} />
       </Head>
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
