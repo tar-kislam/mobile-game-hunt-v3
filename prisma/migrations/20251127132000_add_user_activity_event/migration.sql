@@ -20,4 +20,3 @@ ON DELETE CASCADE ON UPDATE CASCADE;
 CREATE INDEX "idx_user_activity_user_createdAt" ON "public"."UserActivityEvent"("userId", "createdAt");
 CREATE INDEX "idx_user_activity_session_createdAt" ON "public"."UserActivityEvent"("sessionId", "createdAt");
 CREATE INDEX "idx_user_activity_pageType_createdAt" ON "public"."UserActivityEvent"("pageType", "createdAt");
-
