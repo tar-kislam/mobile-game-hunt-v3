@@ -715,6 +715,9 @@ const SOCIAL_ICONS_BASE64 = {
   discord: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIwLjMxNyA0LjM2OTgyQzE4LjM1MiAyLjQwNDgyIDE2LjA4NyAxLjIwNDgyIDEzLjUyMiAwLjcwNDgyM0MxMy4zMjIgMC42NjQ4MjMgMTMuMTIyIDAuNjI0ODIzIDEyLjkyMiAwLjU4NDgyM0MxMi41MjIgMC41MDQ4MjMgMTIuMTIyIDAuNDY0ODIzIDExLjcyMiAwLjQyNDgyM0MxMS4zMjIgMC4zODQ4MjMgMTAuOTIyIDAuMzY0ODIzIDEwLjUyMiAwLjM0NDgyM0M5LjcyMiAwLjMwNDgyMyA4LjkyMiAwLjI4NDgyMyA4LjEyMiAwLjI4NDgyM0M3LjMyMiAwLjI4NDgyMyA2LjUyMiAwLjMwNDgyMyA1LjcyMiAwLjM0NDgyM0M1LjMyMiAwLjM2NDgyMyA0LjkyMiAwLjM4NDgyMyA0LjUyMiAwLjQyNDgyM0M0LjEyMiAwLjQ2NDgyMyAzLjcyMiAwLjUwNDgyMyAzLjMyMiAwLjU4NDgyM0MzLjEyMiAwLjYyNDgyMyAyLjkyMiAwLjY2NDgyMyAyLjcyMiAwLjcwNDgyM0MwLjE2MjAwMyAyLjIwNDgyIC0yLjExNzk3IDQuMzY5ODIgLTQuMDc5OTcgNi4zMzQ4MkMtNC4wNzk5NyA2LjUzNDgyIC00LjA3OTk3IDYuNzM0ODIgLTQuMDM5OTcgNi45MzQ4MkMtNC4wMzk5NyA3LjEzNDgyIC00LjAwMzk3IDcuMzM0ODIgLTMuOTYzOTcgNy41MzQ4MkMtMy45MjM5NyA3LjczNDgyIC0zLjg4Mzk3IDcuOTM0ODIgLTMuODQzOTcgOC4xMzQ4MkMtMy44MDM5NyA4LjMzNDgyIC0zLjc2Mzk3IDguNTM0ODIgLTMuNzIzOTcgOC43MzQ4MkMtMy42ODM5NyA4LjkzNDgyIC0zLjY0Mzk3IDkuMTM0ODIgLTMuNjAzOTcgOS4zMzQ4MkMtMy41NjM5NyA5LjUzNDgyIC0zLjUyMzk3IDkuNzM0ODIgLTMuNDgzOTcgOS45MzQ4MkMtMy40NDM5NyAxMC4xMzUgLTMuNDAzOTcgMTAuMzM1IC0zLjM2Mzk3IDEwLjUzNUMtMy4zMjM5NyAxMC43MzUgLTMuMjgzOTcgMTAuOTM1IC0zLjI0Mzk3IDExLjEzNUMtMy4yMDM5NyAxMS4zMzUgLTMuMTYzOTcgMTEuNTM1IC0zLjEyMzk3IDExLjczNUMtMy4wODM5NyAxMS45MzUgLTMuMDQzOTcgMTIuMTM1IC0zLjAwMzk3IDEyLjMzNUMtMi45NjM5NyAxMi41MzUgLTIuOTIzOTcgMTIuNzM1IC0yLjg4Mzk3IDEyLjkzNUMtMi44NDM5NyAxMy4xMzUgLTIuODAzOTcgMTMuMzM1IC0yLjc2Mzk3IDEzLjUzNUMtMi43MjM5NyAxMy43MzUgLTIuNjgzOTcgMTMuOTM1IC0yLjY0Mzk3IDE0LjEzNUMtMi42MDM5NyAxNC4zMzUgLTIuNTYzOTcgMTQuNTM1IC0yLjUyMzk3IDE0LjczNUMtMi40ODM5NyAxNC45MzUgLTIuNDQzOTcgMTUuMTM1IC0yLjQwMzk3IDE1LjMzNUMtMi4zNjM5NyAxNS41MzUgLTIuMzIzOTcgMTUuNzM1IC0yLjI4Mzk3IDE1LjkzNUMtMi4yNDM5NyAxNi4xMzUgLTIuMjAzOTcgMTYuMzM1IC0yLjE2Mzk3IDE2LjUzNUMtMi4xMjM5NyAxNi43MzUgLTIuMDgzOTcgMTYuOTM1IC0yLjA0Mzk3IDE3LjEzNUMtMi4wMDM5NyAxNy4zMzUgLTEuOTYzOTcgMTcuNTM1IC0xLjkyMzk3IDE3LjczNUMtMS44ODM5NyAxNy45MzUgLTEuODQzOTcgMTguMTM1IC0xLjgwMzk3IDE4LjMzNUMtMS43NjM5NyAxOC41MzUgLTEuNzIzOTcgMTguNzM1IC0xLjY4Mzk3IDE4LjkzNUMtMS42NDM5NyAxOS4xMzUgLTEuNjAzOTcgMTkuMzM1IC0xLjU2Mzk3IDE5LjUzNUMtMS41MjM5NyAxOS43MzUgLTEuNDgzOTcgMTkuOTM1IC0xLjQ0Mzk3IDIwLjEzNUMtMS40MDM5NyAyMC4zMzUgLTEuMzYzOTcgMjAuNTM1IC0xLjMyMzk3IDIwLjczNUMtMS4yODM5NyAyMC45MzUgLTEuMjQzOTcgMjEuMTM1IC0xLjIwMzk3IDIxLjMzNUMtMS4xNjM5NyAyMS41MzUgLTEuMTIzOTcgMjEuNzM1IC0xLjA4Mzk3IDIxLjkzNUMtMS4wNDM5NyAyMi4xMzUgLTEuMDAzOTcgMjIuMzM1IC0wLjk2Mzk3IDIyLjUzNUMtMC45MjM5NyAyMi43MzUgLTAuODgzOTcgMjIuOTM1IC0wLjg0Mzk3IDIzLjEzNUMtMC44MDM5NyAyMy4zMzUgLTAuNzYzOTcgMjMuNTM1IC0wLjcyMzk3IDIzLjczNUMtMC42ODM5NyAyMy45MzUgLTAuNjQzOTcgMjQuMTM1IC0wLjYwMzk3IDI0LjMzNUMtMC41NjM5NyAyNC41MzUgLTAuNTIzOTcgMjQuNzM1IC0wLjQ4Mzk3IDI0LjkzNUMtMC40NDM5NyAyNS4xMzUgLTAuNDAzOTcgMjUuMzM1IC0wLjM2Mzk3IDI1LjUzNUMtMC4zMjM5NyAyNS43MzUgLTAuMjgzOTcgMjUuOTM1IC0wLjI0Mzk3IDI2LjEzNUMtMC4yMDM5NyAyNi4zMzUgLTAuMTYzOTcgMjYuNTM1IC0wLjEyMzk3IDI2LjczNUMtMC4wODM5NyAyNi45MzUgLTAuMDQzOTcgMjcuMTM1IC0wLjAwMzk3IDI3LjMzNUMwLjAzNjAyNyAyNy41MzUgMC4wNzYwMjcgMjcuNzM1IDAuMTE2MDI3IDI3LjkzNUMwLjE1NjAyNyAyOC4xMzUgMC4xOTYwMjcgMjguMzM1IDAuMjM2MDI3IDI4LjUzNUMwLjI3NjAyNyAyOC43MzUgMC4zMTYwMjcgMjguOTM1IDAuMzU2MDI3IDI5LjEzNUMwLjM5NjAyNyAyOS4zMzUgMC40MzYwMjcgMjkuNTM1IDAuNDc2MDI3IDI5LjczNUMwLjUxNjAyNyAyOS45MzUgMC41NTYwMjcgMzAuMTM1IDAuNTk2MDI3IDMwLjMzNUMwLjYzNjAyNyAzMC41MzUgMC42NzYwMjcgMzAuNzM1IDAuNzE2MDI3IDMwLjkzNUMwLjc1NjAyNyAzMS4xMzUgMC43OTYwMjcgMzEuMzM1IDAuODM2MDI3IDMxLjUzNUMwLjg3NjAyNyAzMS43MzUgMC45MTYwMjcgMzEuOTM1IDAuOTU2MDI3IDMyLjEzNUMwLjk5NjAyNyAzMi4zMzUgMS4wMzYwMyAzMi41MzUgMS4wNzYwMyAzMi43MzVRMS4xMTYwMyAzMi45MzUgMS4xNTYwMyAzMy4xMzUgMS4xOTYwMyAzMy4zMzVRMS4yMzYwMyAzMy41MzUgMS4yNzYwMyAzMy43MzUgMS4zMTYwMyAzMy45MzVRMS4zNTYwMyAzNC4xMzUgMS4zOTYwMyAzNC4zMzVRMS40MzYwMyAzNC41MzUgMS40NzYwMyAzNC43MzUgMS41MTYwMyAzNC45MzVRMS41NTYwMyAzNS4xMzUgMS41OTYwMyAzNS4zMzVRMS42MzYwMyAzNS41MzUgMS42NzYwMyAzNS43MzUgMS43MTYwMyAzNS45MzVRMS43NTYwMyAzNi4xMzUgMS43OTYwMyAzNi4zMzVRMS44MzYwMyAzNi41MzUgMS44NzYwMyAzNi43MzUgMS45MTYwMyAzNi45MzVRMS45NTYwMyAzNy4xMzUgMS45OTYwMyAzNy4zMzVRMi4wMzYwMyAzNy41MzUgMi4wNzYwMyAzNy43MzUgMi4xMTYwMyAzNy45MzVRMi4xNTYwMyAzOC4xMzUgMi4xOTYwMyAzOC4zMzVRMi4yMzYwMyAzOC41MzUgMi4yNzYwMyAzOC43MzUgMi4zMTYwMyAzOC45MzVRMi4zNTYwMyAzOS4xMzUgMi4zOTYwMyAzOS4zMzVRMi40MzYwMyAzOS41MzUgMi40NzYwMyAzOS43MzUgMi41MTYwMyAzOS45MzVRMi41NTYwMyA0MC4xMzUgMi41OTYwMyA0MC4zMzVRMi42MzYwMyA0MC41MzUgMi42NzYwMyA0MC43MzUgMi43MTYwMyA0MC45MzVRMi43NTYwMyA0MS4xMzUgMi43OTYwMyA0MS4zMzVRMi44MzYwMyA0MS41MzUgMi44NzYwMyA0MS43MzUgMi45MTYwMyA0MS45MzVRMi45NTYwMyA0Mi4xMzUgMi45OTYwMyA0Mi4zMzVRMy4wMzYwMyA0Mi41MzUgMy4wNzYwMyA0Mi43MzUgMy4xMTYwMyA0Mi45MzVRMy4xNTYwMyA0My4xMzUgMy4xOTYwMyA0My4zMzVRMy4yMzYwMyA0My41MzUgMy4yNzYwMyA0My43MzUgMy4zMTYwMyA0My45MzVRMy4zNTYwMyA0NC4xMzUgMy4zOTYwMyA0NC4zMzVRMy40MzYwMyA0NC41MzUgMy40NzYwMyA0NC43MzUgMy41MTYwMyA0NC45MzVRMy41NTYwMyA0NS4xMzUgMy41OTYwMyA0NS4zMzVRMy42MzYwMyA0NS41MzUgMy42NzYwMyA0NS43MzUgMy43MTYwMyA0NS45MzVRMy43NTYwMyA0Ni4xMzUgMy43OTYwMyA0Ni4zMzVRMy44MzYwMyA0Ni41MzUgMy44NzYwMyA0Ni43MzUgMy45MTYwMyA0Ni45MzVRMy45NTYwMyA0Ny4xMzUgMy45OTYwMyA0Ny4zMzVRNC4wMzYwMyA0Ny41MzUgNC4wNzYwMyA0Ny43MzUgNC4xMTYwMyA0Ny45MzVRNC4xNTYwMyA0OC4xMzUgNC4xOTYwMyA0OC4zMzVRNC4yMzYwMyA0OC41MzUgNC4yNzYwMyA0OC43MzUgNC4zMTYwMyA0OC45MzVRNC4zNTYwMyA0OS4xMzUgNC4zOTYwMyA0OS4zMzVRNC40MzYwMyA0OS41MzUgNC40NzYwMyA0OS43MzUgNC41MTYwMyA0OS45MzVRNC41NTYwMyA1MC4xMzUgNC41OTYwMyA1MC4zMzVRNC42MzYwMyA1MC41MzUgNC42NzYwMyA1MC43MzUgNC43MTYwMyA1MC45MzVRNC43NTYwMyA1MS4xMzUgNC43OTYwMyA1MS4zMzVRNC44MzYwMyA1MS41MzUgNC44NzYwMyA1MS43MzUgNC45MTYwMyA1MS45MzVRNC45NTYwMyA1Mi4xMzUgNC45OTYwMyA1Mi4zMzVRNS4wMzYwMyA1Mi41MzUgNS4wNzYwMyA1Mi43MzUgNS4xMTYwMyA1Mi45MzVRNS4xNTYwMyA1My4xMzUgNS4xOTYwMyA1My4zMzVRNS4yMzYwMyA1My41MzUgNS4yNzYwMyA1My43MzUgNS4zMTYwMyA1My45MzVRNS4zNTYwMyA1NC4xMzUgNS4zOTYwMyA1NC4zMzVRNS40MzYwMyA1NC41MzUgNS40NzYwMyA1NC43MzUgNS41MTYwMyA1NC45MzVRNS41NTYwMyA1NS4xMzUgNS41OTYwMyA1NS4zMzVRNS42MzYwMyA1NS41MzUgNS42NzYwMyA1NS43MzUgNS43MTYwMyA1NS45MzVRNS43NTYwMyA1Ni4xMzUgNS43OTYwMyA1Ni4zMzVRNS44MzYwMyA1Ni41MzUgNS44NzYwMyA1Ni43MzUgNS45MTYwMyA1Ni45MzVRNS45NTYwMyA1Ny4xMzUgNS45OTYwMyA1Ny4zMzVRNi4wMzYwMyA1Ny41MzUgNi4wNzYwMyA1Ny43MzUgNi4xMTYwMyA1Ny45MzVRNi4xNTYwMyA1OC4xMzUgNi4xOTYwMyA1OC4zMzVRNi4yMzYwMyA1OC41MzUgNi4yNzYwMyA1OC43MzUgNi4zMTYwMyA1OC45MzVRNi4zNTYwMyA1OS4xMzUgNi4zOTYwMyA1OS4zMzVRNi40MzYwMyA1OS41MzUgNi40NzYwMyA1OS43MzUgNi41MTYwMyA1OS45MzVRNi41NTYwMyA2MC4xMzUgNi41OTYwMyA2MC4zMzVRNi42MzYwMyA2MC41MzUgNi42NzYwMyA2MC43MzUgNi43MTYwMyA2MC45MzVRNi43NTYwMyA2MS4xMzUgNi43OTYwMyA2MS4zMzVRNi44MzYwMyA2MS41MzUgNi44NzYwMyA2MS43MzUgNi45MTYwMyA2MS45MzVRNi45NTYwMyA2Mi4xMzUgNi45OTYwMyA2Mi4zMzVRNy4wMzYwMyA2Mi41MzUgNy4wNzYwMyA2Mi43MzUgNy4xMTYwMyA2Mi45MzVRNy4xNTYwMyA2My4xMzUgNy4xOTYwMyA2My4zMzVRNy4yMzYwMyA2My41MzUgNy4yNzYwMyA2My43MzUgNy4zMTYwMyA2My45MzVRNy4zNTYwMyA2NC4xMzUgNy4zOTYwMyA2NC4zMzVRNy40MzYwMyA2NC41MzUgNy40NzYwMyA2NC43MzUgNy41MTYwMyA2NC45MzVRNy41NTYwMyA2NS4xMzUgNy41OTYwMyA2NS4zMzVRNy42MzYwMyA2NS41MzUgNy42NzYwMyA2NS43MzUgNy43MTYwMyA2NS45MzVRNy43NTYwMyA2Ni4xMzUgNy43OTYwMyA2Ni4zMzVRNy44MzYwMyA2Ni41MzUgNy44NzYwMyA2Ni43MzUgNy45MTYwMyA2Ni45MzVRNy45NTYwMyA2Ny4xMzUgNy45OTYwMyA2Ny4zMzVRODAuMDM2MDMgNjcuNTM1IDguMDc2MDMgNjcuNzM1IDguMTE2MDMgNjcuOTM1UTguMTU2MDMgNjguMTM1IDguMTk2MDMgNjguMzM1UTguMjM2MDMgNjguNTM1IDguMjc2MDMgNjguNzM1IDguMzE2MDMgNjguOTM1UTguMzU2MDMgNjkuMTM1IDguMzk2MDMgNjkuMzM1UTguNDM2MDMgNjkuNTM1IDguNDc2MDMgNjkuNzM1IDguNTE2MDMgNjkuOTM1UTguNTU2MDMgNzAuMTM1IDguNTk2MDMgNzAuMzM1UTguNjM2MDMgNzAuNTM1IDguNjc2MDMgNzAuNzM1IDguNzE2MDMgNzAuOTM1UTguNzU2MDMgNzEuMTM1IDguNzk2MDMgNzEuMzM1UTguODM2MDMgNzEuNTM1IDguODc2MDMgNzEuNzM1IDguOTE2MDMgNzEuOTM1UTguOTU2MDMgNzIuMTM1IDguOTk2MDMgNzIuMzM1UTkuMDM2MDMgNzIuNTM1IDkuMDc2MDMgNzIuNzM1IDkuMTE2MDMgNzIuOTM1UTkuMTU2MDMgNzMuMTM1IDkuMTk2MDMgNzMuMzM1UTkuMjM2MDMgNzMuNTM1IDkuMjc2MDMgNzMuNzM1IDkuMzE2MDMgNzMuOTM1UTkuMzU2MDMgNzQuMTM1IDkuMzk2MDMgNzQuMzM1UTkuNDM2MDMgNzQuNTM1IDkuNDc2MDMgNzQuNzM1IDkuNTE2MDMgNzQuOTM1UTkuNTU2MDMgNzUuMTM1IDkuNTk2MDMgNzUuMzM1UTkuNjM2MDMgNzUuNTM1IDkuNjc2MDMgNzUuNzM1IDkuNzE2MDMgNzUuOTM1UTkuNzU2MDMgNzYuMTM1IDkuNzk2MDMgNzYuMzM1UTkuODM2MDMgNzYuNTM1IDkuODc2MDMgNzYuNzM1IDkuOTE2MDMgNzYuOTM1UTkuOTU2MDMgNzcuMTM1IDkuOTk2MDMgNzcuMzM1UTkuOTk2MDMgNy41MzQ4MiA5Ljk5NjAzIDcuNzM0ODIgOS45OTYwMyA3LjkzNDgyWiIgZmlsbD0iIzU4NjVGMiIvPgo8L3N2Zz4='
 }
 
+const FOX_ICON_BASE64 =
+  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNTkiIHZpZXdCb3g9IjAgMCA2NCA1OSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMzIiIGN5PSIyOS41IiByPSIyOC41IiBmaWxsPSJ1cmwoI2EpIi8+PGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHN0b3Agc3RvcC1jb2xvcj0iIzY5MDVGRiIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzAwQjhGRiIvPjwvbGluZWFyR3JhZGllbnQ+PHBhdGggZD0iTTMyIDQxYy05LjM4IDAtMTcuMTEtNS42LTIwLjYzLTE0LjA3Yy0uMzU3LS44OTUuMTQzLTEuOTIyIDEuMDk5LTIuMTg1bDIuMTk5LS41NzZjLjUwNi0uMTMyLjk4NS4yNDggMS4wOTcuNzU5QzE2Ljg2IDI3LjkxIDI0Ljk0IDM3IDI5LjUgMzdjNC41NiAwIDEyLjY0LTkuMDkgMTMuODM4LTEzLjA3Yy4xMDgtLjUxMS41OS0uODkyIDEuMDk3LS43NTlsMi4xOTkuNTc2Yy45NTYuMjYzIDEuNDU1IDEuMjkgMS4xMDIgMi4xODVDNDkuMTEgMzUuNCA0MS4zOCA0MSAzMiA0MXoiIGZpbGw9IiNGRkYiIGZpbGwtb3BhY2l0eT0iLjkiLz48cGF0aCBkPSJNMjguMDUgMzEuNTNMNy42OSAyMC4zOGMtLjk5LS41My0uOTMtMS45NjUuMTEtMi40MTRsMy41MTUtMS42ODljLjM1LS4xNjguNzgyLS4xNTkgMS4xMjEuMDE4TDMyIDI2bDE5LjU2LTEwLjAwOThjLjM0My0uMTc1Ljc3NS0uMTg2IDEuMTItLjAyNGwzLjQ5MiAxLjY1OGMxLjA0Ni40OTQgMS4xNjIgMS45My4xODYgMi40NjVMMzcgMzEuNTN2Ny40NzRDMzcuMDA5IDQ2LjY2OCAzMy40NDQgNDkgMzIgNDljLTEuNDQ0IDAtNS4wMDktMi40MDItNS4wMDktMTAuMzk2VjMxLjUzeiIgZmlsbD0iI0ZGRkZGRiIvPjwvc3ZnPg=='
+
 export const getSocialPromoEmailHTML = (displayName: string) => {
   const safeName = displayName?.trim() || 'there'
   return `
@@ -724,387 +727,203 @@ export const getSocialPromoEmailHTML = (displayName: string) => {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>MobileGameHunt – Join Our Social Channels</title>
+  <title>MobileGameHunt – Connect With Us</title>
   <!--[if mso]>
-  <style type="text/css">
-    body, table, td {font-family: Arial, sans-serif !important;}
-  </style>
+    <style type="text/css">
+      body, table, td {font-family: Arial, sans-serif !important;}
+    </style>
   <![endif]-->
   <style>
-    /* Reset */
-    body, table, td, p, a, li, blockquote {
-      -webkit-text-size-adjust: 100%;
-      -ms-text-size-adjust: 100%;
-    }
-    table, td {
-      mso-table-lspace: 0pt;
-      mso-table-rspace: 0pt;
-    }
-    img {
-      -ms-interpolation-mode: bicubic;
-      border: 0;
-      height: auto;
-      line-height: 100%;
-      outline: none;
-      text-decoration: none;
-    }
-    
-    /* Base Styles */
+    body, table, td { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse; }
+    img { -ms-interpolation-mode: bicubic; display: block; }
     body {
       margin: 0 !important;
       padding: 0 !important;
       width: 100% !important;
-      background-color: #000000 !important;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+      background-color: #050505 !important;
+      font-family: 'Inter', 'Segoe UI', Tahoma, Arial, sans-serif;
+      color: #d7e2f2;
     }
-    
-    .email-wrapper {
-      width: 100% !important;
-      background: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%);
-      background-color: #000000;
+    .wrapper {
+      width: 100%;
+      background: #050505;
       padding: 0;
-      margin: 0;
     }
-    
-    .email-container {
-      max-width: 600px !important;
-      width: 100% !important;
-      margin: 0 auto !important;
-      background-color: #0a0a0a;
-      border: 2px solid #00ffff;
-      border-radius: 0;
-      box-shadow: 0 0 30px rgba(0, 255, 255, 0.3), inset 0 0 20px rgba(0, 255, 255, 0.1);
+    .container {
+      width: 100%;
+      max-width: 620px;
+      margin: 0 auto;
+      background: #0c0c14;
+      border-radius: 28px;
+      border: 1px solid rgba(132, 94, 247, 0.35);
+      box-shadow: 0 20px 80px rgba(72, 17, 145, 0.35), inset 0 0 35px rgba(19, 204, 255, 0.08);
+      overflow: hidden;
     }
-    
-    .header-glow {
-      background: linear-gradient(180deg, rgba(0, 255, 255, 0.2) 0%, transparent 100%);
-      padding: 30px 20px;
+    .hero {
+      background: radial-gradient(140% 140% at 10% 10%, rgba(147, 51, 234, 0.3), transparent), radial-gradient(160% 160% at 90% 20%, rgba(14, 165, 233, 0.35), transparent), #05050b;
+      padding: 48px 32px 36px;
       text-align: center;
-      border-bottom: 1px solid #00ffff;
     }
-    
-    .logo-text {
-      font-size: 28px !important;
-      font-weight: 700 !important;
-      color: #00ffff !important;
-      text-transform: uppercase !important;
-      letter-spacing: 4px !important;
-      margin: 0 !important;
-      text-shadow: 0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(0, 255, 255, 0.5);
+    .hero-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 12px;
     }
-    
-    .content {
-      padding: 40px 30px !important;
-      background-color: #0a0a0a;
+    .hero-title {
+      font-size: 24px;
+      letter-spacing: 1px;
+      color: #fefefe;
+      margin: 0;
+      text-transform: uppercase;
     }
-    
+    .divider {
+      height: 1px;
+      width: 100%;
+      background: linear-gradient(90deg, rgba(88, 28, 135, 0) 0%, rgba(88, 28, 135, 0.8) 20%, rgba(14, 165, 233, 0.8) 80%, rgba(14, 165, 233, 0) 100%);
+    }
+    .body {
+      padding: 40px 32px 48px;
+    }
     .greeting {
-      font-size: 18px !important;
-      color: #00ffff !important;
-      margin: 0 0 20px 0 !important;
-      font-weight: 600 !important;
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0 0 12px;
+      color: #e3e8ff;
     }
-    
-    .intro-text {
-      font-size: 15px !important;
-      line-height: 1.7 !important;
-      color: #cccccc !important;
-      margin: 0 0 20px 0 !important;
+    .message {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #c2c8dd;
+      margin: 0 0 18px;
     }
-    
-    .section-title {
-      font-size: 14px !important;
-      color: #00ffff !important;
-      text-transform: uppercase !important;
-      letter-spacing: 2px !important;
-      margin: 30px 0 20px 0 !important;
-      padding-bottom: 10px !important;
-      border-bottom: 1px solid rgba(0, 255, 255, 0.3) !important;
+    .section-label {
+      text-transform: uppercase;
+      font-size: 13px;
+      letter-spacing: 3px;
+      color: #91a0ff;
+      margin: 32px 0 16px;
     }
-    
-    .social-grid {
-      width: 100% !important;
-      border-collapse: collapse !important;
-      margin: 20px 0 !important;
+    .social-card {
+      border-radius: 22px;
+      padding: 24px 20px;
+      background: rgba(20, 20, 28, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      margin-bottom: 16px;
+      text-align: center;
+      box-shadow: 0 12px 32px rgba(8, 12, 20, 0.6);
     }
-    
-    .social-row {
-      width: 100% !important;
-      border-top: 1px solid rgba(0, 255, 255, 0.2) !important;
-      padding: 20px 0 !important;
+    .social-icon-wrap {
+      width: 54px;
+      height: 54px;
+      border-radius: 16px;
+      margin: 0 auto 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: inset 0 0 14px rgba(255, 255, 255, 0.08);
     }
-    
-    .social-row:first-child {
-      border-top: none !important;
-    }
-    
-    .social-icon-cell {
-      width: 60px !important;
-      padding-right: 15px !important;
-      vertical-align: middle !important;
-    }
-    
-    .social-icon-wrapper {
-      width: 50px !important;
-      height: 50px !important;
-      background: linear-gradient(135deg, rgba(0, 255, 255, 0.2) 0%, rgba(0, 0, 0, 0.8) 100%) !important;
-      border: 2px solid #00ffff !important;
-      display: inline-block !important;
-      text-align: center !important;
-      vertical-align: middle !important;
-      box-shadow: 0 0 15px rgba(0, 255, 255, 0.4), inset 0 0 10px rgba(0, 255, 255, 0.2) !important;
-    }
-    
-    .social-icon-wrapper img {
-      width: 28px !important;
-      height: 28px !important;
-      display: block !important;
-      margin: 11px auto !important;
-    }
-    
-    .social-info-cell {
-      vertical-align: middle !important;
-      padding-right: 15px !important;
-    }
-    
     .social-name {
-      font-size: 16px !important;
-      font-weight: 600 !important;
-      color: #ffffff !important;
-      margin: 0 0 5px 0 !important;
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 4px;
+      color: #f1f5ff;
     }
-    
     .social-handle {
-      font-size: 13px !important;
-      color: #888888 !important;
-      margin: 0 !important;
+      font-size: 13px;
+      letter-spacing: 0.4px;
+      margin: 0 0 18px;
+      color: #97a0c1;
     }
-    
-    .social-button-cell {
-      vertical-align: middle !important;
-      text-align: right !important;
-      width: 100px !important;
+    .cta {
+      display: inline-block;
+      padding: 12px 32px;
+      border-radius: 999px;
+      font-size: 13px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: #ffffff;
+      background: linear-gradient(120deg, #7c2fff, #1cb8ff);
+      box-shadow: 0 12px 30px rgba(124, 47, 255, 0.35);
     }
-    
-    .cta-button {
-      display: inline-block !important;
-      padding: 10px 20px !important;
-      background: linear-gradient(135deg, #00ffff 0%, #0099cc 100%) !important;
-      color: #000000 !important;
-      text-decoration: none !important;
-      font-size: 13px !important;
-      font-weight: 700 !important;
-      text-transform: uppercase !important;
-      letter-spacing: 1px !important;
-      border: 1px solid #00ffff !important;
-      box-shadow: 0 0 10px rgba(0, 255, 255, 0.5) !important;
+    .cta:hover {
+      filter: brightness(1.05);
     }
-    
-    .cta-button-ghost {
-      background: transparent !important;
-      color: #00ffff !important;
-      border: 2px solid #00ffff !important;
-      box-shadow: 0 0 10px rgba(0, 255, 255, 0.3) !important;
+    .cta-outline {
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      background: transparent;
+      color: #e2e6ff;
+      box-shadow: none;
     }
-    
     .footer-note {
-      margin-top: 30px !important;
-      padding: 20px !important;
-      background-color: rgba(0, 255, 255, 0.05) !important;
-      border: 1px dashed rgba(0, 255, 255, 0.4) !important;
-      font-size: 13px !important;
-      color: #aaaaaa !important;
-      line-height: 1.6 !important;
+      margin-top: 32px;
+      border-radius: 18px;
+      padding: 18px 20px;
+      border: 1px dashed rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 13px;
+      line-height: 1.6;
+      color: #a8b2d6;
     }
-    
-    .signature {
-      margin-top: 30px !important;
-      font-size: 14px !important;
-      color: #00ffff !important;
-      font-weight: 600 !important;
+    .footer-meta {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 11px;
+      color: #7f88aa;
     }
-    
-    .footer-text {
-      margin-top: 30px !important;
-      font-size: 11px !important;
-      color: #666666 !important;
-      text-align: center !important;
-      line-height: 1.6 !important;
-    }
-    
-    /* Responsive */
-    @media only screen and (max-width: 600px) {
-      .email-container {
-        width: 100% !important;
-        border-left: none !important;
-        border-right: none !important;
-      }
-      
-      .content {
-        padding: 30px 20px !important;
-      }
-      
-      .social-row {
-        display: block !important;
-        padding: 15px 0 !important;
-      }
-      
-      .social-icon-cell,
-      .social-info-cell,
-      .social-button-cell {
-        display: block !important;
-        width: 100% !important;
-        text-align: center !important;
-        padding: 5px 0 !important;
-      }
-      
-      .social-button-cell {
-        margin-top: 15px !important;
-      }
-      
-      .cta-button {
-        width: 100% !important;
-        text-align: center !important;
-        display: block !important;
-      }
+    @media only screen and (max-width: 620px) {
+      .container { border-radius: 0; }
+      .hero, .body { padding: 32px 20px; }
+      .cta { width: 100%; }
     }
   </style>
 </head>
 <body>
-  <div class="email-wrapper">
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #000000;">
+  <div class="wrapper">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
       <tr>
-        <td align="center" style="padding: 20px 0;">
-          <table role="presentation" class="email-container" cellspacing="0" cellpadding="0" border="0" width="600">
-            <!-- Header -->
+        <td align="center" style="padding: 32px 12px;">
+          <table role="presentation" width="600" class="container">
             <tr>
-              <td class="header-glow">
-                <h1 class="logo-text">Mobile Game Hunt</h1>
+              <td class="hero">
+                <img src="${FOX_ICON_BASE64}" alt="MobileGameHunt" class="hero-icon" width="64" height="59" />
+                <p class="hero-title" style="font-family: 'Inter', 'Segoe UI', Tahoma, Arial, sans-serif;">MobileGameHunt</p>
+                <p style="margin: 8px 0 0; font-size: 13px; letter-spacing: 4px; color: #8bc8ff;">NEON COMMUNITY SIGNAL</p>
               </td>
             </tr>
-            
-            <!-- Content -->
+            <tr><td><div class="divider"></div></td></tr>
             <tr>
-              <td class="content">
+              <td class="body">
                 <p class="greeting">Hi ${safeName},</p>
-                
-                <p class="intro-text">
-                  Thank you for being part of the <strong style="color: #00ffff;">MobileGameHunt</strong> community! 
-                  We're building something special for mobile game enthusiasts, and we'd love to connect with you 
-                  on our social channels.
+                <p class="message">
+                  We're building the most indie-friendly spot for discovering mobile games. If you'd like to support the platform,
+                  we'd love to connect with you across our channels 💜
                 </p>
-                
-                <p class="intro-text">
-                  Join us for daily game discoveries, developer spotlights, community highlights, and exclusive 
-                  content you won't find anywhere else. Your support helps indie developers reach more players.
-                </p>
-                
-                <!-- Daily Broadcasts Section -->
-                <h2 class="section-title">Daily Broadcasts</h2>
-                
-                <table class="social-grid" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                  <!-- X (Twitter) -->
-                  <tr class="social-row">
-                    <td class="social-icon-cell">
-                      <div class="social-icon-wrapper">
-                        <img src="${SOCIAL_ICONS_BASE64.x}" alt="X logo" width="28" height="28" />
-                      </div>
-                    </td>
-                    <td class="social-info-cell">
-                      <p class="social-name">X (Twitter)</p>
-                      <p class="social-handle">@mobilegamehunt</p>
-                    </td>
-                    <td class="social-button-cell">
-                      <a href="https://twitter.com/mobilegamehunt" target="_blank" rel="noopener noreferrer" class="cta-button">Follow</a>
-                    </td>
-                  </tr>
-                  
-                  <!-- Instagram -->
-                  <tr class="social-row">
-                    <td class="social-icon-cell">
-                      <div class="social-icon-wrapper">
-                        <img src="${SOCIAL_ICONS_BASE64.instagram}" alt="Instagram logo" width="28" height="28" />
-                      </div>
-                    </td>
-                    <td class="social-info-cell">
-                      <p class="social-name">Instagram</p>
-                      <p class="social-handle">@mobilegamehunt</p>
-                    </td>
-                    <td class="social-button-cell">
-                      <a href="https://instagram.com/mobilegamehunt" target="_blank" rel="noopener noreferrer" class="cta-button">Follow</a>
-                    </td>
-                  </tr>
-                  
-                  <!-- TikTok -->
-                  <tr class="social-row">
-                    <td class="social-icon-cell">
-                      <div class="social-icon-wrapper">
-                        <img src="${SOCIAL_ICONS_BASE64.tiktok}" alt="TikTok logo" width="28" height="28" />
-                      </div>
-                    </td>
-                    <td class="social-info-cell">
-                      <p class="social-name">TikTok</p>
-                      <p class="social-handle">@mobilegamehunt</p>
-                    </td>
-                    <td class="social-button-cell">
-                      <a href="https://www.tiktok.com/@mobilegamehunt" target="_blank" rel="noopener noreferrer" class="cta-button">Follow</a>
-                    </td>
-                  </tr>
-                </table>
-                
-                <!-- Community Hangouts Section -->
-                <h2 class="section-title">Community Hangouts</h2>
-                
-                <table class="social-grid" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                  <!-- Reddit -->
-                  <tr class="social-row">
-                    <td class="social-icon-cell">
-                      <div class="social-icon-wrapper">
-                        <img src="${SOCIAL_ICONS_BASE64.reddit}" alt="Reddit logo" width="28" height="28" />
-                      </div>
-                    </td>
-                    <td class="social-info-cell">
-                      <p class="social-name">Reddit</p>
-                      <p class="social-handle">r/MobileGameHunt</p>
-                    </td>
-                    <td class="social-button-cell">
-                      <a href="https://www.reddit.com/r/MobileGameHunt/" target="_blank" rel="noopener noreferrer" class="cta-button cta-button-ghost">Join</a>
-                    </td>
-                  </tr>
-                  
-                  <!-- Discord -->
-                  <tr class="social-row">
-                    <td class="social-icon-cell">
-                      <div class="social-icon-wrapper">
-                        <img src="${SOCIAL_ICONS_BASE64.discord}" alt="Discord logo" width="28" height="28" />
-                      </div>
-                    </td>
-                    <td class="social-info-cell">
-                      <p class="social-name">Discord</p>
-                      <p class="social-handle">Indie dev community</p>
-                    </td>
-                    <td class="social-button-cell">
-                      <a href="https://discord.gg/zahqtja5e9" target="_blank" rel="noopener noreferrer" class="cta-button cta-button-ghost">Join Server</a>
-                    </td>
-                  </tr>
-                </table>
-                
-                <!-- Footer Note -->
+
+                <p class="section-label">Connect With Us</p>
+
+                ${renderSocialCard('X (Twitter)', '@mobilegamehunt', 'https://x.com/mobilegamehunt', SOCIAL_ICONS_BASE64.x, 'Follow')}
+                ${renderSocialCard('Instagram', '@mobilegamehunt', 'https://instagram.com/mobilegamehunt', SOCIAL_ICONS_BASE64.instagram, 'Follow')}
+                ${renderSocialCard('TikTok', '@mobilegamehunt', 'https://tiktok.com/@mobilegamehunt', SOCIAL_ICONS_BASE64.tiktok, 'Follow')}
+                ${renderSocialCard('Reddit', 'r/MobileGameHunt', 'https://www.reddit.com/r/MobileGameHunt/', SOCIAL_ICONS_BASE64.reddit, 'Join')}
+                ${renderSocialCard('Discord', 'Indie Dev Hangout', 'https://discord.gg/zahqtja5e9', SOCIAL_ICONS_BASE64.discord, 'Join Server', true)}
+
                 <div class="footer-note">
-                  <p style="margin: 0;">
-                    Prefer inbox updates? Just reply to this email anytime and we'll keep you in the loop. 
-                    Every follow, like, or share helps indie teams reach more players. Thanks for being here with us.
-                  </p>
+                  Prefer inbox updates? Just reply to this email anytime and we’ll keep you in the loop.
+                  Every follow, like, or share helps indie teams reach more players. Thanks for exploring with us.
                 </div>
-                
-                <p class="signature">— The MobileGameHunt Team</p>
-                
-                <div class="footer-text">
+
+                <p style="margin: 28px 0 0; font-size: 14px; color: #dfe5ff;">
+                  — The MobileGameHunt Team
+                </p>
+
+                <p class="footer-meta">
                   You're receiving this email because you joined MobileGameHunt.<br/>
                   Update preferences or unsubscribe anytime.
-                </div>
+                </p>
               </td>
             </tr>
           </table>
@@ -1115,6 +934,29 @@ export const getSocialPromoEmailHTML = (displayName: string) => {
 </body>
 </html>
   `
+}
+
+const renderSocialCard = (
+  name: string,
+  handle: string,
+  url: string,
+  icon: string,
+  ctaLabel: string,
+  isOutline = false
+) => {
+  return `
+  <table role="presentation" width="100%" class="social-card">
+    <tr>
+      <td align="center">
+        <div class="social-icon-wrap">
+          <img src="${icon}" alt="${name} icon" width="28" height="28" />
+        </div>
+        <p class="social-name">${name}</p>
+        <p class="social-handle">${handle}</p>
+        <a href="${url}" target="_blank" rel="noopener noreferrer" class="cta ${isOutline ? 'cta-outline' : ''}">${ctaLabel}</a>
+      </td>
+    </tr>
+  </table>`
 }
 
 export async function sendSocialPromoEmail(to: string, displayName: string): Promise<{ success: boolean; error?: string }> {

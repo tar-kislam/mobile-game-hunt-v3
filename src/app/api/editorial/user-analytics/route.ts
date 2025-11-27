@@ -8,6 +8,10 @@ import { subDays, startOfDay, endOfDay } from 'date-fns'
 const DEFAULT_RANGE_DAYS = 30
 const DEFAULT_PAGE_SIZE = 25
 
+const toTextArray = (values: string[]) => {
+  return Prisma.sql`ARRAY[${Prisma.join(values.map((value) => Prisma.sql`${value}`))}]::text[]`
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -64,11 +68,13 @@ export async function GET(request: NextRequest) {
       take: 1
     })
 
+    const developerIdsArray = toTextArray(developerIds)
+
     const visitsOverTime = await prisma.$queryRaw<{ date: string; visits: number }[]>`
       SELECT to_char(date_trunc('day', "createdAt"), 'YYYY-MM-DD') AS date,
              COUNT(*)::int AS visits
       FROM "UserActivityEvent"
-      WHERE "userId" = ANY(${developerIds})
+      WHERE "userId" = ANY(${developerIdsArray})
         AND "createdAt" BETWEEN ${fromDate} AND ${toDate}
         ${pageType ? Prisma.sql`AND "pageType" = ${pageType}` : Prisma.empty}
       GROUP BY 1
@@ -81,7 +87,7 @@ export async function GET(request: NextRequest) {
              COUNT(*)::int AS visits,
              AVG("durationSeconds")::float AS "avgDurationSeconds"
       FROM "UserActivityEvent"
-      WHERE "userId" = ANY(${developerIds})
+      WHERE "userId" = ANY(${developerIdsArray})
         AND "createdAt" BETWEEN ${fromDate} AND ${toDate}
         ${pageType ? Prisma.sql`AND "pageType" = ${pageType}` : Prisma.empty}
       GROUP BY "path", "pageType"
@@ -100,7 +106,7 @@ export async function GET(request: NextRequest) {
              MAX(e."createdAt") AS "lastSeenAt"
       FROM "UserActivityEvent" e
       JOIN "User" u ON u.id = e."userId"
-      WHERE e."userId" = ANY(${developerIds})
+      WHERE e."userId" = ANY(${developerIdsArray})
         AND e."createdAt" BETWEEN ${fromDate} AND ${toDate}
         ${pageType ? Prisma.sql`AND e."pageType" = ${pageType}` : Prisma.empty}
       GROUP BY u.id
@@ -112,6 +118,9 @@ export async function GET(request: NextRequest) {
 
     const userTopPages = pageUserIds.length
       ? await prisma.$queryRaw<{ userId: string; path: string; visits: number }[]>`
+        WITH selected_users AS (
+          SELECT unnest(${toTextArray(pageUserIds)}) AS id
+        )
         SELECT "userId",
                "path",
                visits
@@ -121,7 +130,7 @@ export async function GET(request: NextRequest) {
                  COUNT(*)::int AS visits,
                  ROW_NUMBER() OVER (PARTITION BY e."userId" ORDER BY COUNT(*) DESC) AS row_rank
           FROM "UserActivityEvent" e
-          WHERE e."userId" = ANY(${pageUserIds})
+          WHERE e."userId" IN (SELECT id FROM selected_users)
             AND e."createdAt" BETWEEN ${fromDate} AND ${toDate}
             ${pageType ? Prisma.sql`AND e."pageType" = ${pageType}` : Prisma.empty}
           GROUP BY e."userId", e."path"
