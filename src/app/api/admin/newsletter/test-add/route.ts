@@ -31,16 +31,22 @@ export async function POST(request: NextRequest) {
 
     if (existingSubscription) {
       if (existingSubscription.isActive) {
+        if (existingSubscription.source !== 'test') {
+          await prisma.newsletterSubscription.update({
+            where: { email },
+            data: { source: 'test', updatedAt: new Date() }
+          })
+        }
         return NextResponse.json({ 
-          success: false, 
-          error: 'Email already subscribed',
+          success: true, 
+          message: 'Email is already active and marked for testing',
           id: existingSubscription.id
-        }, { status: 400 })
+        })
       } else {
         // Reactivate subscription (no welcome email for test)
         await prisma.newsletterSubscription.update({
           where: { email },
-          data: { isActive: true, updatedAt: new Date() }
+          data: { isActive: true, updatedAt: new Date(), source: 'test' }
         })
         return NextResponse.json({ 
           success: true, 
@@ -54,7 +60,8 @@ export async function POST(request: NextRequest) {
     const subscription = await prisma.newsletterSubscription.create({
       data: {
         email,
-        isActive: true
+        isActive: true,
+        source: 'test'
       }
     })
 

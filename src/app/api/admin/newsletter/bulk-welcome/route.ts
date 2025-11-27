@@ -4,6 +4,14 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sendWelcomeEmail } from '@/lib/email'
 
+const isValidEmail = (value?: string) => {
+  if (!value || typeof value !== 'string') return false
+  const trimmed = value.trim()
+  if (!trimmed) return false
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(trimmed)
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -14,15 +22,32 @@ export async function POST(request: NextRequest) {
 
     console.log('[BULK EMAIL] Starting bulk welcome email campaign...')
 
-    // Tüm aktif aboneleri al
-    const subscribers = await prisma.newsletterSubscription.findMany({
-      where: {
-        isActive: true
-      },
-      select: {
-        email: true
+    let customEmails: string[] = []
+    if (request.headers.get('content-type')?.includes('application/json')) {
+      const payload = await request.json().catch(() => ({}))
+      if (Array.isArray(payload?.emails)) {
+        customEmails = Array.from(
+          new Set(
+            payload.emails
+              .filter((email: unknown): email is string => isValidEmail(typeof email === 'string' ? email : ''))
+              .map((email: string) => email.trim())
+          )
+        )
       }
-    })
+    }
+
+    // Tüm aktif aboneleri al veya özel listeyi kullan
+    const subscribers =
+      customEmails.length > 0
+        ? customEmails.map((email) => ({ email }))
+        : await prisma.newsletterSubscription.findMany({
+            where: {
+              isActive: true
+            },
+            select: {
+              email: true
+            }
+          })
 
     console.log(`[BULK EMAIL] Found ${subscribers.length} active subscribers`)
 

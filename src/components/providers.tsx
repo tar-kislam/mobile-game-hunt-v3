@@ -3,8 +3,9 @@
 import { SessionProvider } from "next-auth/react"
 import { ThemeProvider } from "next-themes"
 import { Toaster } from "sonner"
-import { ReactNode, useEffect, useState } from "react"
+import { ReactNode, Suspense, useEffect, useState } from "react"
 import { PageTracking } from "@/components/analytics/PageTracking"
+import { UserActivityTracker } from "@/components/analytics/UserActivityTracker"
 import { SupportWidget } from "@/components/support/SupportWidget"
 
 interface ProvidersProps {
@@ -34,7 +35,12 @@ export function Providers({ children }: ProvidersProps) {
         disableTransitionOnChange
         storageKey="mobile-game-hunt-theme"
       >
-        <PageTracking />
+        <Suspense fallback={null}>
+          <PageTracking />
+        </Suspense>
+        <Suspense fallback={null}>
+          <UserActivityTracker />
+        </Suspense>
         {children}
         <SupportWidget />
         <Toaster 

@@ -138,7 +138,7 @@ export function ProductCommentComposer({
                 size="sm"
                 onClick={handleSubmit}
                 disabled={isSubmitting || !content.trim()}
-                className="rounded-full px-6 py-2 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 text-white shadow-[0_0_20px_rgba(59,130,246,0.45)] transition-all duration-300 hover:shadow-[0_0_30px_rgba(14,165,233,0.7)] hover:translate-y-[-1px] disabled:opacity-60 disabled:hover:translate-y-0"
+                className="rounded-full px-6 py-2 bg-[#ff7720] text-[#050608] font-semibold border border-[#ffaf66]/80 shadow-[0_0_18px_rgba(255,119,32,0.45)] transition-all duration-300 hover:bg-[#ff8c3a] hover:border-[#ffd2a6] hover:shadow-[0_0_26px_rgba(20,220,255,0.55)] hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-[#19dfff] focus-visible:ring-offset-0 disabled:opacity-60 disabled:hover:translate-y-0"
               >
                 {isSubmitting ? 'Posting...' : parentId ? 'Reply' : 'Post'}
               </Button>

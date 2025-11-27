@@ -84,6 +84,7 @@ model User {
   campaigns            Campaign[]
   xpLogs               UserXpLog[]
   badges               UserBadge[]
+  activityEvents       UserActivityEvent[]
 }
 
 model Product {
@@ -511,9 +512,28 @@ model NewsletterSubscription {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   isActive  Boolean  @default(true)
+  source    String   @default("newsletter")
 
   @@index([email])
   @@index([createdAt])
+}
+
+model UserActivityEvent {
+  id              String   @id @default(cuid())
+  userId          String?
+  sessionId       String
+  path            String
+  pageType        String?
+  referrer        String?
+  durationSeconds Float    @default(0)
+  createdAt       DateTime @default(now())
+  userAgent       String?
+  country         String?
+  user            User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([sessionId, createdAt])
+  @@index([pageType, createdAt])
 }
 
 model AdvertiseCampaign {

@@ -4,6 +4,14 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sendSocialPromoEmail, getDisplayNameForUser } from '@/lib/email'
 
+const isValidEmail = (email?: string) => {
+  if (!email || typeof email !== 'string') return false
+  const trimmed = email.trim()
+  if (!trimmed) return false
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(trimmed)
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -13,11 +21,42 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json().catch(() => ({}))
-    const target: 'users' | 'newsletter' = body?.target === 'newsletter' ? 'newsletter' : 'users'
+    const target: 'users' | 'newsletter' | 'custom' = body?.target === 'newsletter' ? 'newsletter' : body?.target === 'custom' ? 'custom' : 'users'
+    const manualEmails: string[] = Array.isArray(body?.emails)
+      ? Array.from(
+          new Set(
+            body.emails
+              .filter((email: unknown): email is string => isValidEmail(typeof email === 'string' ? email : ''))
+              .map((email: string) => email.trim())
+          )
+        )
+      : []
 
     let recipients: Array<{ email: string; name?: string | null; username?: string | null }> = []
 
-    if (target === 'newsletter') {
+    if (manualEmails.length > 0) {
+      const userMatches = await prisma.user.findMany({
+        where: {
+          email: {
+            in: manualEmails
+          }
+        },
+        select: {
+          email: true,
+          name: true,
+          username: true
+        }
+      })
+      const userMap = new Map(userMatches.map((user) => [user.email?.trim(), user]))
+
+      recipients = manualEmails.map((email) => {
+        const matched = userMap.get(email)
+        if (matched) {
+          return matched as { email: string; name?: string | null; username?: string | null }
+        }
+        return { email, name: null, username: null }
+      })
+    } else if (target === 'newsletter') {
       const newsletterModel = (prisma as any).newsletterSubscription
       if (!newsletterModel) {
         return NextResponse.json({ error: 'Newsletter subscriptions not available' }, { status: 400 })

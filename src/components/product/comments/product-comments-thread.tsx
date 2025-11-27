@@ -169,7 +169,7 @@ export function ProductCommentsThread({
           </p>
           <Button
             onClick={scrollToComposer}
-            className="mt-2 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white"
+            className="mt-2 rounded-full px-6 py-3 bg-[#ff7720] text-[#050608] font-semibold border border-[#ffaf66]/80 shadow-[0_0_18px_rgba(255,119,32,0.4)] transition-all duration-300 hover:bg-[#ff8c3a] hover:border-[#ffd2a6] hover:shadow-[0_0_28px_rgba(20,220,255,0.35)] focus-visible:ring-2 focus-visible:ring-[#19dfff] focus-visible:ring-offset-0"
           >
             Start the conversation
           </Button>

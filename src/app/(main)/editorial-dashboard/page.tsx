@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -10,8 +10,9 @@ import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Download, GamepadIcon, Mail, Star, MessageCircle, TrendingUp, Users, List, Share2, Trash2, TestTube } from 'lucide-react'
+import { Download, GamepadIcon, Mail, Star, MessageCircle, TrendingUp, Users, List, Share2, Trash2, TestTube, BarChart3 } from 'lucide-react'
 import { SocialPlatformIcon } from '@/components/ui/social-platform-icons'
+import { UserAnalyticsDashboard } from '@/components/editorial/user-analytics-dashboard'
 import { toast } from 'sonner'
 import DarkVeil from '@/components/DarkVeil'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -53,7 +54,15 @@ interface User {
   createdAt: string
 }
 
-type ActiveSection = 'games' | 'newsletter' | 'campaigns' | 'users' | 'submitted-games' | 'test'
+type ActiveSection = 'games' | 'newsletter' | 'campaigns' | 'users' | 'submitted-games' | 'test' | 'user-analytics'
+
+type TestCampaignType = 'social-promo' | 'welcome' | 'weekly' | 'latest' | 'feedback'
+
+interface TestRecipient {
+  id: string
+  email: string
+  createdAt: string
+}
 
 interface Campaign {
   id: string
@@ -128,10 +137,119 @@ export default function EditorialDashboard() {
   const [userDeleteTarget, setUserDeleteTarget] = useState<User | null>(null)
   const [userDeleteLoading, setUserDeleteLoading] = useState(false)
   const [userDeleteError, setUserDeleteError] = useState<string | null>(null)
+  const [testRecipients, setTestRecipients] = useState<TestRecipient[]>([])
+  const [selectedTestRecipients, setSelectedTestRecipients] = useState<string[]>([])
+  const [testRecipientsLoading, setTestRecipientsLoading] = useState(false)
+  const [testRecipientsError, setTestRecipientsError] = useState<string | null>(null)
+  const [testCampaignLoading, setTestCampaignLoading] = useState<TestCampaignType | null>(null)
   const [testEmail, setTestEmail] = useState('')
   const [testEmailLoading, setTestEmailLoading] = useState(false)
   const safeNewsletterSubscribers = Array.isArray(newsletterSubscribers) ? newsletterSubscribers : []
   const ITEMS_PER_PAGE = 10
+  const testSelectionCount = selectedTestRecipients.length
+  const isTestActionDisabled = testSelectionCount === 0 || testCampaignLoading !== null
+
+  const fetchTestRecipients = useCallback(async () => {
+    try {
+      setTestRecipientsLoading(true)
+      setTestRecipientsError(null)
+      const res = await fetch('/api/admin/newsletter/test')
+      if (!res.ok) {
+        throw new Error('Failed to fetch test emails')
+      }
+      const data = await res.json()
+      setTestRecipients(Array.isArray(data) ? data : [])
+      setSelectedTestRecipients((prev) => {
+        const allowed = new Set((Array.isArray(data) ? data : []).map((item: TestRecipient) => item.email))
+        return prev.filter((email) => allowed.has(email))
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to load test emails'
+      setTestRecipientsError(message)
+      toast.error(message)
+    } finally {
+      setTestRecipientsLoading(false)
+    }
+  }, [])
+
+  const toggleTestRecipient = (email: string) => {
+    setSelectedTestRecipients((prev) =>
+      prev.includes(email) ? prev.filter((item) => item !== email) : [...prev, email]
+    )
+  }
+
+  const handleSelectAllTestRecipients = () => {
+    setSelectedTestRecipients(testRecipients.map((recipient) => recipient.email))
+  }
+
+  const handleClearTestRecipients = () => {
+    setSelectedTestRecipients([])
+  }
+
+  const runTestCampaign = useCallback(
+    async (campaign: TestCampaignType) => {
+      if (selectedTestRecipients.length === 0) {
+        toast.error('Please select at least one test email')
+        return
+      }
+
+      const payload = { emails: selectedTestRecipients }
+      let endpoint = ''
+      let successMessage = ''
+
+      switch (campaign) {
+        case 'social-promo':
+          endpoint = '/api/editorial/emails/send-social-promo'
+          successMessage = 'Social promo email sent to selected test recipients'
+          break
+        case 'welcome':
+          endpoint = '/api/admin/newsletter/bulk-welcome'
+          successMessage = 'Welcome emails sent to selected test recipients'
+          break
+        case 'weekly':
+          endpoint = '/api/newsletter/test-weekly'
+          successMessage = 'Weekly Top 5 sent to selected test recipients'
+          break
+        case 'latest':
+          endpoint = '/api/newsletter/send-latest'
+          successMessage = 'Latest game email sent to selected test recipients'
+          break
+        case 'feedback':
+          endpoint = '/api/admin/users/feedback-email'
+          successMessage = 'Feedback email sent to selected test recipients'
+          break
+      }
+
+      try {
+        setTestCampaignLoading(campaign)
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(
+            campaign === 'social-promo'
+              ? { target: 'custom', emails: selectedTestRecipients }
+              : payload
+          )
+        })
+
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data?.success === false || data?.ok === false) {
+          throw new Error(data?.error || data?.message || 'Failed to send campaign')
+        }
+
+        toast.success(successMessage)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to run test campaign'
+        toast.error(message)
+      } finally {
+        setTestCampaignLoading(null)
+      }
+    },
+    [selectedTestRecipients]
+  )
 
   // Filter products based on search term
   const filteredProducts = products.filter(product =>
@@ -221,6 +339,12 @@ export default function EditorialDashboard() {
 
     fetchData()
   }, [session])
+
+  useEffect(() => {
+    if (session?.user?.role === 'ADMIN') {
+      fetchTestRecipients()
+    }
+  }, [session, fetchTestRecipients])
 
   const handleEditorialToggle = async (gameId: string, field: 'editorial_boost' | 'editorial_override', value: boolean) => {
     try {
@@ -590,8 +714,10 @@ export default function EditorialDashboard() {
   const handleAddTestEmail = async () => {
     if (!testEmail || testEmailLoading) return
 
+    const trimmedEmail = testEmail.trim()
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(testEmail)) {
+    if (!emailRegex.test(trimmedEmail)) {
       toast.error('Invalid email format')
       return
     }
@@ -603,14 +729,19 @@ export default function EditorialDashboard() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: testEmail }),
+        body: JSON.stringify({ email: trimmedEmail }),
       })
 
       const data = await res.json()
 
       if (res.ok && data?.success) {
-        toast.success(`Test email "${testEmail}" added successfully`)
+        toast.success(`Test email "${trimmedEmail}" added successfully`)
         setTestEmail('')
+        await fetchTestRecipients()
+        setSelectedTestRecipients((prev) => {
+          if (prev.includes(trimmedEmail)) return prev
+          return [...prev, trimmedEmail]
+        })
         // Refresh newsletter subscribers list
         const newsletterRes = await fetch('/api/admin/newsletter')
         if (newsletterRes.ok) {
@@ -732,6 +863,18 @@ export default function EditorialDashboard() {
                 >
                   <TestTube className="w-4 h-4 mr-2" />
                   Test
+                </Button>
+                <Button
+                  variant={activeSection === 'user-analytics' ? 'default' : 'ghost'}
+                  className={`w-full justify-start ${
+                    activeSection === 'user-analytics' 
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700' 
+                      : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  }`}
+                  onClick={() => setActiveSection('user-analytics')}
+                >
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  User Analytics
                 </Button>
               </CardContent>
             </Card>
@@ -983,23 +1126,23 @@ export default function EditorialDashboard() {
                 <CardContent>
                   <div className="overflow-x-auto">
                     <TooltipProvider delayDuration={120}>
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="border-gray-700">
-                            <TableHead className="text-gray-300">Email</TableHead>
-                            <TableHead className="text-gray-300">Signup Date</TableHead>
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-gray-700">
+                          <TableHead className="text-gray-300">Email</TableHead>
+                          <TableHead className="text-gray-300">Signup Date</TableHead>
                             <TableHead className="text-right text-gray-300">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {paginatedNewsletter.map((subscriber) => (
-                            <TableRow key={subscriber.id} className="border-gray-700">
-                              <TableCell className="text-white">
-                                {subscriber.email}
-                              </TableCell>
-                              <TableCell className="text-gray-300">
-                                {new Date(subscriber.createdAt).toLocaleDateString()}
-                              </TableCell>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedNewsletter.map((subscriber) => (
+                          <TableRow key={subscriber.id} className="border-gray-700">
+                            <TableCell className="text-white">
+                              {subscriber.email}
+                            </TableCell>
+                            <TableCell className="text-gray-300">
+                              {new Date(subscriber.createdAt).toLocaleDateString()}
+                            </TableCell>
                               <TableCell className="text-right">
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -1019,11 +1162,11 @@ export default function EditorialDashboard() {
                                   </TooltipTrigger>
                                   <TooltipContent>Delete this email</TooltipContent>
                                 </Tooltip>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                     </TooltipProvider>
                   </div>
                   {safeNewsletterSubscribers.length > ITEMS_PER_PAGE && (
@@ -1255,23 +1398,23 @@ export default function EditorialDashboard() {
                 <CardContent>
                   <div className="overflow-x-auto">
                     <TooltipProvider delayDuration={120}>
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="border-gray-700">
-                            <TableHead className="text-gray-300">Email</TableHead>
-                            <TableHead className="text-gray-300">Signup Date</TableHead>
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-gray-700">
+                          <TableHead className="text-gray-300">Email</TableHead>
+                          <TableHead className="text-gray-300">Signup Date</TableHead>
                             <TableHead className="text-right text-gray-300">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {paginatedUsers.map((user) => (
-                            <TableRow key={user.id} className="border-gray-700">
-                              <TableCell className="text-white">
-                                {user.email}
-                              </TableCell>
-                              <TableCell className="text-gray-300">
-                                {new Date(user.createdAt).toLocaleDateString()}
-                              </TableCell>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedUsers.map((user) => (
+                          <TableRow key={user.id} className="border-gray-700">
+                            <TableCell className="text-white">
+                              {user.email}
+                            </TableCell>
+                            <TableCell className="text-gray-300">
+                              {new Date(user.createdAt).toLocaleDateString()}
+                            </TableCell>
                               <TableCell className="text-right">
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -1291,11 +1434,11 @@ export default function EditorialDashboard() {
                                   </TooltipTrigger>
                                   <TooltipContent>Delete this user</TooltipContent>
                                 </Tooltip>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                     </TooltipProvider>
                   </div>
                   {users.length > ITEMS_PER_PAGE && (
@@ -1602,11 +1745,78 @@ export default function EditorialDashboard() {
                           </>
                         )}
                       </Button>
-                    </div>
+          </div>
                     <p className="text-gray-400 text-sm mt-2">
                       Add an email address to the newsletter subscription list for testing purposes. No welcome email will be sent.
                     </p>
+        </div>
+
+                <div className="bg-zinc-800/40 p-4 rounded-lg border border-white/5 space-y-3">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h3 className="text-white font-semibold">Saved Test Recipients</h3>
+                      <p className="text-sm text-gray-400">
+                        Select who should receive test campaigns ({testSelectionCount}/{testRecipients.length} selected)
+                      </p>
+      </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSelectAllTestRecipients}
+                        disabled={testRecipientsLoading || testRecipients.length === 0}
+                        className="border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/10"
+                      >
+                        Select all
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleClearTestRecipients}
+                        disabled={testSelectionCount === 0}
+                        className="text-gray-300 hover:text-white hover:bg-white/10"
+                      >
+                        Clear
+                      </Button>
+    </div>
                   </div>
+                  <div className="border border-white/5 rounded-lg bg-black/30 max-h-56 overflow-y-auto">
+                    {testRecipientsLoading ? (
+                      <div className="p-4 text-sm text-gray-400">Loading recipients...</div>
+                    ) : testRecipientsError ? (
+                      <div className="p-4 text-sm text-red-400">{testRecipientsError}</div>
+                    ) : testRecipients.length === 0 ? (
+                      <div className="p-4 text-sm text-gray-400">No test emails yet. Add one above to get started.</div>
+                    ) : (
+                      <div className="divide-y divide-white/5">
+                        {testRecipients.map((recipient) => {
+                          const isSelected = selectedTestRecipients.includes(recipient.email)
+                          return (
+                            <label
+                              key={recipient.id}
+                              className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
+                                isSelected ? 'bg-cyan-500/5 border-l-2 border-cyan-400' : 'hover:bg-white/5'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleTestRecipient(recipient.email)}
+                                className="h-4 w-4 accent-cyan-400"
+                              />
+                              <div>
+                                <p className="text-sm text-white">{recipient.email}</p>
+                                <p className="text-xs text-gray-400">
+                                  added {new Date(recipient.createdAt).toLocaleString()}
+                                </p>
+                              </div>
+                            </label>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                   {/* All Email Buttons Section */}
                   <div className="bg-zinc-800/40 p-4 rounded-lg border border-white/5">
@@ -1615,52 +1825,29 @@ export default function EditorialDashboard() {
                       {/* Newsletter Subscribers Actions */}
                       <div className="space-y-2">
                         <h4 className="text-gray-300 text-sm font-medium mb-2">Newsletter Subscribers</h4>
-                        <AlertDialog open={newsletterSocialDialogOpen} onOpenChange={setNewsletterSocialDialogOpen}>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              disabled={newsletterSocialSending || safeNewsletterSubscribers.length === 0}
-                              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
+                        <Button
+                          onClick={() => runTestCampaign('social-promo')}
+                          disabled={isTestActionDisabled}
+                          className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {testCampaignLoading === 'social-promo' ? (
+                            <>
+                              <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                              Sending...
+                            </>
+                          ) : (
+                            <>
                               <Share2 className="w-4 h-4 mr-2" />
                               Send Social Promo
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="bg-zinc-900 border border-white/10 text-white">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Send Social Media Promo Email to newsletter subscribers?</AlertDialogTitle>
-                              <AlertDialogDescription className="text-gray-300">
-                                This will email every active newsletter subscriber about our social channels.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel className="bg-transparent border border-white/20 text-white hover:bg-white/10">
-                                Cancel
-                              </AlertDialogCancel>
-                              <AlertDialogAction asChild>
-                                <Button
-                                  onClick={handleSendNewsletterSocialPromo}
-                                  disabled={newsletterSocialSending}
-                                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50"
-                                >
-                                  {newsletterSocialSending ? (
-                                    <>
-                                      <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                      Sending...
-                                    </>
-                                  ) : (
-                                    'Send to subscribers'
-                                  )}
-                                </Button>
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                            </>
+                          )}
+                        </Button>
                         <Button
-                          onClick={handleBulkWelcomeEmail}
-                          disabled={bulkEmailLoading || safeNewsletterSubscribers.length === 0}
+                          onClick={() => runTestCampaign('welcome')}
+                          disabled={isTestActionDisabled}
                           className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {bulkEmailLoading ? (
+                          {testCampaignLoading === 'welcome' ? (
                             <>
                               <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
                               Sending...
@@ -1673,12 +1860,12 @@ export default function EditorialDashboard() {
                           )}
                         </Button>
                         <Button
-                          onClick={handleSendWeeklyTop5}
-                          disabled={weeklySending || safeNewsletterSubscribers.length === 0}
+                          onClick={() => runTestCampaign('weekly')}
+                          disabled={isTestActionDisabled}
                           className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Send weekly Top 5 to all subscribers"
                         >
-                          {weeklySending ? (
+                          {testCampaignLoading === 'weekly' ? (
                             <>
                               <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
                               Sending Weekly...
@@ -1691,12 +1878,12 @@ export default function EditorialDashboard() {
                           )}
                         </Button>
                         <Button
-                          onClick={handleSendLatestGame}
-                          disabled={latestSending || safeNewsletterSubscribers.length === 0}
+                          onClick={() => runTestCampaign('latest')}
+                          disabled={isTestActionDisabled}
                           className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Send latest published game to all subscribers"
                         >
-                          {latestSending ? (
+                          {testCampaignLoading === 'latest' ? (
                             <>
                               <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
                               Sending Latest...
@@ -1714,11 +1901,11 @@ export default function EditorialDashboard() {
                       <div className="space-y-2">
                         <h4 className="text-gray-300 text-sm font-medium mb-2">All Users</h4>
                         <Button
-                          onClick={handleSendUsersFeedbackEmail}
-                          disabled={usersFeedbackSending || users.length === 0}
+                          onClick={() => runTestCampaign('feedback')}
+                          disabled={isTestActionDisabled}
                           className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {usersFeedbackSending ? (
+                          {testCampaignLoading === 'feedback' ? (
                             <>
                               <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
                               Sending...
@@ -1730,49 +1917,34 @@ export default function EditorialDashboard() {
                             </>
                           )}
                         </Button>
-                        <AlertDialog open={socialPromoDialogOpen} onOpenChange={setSocialPromoDialogOpen}>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              disabled={users.length === 0}
-                              className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
+                        <Button
+                          onClick={() => runTestCampaign('social-promo')}
+                          disabled={isTestActionDisabled}
+                          className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {testCampaignLoading === 'social-promo' ? (
+                            <>
+                              <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                              Sending...
+                            </>
+                          ) : (
+                            <>
                               <Share2 className="w-4 h-4 mr-2" />
                               Send Social Media Promo Email
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="bg-zinc-900 border border-white/10 text-white">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Send Social Media Promo Email to all users?</AlertDialogTitle>
-                              <AlertDialogDescription className="text-gray-300">
-                                This will send a personalized email about our social channels to every registered user.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel className="bg-transparent border border-white/20 text-white hover:bg-white/10">
-                                Cancel
-                              </AlertDialogCancel>
-                              <AlertDialogAction asChild>
-                                <Button
-                                  onClick={handleSendUsersSocialPromo}
-                                  disabled={socialPromoSending}
-                                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50"
-                                >
-                                  {socialPromoSending ? (
-                                    <>
-                                      <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                      Sending...
-                                    </>
-                                  ) : (
-                                    'Send to all users'
-                                  )}
-                                </Button>
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                            </>
+                          )}
+                        </Button>
                       </div>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeSection === 'user-analytics' && (
+              <Card className="bg-zinc-900/40 backdrop-blur-md border border-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]">
+                <CardContent className="p-6">
+                  <UserAnalyticsDashboard />
                 </CardContent>
               </Card>
             )}

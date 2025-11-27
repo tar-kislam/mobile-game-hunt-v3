@@ -4,6 +4,14 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sendUserFeedbackEmail } from '@/lib/email'
 
+const isValidEmail = (value?: string) => {
+  if (!value || typeof value !== 'string') return false
+  const trimmed = value.trim()
+  if (!trimmed) return false
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(trimmed)
+}
+
 // POST /api/admin/users/feedback-email
 // Sends a short feedback-request email to all users with an email address.
 export async function POST(request: NextRequest) {
@@ -14,16 +22,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
+    let customEmails: string[] = []
+    if (request.headers.get('content-type')?.includes('application/json')) {
+      try {
+        const body = await request.json()
+        if (Array.isArray(body?.emails)) {
+          customEmails = Array.from(
+            new Set(
+              body.emails
+                .filter((email: unknown): email is string => typeof email === 'string' && isValidEmail(email))
+                .map((email: string) => email.trim())
+            )
+          )
+        }
+      } catch (error) {
+        console.warn('[USER FEEDBACK EMAIL] Failed to parse payload:', error)
+      }
+    }
+
     // Fetch all users (email is required in schema, but we filter defensively in JS)
-    const users = await prisma.user.findMany({
+    let users = await prisma.user.findMany({
       select: {
         email: true,
         name: true,
         username: true,
       },
+      where: customEmails.length > 0 ? { email: { in: customEmails } } : undefined,
     })
 
-    const validUsers = users.filter((u) => !!u.email)
+    const validUsers = customEmails.length
+      ? customEmails.map((email) => {
+          const match = users.find((u) => u.email === email)
+          if (match && match.email) {
+            return match
+          }
+          return { email, name: null, username: null }
+        })
+      : users.filter((u) => !!u.email)
 
     const results = {
       total: validUsers.length,
