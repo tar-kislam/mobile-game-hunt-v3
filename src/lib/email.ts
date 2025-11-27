@@ -720,6 +720,13 @@ const FOX_ICON_BASE64 =
 
 export const getSocialPromoEmailHTML = (displayName: string) => {
   const safeName = displayName?.trim() || 'there'
+  const socialCards = [
+    { name: 'X (Twitter)', handle: '@mobilegamehunt', url: 'https://x.com/mobilegamehunt', icon: SOCIAL_ICONS_BASE64.x, cta: 'Follow' },
+    { name: 'Instagram', handle: '@mobilegamehunt', url: 'https://instagram.com/mobilegamehunt', icon: SOCIAL_ICONS_BASE64.instagram, cta: 'Follow' },
+    { name: 'TikTok', handle: '@mobilegamehunt', url: 'https://www.tiktok.com/@mobilegamehunt', icon: SOCIAL_ICONS_BASE64.tiktok, cta: 'Follow' },
+    { name: 'Reddit', handle: 'r/MobileGameHunt', url: 'https://www.reddit.com/r/MobileGameHunt/', icon: SOCIAL_ICONS_BASE64.reddit, cta: 'Join' },
+    { name: 'Discord', handle: 'Indie Dev Hangout', url: 'https://discord.gg/zahqtja5e9', icon: SOCIAL_ICONS_BASE64.discord, cta: 'Join Server' }
+  ]
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -728,236 +735,97 @@ export const getSocialPromoEmailHTML = (displayName: string) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>MobileGameHunt – Connect With Us</title>
-  <!--[if mso]>
-    <style type="text/css">
-      body, table, td {font-family: Arial, sans-serif !important;}
-    </style>
-  <![endif]-->
   <style>
-    body, table, td { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse; }
-    img { -ms-interpolation-mode: bicubic; display: block; }
-    body {
-      margin: 0 !important;
-      padding: 0 !important;
-      width: 100% !important;
-      background-color: #050505 !important;
-      font-family: 'Inter', 'Segoe UI', Tahoma, Arial, sans-serif;
-      color: #d7e2f2;
-    }
-    .wrapper {
-      width: 100%;
-      background: #050505;
-      padding: 0;
-    }
-    .container {
-      width: 100%;
-      max-width: 620px;
-      margin: 0 auto;
-      background: #0c0c14;
-      border-radius: 28px;
-      border: 1px solid rgba(132, 94, 247, 0.35);
-      box-shadow: 0 20px 80px rgba(72, 17, 145, 0.35), inset 0 0 35px rgba(19, 204, 255, 0.08);
-      overflow: hidden;
-    }
-    .hero {
-      background: radial-gradient(140% 140% at 10% 10%, rgba(147, 51, 234, 0.3), transparent), radial-gradient(160% 160% at 90% 20%, rgba(14, 165, 233, 0.35), transparent), #05050b;
-      padding: 48px 32px 36px;
-      text-align: center;
-    }
-    .hero-icon {
-      width: 64px;
-      height: 64px;
-      margin: 0 auto 12px;
-    }
-    .hero-title {
-      font-size: 24px;
-      letter-spacing: 1px;
-      color: #fefefe;
-      margin: 0;
-      text-transform: uppercase;
-    }
-    .divider {
-      height: 1px;
-      width: 100%;
-      background: linear-gradient(90deg, rgba(88, 28, 135, 0) 0%, rgba(88, 28, 135, 0.8) 20%, rgba(14, 165, 233, 0.8) 80%, rgba(14, 165, 233, 0) 100%);
-    }
-    .body {
-      padding: 40px 32px 48px;
-    }
-    .greeting {
-      font-size: 18px;
-      font-weight: 600;
-      margin: 0 0 12px;
-      color: #e3e8ff;
-    }
-    .message {
-      font-size: 15px;
-      line-height: 1.7;
-      color: #c2c8dd;
-      margin: 0 0 18px;
-    }
-    .section-label {
-      text-transform: uppercase;
-      font-size: 13px;
-      letter-spacing: 3px;
-      color: #91a0ff;
-      margin: 32px 0 16px;
-    }
-    .social-card {
-      border-radius: 22px;
-      padding: 24px 20px;
-      background: rgba(20, 20, 28, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      margin-bottom: 16px;
-      text-align: center;
-      box-shadow: 0 12px 32px rgba(8, 12, 20, 0.6);
-    }
-    .social-icon-wrap {
-      width: 54px;
-      height: 54px;
-      border-radius: 16px;
-      margin: 0 auto 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: inset 0 0 14px rgba(255, 255, 255, 0.08);
-    }
-    .social-name {
-      font-size: 16px;
-      font-weight: 600;
-      margin: 0 0 4px;
-      color: #f1f5ff;
-    }
-    .social-handle {
-      font-size: 13px;
-      letter-spacing: 0.4px;
-      margin: 0 0 18px;
-      color: #97a0c1;
-    }
-    .cta {
-      display: inline-block;
-      padding: 12px 32px;
-      border-radius: 999px;
-      font-size: 13px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      text-decoration: none;
-      color: #ffffff;
-      background: linear-gradient(120deg, #7c2fff, #1cb8ff);
-      box-shadow: 0 12px 30px rgba(124, 47, 255, 0.35);
-    }
-    .cta:hover {
-      filter: brightness(1.05);
-    }
-    .cta-outline {
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      background: transparent;
-      color: #e2e6ff;
-      box-shadow: none;
-    }
-    .footer-note {
-      margin-top: 32px;
-      border-radius: 18px;
-      padding: 18px 20px;
-      border: 1px dashed rgba(255, 255, 255, 0.18);
-      background: rgba(255, 255, 255, 0.03);
-      font-size: 13px;
-      line-height: 1.6;
-      color: #a8b2d6;
-    }
-    .footer-meta {
-      margin-top: 24px;
-      text-align: center;
-      font-size: 11px;
-      color: #7f88aa;
-    }
-    @media only screen and (max-width: 620px) {
-      .container { border-radius: 0; }
-      .hero, .body { padding: 32px 20px; }
-      .cta { width: 100%; }
-    }
+    body, table, td { margin: 0; padding: 0; border-collapse: collapse; font-family: 'Inter', 'Segoe UI', Tahoma, Arial, sans-serif; }
+    img { display: block; border: 0; }
   </style>
 </head>
 <body>
-  <div class="wrapper">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-      <tr>
-        <td align="center" style="padding: 32px 12px;">
-          <table role="presentation" width="600" class="container">
-            <tr>
-              <td class="hero">
-                <img src="${FOX_ICON_BASE64}" alt="MobileGameHunt" class="hero-icon" width="64" height="59" />
-                <p class="hero-title" style="font-family: 'Inter', 'Segoe UI', Tahoma, Arial, sans-serif;">MobileGameHunt</p>
-                <p style="margin: 8px 0 0; font-size: 13px; letter-spacing: 4px; color: #8bc8ff;">NEON COMMUNITY SIGNAL</p>
-              </td>
-            </tr>
-            <tr><td><div class="divider"></div></td></tr>
-            <tr>
-              <td class="body">
-                <p class="greeting">Hi ${safeName},</p>
-                <p class="message">
-                  We're building the most indie-friendly spot for discovering mobile games. If you'd like to support the platform,
-                  we'd love to connect with you across our channels 💜
-                </p>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#050505;">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;width:100%;background:#0b0b14;border-radius:26px;border:1px solid rgba(149,114,255,0.35);box-shadow:0 18px 60px rgba(64,16,144,0.4),inset 0 0 30px rgba(17,220,255,0.08);overflow:hidden;">
+          <tr>
+            <td align="center" style="padding:42px 24px 32px;background:radial-gradient(160% 160% at 10% 5%, rgba(124,58,237,0.35), transparent),radial-gradient(160% 160% at 90% 5%, rgba(6,182,212,0.35), transparent),#07070d;">
+              <img src="${FOX_ICON_BASE64}" alt="MobileGameHunt" width="64" height="59" style="margin-bottom:10px;" />
+              <p style="margin:0;font-size:22px;letter-spacing:1px;text-transform:uppercase;color:#fdfdff;font-weight:600;">MobileGameHunt</p>
+              <p style="margin:6px 0 0;font-size:12px;letter-spacing:4px;color:#8ecbff;">NEON COMMUNITY SIGNAL</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="height:1px;background:linear-gradient(90deg,rgba(122,67,255,0) 0%,rgba(122,67,255,0.7) 20%,rgba(17,192,255,0.7) 80%,rgba(17,192,255,0) 100%);font-size:0;line-height:0;">&nbsp;</td>
+          </tr>
+          <tr>
+            <td style="padding:36px 26px 44px;">
+              <p style="margin:0 0 12px;font-size:18px;font-weight:600;color:#e9edff;">Hi ${safeName},</p>
+              <p style="margin:0 0 14px;font-size:15px;line-height:1.7;color:#c6cce6;">
+                We're building the most indie-friendly spot for discovering mobile games. If you'd like to support the platform,
+                we'd love to connect with you across our channels 💜
+              </p>
+              <p style="margin:28px 0 12px;font-size:12px;letter-spacing:4px;text-transform:uppercase;color:#8fb5ff;">Connect With Us</p>
 
-                <p class="section-label">Connect With Us</p>
+              ${socialCards.map((card, idx) => `${idx > 0 ? spacerRow() : ''}${renderSocialCard(card)}`).join('')}
 
-                ${renderSocialCard('X (Twitter)', '@mobilegamehunt', 'https://x.com/mobilegamehunt', SOCIAL_ICONS_BASE64.x, 'Follow')}
-                ${renderSocialCard('Instagram', '@mobilegamehunt', 'https://instagram.com/mobilegamehunt', SOCIAL_ICONS_BASE64.instagram, 'Follow')}
-                ${renderSocialCard('TikTok', '@mobilegamehunt', 'https://tiktok.com/@mobilegamehunt', SOCIAL_ICONS_BASE64.tiktok, 'Follow')}
-                ${renderSocialCard('Reddit', 'r/MobileGameHunt', 'https://www.reddit.com/r/MobileGameHunt/', SOCIAL_ICONS_BASE64.reddit, 'Join')}
-                ${renderSocialCard('Discord', 'Indie Dev Hangout', 'https://discord.gg/zahqtja5e9', SOCIAL_ICONS_BASE64.discord, 'Join Server', true)}
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:28px;">
+                <tr>
+                  <td style="padding:18px;border-radius:18px;border:1px dashed rgba(255,255,255,0.18);background:rgba(255,255,255,0.03);font-size:13px;line-height:1.6;color:#aeb7d9;">
+                    Prefer inbox updates? Just reply to this email anytime and we’ll keep you in the loop. Every follow, like, or share helps indie teams reach more players. Thanks for exploring with us.
+                  </td>
+                </tr>
+              </table>
 
-                <div class="footer-note">
-                  Prefer inbox updates? Just reply to this email anytime and we’ll keep you in the loop.
-                  Every follow, like, or share helps indie teams reach more players. Thanks for exploring with us.
-                </div>
-
-                <p style="margin: 28px 0 0; font-size: 14px; color: #dfe5ff;">
-                  — The MobileGameHunt Team
-                </p>
-
-                <p class="footer-meta">
-                  You're receiving this email because you joined MobileGameHunt.<br/>
-                  Update preferences or unsubscribe anytime.
-                </p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </div>
+              <p style="margin:28px 0 0;font-size:14px;color:#dde3ff;">— The MobileGameHunt Team</p>
+              <p style="margin:20px 0 0;font-size:11px;line-height:1.6;text-align:center;color:#828bb0;">
+                You're receiving this email because you joined MobileGameHunt.<br/>Update preferences or unsubscribe anytime.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
   `
 }
 
-const renderSocialCard = (
-  name: string,
-  handle: string,
-  url: string,
-  icon: string,
-  ctaLabel: string,
-  isOutline = false
-) => {
-  return `
-  <table role="presentation" width="100%" class="social-card">
+const spacerRow = () =>
+  '<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td height="16" style="font-size:0;line-height:0;">&nbsp;</td></tr></table>'
+
+const renderSocialCard = (card: { name: string; handle: string; url: string; icon: string; cta: string }) => `
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#141420;border:1px solid rgba(255,255,255,0.08);border-radius:20px;">
     <tr>
-      <td align="center">
-        <div class="social-icon-wrap">
-          <img src="${icon}" alt="${name} icon" width="28" height="28" />
-        </div>
-        <p class="social-name">${name}</p>
-        <p class="social-handle">${handle}</p>
-        <a href="${url}" target="_blank" rel="noopener noreferrer" class="cta ${isOutline ? 'cta-outline' : ''}">${ctaLabel}</a>
+      <td align="center" style="padding:20px 18px;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+          <tr>
+            <td align="center" style="padding-bottom:14px;">
+              <img src="${card.icon}" alt="${card.name}" width="40" height="40" style="display:block;" />
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="font-size:17px;font-weight:600;color:#f6f8ff;padding-bottom:4px;">${card.name}</td>
+          </tr>
+          <tr>
+            <td align="center" style="font-size:13px;letter-spacing:0.3px;color:#96a0c2;padding-bottom:18px;">${card.handle}</td>
+          </tr>
+          <tr>
+            <td>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center" style="background:linear-gradient(120deg,#7c2fff,#1cb8ff);border-radius:999px;">
+                    <a href="${card.url}" target="_blank" rel="noopener noreferrer" style="display:block;padding:12px 18px;font-size:14px;font-weight:600;text-transform:uppercase;color:#ffffff;text-decoration:none;">
+                      ${card.cta}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>
-  </table>`
-}
+  </table>
+`
 
 export async function sendSocialPromoEmail(to: string, displayName: string): Promise<{ success: boolean; error?: string }> {
   try {

@@ -138,7 +138,7 @@ export function CommunityFeedContainer() {
     const searchHandler = (e: any) => {
       const query = e?.detail
       if (query) setSearchQuery(query)
-    }
+      }
     const clearHandler = () => setSearchQuery('')
     if (typeof window !== 'undefined') {
       window.addEventListener('community:simple-search', searchHandler as EventListener)
@@ -203,28 +203,28 @@ export function CommunityFeedContainer() {
   return (
     <div className="space-y-4">
       <Tabs value={sort} onValueChange={(value) => setSort(value as SortFilter)}>
-        <TabsList className="bg-background/40 border border-white/10">
-          <TabsTrigger value="latest">Latest</TabsTrigger>
-          <TabsTrigger value="trending">Trending</TabsTrigger>
-        </TabsList>
-      </Tabs>
+          <TabsList className="bg-background/40 border border-white/10">
+            <TabsTrigger value="latest">Latest</TabsTrigger>
+            <TabsTrigger value="trending">Trending</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-      {hashtag && (
-        <div className="flex items-center justify-between">
+        {hashtag && (
+          <div className="flex items-center justify-between">
           <Badge variant="secondary" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
             Showing posts for #{hashtag}
           </Badge>
           <button className="text-sm underline text-muted-foreground hover:text-foreground" onClick={() => handleTagClick('')}>
-            Clear
-          </button>
-        </div>
-      )}
+              Clear
+            </button>
+          </div>
+        )}
 
       {activeFeed.loading && !activeFeed.items.length ? (
-        <div className="space-y-4">
-          <Skeleton className="h-40 w-full rounded-xl" />
-          <Skeleton className="h-40 w-full rounded-xl" />
-        </div>
+          <div className="space-y-4">
+            <Skeleton className="h-40 w-full rounded-xl" />
+            <Skeleton className="h-40 w-full rounded-xl" />
+          </div>
       ) : filteredItems.length > 0 ? (
         <>
           <CommunityFeed posts={filteredItems} onTagClick={handleTagClick} onToggleLike={handleToggleLike} />
@@ -248,9 +248,9 @@ export function CommunityFeedContainer() {
                   'No more posts'
                 )}
               </Button>
-            </div>
-          )}
-        </>
+          </div>
+        )}
+      </>
       ) : searchQuery.trim() ? (
         <div className="text-center text-muted-foreground py-8">No results found.</div>
       ) : (
