@@ -60,10 +60,10 @@ export async function GET(request: NextRequest) {
 
     const mostVisitedPageType = await prisma.userActivityEvent.groupBy({
       by: ['pageType'],
-      _count: { _all: true },
+      _count: { pageType: true },
       where: baseWhere,
       orderBy: {
-        _count: { _all: 'desc' }
+        _count: { pageType: 'desc' }
       },
       take: 1
     })
