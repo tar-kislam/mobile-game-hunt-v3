@@ -1,5 +1,5 @@
-CREATE TABLE "public"."UserActivityEvent" (
-    "id" TEXT NOT NULL,
+CREATE TABLE IF NOT EXISTS "public"."UserActivityEvent" (
+    "id" TEXT PRIMARY KEY,
     "userId" TEXT,
     "sessionId" TEXT NOT NULL,
     "path" TEXT NOT NULL,
@@ -8,15 +8,25 @@ CREATE TABLE "public"."UserActivityEvent" (
     "durationSeconds" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "userAgent" TEXT,
-    "country" TEXT,
-    CONSTRAINT "UserActivityEvent_pkey" PRIMARY KEY ("id")
+    "country" TEXT
 );
 
-ALTER TABLE "public"."UserActivityEvent"
-ADD CONSTRAINT "UserActivityEvent_userId_fkey"
-FOREIGN KEY ("userId") REFERENCES "public"."User"("id")
-ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'UserActivityEvent_userId_fkey'
+  ) THEN
+    ALTER TABLE "public"."UserActivityEvent"
+    ADD CONSTRAINT "UserActivityEvent_userId_fkey"
+    FOREIGN KEY ("userId") REFERENCES "public"."User"("id")
+    ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
 
-CREATE INDEX "idx_user_activity_user_createdAt" ON "public"."UserActivityEvent"("userId", "createdAt");
-CREATE INDEX "idx_user_activity_session_createdAt" ON "public"."UserActivityEvent"("sessionId", "createdAt");
-CREATE INDEX "idx_user_activity_pageType_createdAt" ON "public"."UserActivityEvent"("pageType", "createdAt");
+CREATE INDEX IF NOT EXISTS "idx_user_activity_user_createdAt"
+  ON "public"."UserActivityEvent"("userId", "createdAt");
+CREATE INDEX IF NOT EXISTS "idx_user_activity_session_createdAt"
+  ON "public"."UserActivityEvent"("sessionId", "createdAt");
+CREATE INDEX IF NOT EXISTS "idx_user_activity_pageType_createdAt"
+  ON "public"."UserActivityEvent"("pageType", "createdAt");
