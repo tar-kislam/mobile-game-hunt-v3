@@ -27,7 +27,12 @@ type AnalyticsResponse = {
     totalVisits: number
     uniqueUsers: number
     avgDurationSeconds: number
-    topPageType: string | null
+    mostVisitedGame: {
+      productId: string
+      slug: string
+      title: string
+      visits: number
+    } | null
   }
   visitsOverTime: Array<{ date: string; visits: number }>
   topPages: Array<{ path: string; pageType: string | null; visits: number; avgDurationSeconds: number }>
@@ -44,6 +49,7 @@ type AnalyticsResponse = {
     avgDurationSeconds: number
     lastSeenAt: string | null
     topPages: Array<{ path: string; visits: number }>
+    submittedGames: Array<{ id: string; title: string; slug: string }>
   }>
 }
 
@@ -196,10 +202,7 @@ export function UserAnalyticsDashboard() {
           label="Average time per visit"
           value={summary ? formatDuration(summary.avgDurationSeconds) : "0s"}
         />
-        <SummaryCard
-          label="Most visited page type"
-          value={summary?.topPageType ? summary.topPageType : "—"}
-        />
+        <MostVisitedGameCard game={summary?.mostVisitedGame ?? null} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -257,11 +260,12 @@ export function UserAnalyticsDashboard() {
           />
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <div className="min-w-[720px]">
+          <div className="min-w-[900px]">
             <Table>
               <TableHeader>
                 <TableRow className="border-white/10">
                   <TableHead className="text-gray-300">User</TableHead>
+                  <TableHead className="text-gray-300">Submitted games</TableHead>
                   <TableHead className="text-gray-300">Total visits</TableHead>
                   <TableHead className="text-gray-300">Avg duration</TableHead>
                   <TableHead className="text-gray-300">Last seen</TableHead>
@@ -271,7 +275,7 @@ export function UserAnalyticsDashboard() {
               <TableBody>
                 {!isLoading && filteredUsers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="py-10 text-center text-gray-400">
+                    <TableCell colSpan={6} className="py-10 text-center text-gray-400">
                       No developers found for the selected filters.
                     </TableCell>
                   </TableRow>
@@ -279,7 +283,7 @@ export function UserAnalyticsDashboard() {
                 {isLoading
                   ? Array.from({ length: 5 }).map((_, index) => (
                       <TableRow key={`skeleton-${index}`}>
-                        <TableCell colSpan={5} className="py-6">
+                        <TableCell colSpan={6} className="py-6">
                           <div className="h-4 w-full animate-pulse rounded bg-white/5" />
                         </TableCell>
                       </TableRow>
@@ -290,6 +294,17 @@ export function UserAnalyticsDashboard() {
                           <div className="space-y-1">
                             <div className="text-white font-medium">{user.name || "Unknown user"}</div>
                             <div className="text-xs text-gray-400">{user.email}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1.5">
+                            {user.submittedGames.length
+                              ? user.submittedGames.map((game) => (
+                                  <Badge key={game.id} variant="secondary" className="bg-white/10 text-white text-xs">
+                                    {truncate(game.title, 20)}
+                                  </Badge>
+                                ))
+                              : <span className="text-gray-400 text-sm">—</span>}
                           </div>
                         </TableCell>
                         <TableCell className="text-white">{user.totalVisits}</TableCell>
@@ -352,6 +367,20 @@ const SummaryCard = ({ label, value }: { label: string; value: number | string }
     <CardContent className="p-4 space-y-1">
       <p className="text-sm text-gray-400">{label}</p>
       <p className="text-3xl font-semibold text-white">{value}</p>
+    </CardContent>
+  </Card>
+)
+
+const MostVisitedGameCard = ({ game }: { game: { productId: string; slug: string; title: string; visits: number } | null }) => (
+  <Card className="bg-gradient-to-br from-[#0b1220] to-[#05070d] border-white/5">
+    <CardContent className="p-4 space-y-1">
+      <p className="text-sm text-gray-400">Most visited game</p>
+      <p className="text-3xl font-semibold text-white">{game?.title || "—"}</p>
+      {game ? (
+        <p className="text-xs text-gray-500 mt-1">{game.visits} {game.visits === 1 ? 'visit' : 'visits'}</p>
+      ) : (
+        <p className="text-xs text-gray-500 mt-1">No product visits in this period</p>
+      )}
     </CardContent>
   </Card>
 )

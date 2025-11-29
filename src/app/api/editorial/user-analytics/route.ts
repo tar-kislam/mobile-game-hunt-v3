@@ -58,15 +58,38 @@ export async function GET(request: NextRequest) {
       where: baseWhere
     })
 
-    const mostVisitedPageType = await prisma.userActivityEvent.groupBy({
-      by: ['pageType'],
-      _count: { pageType: true },
-      where: baseWhere,
-      orderBy: {
-        _count: { pageType: 'desc' }
-      },
-      take: 1
-    })
+    // Find most visited game (product detail pages only)
+    // Only compute if pageType filter is 'all' or 'product' (or undefined)
+    const mostVisitedGameRaw = !pageType || pageType === 'product'
+      ? await prisma.$queryRaw<Array<{
+          productId: string
+          slug: string
+          title: string
+          visits: number
+        }>>`
+        WITH product_visits AS (
+          SELECT 
+            REGEXP_REPLACE(REGEXP_REPLACE(e."path", '^/product/', ''), '/.*$', '') AS slug,
+            COUNT(*)::int AS visits
+          FROM "UserActivityEvent" e
+          WHERE e."userId" = ANY(${developerIdsArray})
+            AND e."createdAt" BETWEEN ${fromDate} AND ${toDate}
+            AND (e."pageType" = 'product' OR e."path" ~ '^/product/[^/]+/?$')
+          GROUP BY slug
+          HAVING slug != ''
+        )
+        SELECT 
+          p.id AS "productId",
+          p.slug,
+          p.title,
+          pv.visits
+        FROM product_visits pv
+        JOIN "Product" p ON p.slug = pv.slug
+        ORDER BY pv.visits DESC
+        LIMIT 1
+      `
+      : []
+    const mostVisitedGame = mostVisitedGameRaw[0] || null
 
     const developerIdsArray = toTextArray(developerIds)
 
@@ -146,12 +169,33 @@ export async function GET(request: NextRequest) {
       return acc
     }, {})
 
+    // Fetch submitted games for each user
+    const userSubmittedGames = pageUserIds.length
+      ? await prisma.product.findMany({
+          where: {
+            userId: { in: pageUserIds }
+          },
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            userId: true
+          }
+        })
+      : []
+
+    const userSubmittedGamesMap = userSubmittedGames.reduce<Record<string, Array<{ id: string; title: string; slug: string }>>>((acc, product) => {
+      if (!acc[product.userId]) acc[product.userId] = []
+      acc[product.userId].push({ id: product.id, title: product.title, slug: product.slug })
+      return acc
+    }, {})
+
     return NextResponse.json({
       summary: {
         totalVisits,
         uniqueUsers: uniqueUsers.length,
         avgDurationSeconds: avgDurationAgg._avg.durationSeconds ?? 0,
-        topPageType: mostVisitedPageType[0]?.pageType || 'other'
+        mostVisitedGame
       },
       visitsOverTime,
       topPages,
@@ -163,7 +207,8 @@ export async function GET(request: NextRequest) {
       users: userStats.map((user) => ({
         ...user,
         lastSeenAt: user.lastSeenAt?.toISOString?.() ?? null,
-        topPages: userTopPagesMap[user.userId] || []
+        topPages: userTopPagesMap[user.userId] || [],
+        submittedGames: userSubmittedGamesMap[user.userId] || []
       }))
     })
   } catch (error) {
@@ -177,7 +222,7 @@ const emptyAnalyticsPayload = () => ({
     totalVisits: 0,
     uniqueUsers: 0,
     avgDurationSeconds: 0,
-    topPageType: null
+    mostVisitedGame: null
   },
   visitsOverTime: [],
   topPages: [],
