@@ -11,8 +11,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres-init:/docker-entrypoint-initdb.d
-    ports:
-      - "5432:5432"
+    # SECURITY: Port mapping removed - database only accessible via internal network
+    # ports:
+    #   - "5432:5432"
     networks:
       - app-network
     healthcheck:
@@ -26,8 +27,10 @@ services:
     image: redis:7-alpine
     container_name: mobile-game-hunt-redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
+    # SECURITY: Port mapping removed - Redis only accessible via internal network
+    # If external access needed, add Redis password authentication
+    # ports:
+    #   - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -72,17 +75,17 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    # SECURITY: Additional hardening options (commented out to avoid breaking current deployment)
-    # Uncomment these after testing in staging:
-    # security_opt:
-    #   - no-new-privileges:true
-    # cap_drop:
-    #   - ALL
+    # SECURITY: Hardening options enabled
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Note: read_only and tmpfs commented out as they require careful testing
+    # Uncomment after verifying all write operations work correctly:
     # read_only: true
     # tmpfs:
     #   - /tmp
     #   - /app/.next/cache
-    # Note: read_only requires tmpfs for writable directories. See SECURITY.md for details.
 
   # NGINX Reverse Proxy
   nginx:

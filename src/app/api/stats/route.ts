@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 
-const prisma = new PrismaClient()
+// SECURITY: Use singleton Prisma instance instead of creating new one
+// This prevents connection pool exhaustion and memory leaks
 
 export async function GET() {
   try {
@@ -53,7 +54,7 @@ export async function GET() {
       reviews: 250,
       dailySubmissions: 50
     })
-  } finally {
-    await prisma.$disconnect()
   }
+  // SECURITY: Don't disconnect - using singleton instance
+  // prisma.$disconnect() removed
 }

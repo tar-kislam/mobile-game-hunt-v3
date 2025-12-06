@@ -1,37 +1,20 @@
 import { NextResponse } from "next/server"
 import { prisma } from '@/lib/prisma'
 
+// SECURITY: Public health check - minimal information to prevent information disclosure
 export async function GET() {
   try {
     // Check database connection
     await prisma.$queryRaw`SELECT 1`
     
-    // Get basic system info
-    const healthData = {
-      status: "healthy",
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      version: process.env.npm_package_version || "1.0.0",
-      environment: process.env.NODE_ENV,
-      database: "connected",
-      memory: {
-        used: Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) / 100,
-        total: Math.round((process.memoryUsage().heapTotal / 1024 / 1024) * 100) / 100,
-      },
-    }
-
-    return NextResponse.json(healthData, { status: 200 })
+    // SECURITY: Return minimal response for public health checks
+    // Detailed system info should be in internal health check endpoint
+    return NextResponse.json({ status: "healthy" }, { status: 200 })
   } catch (error) {
     console.error("Health check failed:", error)
     
-    return NextResponse.json(
-      {
-        status: "unhealthy",
-        timestamp: new Date().toISOString(),
-        error: "Database connection failed",
-      },
-      { status: 503 }
-    )
+    // SECURITY: Don't expose error details in public endpoint
+    return NextResponse.json({ status: "unhealthy" }, { status: 503 })
   }
 }
 

@@ -7,6 +7,8 @@ import { FALLBACK_OG_IMAGE, getSiteBaseUrl, toAbsoluteUrl } from "@/lib/image-ut
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import "@/lib/jobs/registerNewsletterCron";
 import "@/lib/jobs/registerGameOfDayCron";
+// SECURITY: Validate environment variables on startup
+import "@/lib/env-validation";
 
 const dmMono = DM_Mono({
   variable: "--font-dm-mono",

@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateUniqueUsername, isUsernameAvailable, sanitizeUsername } from '@/lib/usernameUtils'
 
+// SECURITY: Disable test endpoint in production
 export async function POST(request: NextRequest) {
+  // SECURITY: Only allow in development
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      { error: 'This endpoint is not available in production' },
+      { status: 403 }
+    )
+  }
+
   try {
     const { name, action = 'generate' } = await request.json()
 
@@ -74,6 +83,14 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
+  // SECURITY: Only allow in development
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      { error: 'This endpoint is not available in production' },
+      { status: 403 }
+    )
+  }
+
   return NextResponse.json({
     message: 'Username generation API',
     usage: {

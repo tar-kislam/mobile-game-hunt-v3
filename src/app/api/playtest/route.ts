@@ -104,11 +104,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // If API key is provided, validate it against the game
-    if (apiKey && product) {
-      // Here you could add additional API key validation logic
-      // For now, we'll just log that the API key was used
-      console.log('API key used for playtest creation');
+    // SECURITY: API key validation
+    // If API key is provided, it must match the expected API key from environment
+    if (apiKey) {
+      const expectedApiKey = process.env.PLAYTEST_API_KEY
+      if (!expectedApiKey || apiKey !== expectedApiKey) {
+        console.log('Invalid API key provided');
+        return NextResponse.json(
+          { error: 'Invalid API key' },
+          { status: 401 }
+        );
+      }
+      // API key is valid, but still need to verify game ownership or access
+      if (!product) {
+        return NextResponse.json(
+          { error: 'Game not found' },
+          { status: 404 }
+        );
+      }
+      console.log('Valid API key used for playtest creation');
     }
 
     // Check if playtest already exists for this game
