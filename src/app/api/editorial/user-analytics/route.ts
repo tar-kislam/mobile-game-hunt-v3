@@ -58,6 +58,9 @@ export async function GET(request: NextRequest) {
       where: baseWhere
     })
 
+    // Convert developerIds to text array for SQL queries
+    const developerIdsArray = toTextArray(developerIds)
+
     // Find most visited game (product detail pages only)
     // Only compute if pageType filter is 'all' or 'product' (or undefined)
     const mostVisitedGameRaw = !pageType || pageType === 'product'
@@ -90,8 +93,6 @@ export async function GET(request: NextRequest) {
       `
       : []
     const mostVisitedGame = mostVisitedGameRaw[0] || null
-
-    const developerIdsArray = toTextArray(developerIds)
 
     const visitsOverTime = await prisma.$queryRaw<{ date: string; visits: number }[]>`
       SELECT to_char(date_trunc('day', "createdAt"), 'YYYY-MM-DD') AS date,
