@@ -66,11 +66,15 @@ export function validateEnvironment(): { valid: boolean; errors: string[] } {
     errors.push('DATABASE_URL must be a valid PostgreSQL connection string')
   }
 
-  if (process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.startsWith('http')) {
+  // NEXTAUTH_URL validation - handle quoted values
+  const nextAuthUrl = process.env.NEXTAUTH_URL?.replace(/^["']|["']$/g, '') // Remove quotes
+  if (nextAuthUrl && !nextAuthUrl.startsWith('http')) {
     errors.push('NEXTAUTH_URL must be a valid URL starting with http:// or https://')
   }
 
-  if (process.env.NEXTAUTH_SECRET && process.env.NEXTAUTH_SECRET.length < 32) {
+  // NEXTAUTH_SECRET validation - handle quoted values
+  const nextAuthSecret = process.env.NEXTAUTH_SECRET?.replace(/^["']|["']$/g, '') // Remove quotes
+  if (nextAuthSecret && nextAuthSecret.length < 32) {
     errors.push('NEXTAUTH_SECRET must be at least 32 characters long')
   }
 
@@ -95,16 +99,23 @@ export function getEnv(key: string, defaultValue?: string): string {
 
 /**
  * Initialize and validate environment on module load (only in production)
+ * SECURITY: This runs at module load time, so errors are logged but don't crash the app
+ * to allow for graceful degradation and easier debugging.
  */
 if (process.env.NODE_ENV === 'production') {
-  const validation = validateEnvironment()
-  if (!validation.valid) {
-    console.error('[ENV] Environment validation failed:')
-    validation.errors.forEach((error) => console.error(`[ENV] ${error}`))
-    // Don't throw in production to avoid breaking the app, but log errors
-    // In development, you might want to throw
-  } else {
-    console.log('[ENV] Environment variables validated successfully')
+  try {
+    const validation = validateEnvironment()
+    if (!validation.valid) {
+      console.error('[ENV] Environment validation failed:')
+      validation.errors.forEach((error) => console.error(`[ENV] ${error}`))
+      // Don't throw in production to avoid breaking the app, but log errors
+      // Critical errors will be caught by auth.ts validation
+    } else {
+      console.log('[ENV] Environment variables validated successfully')
+    }
+  } catch (error) {
+    // Catch any errors during validation to prevent app crash
+    console.error('[ENV] Error during environment validation:', error)
   }
 }
 

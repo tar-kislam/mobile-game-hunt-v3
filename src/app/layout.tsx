@@ -8,6 +8,7 @@ import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import "@/lib/jobs/registerNewsletterCron";
 import "@/lib/jobs/registerGameOfDayCron";
 // SECURITY: Validate environment variables on startup
+// Note: env-validation.ts has internal error handling to prevent app crashes
 import "@/lib/env-validation";
 
 const dmMono = DM_Mono({
