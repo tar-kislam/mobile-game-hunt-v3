@@ -41,6 +41,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
     }
 
+    // Check if userActivityEvent model is available
+    if (!prisma.userActivityEvent) {
+      console.error('[ANALYTICS][TRACK] Prisma client not properly initialized - userActivityEvent model not found')
+      return NextResponse.json({ error: 'Analytics service unavailable' }, { status: 503 })
+    }
+
     await prisma.userActivityEvent.create({
       data: {
         userId: session.user.id,

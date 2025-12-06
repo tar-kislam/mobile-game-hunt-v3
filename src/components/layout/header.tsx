@@ -63,6 +63,7 @@ export function Header() {
   const baseNavItems = [
     { label: "Home", href: "/" },
     { label: "All Games", href: "/products" },
+    { label: "Quest", href: "/quest" },
     { label: "Leaderboard", href: "/leaderboard" },
     { label: "Community", href: "/community" },
     { label: "Calendar", href: "/calendar" }
