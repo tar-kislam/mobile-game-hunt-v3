@@ -28,12 +28,20 @@ chmod -R u+rwX,g+rwX /app/.next /app/public/uploads 2>/dev/null || true
 # 
 # With no-new-privileges and cap_drop: ALL, su-exec will likely fail.
 # In that case, we run as root which is safe with these security settings.
+
+# Test if su-exec can actually work (it will fail with no-new-privileges)
 if command -v su-exec >/dev/null 2>&1; then
-  # Try su-exec - if it works, it replaces this process and never returns
-  # If it fails, we fall through to root execution below
-  exec su-exec nextjs:nodejs node server.js 2>&1
+  # Try to test su-exec with a simple command first
+  # If this fails, su-exec won't work and we should skip it
+  if su-exec nextjs:nodejs true 2>/dev/null; then
+    # su-exec works, use it
+    exec su-exec nextjs:nodejs node server.js
+  else
+    # su-exec failed (expected with no-new-privileges), skip it
+    echo "WARNING: su-exec test failed (expected with no-new-privileges), running as root"
+  fi
 fi
 
 # Fallback: run as root (safe with no-new-privileges:true)
-echo "WARNING: Running as root (su-exec unavailable or failed, no-new-privileges is active)"
+echo "INFO: Running as root (no-new-privileges is active, this is safe)"
 exec node server.js
