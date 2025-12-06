@@ -46,17 +46,6 @@ Update `.env` with your PostgreSQL database URL and authentication secrets:
 DATABASE_URL="postgresql://username:password@localhost:5432/mobile_game_hunt_db"
 NEXTAUTH_SECRET="your-secret-here"
 NEXTAUTH_URL="http://localhost:3000"
-
-# Optional – enable automated Game of the Day tweets
-TWITTER_AUTOMATION_ENABLED="false"
-TWITTER_API_KEY=""
-TWITTER_API_SECRET=""
-TWITTER_ACCESS_TOKEN=""
-TWITTER_ACCESS_SECRET=""
-GAME_OF_DAY_TIMEZONE="Europe/Istanbul"
-GAME_OF_DAY_CRON="0 19 * * *"
-# Optional manual trigger protection
-SOCIAL_AUTOMATION_TOKEN=""
 ```
 
 ### 2. Database Setup

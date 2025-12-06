@@ -6,7 +6,6 @@ import { generateOrganizationJsonLd } from "@/lib/seo";
 import { FALLBACK_OG_IMAGE, getSiteBaseUrl, toAbsoluteUrl } from "@/lib/image-utils";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import "@/lib/jobs/registerNewsletterCron";
-import "@/lib/jobs/registerGameOfDayCron";
 // SECURITY: Validate environment variables on startup
 // Note: env-validation.ts has internal error handling to prevent app crashes
 import "@/lib/env-validation";
