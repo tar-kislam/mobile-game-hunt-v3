@@ -141,7 +141,8 @@ export async function GET(request: NextRequest) {
     
     if (!pageType || pageType === 'product') {
       try {
-        // Use Prisma.sql for date parameters to ensure proper formatting
+        // Use split_part instead of REGEXP_REPLACE for better compatibility
+        // Extract slug from path like '/product/slug-name' -> 'slug-name'
         mostVisitedGameRaw = await prisma.$queryRaw<Array<{
           productId: string
           slug: string
@@ -150,16 +151,13 @@ export async function GET(request: NextRequest) {
         }>>`
           WITH product_visits AS (
             SELECT 
-              CASE 
-                WHEN e."path" ~ '^/product/[^/]+/?$' THEN
-                  REGEXP_REPLACE(REGEXP_REPLACE(e."path", '^/product/', ''), '/.*$', '')
-                ELSE ''
-              END AS slug,
+              TRIM(BOTH '/' FROM split_part(split_part(e."path", '/product/', 2), '/', 1)) AS slug,
               COUNT(*)::int AS visits
             FROM "UserActivityEvent" e
             WHERE e."userId" = ANY(${developerIdsArray})
               AND e."createdAt" >= ${fromDate}
               AND e."createdAt" <= ${toDate}
+              AND e."path" LIKE '/product/%'
               AND (e."pageType" = 'product' OR e."path" ~ '^/product/[^/]+/?$')
             GROUP BY slug
             HAVING slug != '' AND slug IS NOT NULL
