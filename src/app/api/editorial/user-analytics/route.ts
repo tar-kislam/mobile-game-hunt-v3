@@ -141,6 +141,7 @@ export async function GET(request: NextRequest) {
     
     if (!pageType || pageType === 'product') {
       try {
+        // Use Prisma.sql for date parameters to ensure proper formatting
         mostVisitedGameRaw = await prisma.$queryRaw<Array<{
           productId: string
           slug: string
@@ -149,14 +150,19 @@ export async function GET(request: NextRequest) {
         }>>`
           WITH product_visits AS (
             SELECT 
-              REGEXP_REPLACE(REGEXP_REPLACE(e."path", '^/product/', ''), '/.*$', '') AS slug,
+              CASE 
+                WHEN e."path" ~ '^/product/[^/]+/?$' THEN
+                  REGEXP_REPLACE(REGEXP_REPLACE(e."path", '^/product/', ''), '/.*$', '')
+                ELSE ''
+              END AS slug,
               COUNT(*)::int AS visits
             FROM "UserActivityEvent" e
             WHERE e."userId" = ANY(${developerIdsArray})
-              AND e."createdAt" BETWEEN ${fromDate} AND ${toDate}
+              AND e."createdAt" >= ${fromDate}
+              AND e."createdAt" <= ${toDate}
               AND (e."pageType" = 'product' OR e."path" ~ '^/product/[^/]+/?$')
             GROUP BY slug
-            HAVING slug != ''
+            HAVING slug != '' AND slug IS NOT NULL
           )
           SELECT 
             p.id AS "productId",
@@ -170,6 +176,15 @@ export async function GET(request: NextRequest) {
         `
       } catch (error) {
         console.error('[EDITORIAL][USER_ANALYTICS] Error fetching most visited game:', error)
+        if (error instanceof Error) {
+          console.error('[EDITORIAL][USER_ANALYTICS] Error name:', error.name)
+          console.error('[EDITORIAL][USER_ANALYTICS] Error message:', error.message)
+          console.error('[EDITORIAL][USER_ANALYTICS] Error stack:', error.stack)
+        }
+        if (error && typeof error === 'object' && 'code' in error) {
+          console.error('[EDITORIAL][USER_ANALYTICS] Prisma error code:', (error as any).code)
+          console.error('[EDITORIAL][USER_ANALYTICS] Prisma error meta:', JSON.stringify((error as any).meta, null, 2))
+        }
         // Continue without most visited game data
         mostVisitedGameRaw = []
       }
@@ -184,13 +199,17 @@ export async function GET(request: NextRequest) {
                COUNT(*)::int AS visits
         FROM "UserActivityEvent"
         WHERE "userId" = ANY(${developerIdsArray})
-          AND "createdAt" BETWEEN ${fromDate} AND ${toDate}
+          AND "createdAt" >= ${fromDate}
+          AND "createdAt" <= ${toDate}
           ${pageType ? Prisma.sql`AND "pageType" = ${pageType}` : Prisma.empty}
         GROUP BY 1
         ORDER BY 1
       `
     } catch (error) {
       console.error('[EDITORIAL][USER_ANALYTICS] Error fetching visits over time:', error)
+      if (error instanceof Error) {
+        console.error('[EDITORIAL][USER_ANALYTICS] VisitsOverTime error details:', error.message)
+      }
       visitsOverTime = []
     }
 
@@ -203,7 +222,8 @@ export async function GET(request: NextRequest) {
                AVG("durationSeconds")::float AS "avgDurationSeconds"
         FROM "UserActivityEvent"
         WHERE "userId" = ANY(${developerIdsArray})
-          AND "createdAt" BETWEEN ${fromDate} AND ${toDate}
+          AND "createdAt" >= ${fromDate}
+          AND "createdAt" <= ${toDate}
           ${pageType ? Prisma.sql`AND "pageType" = ${pageType}` : Prisma.empty}
         GROUP BY "path", "pageType"
         ORDER BY visits DESC
@@ -211,6 +231,9 @@ export async function GET(request: NextRequest) {
       `
     } catch (error) {
       console.error('[EDITORIAL][USER_ANALYTICS] Error fetching top pages:', error)
+      if (error instanceof Error) {
+        console.error('[EDITORIAL][USER_ANALYTICS] TopPages error details:', error.message)
+      }
       topPages = []
     }
 
@@ -228,7 +251,8 @@ export async function GET(request: NextRequest) {
         FROM "UserActivityEvent" e
         JOIN "User" u ON u.id = e."userId"
         WHERE e."userId" = ANY(${developerIdsArray})
-          AND e."createdAt" BETWEEN ${fromDate} AND ${toDate}
+          AND e."createdAt" >= ${fromDate}
+          AND e."createdAt" <= ${toDate}
           ${pageType ? Prisma.sql`AND e."pageType" = ${pageType}` : Prisma.empty}
         GROUP BY u.id
         ORDER BY "totalVisits" DESC
@@ -236,6 +260,14 @@ export async function GET(request: NextRequest) {
       `
     } catch (error) {
       console.error('[EDITORIAL][USER_ANALYTICS] Error fetching user stats:', error)
+      if (error instanceof Error) {
+        console.error('[EDITORIAL][USER_ANALYTICS] UserStats error name:', error.name)
+        console.error('[EDITORIAL][USER_ANALYTICS] UserStats error message:', error.message)
+      }
+      if (error && typeof error === 'object' && 'code' in error) {
+        console.error('[EDITORIAL][USER_ANALYTICS] UserStats Prisma error code:', (error as any).code)
+        console.error('[EDITORIAL][USER_ANALYTICS] UserStats Prisma error meta:', JSON.stringify((error as any).meta, null, 2))
+      }
       throw error
     }
 
@@ -244,9 +276,10 @@ export async function GET(request: NextRequest) {
     let userTopPages: { userId: string; path: string; visits: number }[] = []
     if (pageUserIds.length > 0) {
       try {
+        const pageUserIdsArray = toTextArray(pageUserIds)
         userTopPages = await prisma.$queryRaw<{ userId: string; path: string; visits: number }[]>`
           WITH selected_users AS (
-            SELECT unnest(${toTextArray(pageUserIds)}) AS id
+            SELECT unnest(${pageUserIdsArray}) AS id
           )
           SELECT "userId",
                  "path",
@@ -258,7 +291,8 @@ export async function GET(request: NextRequest) {
                    ROW_NUMBER() OVER (PARTITION BY e."userId" ORDER BY COUNT(*) DESC) AS row_rank
             FROM "UserActivityEvent" e
             WHERE e."userId" IN (SELECT id FROM selected_users)
-              AND e."createdAt" BETWEEN ${fromDate} AND ${toDate}
+              AND e."createdAt" >= ${fromDate}
+              AND e."createdAt" <= ${toDate}
               ${pageType ? Prisma.sql`AND e."pageType" = ${pageType}` : Prisma.empty}
             GROUP BY e."userId", e."path"
           ) ranked
@@ -267,6 +301,9 @@ export async function GET(request: NextRequest) {
         `
       } catch (error) {
         console.error('[EDITORIAL][USER_ANALYTICS] Error fetching user top pages:', error)
+        if (error instanceof Error) {
+          console.error('[EDITORIAL][USER_ANALYTICS] UserTopPages error details:', error.message)
+        }
         // Continue without user top pages data
         userTopPages = []
       }
