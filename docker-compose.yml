@@ -72,6 +72,17 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    # SECURITY: Additional hardening options (commented out to avoid breaking current deployment)
+    # Uncomment these after testing in staging:
+    # security_opt:
+    #   - no-new-privileges:true
+    # cap_drop:
+    #   - ALL
+    # read_only: true
+    # tmpfs:
+    #   - /tmp
+    #   - /app/.next/cache
+    # Note: read_only requires tmpfs for writable directories. See SECURITY.md for details.
 
   # NGINX Reverse Proxy
   nginx:

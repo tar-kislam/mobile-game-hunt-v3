@@ -100,8 +100,42 @@ Generated on: ${new Date().toLocaleDateString()}
     const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' })
     
     // Save zip file to public directory
+    // SECURITY: gameId is validated from database query (user owns the product)
+    // SECURITY: Use timestamp to ensure unique filename and prevent overwrites
     const fileName = `press-kit-${gameId}-${Date.now()}.zip`
-    const filePath = path.join(process.cwd(), 'public', 'press-kits', fileName)
+    
+    // SECURITY: Use path.join with fixed directory to prevent path traversal
+    const pressKitsDir = path.join(process.cwd(), 'public', 'press-kits')
+    const filePath = path.join(pressKitsDir, fileName)
+    
+    // SECURITY: Verify the resolved path is still within pressKitsDir (prevent path traversal)
+    const resolvedPath = path.resolve(filePath)
+    const resolvedDir = path.resolve(pressKitsDir)
+    if (!resolvedPath.startsWith(resolvedDir)) {
+      // Log security event
+      const { logSecurityEvent, extractIp, extractUserAgent } = await import('@/lib/security-monitor')
+      await logSecurityEvent({
+        type: 'PATH_TRAVERSAL_ATTEMPT',
+        severity: 'high',
+        message: 'Path traversal attempt detected in press kit generation',
+        details: {
+          attemptedPath: filePath,
+          resolvedPath,
+          baseDir: resolvedDir,
+          gameId,
+          userId: session.user.id,
+        },
+        ip: extractIp(request),
+        userAgent: extractUserAgent(request),
+        path: '/api/presskit/generate',
+        userId: session.user.id,
+      })
+      
+      return NextResponse.json(
+        { error: 'Invalid file path' },
+        { status: 400 }
+      )
+    }
     
     // Ensure directory exists
     const dir = path.dirname(filePath)

@@ -41,22 +41,75 @@ export async function PATCH(req: NextRequest) {
     if (data.email !== undefined) updateData.email = data.email
 
     // If image is a data URL, store to /public/uploads/users
+    // SECURITY: Validate file extension to prevent path traversal and malicious file types
     if (data.image) {
       if (data.image.startsWith('data:image')) {
         const match = data.image.match(/^data:(image\/\w+);base64,(.*)$/)
         if (match) {
-          const ext = match[1].split('/')[1]
-          const buffer = Buffer.from(match[2], 'base64')
+          const mimeType = match[1]
+          const base64Data = match[2]
+          
+          // SECURITY: Whitelist allowed image types only
+          const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp']
+          if (!allowedMimeTypes.includes(mimeType)) {
+            return NextResponse.json({ error: 'Invalid image type. Only JPEG, PNG, and WEBP are allowed.' }, { status: 400 })
+          }
+          
+          // SECURITY: Map MIME type to safe file extension (no user input in extension)
+          const extMap: Record<string, string> = {
+            'image/jpeg': 'jpg',
+            'image/png': 'png',
+            'image/webp': 'webp'
+          }
+          const ext = extMap[mimeType] || 'jpg'
+          
+          // SECURITY: Validate base64 data size (max 5MB)
+          const buffer = Buffer.from(base64Data, 'base64')
+          if (buffer.length > 5 * 1024 * 1024) {
+            return NextResponse.json({ error: 'Image too large. Maximum size is 5MB.' }, { status: 400 })
+          }
+          
           const fs = await import('fs')
           const path = await import('path')
+          
+          // SECURITY: Use path.join with fixed directory to prevent path traversal
           const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'users')
           if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true })
+          
+          // SECURITY: Filename uses only session.user.id (validated) and whitelisted extension
           const filename = `${session.user.id}.${ext}`
           const filepath = path.join(uploadsDir, filename)
+          
+          // SECURITY: Verify the resolved path is still within uploadsDir (prevent path traversal)
+          const resolvedPath = path.resolve(filepath)
+          const resolvedDir = path.resolve(uploadsDir)
+          if (!resolvedPath.startsWith(resolvedDir)) {
+            // Log security event
+            const { logSecurityEvent, extractIp, extractUserAgent } = await import('@/lib/security-monitor')
+            await logSecurityEvent({
+              type: 'PATH_TRAVERSAL_ATTEMPT',
+              severity: 'high',
+              message: 'Path traversal attempt detected in user avatar upload',
+              details: {
+                attemptedPath: filepath,
+                resolvedPath,
+                baseDir: resolvedDir,
+                userId: session.user.id,
+              },
+              ip: extractIp(req),
+              userAgent: extractUserAgent(req),
+              path: '/api/user/update',
+              userId: session.user.id,
+            })
+            
+            return NextResponse.json({ error: 'Invalid file path' }, { status: 400 })
+          }
+          
           fs.writeFileSync(filepath, buffer)
           updateData.image = `/uploads/users/${filename}`
         }
       } else if (data.image.startsWith('/uploads/') || data.image.startsWith('http')) {
+        // SECURITY: Only allow paths starting with /uploads/ or http(s) URLs
         updateData.image = data.image
       }
     }

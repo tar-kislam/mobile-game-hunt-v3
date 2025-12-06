@@ -827,6 +827,219 @@ const renderSocialCard = (card: { name: string; handle: string; url: string; ico
   </table>
 `
 
+// Security Alert Email HTML Template
+const getSecurityAlertEmailHTML = (data: {
+  eventType: string
+  severity: string
+  message: string
+  details?: Record<string, any>
+  ip?: string
+  userId?: string
+  path?: string
+  timestamp: Date
+  count?: number
+}) => {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'
+  const severityColors: Record<string, string> = {
+    critical: '#ef4444',
+    high: '#f97316',
+    medium: '#eab308',
+    low: '#3b82f6',
+  }
+  const color = severityColors[data.severity] || '#6b7280'
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Security Alert - ${data.eventType}</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: #0b0c10;
+      color: #f5f5f5;
+    }
+    .wrapper {
+      width: 100%;
+      padding: 24px 12px;
+      box-sizing: border-box;
+    }
+    .card {
+      max-width: 640px;
+      margin: 0 auto;
+      background: #11131a;
+      border-radius: 16px;
+      padding: 24px 20px 20px;
+      box-sizing: border-box;
+      border: 1px solid ${color}40;
+    }
+    .header {
+      border-left: 4px solid ${color};
+      padding-left: 12px;
+      margin-bottom: 20px;
+    }
+    .severity-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      background: ${color}20;
+      color: ${color};
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 20px;
+      margin: 0 0 8px 0;
+      color: ${color};
+    }
+    .event-type {
+      font-size: 14px;
+      color: #9ca3af;
+      font-family: monospace;
+      margin: 0;
+    }
+    .details {
+      background: #1a1d26;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+    .detail-label {
+      color: #9ca3af;
+      font-weight: 500;
+    }
+    .detail-value {
+      color: #f5f5f5;
+      font-family: monospace;
+      word-break: break-all;
+    }
+    .message {
+      background: ${color}15;
+      border-left: 3px solid ${color};
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin: 16px 0;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .footer {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 20px;
+      text-align: center;
+    }
+    .timestamp {
+      color: #9ca3af;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+      <div class="header">
+        <span class="severity-badge">${data.severity}</span>
+        <h1>🚨 Security Alert</h1>
+        <p class="event-type">${data.eventType}</p>
+      </div>
+      
+      <div class="message">
+        ${data.message}
+        ${data.count ? `<br><strong>Count: ${data.count} events in time window</strong>` : ''}
+      </div>
+      
+      <div class="details">
+        ${data.path ? `<div class="detail-row"><span class="detail-label">Path:</span><span class="detail-value">${data.path}</span></div>` : ''}
+        ${data.ip ? `<div class="detail-row"><span class="detail-label">IP Address:</span><span class="detail-value">${data.ip}</span></div>` : ''}
+        ${data.userId ? `<div class="detail-row"><span class="detail-label">User ID:</span><span class="detail-value">${data.userId}</span></div>` : ''}
+        <div class="detail-row"><span class="detail-label">Timestamp:</span><span class="detail-value">${data.timestamp.toISOString()}</span></div>
+        ${data.details && Object.keys(data.details).length > 0 ? `
+          <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <div style="color: #9ca3af; font-weight: 500; margin-bottom: 8px;">Additional Details:</div>
+            ${Object.entries(data.details).map(([key, value]) => `
+              <div class="detail-row">
+                <span class="detail-label">${key}:</span>
+                <span class="detail-value">${typeof value === 'object' ? JSON.stringify(value) : String(value)}</span>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+      </div>
+      
+      <div class="footer">
+        <p>This is an automated security alert from MobileGameHunt.</p>
+        <p class="timestamp">Alert generated at ${data.timestamp.toISOString()}</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+`
+}
+
+export async function sendSecurityAlertEmail(
+  data: {
+    eventType: string
+    severity: string
+    message: string
+    details?: Record<string, any>
+    ip?: string
+    userId?: string
+    path?: string
+    timestamp: Date
+    count?: number
+  },
+  to: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log(`[SECURITY][EMAIL] Sending security alert to: ${to}`)
+    
+    const transporter = getTransporter()
+    if (!transporter) {
+      const error = 'SMTP not configured'
+      console.error(`[SECURITY][EMAIL] ${error}`)
+      return { success: false, error }
+    }
+
+    const html = getSecurityAlertEmailHTML(data)
+    const from = process.env.SMTP_FROM || 'security@mobilegamehunt.com'
+    
+    const mailOptions = {
+      from: `"MobileGameHunt Security" <${from}>`,
+      to,
+      subject: `🚨 [${data.severity.toUpperCase()}] Security Alert: ${data.eventType}`,
+      html,
+      text: `Security Alert: ${data.eventType}\n\nSeverity: ${data.severity}\nMessage: ${data.message}\n\nDetails:\n${JSON.stringify(data.details || {}, null, 2)}\n\nIP: ${data.ip || 'unknown'}\nUser ID: ${data.userId || 'unknown'}\nPath: ${data.path || 'unknown'}\nTimestamp: ${data.timestamp.toISOString()}`,
+    }
+
+    const result = await transporter.sendMail(mailOptions)
+    console.log(`[SECURITY][EMAIL] Security alert sent successfully to ${to}. MessageId: ${result.messageId}`)
+    
+    return { success: true }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error(`[SECURITY][EMAIL] Failed to send security alert to ${to}:`, errorMessage)
+    return { success: false, error: errorMessage }
+  }
+}
+
 export async function sendSocialPromoEmail(to: string, displayName: string): Promise<{ success: boolean; error?: string }> {
   try {
     console.log(`[EMAIL] Sending social promo email to: ${to}`)

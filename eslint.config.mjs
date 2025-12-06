@@ -34,6 +34,41 @@ const eslintConfig = [
       "@typescript-eslint/no-unused-vars": "warn",
       "@next/next/no-page-custom-font": "warn",
       "@typescript-eslint/no-empty-object-type": "warn",
+      
+      // SECURITY: Prevent dangerous patterns
+      // Note: These rules warn on usage - review any warnings carefully
+      "no-eval": "error", // Prevent eval() usage
+      "no-implied-eval": "error", // Prevent setTimeout/setInterval with strings
+      "@typescript-eslint/no-implied-eval": "error", // TypeScript version
+    },
+  },
+  {
+    // SECURITY: Custom rule to warn on child_process usage
+    // This helps catch potential command injection vulnerabilities
+    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+    rules: {
+      "no-restricted-imports": [
+        "warn",
+        {
+          patterns: [
+            {
+              group: ["child_process"],
+              message: "SECURITY: child_process usage detected. Ensure all inputs are validated and use spawn() with shell: false. See SECURITY.md for guidelines.",
+            },
+          ],
+        },
+      ],
+      "no-restricted-syntax": [
+        "warn",
+        {
+          selector: "CallExpression[callee.name='exec']",
+          message: "SECURITY: exec() can be dangerous. Use spawn() with shell: false and validate all inputs. See SECURITY.md for guidelines.",
+        },
+        {
+          selector: "CallExpression[callee.name='execSync']",
+          message: "SECURITY: execSync() can be dangerous. Use spawn() with shell: false and validate all inputs. See SECURITY.md for guidelines.",
+        },
+      ],
     },
   },
 ];

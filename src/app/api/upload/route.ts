@@ -98,6 +98,34 @@ export async function POST(request: NextRequest) {
 
     const filename = generateWebpFilename(file.name)
     const filePath = path.join(uploadsDir, filename)
+    
+    // SECURITY: Verify the resolved path is still within uploadsDir (prevent path traversal)
+    const resolvedPath = path.resolve(filePath)
+    const resolvedDir = path.resolve(uploadsDir)
+    if (!resolvedPath.startsWith(resolvedDir)) {
+      // Log security event
+      const { logSecurityEvent, extractIp, extractUserAgent } = await import('@/lib/security-monitor')
+      await logSecurityEvent({
+        type: 'PATH_TRAVERSAL_ATTEMPT',
+        severity: 'high',
+        message: 'Path traversal attempt detected in file upload',
+        details: {
+          attemptedPath: filePath,
+          resolvedPath,
+          baseDir: resolvedDir,
+          filename: file.name,
+        },
+        ip: extractIp(request),
+        userAgent: extractUserAgent(request),
+        path: '/api/upload',
+      })
+      
+      return NextResponse.json({ 
+        ok: false, 
+        success: false,
+        error: 'Invalid file path' 
+      }, { status: 400 })
+    }
 
     await fs.writeFile(filePath, webpBuffer)
 

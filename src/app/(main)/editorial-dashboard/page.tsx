@@ -10,9 +10,10 @@ import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Download, GamepadIcon, Mail, Star, MessageCircle, TrendingUp, Users, List, Share2, Trash2, TestTube, BarChart3 } from 'lucide-react'
+import { Download, GamepadIcon, Mail, Star, MessageCircle, TrendingUp, Users, List, Share2, Trash2, TestTube, BarChart3, Shield } from 'lucide-react'
 import { SocialPlatformIcon } from '@/components/ui/social-platform-icons'
 import { UserAnalyticsDashboard } from '@/components/editorial/user-analytics-dashboard'
+import { SecurityMonitoringDashboard } from '@/components/editorial/security-monitoring-dashboard'
 import { toast } from 'sonner'
 import DarkVeil from '@/components/DarkVeil'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -54,7 +55,7 @@ interface User {
   createdAt: string
 }
 
-type ActiveSection = 'games' | 'newsletter' | 'campaigns' | 'users' | 'submitted-games' | 'test' | 'user-analytics'
+type ActiveSection = 'games' | 'newsletter' | 'campaigns' | 'users' | 'submitted-games' | 'test' | 'user-analytics' | 'security-monitoring'
 
 type TestCampaignType = 'social-promo' | 'welcome' | 'weekly' | 'latest' | 'feedback'
 
@@ -875,6 +876,18 @@ export default function EditorialDashboard() {
                 >
                   <BarChart3 className="w-4 h-4 mr-2" />
                   User Analytics
+                </Button>
+                <Button
+                  variant={activeSection === 'security-monitoring' ? 'default' : 'ghost'}
+                  className={`w-full justify-start ${
+                    activeSection === 'security-monitoring' 
+                      ? 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700' 
+                      : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  }`}
+                  onClick={() => setActiveSection('security-monitoring')}
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Security Monitoring
                 </Button>
               </CardContent>
             </Card>
@@ -1945,6 +1958,14 @@ export default function EditorialDashboard() {
               <Card className="bg-zinc-900/40 backdrop-blur-md border border-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]">
                 <CardContent className="p-6">
                   <UserAnalyticsDashboard />
+                </CardContent>
+              </Card>
+            )}
+
+            {activeSection === 'security-monitoring' && (
+              <Card className="bg-zinc-900/40 backdrop-blur-md border border-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]">
+                <CardContent className="p-6">
+                  <SecurityMonitoringDashboard />
                 </CardContent>
               </Card>
             )}
