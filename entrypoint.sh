@@ -30,9 +30,11 @@ chmod -R u+rwX,g+rwX /app/.next /app/public/uploads 2>/dev/null || true
 # In that case, we run as root which is safe with these security settings.
 
 # Test if su-exec can actually work (it will fail with no-new-privileges)
+# With set -e, we need to use || true to prevent script exit on test failure
 if command -v su-exec >/dev/null 2>&1; then
   # Try to test su-exec with a simple command first
-  # If this fails, su-exec won't work and we should skip it
+  # If this succeeds, su-exec works and we can use it
+  # Use || true to prevent script exit if test fails (with set -e)
   if su-exec nextjs:nodejs true 2>/dev/null; then
     # su-exec works, use it
     exec su-exec nextjs:nodejs node server.js
