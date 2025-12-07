@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma'
 import { ProductFullInput } from '@/lib/schemas/product'
 import { awardXP } from '@/lib/xpService'
 import { sendNewGameEmail } from '@/lib/newsletter'
+import { generateSlug, generateUniqueSlug } from '@/lib/slug'
 
 const PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://mobilegamehunt.com'
 
@@ -445,17 +446,17 @@ export async function submitApprovalAction(data: ProductFullInput) {
       })
     }
 
-    // Generate slug from title
-    const slug = data.title
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .trim()
+    // Generate unique slug from title
+    const baseSlug = generateSlug(data.title)
+    const existingSlugs = await prisma.product.findMany({
+      select: { slug: true }
+    }).then(products => products.map(p => p.slug))
+    const uniqueSlug = generateUniqueSlug(baseSlug, existingSlugs)
 
     const product = await prisma.product.create({
       data: {
         title: data.title,
-        slug: slug,
+        slug: uniqueSlug,
         tagline: data.tagline,
         description: data.description,
         url: data.iosUrl || data.androidUrl || '', // Use one of the URLs as the primary URL

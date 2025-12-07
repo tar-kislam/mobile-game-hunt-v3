@@ -90,10 +90,25 @@ export async function POST(request: NextRequest) {
     const start = Date.now()
     let webpBuffer: Buffer
     try {
+      // Check if sharp is available
+      if (!sharp) {
+        console.error('❌ Sharp is not installed')
+        return NextResponse.json({ 
+          ok: false, 
+          success: false, 
+          error: 'Image processing service unavailable. Please contact support.' 
+        }, { status: 500 })
+      }
+      
       webpBuffer = await sharp(buffer).webp({ quality: 85 }).toBuffer()
     } catch (err) {
       console.error('❌ Image conversion failed:', err)
-      return NextResponse.json({ ok: false, success: false, error: 'Image conversion failed' }, { status: 500 })
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      return NextResponse.json({ 
+        ok: false, 
+        success: false, 
+        error: `Image conversion failed: ${errorMessage}` 
+      }, { status: 500 })
     }
 
     const filename = generateWebpFilename(file.name)
@@ -103,22 +118,27 @@ export async function POST(request: NextRequest) {
     const resolvedPath = path.resolve(filePath)
     const resolvedDir = path.resolve(uploadsDir)
     if (!resolvedPath.startsWith(resolvedDir)) {
-      // Log security event
-      const { logSecurityEvent, extractIp, extractUserAgent } = await import('@/lib/security-monitor')
-      await logSecurityEvent({
-        type: 'PATH_TRAVERSAL_ATTEMPT',
-        severity: 'high',
-        message: 'Path traversal attempt detected in file upload',
-        details: {
-          attemptedPath: filePath,
-          resolvedPath,
-          baseDir: resolvedDir,
-          filename: file.name,
-        },
-        ip: extractIp(request),
-        userAgent: extractUserAgent(request),
-        path: '/api/upload',
-      })
+      // Log security event (fail gracefully if security monitor fails)
+      try {
+        const { logSecurityEvent, extractIp, extractUserAgent } = await import('@/lib/security-monitor')
+        await logSecurityEvent({
+          type: 'PATH_TRAVERSAL_ATTEMPT',
+          severity: 'high',
+          message: 'Path traversal attempt detected in file upload',
+          details: {
+            attemptedPath: filePath,
+            resolvedPath,
+            baseDir: resolvedDir,
+            filename: file.name,
+          },
+          ip: extractIp(request),
+          userAgent: extractUserAgent(request),
+          path: '/api/upload',
+        })
+      } catch (securityError) {
+        console.error('⚠️ Security monitor failed:', securityError)
+        // Continue with error response even if security logging fails
+      }
       
       return NextResponse.json({ 
         ok: false, 
@@ -157,11 +177,22 @@ export async function POST(request: NextRequest) {
       }, { status: 499 }) // Client Closed Request
     }
     
-    console.error('❌ POST /api/upload error:', error)
+    // Log detailed error for debugging
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : undefined
+    console.error('❌ POST /api/upload error:', {
+      message: errorMessage,
+      stack: errorStack,
+      error
+    })
+    
+    // Return more informative error message
     return NextResponse.json({ 
       ok: false, 
       success: false, // For backward compatibility
-      error: 'Upload failed' 
+      error: process.env.NODE_ENV === 'development' 
+        ? `Upload failed: ${errorMessage}` 
+        : 'Upload failed. Please try again or contact support.' 
     }, { status: 500 })
   }
 }

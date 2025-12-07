@@ -3,12 +3,11 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ExternalLink, Play, RotateCcw, Share2, ArrowUpIcon, MessageCircleIcon } from "lucide-react"
+import { ExternalLink, Play, RotateCcw, ArrowUpIcon, MessageCircleIcon } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { useState } from "react"
-import { ShareQuizModal } from "./share-quiz-modal"
 
 interface QuizResult {
   id: string
@@ -130,8 +129,7 @@ export function QuizResults({ results, onRetake }: QuizResultsProps) {
 
   const iconVariants = {
     rest: { rotate: 0 },
-    hover: { rotate: 180, transition: { duration: 0.3 } },
-    shareHover: { rotate: [0, -10, 10, -10, 0], transition: { duration: 0.5 } }
+    hover: { rotate: 180, transition: { duration: 0.3 } }
   }
 
   return (
@@ -160,14 +158,14 @@ export function QuizResults({ results, onRetake }: QuizResultsProps) {
         </motion.p>
       </motion.div>
 
-      {/* Action Buttons with animations */}
+      {/* Action Button with animations */}
       <motion.div 
-        className="flex flex-wrap justify-center gap-4 mb-8"
+        className="flex justify-center mb-8"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* Retake Button - Futuristic Glassmorphism Style */}
+        {/* Retake Button - Futuristic Glassmorphism Style - Centered */}
         <motion.div
           variants={buttonVariants}
           whileHover="hover"
@@ -220,68 +218,9 @@ export function QuizResults({ results, onRetake }: QuizResultsProps) {
               <RotateCcw className="w-5 h-5 mr-3 text-purple-300 group-hover:text-purple-200 transition-colors" />
             </motion.div>
             <span className="relative z-10 font-bold text-white text-lg tracking-wide group-hover:text-purple-100 transition-colors">
-              Retake Quest
+              Go Another Quest
             </span>
           </Button>
-        </motion.div>
-
-        {/* Share Button - Futuristic with Modal */}
-        <motion.div
-          variants={buttonVariants}
-          whileHover="hover"
-          whileTap="tap"
-          onHoverStart={() => setHoveredButton('share')}
-          onHoverEnd={() => setHoveredButton(null)}
-        >
-          <ShareQuizModal currentUrl={quizUrl}>
-            <Button
-              variant="outline"
-              className="relative group px-8 py-4 rounded-2xl overflow-hidden transition-all duration-500 backdrop-blur-xl cursor-pointer"
-              style={{
-                background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%)',
-                border: '2px solid rgba(236, 72, 153, 0.4)',
-                boxShadow: '0 8px 32px rgba(236, 72, 153, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-              }}
-            >
-              {/* Animated gradient overlay */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-pink-600/20 via-purple-600/20 to-pink-600/20"
-                animate={{
-                  backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: 'linear'
-                }}
-                style={{
-                  backgroundSize: '200% 100%'
-                }}
-              />
-              
-              {/* Holographic shimmer effect */}
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000 skew-x-12" />
-              
-              {/* Neon glow on hover */}
-              <motion.div
-                className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                style={{
-                  boxShadow: '0 0 30px rgba(236, 72, 153, 0.6), 0 0 60px rgba(168, 85, 247, 0.4)'
-                }}
-              />
-              
-              <motion.div
-                variants={iconVariants}
-                animate={hoveredButton === 'share' ? 'shareHover' : 'rest'}
-                className="inline-block relative z-10"
-              >
-                <Share2 className="w-5 h-5 mr-3 text-pink-300 group-hover:text-pink-200 transition-colors" />
-              </motion.div>
-              <span className="relative z-10 font-bold text-white text-lg tracking-wide group-hover:text-pink-100 transition-colors">
-                Share Quest
-              </span>
-            </Button>
-          </ShareQuizModal>
         </motion.div>
       </motion.div>
 
@@ -316,17 +255,6 @@ export function QuizResults({ results, onRetake }: QuizResultsProps) {
           <p className="text-base text-gray-500 mb-8 max-w-md mx-auto">
             Don't worry though - maybe your preferences are just too cool for the rest of us! 😎
           </p>
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Button
-              onClick={onRetake}
-              className="px-8 py-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-xl text-lg transition-all duration-300 shadow-lg"
-            >
-              Try Different Answers
-            </Button>
-          </motion.div>
         </motion.div>
       ) : (
         <>

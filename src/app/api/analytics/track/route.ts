@@ -47,7 +47,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Analytics service unavailable' }, { status: 503 })
     }
 
-    await prisma.userActivityEvent.create({
+    try {
+      await prisma.userActivityEvent.create({
       data: {
         userId: session.user.id,
         sessionId: payload!.sessionId!,
@@ -58,12 +59,25 @@ export async function POST(request: NextRequest) {
         userAgent: payload?.userAgent || request.headers.get('user-agent') || null,
         country: payload?.country || request.headers.get('x-vercel-ip-country') || null
       }
-    })
+      })
+    } catch (dbError: any) {
+      // Check if the error is due to missing table
+      if (dbError?.code === 'P2021' || dbError?.message?.includes('does not exist')) {
+        console.error('[ANALYTICS][TRACK] UserActivityEvent table does not exist. Run migrations:', dbError.message)
+        // Fail gracefully - don't break the app if analytics table is missing
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Analytics table not found. Please run database migrations.' 
+        }, { status: 503 })
+      }
+      throw dbError // Re-throw other errors
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[ANALYTICS][TRACK] Failed to record activity', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    // Return success to avoid breaking user experience, but log the error
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
   }
 }
 

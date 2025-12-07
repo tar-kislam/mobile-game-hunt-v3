@@ -10,6 +10,7 @@ export type QuizAnswerEffect = {
 export interface QuizOption {
   id: string
   label: string
+  description?: string  // Optional description/subtitle for options
   effects: QuizAnswerEffect[]
 }
 
@@ -274,102 +275,41 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 'monetization',
-    title: 'Monetization preference?',
+    title: 'What\'s your wallet saying? 💰',
+    helperText: 'Choose how you like to spend (or not spend) your coins',
     options: [
       {
         id: 'free',
-        label: 'Free-to-play',
+        label: 'Free',
+        description: 'Completely free to play, freemium, or ad-supported games',
         effects: [
           {
-            filters: { monetization: 'FREE' },
+            // Match FREE, FREEMIUM, or ADS_SUPPORTED monetization
+            // We'll handle this in the recommendation logic
+            filters: { monetization: ['FREE', 'FREEMIUM', 'ADS_SUPPORTED'] },
             weightBoost: 1.5
           }
         ]
       },
       {
         id: 'premium',
-        label: 'Premium / One-time purchase is OK',
+        label: 'Paid',
+        description: 'One-time purchase required',
         effects: [
           {
-            filters: { monetization: 'PAID', pricing: 'PAID' },
+            filters: { monetization: 'PAID' },
             weightBoost: 1.3
           }
         ]
       },
       {
-        id: 'freemium',
-        label: 'Freemium (has in-app purchases)',
+        id: 'subscription',
+        label: 'Subscription',
+        description: 'Monthly or yearly subscription model',
         effects: [
           {
-            filters: { monetization: 'FREEMIUM' },
+            filters: { monetization: 'SUBSCRIPTION' },
             weightBoost: 1.2
-          }
-        ]
-      },
-      {
-        id: 'ads-ok',
-        label: "I don't mind ads as long as the game is good",
-        effects: [
-          {
-            filters: { monetization: 'ADS_SUPPORTED' },
-            weightBoost: 1.0
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'features',
-    title: 'Which features are important?',
-    helperText: 'Matches based on gamification tags from submissions',
-    options: [
-      {
-        id: 'achievements',
-        label: 'Achievements and badges',
-        effects: [
-          {
-            addTags: ['achievements', 'badges'],
-            weightBoost: 1.2
-          }
-        ]
-      },
-      {
-        id: 'social',
-        label: 'Social features and multiplayer',
-        effects: [
-          {
-            addTags: ['social', 'multiplayer', 'cooperative'],
-            weightBoost: 1.3
-          }
-        ]
-      },
-      {
-        id: 'competitive',
-        label: 'Competitive (leaderboard, PvP)',
-        effects: [
-          {
-            addTags: ['competitive', 'leaderboards', 'pvp'],
-            weightBoost: 1.3
-          }
-        ]
-      },
-      {
-        id: 'story',
-        label: 'Story-focused',
-        effects: [
-          {
-            addTags: ['story', 'story-rich', 'narrative'],
-            weightBoost: 1.2
-          }
-        ]
-      },
-      {
-        id: 'customization',
-        label: 'Customization and collectibles',
-        effects: [
-          {
-            addTags: ['customization', 'collectibles'],
-            weightBoost: 1.1
           }
         ]
       }

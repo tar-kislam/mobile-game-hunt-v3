@@ -23,8 +23,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Apply required filters (monetization, pricing)
+    // Handle monetization filter - can be array (for "free" option) or single value
     if (requiredFilters.monetization) {
-      where.monetization = requiredFilters.monetization
+      if (Array.isArray(requiredFilters.monetization)) {
+        // For "free" option: match FREE, FREEMIUM, or ADS_SUPPORTED
+        where.monetization = {
+          in: requiredFilters.monetization
+        }
+      } else {
+        where.monetization = requiredFilters.monetization
+      }
     }
     if (requiredFilters.pricing) {
       where.pricing = requiredFilters.pricing
@@ -168,25 +176,28 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      // 6. MONETIZATION EXACT MATCH (Bonus 2 points)
+      // 6. MONETIZATION MATCHING (Bonus 2 points)
       // This uses the monetization field from submit form
-      if (requiredFilters.monetization && product.monetization === requiredFilters.monetization) {
-        score += 2.0  // Increased from 1.0 - monetization is a strong filter
-      }
+      const monetizationAnswer = answers.find(a => a.questionId === 'monetization')
       
-      // Additional bonus if monetization matches even without required filter
-      if (!requiredFilters.monetization) {
-        // Check if any monetization preference was selected
-        const monetizationAnswer = answers.find(a => a.questionId === 'monetization')
-        if (monetizationAnswer) {
-          const pref = monetizationAnswer.optionId
-          if (pref === 'free' && product.monetization === 'FREE') {
-            score += 1.0
-          } else if (pref === 'premium' && (product.monetization === 'PAID' || product.pricing === 'PAID')) {
-            score += 1.0
-          } else if (pref === 'freemium' && product.monetization === 'FREEMIUM') {
-            score += 1.0
+      if (requiredFilters.monetization) {
+        // Check if product's monetization matches any in the filter array (for "free" option)
+        if (Array.isArray(requiredFilters.monetization)) {
+          if (product.monetization && requiredFilters.monetization.includes(product.monetization)) {
+            score += 2.0  // Strong match for free-related monetization
           }
+        } else if (product.monetization === requiredFilters.monetization) {
+          score += 2.0  // Exact match for paid/subscription
+        }
+      } else if (monetizationAnswer) {
+        // Fallback: check monetization preference even if not in requiredFilters
+        const pref = monetizationAnswer.optionId
+        if (pref === 'free' && product.monetization && ['FREE', 'FREEMIUM', 'ADS_SUPPORTED'].includes(product.monetization)) {
+          score += 1.5  // Bonus for free-related games
+        } else if (pref === 'premium' && (product.monetization === 'PAID' || product.pricing === 'PAID')) {
+          score += 1.0
+        } else if (pref === 'subscription' && product.monetization === 'SUBSCRIPTION') {
+          score += 1.0
         }
       }
 
@@ -238,6 +249,10 @@ export async function POST(request: NextRequest) {
         reasons.push('premium')
       } else if (product.monetization === 'FREEMIUM') {
         reasons.push('freemium')
+      } else if (product.monetization === 'ADS_SUPPORTED') {
+        reasons.push('ad-supported')
+      } else if (product.monetization === 'SUBSCRIPTION') {
+        reasons.push('subscription')
       }
 
       // Add session duration hint based on category

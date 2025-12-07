@@ -188,12 +188,21 @@ export function QuestionStep({
                         />
                       )}
 
-                      <div className="relative z-10 flex items-center justify-between">
-                        <span className={`text-lg font-medium transition-colors ${
-                          isSelected ? 'text-white' : 'text-gray-300 group-hover:text-white'
-                        }`}>
-                          {option.label}
-                        </span>
+                      <div className="relative z-10 flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <span className={`text-lg font-medium transition-colors block mb-1 ${
+                            isSelected ? 'text-white' : 'text-gray-300 group-hover:text-white'
+                          }`}>
+                            {option.label}
+                          </span>
+                          {option.description && (
+                            <span className={`text-sm transition-colors block ${
+                              isSelected ? 'text-gray-300' : 'text-gray-500 group-hover:text-gray-400'
+                            }`}>
+                              {option.description}
+                            </span>
+                          )}
+                        </div>
                         <motion.div
                           initial={false}
                           animate={{
