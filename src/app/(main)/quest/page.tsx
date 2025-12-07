@@ -3,26 +3,14 @@
 import { useState } from "react"
 import { QuizFlow } from "@/components/quiz/QuizFlow"
 import { QuizResults } from "@/components/quiz/QuizResults"
+import { QuestGameResult } from "@/lib/quest/types"
 import { Loader2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 type QuizState = 'intro' | 'questions' | 'loading' | 'results'
 
-interface QuizResult {
-  id: string
-  slug: string
-  title: string
-  tagline?: string | null
-  shortPitch?: string | null
-  thumbnail?: string | null
-  url?: string | null
-  score: number
-  matchedTags: string[]
-  reasons: string[]
-  metrics: {
-    likes: number
-  }
-}
+// Use unified QuestGameResult type
+type QuizResult = QuestGameResult
 
 export default function QuizPage() {
   const [state, setState] = useState<QuizState>('intro')
@@ -38,7 +26,7 @@ export default function QuizPage() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/quiz/recommendations', {
+      const response = await fetch('/api/quest/recommendations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

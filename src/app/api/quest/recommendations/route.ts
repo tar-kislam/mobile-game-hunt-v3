@@ -1,9 +1,4 @@
-/**
- * Legacy endpoint: /api/quiz/recommendations
- * Uses the same unified recommendation logic as /api/quest/recommendations
- * Maintains backward compatibility
- */
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from "next/server"
 import { generateQuestRecommendations } from "@/lib/quest/recommendations"
 
 export async function POST(request: NextRequest) {
@@ -21,10 +16,11 @@ export async function POST(request: NextRequest) {
     const results = await generateQuestRecommendations(answers)
     return NextResponse.json({ results })
   } catch (error) {
-    console.error('[QUIZ] Error generating recommendations:', error)
+    console.error('[QUEST] Error generating recommendations:', error)
     return NextResponse.json(
       { error: 'Failed to generate recommendations' },
       { status: 500 }
     )
   }
 }
+

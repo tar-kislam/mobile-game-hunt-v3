@@ -84,30 +84,86 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(arrayBuffer)
 
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
-    await fs.mkdir(uploadsDir, { recursive: true })
-
-    // Convert to webp using sharp
-    const start = Date.now()
-    let webpBuffer: Buffer
     try {
-      // Check if sharp is available
-      if (!sharp) {
-        console.error('❌ Sharp is not installed')
-        return NextResponse.json({ 
-          ok: false, 
-          success: false, 
-          error: 'Image processing service unavailable. Please contact support.' 
-        }, { status: 500 })
-      }
-      
-      webpBuffer = await sharp(buffer).webp({ quality: 85 }).toBuffer()
-    } catch (err) {
-      console.error('❌ Image conversion failed:', err)
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      await fs.mkdir(uploadsDir, { recursive: true })
+      // Verify directory was created and is writable
+      await fs.access(uploadsDir, fs.constants.W_OK)
+    } catch (dirError) {
+      console.error('❌ Failed to create or access uploads directory:', dirError)
+      const errorMessage = dirError instanceof Error ? dirError.message : 'Unknown error'
       return NextResponse.json({ 
         ok: false, 
         success: false, 
-        error: `Image conversion failed: ${errorMessage}` 
+        error: `Failed to create upload directory: ${errorMessage}` 
+      }, { status: 500 })
+    }
+
+    // Convert to webp using sharp
+    const start = Date.now()
+    let webpBuffer: Buffer | null = null
+    
+    try {
+      // Check if sharp is available and working
+      try {
+        // Test sharp by creating a metadata call
+        await sharp(buffer).metadata()
+        
+        // Sharp is working, convert to WebP
+        webpBuffer = await sharp(buffer).webp({ quality: 85 }).toBuffer()
+      } catch (sharpError) {
+        console.error('❌ Sharp initialization/conversion failed:', sharpError)
+        const errorDetails = sharpError instanceof Error ? sharpError.message : String(sharpError)
+        console.error('❌ Sharp error details:', {
+          message: errorDetails,
+          stack: sharpError instanceof Error ? sharpError.stack : undefined,
+          platform: process.platform,
+          arch: process.arch,
+          nodeVersion: process.version,
+          sharpVersion: sharp?.version || 'unknown'
+        })
+        
+        // In production, try to use original buffer as fallback for WebP files
+        if (process.env.NODE_ENV === 'production' && file.type === 'image/webp') {
+          console.log('⚠️ Using original WebP file as fallback (sharp unavailable)')
+          webpBuffer = buffer
+        } else {
+          return NextResponse.json({ 
+            ok: false, 
+            success: false, 
+            error: 'Image processing service unavailable. Please contact support.' 
+          }, { status: 500 })
+        }
+      }
+    } catch (err) {
+      console.error('❌ Image conversion failed:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      const errorStack = err instanceof Error ? err.stack : undefined
+      console.error('❌ Conversion error details:', {
+        message: errorMessage,
+        stack: errorStack,
+        fileType: file.type,
+        fileSize: file.size
+      })
+      
+      // In production, if it's already WebP, use original
+      if (process.env.NODE_ENV === 'production' && file.type === 'image/webp' && !webpBuffer) {
+        console.log('⚠️ Using original WebP file as fallback')
+        webpBuffer = buffer
+      } else if (!webpBuffer) {
+        return NextResponse.json({ 
+          ok: false, 
+          success: false, 
+          error: `Image conversion failed: ${errorMessage}` 
+        }, { status: 500 })
+      }
+    }
+    
+    // Ensure we have a buffer
+    if (!webpBuffer) {
+      return NextResponse.json({ 
+        ok: false, 
+        success: false, 
+        error: 'Failed to process image' 
       }, { status: 500 })
     }
 
@@ -147,7 +203,22 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    await fs.writeFile(filePath, webpBuffer)
+    try {
+      await fs.writeFile(filePath, webpBuffer)
+      // Verify file was written
+      const stats = await fs.stat(filePath)
+      if (stats.size === 0) {
+        throw new Error('File was written but size is 0')
+      }
+    } catch (writeError) {
+      console.error('❌ Failed to write file:', writeError)
+      const errorMessage = writeError instanceof Error ? writeError.message : 'Unknown error'
+      return NextResponse.json({ 
+        ok: false, 
+        success: false, 
+        error: `Failed to save file: ${errorMessage}` 
+      }, { status: 500 })
+    }
 
     const url = `/uploads/${filename}`
     console.log('✅ File converted to webp and saved:', url, 'bytes:', webpBuffer.byteLength, 'time:', (Date.now()-start)+'ms')
