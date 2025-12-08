@@ -40,6 +40,7 @@ const eslintConfig = [
       "no-eval": "error", // Prevent eval() usage
       "no-implied-eval": "error", // Prevent setTimeout/setInterval with strings
       "@typescript-eslint/no-implied-eval": "error", // TypeScript version
+      "no-new-func": "error", // Prevent new Function() constructor
     },
   },
   {
@@ -48,12 +49,12 @@ const eslintConfig = [
     files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
     rules: {
       "no-restricted-imports": [
-        "warn",
+        "error", // Changed from 'warn' to 'error' - block child_process imports
         {
           patterns: [
             {
               group: ["child_process"],
-              message: "SECURITY: child_process usage detected. Ensure all inputs are validated and use spawn() with shell: false. See SECURITY.md for guidelines.",
+              message: "SECURITY: Direct child_process usage is FORBIDDEN. Use secureExecFile() from @/lib/security/shell instead. See RCE_SECURITY_AUDIT.md for details.",
             },
           ],
         },

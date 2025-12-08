@@ -9,6 +9,8 @@ import { sendSecurityAlertEmail } from './email'
 
 export type SecurityEventType =
   | 'COMMAND_INJECTION_ATTEMPT'
+  | 'RCE_ATTEMPT'
+  | 'SHELL_INJECTION_ATTEMPT'
   | 'PATH_TRAVERSAL_ATTEMPT'
   | 'UNAUTHORIZED_ACCESS'
   | 'RATE_LIMIT_EXCEEDED'
@@ -18,6 +20,7 @@ export type SecurityEventType =
   | 'PRIVILEGE_ESCALATION_ATTEMPT'
   | 'SQL_INJECTION_ATTEMPT'
   | 'XSS_ATTEMPT'
+  | 'SSRF_ATTEMPT'
 
 export interface SecurityEvent {
   type: SecurityEventType

@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
     try {
-      await fs.mkdir(uploadsDir, { recursive: true })
+    await fs.mkdir(uploadsDir, { recursive: true })
       // Verify directory was created and is writable
       await fs.access(uploadsDir, fs.constants.W_OK)
     } catch (dirError) {
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
         await sharp(buffer).metadata()
         
         // Sharp is working, convert to WebP
-        webpBuffer = await sharp(buffer).webp({ quality: 85 }).toBuffer()
+      webpBuffer = await sharp(buffer).webp({ quality: 85 }).toBuffer()
       } catch (sharpError) {
         console.error('❌ Sharp initialization/conversion failed:', sharpError)
         const errorDetails = sharpError instanceof Error ? sharpError.message : String(sharpError)
@@ -176,21 +176,21 @@ export async function POST(request: NextRequest) {
     if (!resolvedPath.startsWith(resolvedDir)) {
       // Log security event (fail gracefully if security monitor fails)
       try {
-        const { logSecurityEvent, extractIp, extractUserAgent } = await import('@/lib/security-monitor')
-        await logSecurityEvent({
-          type: 'PATH_TRAVERSAL_ATTEMPT',
-          severity: 'high',
-          message: 'Path traversal attempt detected in file upload',
-          details: {
-            attemptedPath: filePath,
-            resolvedPath,
-            baseDir: resolvedDir,
-            filename: file.name,
-          },
-          ip: extractIp(request),
-          userAgent: extractUserAgent(request),
-          path: '/api/upload',
-        })
+      const { logSecurityEvent, extractIp, extractUserAgent } = await import('@/lib/security-monitor')
+      await logSecurityEvent({
+        type: 'PATH_TRAVERSAL_ATTEMPT',
+        severity: 'high',
+        message: 'Path traversal attempt detected in file upload',
+        details: {
+          attemptedPath: filePath,
+          resolvedPath,
+          baseDir: resolvedDir,
+          filename: file.name,
+        },
+        ip: extractIp(request),
+        userAgent: extractUserAgent(request),
+        path: '/api/upload',
+      })
       } catch (securityError) {
         console.error('⚠️ Security monitor failed:', securityError)
         // Continue with error response even if security logging fails
@@ -204,7 +204,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      await fs.writeFile(filePath, webpBuffer)
+    await fs.writeFile(filePath, webpBuffer)
       // Verify file was written
       const stats = await fs.stat(filePath)
       if (stats.size === 0) {

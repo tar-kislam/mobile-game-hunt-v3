@@ -47,64 +47,64 @@ info() {
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --dry-run)
-            DRY_RUN=true
-            shift
-            ;;
+    --dry-run)
+      DRY_RUN=true
+      shift
+      ;;
         --skip-backup)
             SKIP_BACKUP=true
             warning "Backup skipped (--skip-backup flag used)"
-            shift
-            ;;
+      shift
+      ;;
         *)
             error "Unknown option: $1"
             echo "Usage: $0 [--dry-run] [--skip-backup]"
             exit 1
-            ;;
-    esac
+      ;;
+  esac
 done
 
 # Check prerequisites
 check_prerequisites() {
     log "Checking prerequisites..."
-    
-    # Check if DATABASE_URL is set
+  
+  # Check if DATABASE_URL is set
     if [ -z "$DATABASE_URL" ]; then
         error "DATABASE_URL environment variable not set"
         echo "Please set DATABASE_URL before running this script"
-        exit 1
+      exit 1
     fi
     
     # Check if Prisma CLI is available
     if ! command -v npx &> /dev/null; then
         error "npx command not found. Please install Node.js and npm"
-        exit 1
+      exit 1
     fi
     
     # Check if pg_dump is available (for backup)
     if [ "$SKIP_BACKUP" = false ] && ! command -v pg_dump &> /dev/null; then
         error "pg_dump command not found. Install PostgreSQL client tools or use --skip-backup"
-        exit 1
-    fi
-    
+      exit 1
+  fi
+  
     success "All prerequisites met"
 }
 
 # Create backup directory
 create_backup_dir() {
     if [ ! -d "$BACKUP_DIR" ]; then
-        mkdir -p "$BACKUP_DIR"
+  mkdir -p "$BACKUP_DIR"
         log "Created backup directory: $BACKUP_DIR"
     fi
 }
 
 # Create database backup
 create_backup() {
-    if [ "$SKIP_BACKUP" = true ]; then
+  if [ "$SKIP_BACKUP" = true ]; then
         warning "Skipping backup (--skip-backup flag used)"
-        return 0
-    fi
-    
+    return 0
+  fi
+  
     local backup_file="$BACKUP_DIR/prod_backup_${TIMESTAMP}.sql"
     
     log "Creating production database backup..."
@@ -136,11 +136,11 @@ create_backup() {
         else
             error "Backup file verification failed"
             return 1
-        fi
+      fi
     else
         error "Failed to create database backup"
         return 1
-    fi
+  fi
 }
 
 # Check current migration status
@@ -152,22 +152,22 @@ check_migration_status() {
     if npx prisma migrate status >> "$LOG_FILE" 2>&1; then
         local status_output=$(npx prisma migrate status 2>&1)
         echo "$status_output" | tee -a "$LOG_FILE"
-        
-        # Check if there are pending migrations
+  
+  # Check if there are pending migrations
         if echo "$status_output" | grep -q "following migration.*have not yet been applied"; then
             info "Pending migrations detected"
-            return 0
+    return 0
         elif echo "$status_output" | grep -q "Database schema is up to date"; then
             success "Database is already up to date. No migrations needed."
             return 2
         else
             warning "Unexpected migration status"
-            return 1
+    return 1
         fi
-    else
+  else
         error "Failed to check migration status"
         return 1
-    fi
+  fi
 }
 
 # Apply migrations
@@ -175,13 +175,13 @@ apply_migrations() {
     log "Applying migrations..."
     
     cd "$PROJECT_DIR"
-    
-    if [ "$DRY_RUN" = true ]; then
+  
+  if [ "$DRY_RUN" = true ]; then
         warning "DRY RUN MODE - No changes will be made"
         log "Would run: npx prisma migrate deploy"
-        return 0
-    fi
-    
+    return 0
+  fi
+  
     # Apply migrations
     if npx prisma migrate deploy >> "$LOG_FILE" 2>&1; then
         success "Migrations applied successfully"
@@ -190,13 +190,13 @@ apply_migrations() {
         log "Verifying migration status after applying..."
         if npx prisma migrate status >> "$LOG_FILE" 2>&1; then
             success "Migration verification passed"
-        else
+    else
             warning "Migration verification check failed, but migrations were applied"
         fi
     else
         error "Migration failed. Check log file: $LOG_FILE"
         return 1
-    fi
+  fi
 }
 
 # Generate Prisma client
@@ -204,12 +204,12 @@ generate_prisma_client() {
     log "Generating Prisma client..."
     
     cd "$PROJECT_DIR"
-    
-    if [ "$DRY_RUN" = true ]; then
+  
+  if [ "$DRY_RUN" = true ]; then
         warning "DRY RUN MODE - Would run: npx prisma generate"
-        return 0
-    fi
-    
+    return 0
+  fi
+  
     if npx prisma generate >> "$LOG_FILE" 2>&1; then
         success "Prisma client generated successfully"
     else
@@ -226,7 +226,7 @@ verify_migrations() {
     
     # Check if UserActivityEvent table exists (one of the new tables)
     log "Checking if UserActivityEvent table exists..."
-    
+  
     if [ "$DRY_RUN" = true ]; then
         warning "DRY RUN MODE - Skipping verification queries"
         return 0
@@ -239,7 +239,7 @@ verify_migrations() {
         success "Database verification completed"
     else
         warning "Database verification query failed (this is not critical)"
-    fi
+  fi
 }
 
 # Print summary
@@ -267,7 +267,7 @@ rollback_info() {
     warning "If you need to rollback, use the backup file:"
     if [ "$SKIP_BACKUP" = false ]; then
         echo "  Backup: $BACKUP_DIR/prod_backup_${TIMESTAMP}.sql.gz"
-        echo ""
+    echo ""
         echo "To restore:"
         echo "  1. Stop the application"
         echo "  2. gunzip $BACKUP_DIR/prod_backup_${TIMESTAMP}.sql.gz"
@@ -275,7 +275,7 @@ rollback_info() {
         echo "  4. Restart the application"
     else
         echo "  No backup available (--skip-backup was used)"
-    fi
+  fi
 }
 
 # Main execution
@@ -284,11 +284,11 @@ main() {
     log "Production Migration Script"
     log "=========================================="
     log "Starting migration process..."
-    
-    if [ "$DRY_RUN" = true ]; then
+  
+  if [ "$DRY_RUN" = true ]; then
         warning "DRY RUN MODE - No changes will be made"
-    fi
-    
+  fi
+  
     # Pre-flight checks
     check_prerequisites
     create_backup_dir
@@ -298,9 +298,9 @@ main() {
         if ! create_backup; then
             error "Backup failed. Aborting migration."
             exit 1
-        fi
     fi
-    
+  fi
+  
     # Check migration status
     local status_result
     check_migration_status
@@ -309,7 +309,7 @@ main() {
     if [ $status_result -eq 2 ]; then
         success "No migrations needed. Database is up to date."
         print_summary
-        exit 0
+    exit 0
     elif [ $status_result -ne 0 ]; then
         error "Migration status check failed"
         rollback_info

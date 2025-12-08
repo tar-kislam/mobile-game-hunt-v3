@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      await prisma.userActivityEvent.create({
+    await prisma.userActivityEvent.create({
       data: {
         userId: session.user.id,
         sessionId: payload!.sessionId!,
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
         userAgent: payload?.userAgent || request.headers.get('user-agent') || null,
         country: payload?.country || request.headers.get('x-vercel-ip-country') || null
       }
-      })
+    })
     } catch (dbError: any) {
       // Check if the error is due to missing table
       if (dbError?.code === 'P2021' || dbError?.message?.includes('does not exist')) {

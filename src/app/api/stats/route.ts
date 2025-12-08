@@ -35,7 +35,7 @@ export async function GET() {
       })
     ])
 
-    const baselineMembers = 150
+    const baselineMembers = 250
     const baselineReviews = 75
 
     return NextResponse.json({

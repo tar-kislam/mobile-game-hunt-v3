@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { QuizFlow } from "@/components/quiz/QuizFlow"
 import { QuizResults } from "@/components/quiz/QuizResults"
 import { QuestGameResult } from "@/lib/quest/types"
@@ -13,9 +15,18 @@ type QuizState = 'intro' | 'questions' | 'loading' | 'results'
 type QuizResult = QuestGameResult
 
 export default function QuizPage() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
   const [state, setState] = useState<QuizState>('intro')
   const [results, setResults] = useState<QuizResult[]>([])
   const [loading, setLoading] = useState(false)
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent('/quest')}`)
+    }
+  }, [status, router])
 
   const handleStart = () => {
     setState('questions')
@@ -35,6 +46,12 @@ export default function QuizPage() {
       })
 
       if (!response.ok) {
+        // If unauthorized, redirect to login
+        if (response.status === 401) {
+          router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent('/quest')}`)
+          return
+        }
+        
         const errorData = await response.json().catch(() => ({}))
         throw new Error(errorData.error || 'Failed to get recommendations')
       }
@@ -78,6 +95,23 @@ export default function QuizPage() {
         ease: [0.22, 1, 0.36, 1]
       }
     }
+  }
+
+  // Show loading state while checking authentication
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-[#121225] to-[#050509] bg-[radial-gradient(80%_80%_at_0%_0%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(80%_80%_at_100%_100%,rgba(6,182,212,0.18),transparent_60%)] relative overflow-hidden flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-purple-400 animate-spin mx-auto mb-4" />
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Don't render content if not authenticated (redirect will happen)
+  if (status === 'unauthenticated' || !session) {
+    return null
   }
 
   return (

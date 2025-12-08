@@ -12,25 +12,36 @@ This application has been hardened against common security vulnerabilities, part
 
 ## Code Security Measures
 
-### 1. Command Injection Prevention
+### 1. Command Injection Prevention (RCE Protection)
 
-**Status**: ✅ **No dangerous patterns found**
+**Status**: ✅ **Secure patterns enforced**
 
 - **No `child_process` usage**: The codebase does not use `child_process.exec()`, `execSync()`, or `spawn()` with shell enabled
 - **CRON jobs**: Use `node-cron` library (safe, no shell execution)
 - **File operations**: Use Node.js `fs` APIs, not shell commands
+- **Secure Shell Wrapper**: All command execution must use `secureExecFile()` from `@/lib/security/shell`
 
 **ESLint Rules Added**:
 - `no-eval`: Prevents `eval()` usage
 - `no-implied-eval`: Prevents `setTimeout/setInterval` with strings
-- `no-restricted-imports`: Warns on `child_process` imports
+- `no-new-func`: Prevents `new Function()` constructor
+- `no-restricted-imports`: **ERROR** on `child_process` imports (blocks compilation)
 - Custom rules warn on `exec()` and `execSync()` usage
 
-**If you need to add shell commands in the future**:
-1. **NEVER** use `exec()` or `execSync()` with user input
-2. Use `spawn()` with `shell: false` and argument arrays
-3. Validate all inputs with whitelists (enums, regex patterns)
-4. Add a comment explaining why shell is necessary and how inputs are sanitized
+**CRITICAL: If you need to add shell commands in the future**:
+1. **NEVER** use `exec()`, `execSync()`, or `spawnSync('/bin/sh', ['-c', ...])`
+2. **MUST** use `secureExecFile()` from `@/lib/security/shell`
+3. **MUST** validate all inputs using provided validators (`validateHost`, `validateFilename`, etc.)
+4. **MUST** add command to `ALLOWED_COMMANDS` whitelist in `src/lib/security/shell.ts`
+5. See `docs/RCE_SECURITY_AUDIT.md` for complete security guidelines
+
+**Example Safe Usage**:
+```typescript
+import { secureExecFile, validateHost } from '@/lib/security/shell'
+
+// ✅ SAFE - Validated input, whitelisted command
+const result = await secureExecFile('ping', ['-c', '3', validateHost(userHostname)])
+```
 
 ### 2. Path Traversal Prevention
 
