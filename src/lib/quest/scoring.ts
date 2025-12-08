@@ -300,15 +300,17 @@ export function scoreGameForQuest(
   const platformMatch = computePlatformMatch(profile, game)
   score += weights.platform * platformMatch
 
-  // 2) Genre/type
+  // 2) Genre/type matching (works for ALL genres: Action, RPG, Strategy, Puzzle, Casual, Sports, Card, etc.)
   const genreMatch = computeGenreMatch(profile, game)
   score += weights.genre * genreMatch
   
   // CRITICAL: Extra boost for internal games with genre match
-  // This ensures internal games with matching genres always score highly
+  // This applies to ALL genres in QUEST_CONFIG (Action, RPG, Strategy/Puzzle, Casual, Sports, Card/Roguelike)
+  // This ensures internal games with matching genres always score highly, regardless of which genre was selected
   if (genreMatch > 0.5) {
     // Additional boost for strong genre matches (internal games should appear first)
-    score += 2.0 * genreMatch // Extra 2.0 points for genre matches
+    // This boost works universally for all genre categories
+    score += 2.0 * genreMatch // Extra 2.0 points for genre matches (all genres)
   }
 
   // 3) Tags

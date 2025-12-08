@@ -207,10 +207,11 @@ export async function generateQuestRecommendations(
   console.log(`[QUEST] Found ${products.length} candidate games from DB`)
   
   // CRITICAL: If we have very few internal games with genre filter, try without genre filter
-  // This ensures we always have internal games to show if they exist
+  // This applies to ALL genres: Action, RPG, Strategy/Puzzle, Casual, Sports, Card/Roguelike
+  // This ensures we always have internal games to show if they exist, regardless of selected genre
   let productsToUse = products
   if (products.length < 4 && profile.preferredGenres.length > 0) {
-    console.warn(`[QUEST] Only ${products.length} internal games found with genre filter, trying broader search...`)
+    console.warn(`[QUEST] Only ${products.length} internal games found with genre filter (${profile.preferredGenres.slice(0, 3).join(', ')}), trying broader search...`)
     
     // Build broader where clause (without genre filter)
     const broaderWhere: any = {
@@ -335,15 +336,19 @@ export async function generateQuestRecommendations(
   scoredProducts.sort((a, b) => b.score - a.score)
 
   // CRITICAL: For internal games, be VERY lenient with score threshold
+  // This applies to ALL genres: Action, RPG, Strategy, Puzzle, Casual, Sports, Card, etc.
   // Internal games should ALWAYS appear if they match genre, even with low scores
   // Priority: Internal games with genre match > Internal games without genre match > External games
-  const internalScoreThreshold = 0.5 // Very lenient - we want to show internal games
+  const internalScoreThreshold = 0.5 // Very lenient - we want to show internal games for ALL genres
   
-  // Separate games by genre match
+  // Separate games by genre match (works for ALL genres in QUEST_CONFIG)
+  // This logic is genre-agnostic and works for: Action, RPG, Strategy/Puzzle, Casual, Sports, Card/Roguelike
   let withGenreMatch: typeof scoredProducts = []
   let withoutGenreMatch: typeof scoredProducts = []
   
   if (profile.preferredGenres.length > 0) {
+    // Filter internal games that match ANY of the user's preferred genres
+    // Works for all genre mappings: genre-action, genre-rpg, genre-strategy, genre-casual, genre-sports, genre-card
     withGenreMatch = scoredProducts.filter(item => {
       const gameGenres = item.gameData.categories.map(c => c.name.toLowerCase().trim())
       const preferredGenres = profile.preferredGenres.map(g => g.toLowerCase().trim())
@@ -353,6 +358,7 @@ export async function generateQuestRecommendations(
       return hasMatch && item.score >= internalScoreThreshold
     })
     
+    // Internal games without genre match (still show them, but lower priority)
     withoutGenreMatch = scoredProducts.filter(item => {
       const gameGenres = item.gameData.categories.map(c => c.name.toLowerCase().trim())
       const preferredGenres = profile.preferredGenres.map(g => g.toLowerCase().trim())
@@ -366,7 +372,7 @@ export async function generateQuestRecommendations(
     withoutGenreMatch = scoredProducts.filter(item => item.score >= internalScoreThreshold)
   }
   
-  // Prioritize games with genre match
+  // Prioritize games with genre match (applies to ALL genres)
   const filteredScored = [...withGenreMatch, ...withoutGenreMatch]
 
   console.log(`[QUEST] Internal games after scoring: ${filteredScored.length} (with genre match: ${withGenreMatch.length}, without: ${withoutGenreMatch.length}, threshold: ${internalScoreThreshold.toFixed(2)})`)
