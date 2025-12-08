@@ -142,6 +142,7 @@ export async function generateQuestRecommendations(
   }
 
   // CRITICAL: Add genre/category filter at DB level if we have preferred genres
+  // BUT: Make it more flexible - if no results, we'll fall back to broader search
   // This ensures we only fetch games that match the user's genre preference
   if (profile.preferredGenres.length > 0) {
     where.categories = {
@@ -205,10 +206,90 @@ export async function generateQuestRecommendations(
 
   console.log(`[QUEST] Found ${products.length} candidate games from DB`)
   
+  // CRITICAL: If we have very few internal games with genre filter, try without genre filter
+  // This ensures we always have internal games to show if they exist
+  let productsToUse = products
+  if (products.length < 4 && profile.preferredGenres.length > 0) {
+    console.warn(`[QUEST] Only ${products.length} internal games found with genre filter, trying broader search...`)
+    
+    // Build broader where clause (without genre filter)
+    const broaderWhere: any = {
+      status: 'PUBLISHED'
+    }
+    
+    // Keep platform filter
+    if (platformAnswer !== 'ANY' && allowedPlatforms.length > 0) {
+      broaderWhere.platforms = {
+        hasSome: allowedPlatforms.map(p => p.toLowerCase())
+      }
+    }
+    
+    // Keep monetization filter
+    if (profile.requiredMonetization && profile.requiredMonetization.length > 0) {
+      if (profile.requiredMonetization.length === 1) {
+        broaderWhere.monetization = profile.requiredMonetization[0]
+      } else {
+        broaderWhere.monetization = {
+          in: profile.requiredMonetization
+        }
+      }
+    }
+    
+    // Fetch broader set
+    const broaderProducts = await prisma.product.findMany({
+      where: broaderWhere,
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        tagline: true,
+        description: true,
+        thumbnail: true,
+        image: true,
+        url: true,
+        monetization: true,
+        pricing: true,
+        engine: true,
+        gamificationTags: true,
+        platforms: true,
+        categories: {
+          include: {
+            category: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        },
+        tags: {
+          include: {
+            tag: {
+              select: {
+                id: true,
+                slug: true,
+                name: true
+              }
+            }
+          }
+        },
+        _count: {
+          select: {
+            votes: true,
+            comments: true
+          }
+        }
+      }
+    })
+    
+    console.log(`[QUEST] Broader search found ${broaderProducts.length} games (without genre filter)`)
+    productsToUse = broaderProducts
+  }
+  
   // Log genre distribution for debugging
   if (profile.preferredGenres.length > 0) {
     const genreCounts = new Map<string, number>()
-    products.forEach(p => {
+    productsToUse.forEach(p => {
       p.categories.forEach(pc => {
         const catName = pc.category.name
         if (profile.preferredGenres.includes(catName)) {
@@ -220,10 +301,10 @@ export async function generateQuestRecommendations(
   }
 
   // Calculate max likes for normalization
-  const maxLikes = Math.max(...products.map(p => p._count.votes), 1)
+  const maxLikes = Math.max(...productsToUse.map(p => p._count.votes), 1)
 
   // Score all games using centralized scoring function
-  const scoredProducts = products.map(product => {
+  const scoredProducts = productsToUse.map(product => {
     // Convert product to GameWithTagsGenresPlatformsAndMeta format
     const gameData: GameWithTagsGenresPlatformsAndMeta = {
       id: product.id,
@@ -253,13 +334,42 @@ export async function generateQuestRecommendations(
   // Sort by score descending
   scoredProducts.sort((a, b) => b.score - a.score)
 
-  // CRITICAL: For internal games, be more lenient with score threshold
-  // Internal games should be prioritized even if they score slightly lower
-  // Only filter out games with very low scores (below 1.0) to avoid completely irrelevant games
-  const internalScoreThreshold = Math.max(1.0, QUEST_CONFIG.minScoreThreshold * 0.5) // More lenient for internal
-  const filteredScored = scoredProducts.filter(item => item.score >= internalScoreThreshold)
+  // CRITICAL: For internal games, be VERY lenient with score threshold
+  // Internal games should ALWAYS appear if they match genre, even with low scores
+  // Priority: Internal games with genre match > Internal games without genre match > External games
+  const internalScoreThreshold = 0.5 // Very lenient - we want to show internal games
+  
+  // Separate games by genre match
+  let withGenreMatch: typeof scoredProducts = []
+  let withoutGenreMatch: typeof scoredProducts = []
+  
+  if (profile.preferredGenres.length > 0) {
+    withGenreMatch = scoredProducts.filter(item => {
+      const gameGenres = item.gameData.categories.map(c => c.name.toLowerCase().trim())
+      const preferredGenres = profile.preferredGenres.map(g => g.toLowerCase().trim())
+      const hasMatch = preferredGenres.some(prefGenre => 
+        gameGenres.some(gameGenre => gameGenre === prefGenre)
+      )
+      return hasMatch && item.score >= internalScoreThreshold
+    })
+    
+    withoutGenreMatch = scoredProducts.filter(item => {
+      const gameGenres = item.gameData.categories.map(c => c.name.toLowerCase().trim())
+      const preferredGenres = profile.preferredGenres.map(g => g.toLowerCase().trim())
+      const hasMatch = preferredGenres.some(prefGenre => 
+        gameGenres.some(gameGenre => gameGenre === prefGenre)
+      )
+      return !hasMatch && item.score >= internalScoreThreshold
+    })
+  } else {
+    // No genre preference - just filter by threshold
+    withoutGenreMatch = scoredProducts.filter(item => item.score >= internalScoreThreshold)
+  }
+  
+  // Prioritize games with genre match
+  const filteredScored = [...withGenreMatch, ...withoutGenreMatch]
 
-  console.log(`[QUEST] Internal games after scoring: ${filteredScored.length} (threshold: ${internalScoreThreshold.toFixed(2)})`)
+  console.log(`[QUEST] Internal games after scoring: ${filteredScored.length} (with genre match: ${withGenreMatch.length}, without: ${withoutGenreMatch.length}, threshold: ${internalScoreThreshold.toFixed(2)})`)
 
   // Convert to QuestGameResult format
   const internalCandidates: QuestGameResult[] = filteredScored.map(({ product, score, matchReason }) => {

@@ -303,6 +303,13 @@ export function scoreGameForQuest(
   // 2) Genre/type
   const genreMatch = computeGenreMatch(profile, game)
   score += weights.genre * genreMatch
+  
+  // CRITICAL: Extra boost for internal games with genre match
+  // This ensures internal games with matching genres always score highly
+  if (genreMatch > 0.5) {
+    // Additional boost for strong genre matches (internal games should appear first)
+    score += 2.0 * genreMatch // Extra 2.0 points for genre matches
+  }
 
   // 3) Tags
   const tagOverlap = computeTagOverlap(profile, game)

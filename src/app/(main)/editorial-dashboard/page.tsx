@@ -2047,7 +2047,7 @@ export default function EditorialDashboard() {
                       >
                         Refresh
                       </Button>
-                    </div>
+          </div>
 
                     {/* Feedback Table */}
                     {questFeedbackLoading ? (
