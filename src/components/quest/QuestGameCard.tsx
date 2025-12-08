@@ -9,6 +9,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { QuestGameResult } from "@/lib/quest/types"
 import { useSession } from "next-auth/react"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface QuestGameCardProps {
   game: QuestGameResult
@@ -44,6 +45,15 @@ export function QuestGameCard({ game }: QuestGameCardProps) {
       if (response.ok) {
         setFeedbackSent(true)
         setShowFeedback(false)
+        
+        // Redirect to game URL after feedback
+        setTimeout(() => {
+          if (game.source === 'internal' && game.links.internalProductUrl) {
+            window.location.href = game.links.internalProductUrl
+          } else if (game.source === 'external' && game.links.externalStoreUrl) {
+            window.open(game.links.externalStoreUrl, '_blank', 'noopener,noreferrer')
+          }
+        }, 500) // Small delay to show feedback confirmation
       } else {
         const errorData = await response.json().catch(() => ({}))
         console.error('Failed to send feedback:', errorData)
@@ -215,83 +225,136 @@ export function QuestGameCard({ game }: QuestGameCardProps) {
         {session && !feedbackSent && (
           <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
             {!showFeedback ? (
-              <button
+              <motion.button
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
                   setShowFeedback(true)
                 }}
                 className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1 w-full"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.2 }}
               >
                 <AlertCircle className="w-3 h-3" />
                 <span>Not right for me?</span>
-              </button>
+              </motion.button>
             ) : (
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-gray-600 dark:text-gray-400">Why not?</span>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      setShowFeedback(false)
-                    }}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs h-6 px-2"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      handleFeedback('WRONG_PLATFORM')
-                    }}
-                  >
-                    Wrong Platform
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs h-6 px-2"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      handleFeedback('NOT_MY_STYLE')
-                    }}
-                  >
-                    Not My Style
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs h-6 px-2"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      handleFeedback('NOT_INTERESTED')
-                    }}
-                  >
-                    Not Interested
-                  </Button>
-                </div>
-              </div>
+              <AnimatePresence>
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{
+                    duration: 0.3,
+                    ease: [0.22, 1, 0.36, 1]
+                  }}
+                  className="flex flex-col gap-1"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">Why not?</span>
+                    <motion.button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setShowFeedback(false)
+                      }}
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      whileHover={{ scale: 1.1, rotate: 90 }}
+                      whileTap={{ scale: 0.9 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <X className="w-3 h-3" />
+                    </motion.button>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs h-7 px-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800 hover:from-purple-100 hover:to-pink-100 dark:hover:from-purple-800/30 dark:hover:to-pink-800/30"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleFeedback('WRONG_PLATFORM')
+                        }}
+                      >
+                        Wrong Platform
+                      </Button>
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.15, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs h-7 px-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800 hover:from-purple-100 hover:to-pink-100 dark:hover:from-purple-800/30 dark:hover:to-pink-800/30"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleFeedback('NOT_MY_STYLE')
+                        }}
+                      >
+                        Not My Style
+                      </Button>
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs h-7 px-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800 hover:from-purple-100 hover:to-pink-100 dark:hover:from-purple-800/30 dark:hover:to-pink-800/30"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleFeedback('NOT_INTERESTED')
+                        }}
+                      >
+                        Not Interested
+                      </Button>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
             )}
           </div>
         )}
 
         {/* Feedback sent confirmation */}
-        {feedbackSent && (
-          <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-xs text-green-600 dark:text-green-400">
-              ✓ Thanks for your feedback!
-            </p>
-          </div>
-        )}
+        <AnimatePresence>
+          {feedbackSent && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{
+                duration: 0.3,
+                ease: [0.22, 1, 0.36, 1]
+              }}
+              className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700"
+            >
+              <p className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+                >
+                  ✓
+                </motion.span>
+                <span>Thanks for your feedback! Redirecting...</span>
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* External games - show store link hint */}
         {game.source === 'external' && (
