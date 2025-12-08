@@ -23,22 +23,30 @@ export function QuestGameCard({ game }: QuestGameCardProps) {
     if (!session || feedbackSent) return
 
     try {
+      // For external games, use title as identifier since id might be null
+      const gameIdentifier = game.id || game.title || 'unknown'
+      
       const response = await fetch('/api/quest/feedback', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          gameId: game.id,
+          gameId: gameIdentifier,
           reason,
           matchRank: game.matchRank,
           gameTitle: game.title,
+          gameSource: game.source, // Include source (internal/external)
+          gameStore: game.store, // Include store for external games
         }),
       })
 
       if (response.ok) {
         setFeedbackSent(true)
         setShowFeedback(false)
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Failed to send feedback:', errorData)
       }
     } catch (error) {
       console.error('Failed to send feedback:', error)
@@ -203,8 +211,8 @@ export function QuestGameCard({ game }: QuestGameCardProps) {
           </div>
         )}
 
-        {/* Feedback buttons - Only for internal games and authenticated users */}
-        {game.source === 'internal' && session && !feedbackSent && (
+        {/* Feedback buttons - For ALL games (internal and external) and authenticated users */}
+        {session && !feedbackSent && (
           <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
             {!showFeedback ? (
               <button
@@ -213,7 +221,7 @@ export function QuestGameCard({ game }: QuestGameCardProps) {
                   e.stopPropagation()
                   setShowFeedback(true)
                 }}
-                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1"
+                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1 w-full"
               >
                 <AlertCircle className="w-3 h-3" />
                 <span>Not right for me?</span>

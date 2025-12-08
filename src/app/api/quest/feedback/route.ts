@@ -20,11 +20,20 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { gameId, reason, matchRank, gameTitle, notes } = body
+    const { gameId, reason, matchRank, gameTitle, notes, gameSource, gameStore } = body
 
-    if (!gameId || !reason) {
+    // gameId is optional for external games (they might not have an ID)
+    // But we need at least gameTitle for external games
+    if (!gameId && !gameTitle) {
       return NextResponse.json(
-        { error: 'Missing required fields: gameId and reason' },
+        { error: 'Missing required fields: gameId or gameTitle, and reason' },
+        { status: 400 }
+      )
+    }
+
+    if (!reason) {
+      return NextResponse.json(
+        { error: 'Missing required field: reason' },
         { status: 400 }
       )
     }
@@ -38,9 +47,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get game title if not provided
+    // Get game title if not provided (only for internal games with gameId)
     let finalGameTitle = gameTitle
-    if (!finalGameTitle && gameId) {
+    if (!finalGameTitle && gameId && gameSource !== 'external') {
       try {
         const game = await prisma.product.findUnique({
           where: { id: gameId },
@@ -53,24 +62,37 @@ export async function POST(request: NextRequest) {
         console.warn('[QUEST_FEEDBACK] Could not fetch game title:', error)
       }
     }
+    
+    // For external games, use title as identifier if no gameId
+    const finalGameId = gameId || (gameSource === 'external' ? `external:${finalGameTitle || 'unknown'}` : null)
 
     // Store feedback in database
     try {
+      // Build notes with source/store info for external games
+      let finalNotes = notes
+      if (gameSource === 'external') {
+        const sourceInfo = `Source: ${gameSource}${gameStore ? `, Store: ${gameStore}` : ''}`
+        finalNotes = finalNotes ? `${finalNotes} | ${sourceInfo}` : sourceInfo
+      }
+      
       const feedback = await prisma.questFeedback.create({
         data: {
           userId: session.user.id,
-          gameId: gameId || null,
+          gameId: finalGameId || null,
           gameTitle: finalGameTitle || null,
           matchRank: matchRank || null,
           reason,
-          notes: notes || null,
+          notes: finalNotes || null,
         }
       })
 
       console.log('[QUEST_FEEDBACK] Stored feedback:', {
         id: feedback.id,
         userId: session.user.id,
-        gameId,
+        gameId: finalGameId,
+        gameTitle: finalGameTitle,
+        gameSource,
+        gameStore,
         reason,
         matchRank,
       })
