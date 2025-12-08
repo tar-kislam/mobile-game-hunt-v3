@@ -1,27 +1,77 @@
 /**
  * Shared Quest Recommendations Logic
  * Used by both /api/quest/recommendations and /api/quiz/recommendations (legacy)
+ * 
+ * FIXED: Strict platform filtering, separate internal/external ranking, balanced external selection
  */
 
 import { prisma } from "@/lib/prisma"
-import { aggregateQuizEffects, categoryToAttributesMap } from "@/lib/quiz/config"
 import { QuestGameResult } from "@/lib/quest/types"
 import { searchExternalGames, buildSearchQueryFromPreferences } from "@/lib/externalStores/search"
+import { QUEST_CONFIG, PLATFORM_LABELS, QuestMatchReason, buildUserQuestProfile, UserQuestProfile } from "./config"
+import { scoreGameForQuest, GameWithTagsGenresPlatformsAndMeta } from "./scoring"
+import { extractPlatformAnswer, filterByPlatform, PlatformAnswer, getAllowedPlatforms, buildBalancedExternalForMobile } from "./platform-filter"
 
-const TARGET_RESULTS = 8 // Total games to show
-const MAX_INTERNAL = 4 // Max internal games
-const MAX_EXTERNAL = 4 // Max external games
+const TOTAL_LIMIT = 8 // Total games to show
+const INTERNAL_LIMIT = 4 // Preferred max internal games
 
 // Convert internal product to QuestGameResult
 function convertInternalProductToQuestResult(
   product: any,
   score: number,
-  matchedTags: string[],
-  matchedCategories: string[],
-  reasons: string[],
+  matchReason: QuestMatchReason,
   maxLikes: number
 ): QuestGameResult {
   const productCategoryNames = product.categories.map((pc: any) => pc.category.name)
+  
+  // Build detailed reasons array from matchReason
+  const reasons: string[] = []
+  
+  // Platform match (critical)
+  if (matchReason.platforms.length > 0) {
+    const platformLabels = matchReason.platforms.map(p => PLATFORM_LABELS[p.toLowerCase()] || p).join(', ')
+    reasons.push(`${platformLabels} compatible`)
+  }
+  
+  // Genre matches
+  if (matchReason.genresMatched.length > 0) {
+    reasons.push(matchReason.genresMatched.slice(0, 2).join(' / '))
+  }
+  
+  // Tag matches
+  if (matchReason.tagsMatched.length > 0) {
+    const tagsToShow = matchReason.tagsMatched.slice(0, 3).join(', ')
+    if (!reasons.includes(tagsToShow)) {
+      reasons.push(tagsToShow)
+    }
+  }
+  
+  // Session match
+  if (matchReason.sessionMatch && matchReason.sessionMatch !== 'none') {
+    const sessionLabels: Record<string, string> = {
+      'short': '5-10 min sessions',
+      'medium': '10-20 min sessions',
+      'long': '30+ min sessions',
+    }
+    reasons.push(sessionLabels[matchReason.sessionMatch] || matchReason.sessionMatch)
+  }
+  
+  // Favorite game similarity
+  if (matchReason.favoriteSimilarity) {
+    reasons.push('Similar to your favorites')
+  }
+  
+  // Monetization match
+  if (matchReason.monetizationMatch) {
+    const monetizationLabels: Record<string, string> = {
+      'FREE': 'free-to-play',
+      'PAID': 'premium',
+      'FREEMIUM': 'freemium',
+      'ADS_SUPPORTED': 'ad-supported',
+      'SUBSCRIPTION': 'subscription',
+    }
+    reasons.push(monetizationLabels[matchReason.monetizationMatch] || matchReason.monetizationMatch.toLowerCase())
+  }
   
   return {
     id: product.id,
@@ -35,6 +85,7 @@ function convertInternalProductToQuestResult(
     categories: productCategoryNames,
     matchRank: 0, // will be set later
     score,
+    platforms: product.platforms || [], // Include platforms for filtering
     metrics: {
       likes: product._count.votes,
     },
@@ -48,29 +99,49 @@ function convertInternalProductToQuestResult(
 export async function generateQuestRecommendations(
   answers: Array<{ questionId: string; optionId: string }>
 ): Promise<QuestGameResult[]> {
-  // Aggregate effects from answers
-  const { desiredTags, desiredCategoryNames, desiredPlatforms, requiredFilters, weightBoosts } = aggregateQuizEffects(answers)
+  // Extract platform answer
+  const platformAnswer = extractPlatformAnswer(answers)
+  const allowedPlatforms = getAllowedPlatforms(platformAnswer)
+  
+  console.log('[QUEST] Platform answer:', platformAnswer, 'Allowed platforms:', allowedPlatforms)
+
+  // Build normalized user profile from answers
+  const profile = buildUserQuestProfile(answers)
+
+  console.log('[QUEST] User profile:', {
+    platforms: profile.platforms,
+    preferredGenres: profile.preferredGenres.slice(0, 5),
+    preferredTags: profile.preferredTags.slice(0, 5),
+    sessionPreference: profile.sessionPreference,
+    favoriteGameTags: profile.favoriteGameTags,
+  })
 
   // Build where clause for published products
   const where: any = {
     status: 'PUBLISHED'
   }
 
-  // Apply required filters (monetization, pricing)
-  if (requiredFilters.monetization) {
-    if (Array.isArray(requiredFilters.monetization)) {
-      where.monetization = {
-        in: requiredFilters.monetization
-      }
-    } else {
-      where.monetization = requiredFilters.monetization
+  // CRITICAL: Hard platform filter at query level
+  // Use allowedPlatforms from platform answer (not profile.platforms which might be different)
+  if (platformAnswer !== 'ANY' && allowedPlatforms.length > 0) {
+    where.platforms = {
+      hasSome: allowedPlatforms.map(p => p.toLowerCase())
     }
-  }
-  if (requiredFilters.pricing) {
-    where.pricing = requiredFilters.pricing
+    console.log(`[QUEST] Hard platform filter applied at DB level: ${allowedPlatforms.join(', ')}`)
   }
 
-  // Fetch all candidate products
+  // Apply monetization filter if required
+  if (profile.requiredMonetization && profile.requiredMonetization.length > 0) {
+    if (profile.requiredMonetization.length === 1) {
+      where.monetization = profile.requiredMonetization[0]
+    } else {
+      where.monetization = {
+        in: profile.requiredMonetization
+      }
+    }
+  }
+
+  // Fetch ALL candidate products (will be filtered again after scoring)
   const products = await prisma.product.findMany({
     where,
     select: {
@@ -117,254 +188,197 @@ export async function generateQuestRecommendations(
     }
   })
 
-  // Calculate scores for internal products
-  const internalResults: QuestGameResult[] = products.map(product => {
-    let score = 0
-    const matchedTags: string[] = []
-    const matchedCategories: string[] = []
-    const reasons: string[] = []
+  console.log(`[QUEST] Found ${products.length} candidate games from DB`)
 
-    const productCategoryNames = product.categories.map(pc => pc.category.name)
-    const productTagSlugs = product.tags.map(pt => pt.tag.slug.toLowerCase())
-    const productTagNames = product.tags.map(pt => pt.tag.name)
-    const productGamificationTags = (product.gamificationTags || []).map((tag: string) => tag.toLowerCase())
-    const productPlatforms = (product.platforms || []).map((p: string) => p.toLowerCase())
+  // Calculate max likes for normalization
+  const maxLikes = Math.max(...products.map(p => p._count.votes), 1)
 
-    // Platform matching
-    if (desiredPlatforms.length > 0) {
-      let platformMatchCount = 0
-      desiredPlatforms.forEach(desiredPlatform => {
-        const normalizedDesired = desiredPlatform.toLowerCase()
-        const hasPlatform = productPlatforms.some(p => p === normalizedDesired)
-        if (hasPlatform) {
-          score += 4.0
-          platformMatchCount++
-        }
-      })
-      if (platformMatchCount === desiredPlatforms.length && desiredPlatforms.length > 1) {
-        score += 1.0
-      }
+  // Score all games using centralized scoring function
+  const scoredProducts = products.map(product => {
+    // Convert product to GameWithTagsGenresPlatformsAndMeta format
+    const gameData: GameWithTagsGenresPlatformsAndMeta = {
+      id: product.id,
+      platforms: product.platforms || [],
+      categories: product.categories.map(pc => ({ name: pc.category.name })),
+      tags: product.tags.map(pt => ({ slug: pt.tag.slug, name: pt.tag.name })),
+      gamificationTags: product.gamificationTags || [],
+      monetization: product.monetization || undefined,
+      pricing: product.pricing || undefined,
+      _count: {
+        votes: product._count.votes,
+        comments: product._count.comments,
+      },
     }
 
-    // Category matching
-    if (desiredCategoryNames.length > 0) {
-      desiredCategoryNames.forEach(desiredCategory => {
-        if (productCategoryNames.includes(desiredCategory)) {
-          score += 5.0
-          matchedCategories.push(desiredCategory)
-        }
-      })
+    // Score the game
+    const { score, matchReason } = scoreGameForQuest(profile, gameData, maxLikes)
+
+    return {
+      product,
+      gameData,
+      score,
+      matchReason,
     }
+  })
 
-    // Gamification tags matching
-    desiredTags.forEach(desiredTag => {
-      const normalizedDesiredTag = desiredTag.toLowerCase()
-      if (productGamificationTags.includes(normalizedDesiredTag)) {
-        score += 2.5
-        if (!matchedTags.includes(desiredTag)) {
-          matchedTags.push(desiredTag)
-        }
-      }
-    })
+  // Sort by score descending
+  scoredProducts.sort((a, b) => b.score - a.score)
 
-    // Tag matching
-    desiredTags.forEach(desiredTag => {
-      const normalizedDesiredTag = desiredTag.toLowerCase()
-      const matchingTag = productTagSlugs.find(tagSlug => 
-        tagSlug === normalizedDesiredTag || 
-        tagSlug.includes(normalizedDesiredTag) || 
-        normalizedDesiredTag.includes(tagSlug)
-      )
-      if (matchingTag) {
-        score += 1.5
-        const tagName = productTagNames.find((_, idx) => productTagSlugs[idx] === matchingTag)
-        if (tagName && !matchedTags.includes(tagName)) {
-          matchedTags.push(tagName)
-        }
-      }
-    })
+  // Filter out low scores
+  const filteredScored = scoredProducts.filter(item => item.score >= QUEST_CONFIG.minScoreThreshold)
 
-    // Session duration (minimal impact)
-    const sessionAnswer = answers.find(a => a.questionId === 'session-duration')
-    if (sessionAnswer) {
-      productCategoryNames.forEach(categoryName => {
-        const categoryAttrs = categoryToAttributesMap[categoryName]
-        if (categoryAttrs && sessionAnswer.optionId === categoryAttrs.sessionLength) {
-          score += 0.1
-        }
-      })
-    }
-
-    // Monetization matching
-    const monetizationAnswer = answers.find(a => a.questionId === 'monetization')
-    if (requiredFilters.monetization) {
-      if (Array.isArray(requiredFilters.monetization)) {
-        if (product.monetization && requiredFilters.monetization.includes(product.monetization)) {
-          score += 2.0
-        }
-      } else if (product.monetization === requiredFilters.monetization) {
-        score += 2.0
-      }
-    } else if (monetizationAnswer) {
-      const pref = monetizationAnswer.optionId
-      if (pref === 'free' && product.monetization && ['FREE', 'FREEMIUM', 'ADS_SUPPORTED'].includes(product.monetization)) {
-        score += 1.5
-      } else if (pref === 'premium' && (product.monetization === 'PAID' || product.pricing === 'PAID')) {
-        score += 1.0
-      } else if (pref === 'subscription' && product.monetization === 'SUBSCRIPTION') {
-        score += 1.0
-      }
-    }
-
-    // Popularity bonus
-    const maxLikes = Math.max(...products.map(p => p._count.votes), 1)
-    const likesBonus = (product._count.votes / maxLikes) * 0.5
-    score += likesBonus
-
-    // Apply weight boosts
-    const avgWeightBoost = weightBoosts.length > 0
-      ? weightBoosts.reduce((a, b) => a + b, 0) / weightBoosts.length
-      : 1.0
-    score *= avgWeightBoost
-
-    // Build reasons
-    if (matchedCategories.length > 0) {
-      reasons.push(matchedCategories.slice(0, 2).join(', '))
-    }
-
-    if (desiredPlatforms.length > 0) {
-      const matchedPlatforms = desiredPlatforms.filter(dp => 
-        productPlatforms.includes(dp.toLowerCase())
-      )
-      if (matchedPlatforms.length > 0) {
-        const platformLabels: Record<string, string> = {
-          'ios': 'iOS',
-          'android': 'Android',
-          'web': 'Web',
-          'windows': 'Windows',
-          'mac': 'macOS'
-        }
-        const labels = matchedPlatforms.map(p => platformLabels[p.toLowerCase()] || p).join(', ')
-        reasons.push(`${labels} compatible`)
-      }
-    }
-
-    if (matchedTags.length > 0) {
-      const tagsToShow = matchedTags.slice(0, 2).join(', ')
-      if (!reasons.includes(tagsToShow)) {
-        reasons.push(tagsToShow)
-      }
-    }
-
-    if (product.monetization === 'FREE') {
-      reasons.push('free-to-play')
-    } else if (product.monetization === 'PAID') {
-      reasons.push('premium')
-    } else if (product.monetization === 'FREEMIUM') {
-      reasons.push('freemium')
-    } else if (product.monetization === 'ADS_SUPPORTED') {
-      reasons.push('ad-supported')
-    } else if (product.monetization === 'SUBSCRIPTION') {
-      reasons.push('subscription')
-    }
-
-    const primaryCategory = productCategoryNames[0]
-    if (primaryCategory) {
-      const attrs = categoryToAttributesMap[primaryCategory]
-      if (attrs) {
-        if (attrs.sessionLength === 'quick') {
-          reasons.push('short sessions')
-        } else if (attrs.sessionLength === 'long') {
-          reasons.push('longer play sessions')
-        }
-      }
-    }
-
-    const maxLikesForBonus = Math.max(...products.map(p => p._count.votes), 1)
+  // Convert to QuestGameResult format
+  const internalCandidates: QuestGameResult[] = filteredScored.map(({ product, score, matchReason }) => {
     return convertInternalProductToQuestResult(
       product,
       score,
-      matchedTags,
-      matchedCategories,
-      reasons.length > 0 ? reasons : ['Mobile game recommendation'],
-      maxLikesForBonus
+      matchReason,
+      maxLikes
     )
   })
 
-  // Sort internal results by score descending
-  internalResults.sort((a, b) => b.score - a.score)
-
-  // Filter out very low scores
-  const filteredInternal = internalResults.filter(game => game.score >= 1.0)
-
-  // Log internal results count
-  console.log(`[QUEST] Internal results: ${filteredInternal.length} (max: ${MAX_INTERNAL})`)
+  // CRITICAL: Apply platform filter to internal games (defensive check)
+  const filteredInternal = filterByPlatform(internalCandidates, platformAnswer)
   
-  // Limit internal results to MAX_INTERNAL
-  const limitedInternal = filteredInternal.slice(0, MAX_INTERNAL)
-  
-  // Always try to get external games (up to MAX_EXTERNAL)
-  let externalResults: QuestGameResult[] = []
+  console.log(`[QUEST] Internal games after platform filter: ${filteredInternal.length} (from ${internalCandidates.length})`)
+
+  // Sort internal games by score and limit to INTERNAL_LIMIT
+  const sortedInternal = filteredInternal
+    .sort((a, b) => b.score - a.score)
+    .slice(0, INTERNAL_LIMIT)
+
+  console.log(`[QUEST] Internal results: ${sortedInternal.length} (max: ${INTERNAL_LIMIT})`)
+
+  // Calculate remaining slots for external games
+  const remainingSlots = Math.max(0, TOTAL_LIMIT - sortedInternal.length)
+  console.log(`[QUEST] Remaining slots for external games: ${remainingSlots}`)
+
+  // Fetch external games
+  let externalCandidates: QuestGameResult[] = []
   
   try {
     const searchQuery = buildSearchQueryFromPreferences(answers)
-    const neededCount = Math.min(MAX_EXTERNAL, TARGET_RESULTS - limitedInternal.length)
+    // Fetch more external games to account for filtering and balancing
+    const fetchLimit = platformAnswer === 'MOBILE_BOTH' ? remainingSlots * 3 : remainingSlots * 2
     
-    console.log(`[QUEST] Fetching ${neededCount} external games, searching with query: "${searchQuery}"`)
+    console.log(`[QUEST] Fetching external games, searching with query: "${searchQuery}"`)
+    console.log(`[QUEST] Platform filter for external: ${platformAnswer}, fetch limit: ${fetchLimit}`)
     
-    externalResults = await searchExternalGames({
+    // Pass allowed platforms to external search
+    externalCandidates = await searchExternalGames({
       query: searchQuery,
-      limit: neededCount,
+      limit: fetchLimit,
+      platforms: allowedPlatforms,
     })
     
-    console.log(`[QUEST] External search returned ${externalResults.length} results`)
+    // Platforms are already set in normalizeExternalResult, but ensure they're present
+    externalCandidates = externalCandidates.map(game => ({
+      ...game,
+      platforms: game.platforms || (game.store === 'apple_app_store' ? ['ios'] : game.store === 'google_play_store' ? ['android'] : []),
+    }))
+    
+    console.log(`[QUEST] External search returned ${externalCandidates.length} results`)
   } catch (error) {
     console.error('[QUEST] External search failed, continuing with internal only:', error)
-    // Continue with internal results only if external search fails
   }
 
-  // Combine results: internal first, then external
-  const combined: QuestGameResult[] = [
-    ...limitedInternal,
-    ...externalResults,
+  // CRITICAL: Apply platform filter to external games
+  const filteredExternal = filterByPlatform(externalCandidates, platformAnswer)
+  
+  console.log(`[QUEST] External games after platform filter: ${filteredExternal.length} (from ${externalCandidates.length})`)
+
+  // Select external games based on platform answer
+  let sortedExternal: QuestGameResult[] = []
+  
+  if (remainingSlots > 0 && filteredExternal.length > 0) {
+    if (platformAnswer === 'MOBILE_BOTH') {
+      // Use balanced selection for MOBILE_BOTH to ensure iOS/Android mix
+      sortedExternal = buildBalancedExternalForMobile(filteredExternal, remainingSlots)
+      console.log(`[QUEST] Balanced external selection: ${sortedExternal.length} games (iOS/Android mix)`)
+    } else {
+      // For other platform answers, simple sort + slice
+      sortedExternal = filteredExternal
+        .sort((a, b) => b.score - a.score)
+        .slice(0, remainingSlots)
+      console.log(`[QUEST] External results: ${sortedExternal.length} (max: ${remainingSlots})`)
+    }
+  }
+
+  // Combine: internal first, then external (strict order)
+  const finalMatches: QuestGameResult[] = [
+    ...sortedInternal,
+    ...sortedExternal,
   ]
 
-  // Sort: internal first (by score), then external (by score)
-  const finalResults = combined
-    .sort((a, b) => {
-      // Internal games always come first
-      if (a.source !== b.source) {
-        return a.source === 'internal' ? -1 : 1
-      }
-      // Within same source, sort by score descending
-      return b.score - a.score
-    })
-    .slice(0, TARGET_RESULTS) // Max 8 total
-    .map((game, index) => ({ ...game, matchRank: index + 1 }))
+  // Assign match ranks (1, 2, 3...)
+  const finalResults = finalMatches.map((game, index) => ({
+    ...game,
+    matchRank: index + 1,
+  }))
   
   console.log(`[QUEST] Final results: ${finalResults.filter(g => g.source === 'internal').length} internal, ${finalResults.filter(g => g.source === 'external').length} external, total: ${finalResults.length}`)
 
-  // Fallback: if no internal results and no external results, return top games by likes
+  // CRITICAL: Validate platform filter (runtime check)
+  if (platformAnswer !== 'ANY') {
+    const invalidGames = finalResults.filter(game => {
+      const gamePlatforms = (game.platforms || []).map(p => p.toLowerCase())
+
+      switch (platformAnswer) {
+        case 'IOS':
+          // Must have iOS support
+          return !gamePlatforms.includes('ios')
+        case 'ANDROID':
+          // Must have Android support
+          return !gamePlatforms.includes('android')
+        case 'WEB':
+          // Must have web support
+          return !gamePlatforms.includes('web')
+        case 'MOBILE_BOTH':
+          // Must have at least one of iOS or Android (no web-only)
+          const hasMobile = gamePlatforms.includes('ios') || gamePlatforms.includes('android')
+          const isWebOnly = gamePlatforms.length === 1 && gamePlatforms[0] === 'web'
+          return !hasMobile || isWebOnly
+        default:
+          return false
+      }
+    })
+
+    if (invalidGames.length > 0) {
+      console.error(`[QUEST] PLATFORM FILTER VIOLATION: ${invalidGames.length} games don't match platform filter!`)
+      console.error('[QUEST] Invalid games:', invalidGames.map(g => ({ 
+        title: g.title, 
+        platforms: g.platforms,
+        source: g.source,
+        store: g.store 
+      })))
+      // Remove invalid games
+      return finalResults.filter(game => !invalidGames.includes(game))
+    }
+  }
+
+  // Fallback: if no results, return top games by likes (still respecting platform filter)
   if (finalResults.length === 0) {
-    const fallbackGames = products
+    console.warn('[QUEST] No results found, falling back to top games by likes')
+    const fallbackCandidates = products
       .sort((a, b) => b._count.votes - a._count.votes)
-      .slice(0, MAX_INTERNAL) // Max 4 in fallback too
-      .map((product, index) => {
-        const maxLikesForFallback = Math.max(...products.map(p => p._count.votes), 1)
+      .slice(0, INTERNAL_LIMIT)
+      .map((product) => {
+        const emptyMatchReason: QuestMatchReason = {
+          platforms: product.platforms || [],
+          genresMatched: [],
+          tagsMatched: [],
+        }
         return convertInternalProductToQuestResult(
           product,
           1,
-          [],
-          [],
-          ['Popular game on MobileGameHunt'],
-          maxLikesForFallback
+          emptyMatchReason,
+          maxLikes
         )
       })
-      .map((game, index) => ({ ...game, matchRank: index + 1 }))
 
-    return fallbackGames
+    const filteredFallback = filterByPlatform(fallbackCandidates, platformAnswer)
+    return filteredFallback.map((game, index) => ({ ...game, matchRank: index + 1 }))
   }
 
   return finalResults
 }
-

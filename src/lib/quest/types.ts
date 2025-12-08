@@ -19,6 +19,7 @@ export interface QuestGameResult {
   categories: string[]
   matchRank: number // 1,2,3... order after sorting
   score: number // numeric score used for ranking
+  platforms?: string[] // Unified platforms array for filtering
   metrics?: {
     likes?: number
     visits?: number

@@ -14,6 +14,7 @@ const CACHE_TTL = 24 * 60 * 60 // 24 hours in seconds
 export type ExternalStoreSearchParams = {
   query: string // search text derived from Quest preferences
   limit?: number // max items
+  platforms?: string[] // optional platform filter (e.g., ['android', 'ios'])
 }
 
 // Normalize external game results to unified format
@@ -107,6 +108,9 @@ function normalizeExternalResult(
     console.log(`[EXTERNAL_SEARCH] Normalized link for ${store}:`, link)
   }
   
+  // Determine platforms from store
+  const platforms: string[] = store === 'apple_app_store' ? ['ios'] : store === 'google_play_store' ? ['android'] : []
+
   return {
     id: null,
     slug: null,
@@ -119,6 +123,7 @@ function normalizeExternalResult(
     categories: [String(category).trim()],
     matchRank: 0, // will be set later by parent
     score,
+    platforms, // Include platforms for filtering
     metrics: {},
     links: {
       externalStoreUrl: link,
@@ -298,10 +303,15 @@ export async function searchExternalGames(
     })
     return []
   }
-  
+
   console.log('[EXTERNAL_SEARCH] Starting external search...')
   
-  const { query, limit = 10 } = params
+  // Determine which stores to search based on platform filter
+  const { query, limit = 10, platforms = [] } = params
+  const shouldSearchApple = platforms.length === 0 || platforms.some(p => p.toLowerCase() === 'ios')
+  const shouldSearchGoogle = platforms.length === 0 || platforms.some(p => p.toLowerCase() === 'android')
+  
+  console.log(`[EXTERNAL_SEARCH] Platform filter: iOS=${shouldSearchApple}, Android=${shouldSearchGoogle}`)
   
   // Check cache first (temporarily disabled for debugging)
   // const cacheKey = getCacheKey(query)
@@ -318,11 +328,24 @@ export async function searchExternalGames(
   
   console.log(`[EXTERNAL_SEARCH] Searching external stores for query: "${query}" (limit: ${limit})`)
   
-  // Search both stores in parallel
-  const [appleResults, googleResults] = await Promise.all([
-    searchAppleAppStore(query, limit),
-    searchGooglePlayStore(query, limit),
-  ])
+  // Search stores based on platform filter
+  const searchPromises: Promise<QuestGameResult[]>[] = []
+  
+  if (shouldSearchApple) {
+    searchPromises.push(searchAppleAppStore(query, Math.ceil(limit / (shouldSearchApple && shouldSearchGoogle ? 2 : 1))))
+  }
+  
+  if (shouldSearchGoogle) {
+    searchPromises.push(searchGooglePlayStore(query, Math.ceil(limit / (shouldSearchApple && shouldSearchGoogle ? 2 : 1))))
+  }
+  
+  // Search selected stores in parallel
+  const storeResults = await Promise.all(searchPromises)
+  const [appleResults = [], googleResults = []] = storeResults.length === 2 
+    ? storeResults 
+    : shouldSearchApple 
+      ? [storeResults[0], []] 
+      : [[], storeResults[0]]
   
   console.log(`[EXTERNAL_SEARCH] Search completed: ${appleResults.length} Apple results, ${googleResults.length} Google Play results`)
   
@@ -343,13 +366,14 @@ export async function searchExternalGames(
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
   
-  // Cache the results
-  try {
-    await cacheService.set(cacheKey, results, CACHE_TTL)
-    console.log('[EXTERNAL_SEARCH] Cached results for query:', query)
-  } catch (error) {
-    console.warn('[EXTERNAL_SEARCH] Cache write error:', error)
-  }
+  // Cache the results (temporarily disabled - see above)
+  // try {
+  //   const cacheKey = getCacheKey(query)
+  //   await cacheService.set(cacheKey, results, CACHE_TTL)
+  //   console.log('[EXTERNAL_SEARCH] Cached results for query:', query)
+  // } catch (error) {
+  //   console.warn('[EXTERNAL_SEARCH] Cache write error:', error)
+  // }
   
   return results
 }

@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Download, GamepadIcon, Mail, Star, MessageCircle, TrendingUp, Users, List, Share2, Trash2, TestTube, BarChart3, Shield } from 'lucide-react'
+import { Download, GamepadIcon, Mail, Star, MessageCircle, TrendingUp, Users, List, Share2, Trash2, TestTube, BarChart3, Shield, MessageSquare } from 'lucide-react'
 import { SocialPlatformIcon } from '@/components/ui/social-platform-icons'
 import { UserAnalyticsDashboard } from '@/components/editorial/user-analytics-dashboard'
 import { SecurityMonitoringDashboard } from '@/components/editorial/security-monitoring-dashboard'
@@ -55,7 +55,7 @@ interface User {
   createdAt: string
 }
 
-type ActiveSection = 'games' | 'newsletter' | 'campaigns' | 'users' | 'submitted-games' | 'test' | 'user-analytics' | 'security-monitoring'
+type ActiveSection = 'games' | 'newsletter' | 'campaigns' | 'users' | 'submitted-games' | 'test' | 'user-analytics' | 'security-monitoring' | 'quest-feedback'
 
 type TestCampaignType = 'social-promo' | 'welcome' | 'weekly' | 'latest' | 'feedback'
 
@@ -145,6 +145,9 @@ export default function EditorialDashboard() {
   const [testCampaignLoading, setTestCampaignLoading] = useState<TestCampaignType | null>(null)
   const [testEmail, setTestEmail] = useState('')
   const [testEmailLoading, setTestEmailLoading] = useState(false)
+  const [questFeedback, setQuestFeedback] = useState<any[]>([])
+  const [questFeedbackLoading, setQuestFeedbackLoading] = useState(false)
+  const [questFeedbackFilter, setQuestFeedbackFilter] = useState<string>('')
   const safeNewsletterSubscribers = Array.isArray(newsletterSubscribers) ? newsletterSubscribers : []
   const ITEMS_PER_PAGE = 10
   const testSelectionCount = selectedTestRecipients.length
@@ -346,6 +349,35 @@ export default function EditorialDashboard() {
       fetchTestRecipients()
     }
   }, [session, fetchTestRecipients])
+
+  // Fetch Quest feedback
+  const fetchQuestFeedback = useCallback(async () => {
+    if (session?.user?.role !== 'ADMIN') return
+    
+    try {
+      setQuestFeedbackLoading(true)
+      const url = questFeedbackFilter 
+        ? `/api/quest/feedback?reason=${questFeedbackFilter}`
+        : '/api/quest/feedback'
+      const res = await fetch(url)
+      if (!res.ok) {
+        throw new Error('Failed to fetch Quest feedback')
+      }
+      const data = await res.json()
+      setQuestFeedback(Array.isArray(data.feedback) ? data.feedback : [])
+    } catch (error) {
+      console.error('Error fetching Quest feedback:', error)
+      toast.error('Failed to load Quest feedback')
+    } finally {
+      setQuestFeedbackLoading(false)
+    }
+  }, [session, questFeedbackFilter])
+
+  useEffect(() => {
+    if (activeSection === 'quest-feedback' && session?.user?.role === 'ADMIN') {
+      fetchQuestFeedback()
+    }
+  }, [activeSection, session, fetchQuestFeedback])
 
   const handleEditorialToggle = async (gameId: string, field: 'editorial_boost' | 'editorial_override', value: boolean) => {
     try {
@@ -888,6 +920,18 @@ export default function EditorialDashboard() {
                 >
                   <Shield className="w-4 h-4 mr-2" />
                   Security Monitoring
+                </Button>
+                <Button
+                  variant={activeSection === 'quest-feedback' ? 'default' : 'ghost'}
+                  className={`w-full justify-start ${
+                    activeSection === 'quest-feedback' 
+                      ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700' 
+                      : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  }`}
+                  onClick={() => setActiveSection('quest-feedback')}
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Quest Feedback
                 </Button>
               </CardContent>
             </Card>
@@ -1966,6 +2010,148 @@ export default function EditorialDashboard() {
               <Card className="bg-zinc-900/40 backdrop-blur-md border border-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]">
                 <CardContent className="p-6">
                   <SecurityMonitoringDashboard />
+                </CardContent>
+              </Card>
+            )}
+
+            {activeSection === 'quest-feedback' && (
+              <Card className="bg-zinc-900/40 backdrop-blur-md border border-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5" />
+                    Quest Feedback
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {/* Filter */}
+                    <div className="flex items-center gap-4">
+                      <label className="text-sm text-gray-300">Filter by reason:</label>
+                      <select
+                        value={questFeedbackFilter}
+                        onChange={(e) => setQuestFeedbackFilter(e.target.value)}
+                        className="bg-zinc-800 border border-white/10 text-white rounded px-3 py-2 text-sm"
+                      >
+                        <option value="">All</option>
+                        <option value="WRONG_PLATFORM">Wrong Platform</option>
+                        <option value="NOT_MY_STYLE">Not My Style</option>
+                        <option value="NOT_INTERESTED">Not Interested</option>
+                        <option value="OTHER">Other</option>
+                      </select>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={fetchQuestFeedback}
+                        disabled={questFeedbackLoading}
+                        className="text-white border-white/20 hover:bg-white/10"
+                      >
+                        Refresh
+                      </Button>
+                    </div>
+
+                    {/* Feedback Table */}
+                    {questFeedbackLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="w-6 h-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        <span className="ml-2 text-gray-300">Loading feedback...</span>
+                      </div>
+                    ) : questFeedback.length === 0 ? (
+                      <div className="text-center py-8 text-gray-400">
+                        No Quest feedback yet. Users can provide feedback on Quest recommendations.
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="border-gray-700">
+                              <TableHead className="text-gray-300">User</TableHead>
+                              <TableHead className="text-gray-300">Game</TableHead>
+                              <TableHead className="text-gray-300">Match Rank</TableHead>
+                              <TableHead className="text-gray-300">Reason</TableHead>
+                              <TableHead className="text-gray-300">Notes</TableHead>
+                              <TableHead className="text-gray-300">Date</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {questFeedback.map((feedback) => (
+                              <TableRow key={feedback.id} className="border-gray-700">
+                                <TableCell className="text-white">
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">
+                                      {feedback.user?.name || feedback.user?.username || 'Unknown'}
+                                    </span>
+                                    <span className="text-xs text-gray-400">
+                                      {feedback.user?.email}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-gray-300">
+                                  {feedback.gameTitle || feedback.gameId || 'N/A'}
+                                </TableCell>
+                                <TableCell className="text-gray-300">
+                                  {feedback.matchRank ? `#${feedback.matchRank}` : 'N/A'}
+                                </TableCell>
+                                <TableCell className="text-gray-300">
+                                  <Badge
+                                    variant={
+                                      feedback.reason === 'WRONG_PLATFORM' ? 'destructive' :
+                                      feedback.reason === 'NOT_MY_STYLE' ? 'secondary' :
+                                      'outline'
+                                    }
+                                    className="text-xs"
+                                  >
+                                    {feedback.reason.replace(/_/g, ' ')}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-gray-300 text-sm max-w-xs truncate">
+                                  {feedback.notes || '-'}
+                                </TableCell>
+                                <TableCell className="text-gray-300 text-sm">
+                                  {new Date(feedback.createdAt).toLocaleDateString()}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+
+                    {/* Summary Stats */}
+                    {questFeedback.length > 0 && (
+                      <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <Card className="bg-zinc-800/50 border border-white/10">
+                          <CardContent className="p-4">
+                            <div className="text-2xl font-bold text-white">{questFeedback.length}</div>
+                            <div className="text-sm text-gray-400">Total Feedback</div>
+                          </CardContent>
+                        </Card>
+                        <Card className="bg-zinc-800/50 border border-white/10">
+                          <CardContent className="p-4">
+                            <div className="text-2xl font-bold text-red-400">
+                              {questFeedback.filter(f => f.reason === 'WRONG_PLATFORM').length}
+                            </div>
+                            <div className="text-sm text-gray-400">Wrong Platform</div>
+                          </CardContent>
+                        </Card>
+                        <Card className="bg-zinc-800/50 border border-white/10">
+                          <CardContent className="p-4">
+                            <div className="text-2xl font-bold text-yellow-400">
+                              {questFeedback.filter(f => f.reason === 'NOT_MY_STYLE').length}
+                            </div>
+                            <div className="text-sm text-gray-400">Not My Style</div>
+                          </CardContent>
+                        </Card>
+                        <Card className="bg-zinc-800/50 border border-white/10">
+                          <CardContent className="p-4">
+                            <div className="text-2xl font-bold text-blue-400">
+                              {questFeedback.filter(f => f.reason === 'NOT_INTERESTED').length}
+                            </div>
+                            <div className="text-sm text-gray-400">Not Interested</div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             )}

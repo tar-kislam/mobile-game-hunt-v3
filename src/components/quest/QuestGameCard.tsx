@@ -1,17 +1,50 @@
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ExternalLink, ArrowUpIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { ExternalLink, ArrowUpIcon, X, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { QuestGameResult } from "@/lib/quest/types"
+import { useSession } from "next-auth/react"
 
 interface QuestGameCardProps {
   game: QuestGameResult
 }
 
 export function QuestGameCard({ game }: QuestGameCardProps) {
+  const { data: session } = useSession()
+  const [feedbackSent, setFeedbackSent] = useState(false)
+  const [showFeedback, setShowFeedback] = useState(false)
+
+  const handleFeedback = async (reason: 'NOT_MY_STYLE' | 'WRONG_PLATFORM' | 'NOT_INTERESTED' | 'OTHER') => {
+    if (!session || feedbackSent) return
+
+    try {
+      const response = await fetch('/api/quest/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          gameId: game.id,
+          reason,
+          matchRank: game.matchRank,
+          gameTitle: game.title,
+        }),
+      })
+
+      if (response.ok) {
+        setFeedbackSent(true)
+        setShowFeedback(false)
+      }
+    } catch (error) {
+      console.error('Failed to send feedback:', error)
+    }
+  }
+
   const handleCardClick = (e: React.MouseEvent) => {
     if (game.source === 'external' && game.links.externalStoreUrl) {
       e.preventDefault()
@@ -131,11 +164,14 @@ export function QuestGameCard({ game }: QuestGameCardProps) {
           </p>
         )}
 
-        {/* Why this game? - Only for internal games */}
+        {/* Why this game? - Match explanation */}
         {game.source === 'internal' && game.reasons && game.reasons.length > 0 && (
           <div className="mb-2">
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+              Matched:
+            </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
-              {game.reasons.slice(0, 2).join(' • ')}
+              {game.reasons.join(' • ')}
             </p>
           </div>
         )}
@@ -164,6 +200,88 @@ export function QuestGameCard({ game }: QuestGameCardProps) {
             <div className="flex items-center gap-1">
               <ExternalLink className="w-3 h-3" />
             </div>
+          </div>
+        )}
+
+        {/* Feedback buttons - Only for internal games and authenticated users */}
+        {game.source === 'internal' && session && !feedbackSent && (
+          <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+            {!showFeedback ? (
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setShowFeedback(true)
+                }}
+                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1"
+              >
+                <AlertCircle className="w-3 h-3" />
+                <span>Not right for me?</span>
+              </button>
+            ) : (
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-gray-600 dark:text-gray-400">Why not?</span>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      setShowFeedback(false)
+                    }}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-6 px-2"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleFeedback('WRONG_PLATFORM')
+                    }}
+                  >
+                    Wrong Platform
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-6 px-2"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleFeedback('NOT_MY_STYLE')
+                    }}
+                  >
+                    Not My Style
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-6 px-2"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleFeedback('NOT_INTERESTED')
+                    }}
+                  >
+                    Not Interested
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Feedback sent confirmation */}
+        {feedbackSent && (
+          <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-xs text-green-600 dark:text-green-400">
+              ✓ Thanks for your feedback!
+            </p>
           </div>
         )}
 

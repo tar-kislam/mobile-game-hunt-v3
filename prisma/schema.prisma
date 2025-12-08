@@ -85,6 +85,7 @@ model User {
   xpLogs               UserXpLog[]
   badges               UserBadge[]
   activityEvents       UserActivityEvent[]
+  questFeedbacks       QuestFeedback[]
 }
 
 model Product {
@@ -732,5 +733,24 @@ model SupportMessage {
   createdAt DateTime @default(now())
 
   @@index([email])
+  @@index([createdAt])
+}
+
+model QuestFeedback {
+  id        String   @id @default(cuid())
+  userId    String?
+  gameId    String?  // Internal game ID (if available)
+  gameTitle  String?  // Game title for reference
+  matchRank Int?     // Position in Quest results (1, 2, 3...)
+  reason    String   // "NOT_MY_STYLE" | "WRONG_PLATFORM" | "NOT_INTERESTED" | "OTHER"
+  notes     String?  // Optional additional notes
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([gameId])
+  @@index([reason])
   @@index([createdAt])
 }
