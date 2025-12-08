@@ -19,6 +19,11 @@ export function QuestGameCard({ game }: QuestGameCardProps) {
   const { data: session } = useSession()
   const [feedbackSent, setFeedbackSent] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
+  
+  // Debug: Log session status
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    console.log('[QuestGameCard] Session:', !!session, 'Feedback sent:', feedbackSent, 'Show feedback:', showFeedback)
+  }
 
   const handleFeedback = async (reason: 'NOT_MY_STYLE' | 'WRONG_PLATFORM' | 'NOT_INTERESTED' | 'OTHER') => {
     if (!session || feedbackSent) return
@@ -64,6 +69,12 @@ export function QuestGameCard({ game }: QuestGameCardProps) {
   }
 
   const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on feedback buttons
+    const target = e.target as HTMLElement
+    if (target.closest('.feedback-container') || target.closest('button') || target.closest('a')) {
+      return
+    }
+    
     if (game.source === 'external' && game.links.externalStoreUrl) {
       e.preventDefault()
       const url = game.links.externalStoreUrl
@@ -223,21 +234,33 @@ export function QuestGameCard({ game }: QuestGameCardProps) {
 
         {/* Feedback buttons - For ALL games (internal and external) and authenticated users */}
         {session && !feedbackSent && (
-          <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+          <div 
+            className="feedback-container mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 relative z-10" 
+            onClick={(e) => {
+              e.stopPropagation()
+              e.preventDefault()
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation()
+            }}
+          >
             {!showFeedback ? (
               <motion.button
+                type="button"
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
+                  console.log('[QuestGameCard] Feedback button clicked, opening feedback modal')
                   setShowFeedback(true)
                 }}
-                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1 w-full"
+                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1 w-full py-1.5 px-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.2 }}
+                style={{ pointerEvents: 'auto' }}
               >
-                <AlertCircle className="w-3 h-3" />
-                <span>Not right for me?</span>
+                <AlertCircle className="w-3.5 h-3.5" />
+                <span className="font-medium">Not right for me?</span>
               </motion.button>
             ) : (
               <AnimatePresence>
@@ -370,12 +393,21 @@ export function QuestGameCard({ game }: QuestGameCardProps) {
   )
 
   // Wrap in Link for internal games, plain div for external (handled by onClick)
+  // But prevent navigation when clicking on feedback buttons
   if (game.source === 'internal' && game.links.internalProductUrl) {
     return (
       <Link 
         href={game.links.internalProductUrl}
         className="block"
-        onClick={handleCardClick}
+        onClick={(e) => {
+          // Don't navigate if clicking on feedback buttons
+          const target = e.target as HTMLElement
+          if (target.closest('.feedback-container') || target.closest('button')) {
+            e.preventDefault()
+            return
+          }
+          handleCardClick(e)
+        }}
       >
         {cardContent}
       </Link>
