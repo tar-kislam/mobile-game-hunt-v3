@@ -291,8 +291,15 @@ export async function searchExternalGames(
   // Check if SearchAPI is configured
   if (!isSearchApiConfigured()) {
     console.warn('[EXTERNAL_SEARCH] SearchAPI not configured, skipping external search')
+    console.warn('[EXTERNAL_SEARCH] Config check:', {
+      hasApiKey: !!SEARCHAPI_CONFIG.apiKey,
+      apiKeyLength: SEARCHAPI_CONFIG.apiKey?.length || 0,
+      baseUrl: SEARCHAPI_CONFIG.baseUrl
+    })
     return []
   }
+  
+  console.log('[EXTERNAL_SEARCH] Starting external search...')
   
   const { query, limit = 10 } = params
   

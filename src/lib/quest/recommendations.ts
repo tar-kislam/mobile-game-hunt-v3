@@ -8,7 +8,9 @@ import { aggregateQuizEffects, categoryToAttributesMap } from "@/lib/quiz/config
 import { QuestGameResult } from "@/lib/quest/types"
 import { searchExternalGames, buildSearchQueryFromPreferences } from "@/lib/externalStores/search"
 
-const TARGET_RESULTS = 5
+const TARGET_RESULTS = 8 // Total games to show
+const MAX_INTERNAL = 4 // Max internal games
+const MAX_EXTERNAL = 4 // Max external games
 
 // Convert internal product to QuestGameResult
 function convertInternalProductToQuestResult(
@@ -295,24 +297,27 @@ export async function generateQuestRecommendations(
   // Filter out very low scores
   const filteredInternal = internalResults.filter(game => game.score >= 1.0)
 
-  // If we have enough internal results, return only those
-  if (filteredInternal.length >= TARGET_RESULTS) {
-    return filteredInternal
-      .slice(0, TARGET_RESULTS)
-      .map((game, index) => ({ ...game, matchRank: index + 1 }))
-  }
-
-  // Need external games to fill remaining slots
+  // Log internal results count
+  console.log(`[QUEST] Internal results: ${filteredInternal.length} (max: ${MAX_INTERNAL})`)
+  
+  // Limit internal results to MAX_INTERNAL
+  const limitedInternal = filteredInternal.slice(0, MAX_INTERNAL)
+  
+  // Always try to get external games (up to MAX_EXTERNAL)
   let externalResults: QuestGameResult[] = []
   
   try {
     const searchQuery = buildSearchQueryFromPreferences(answers)
-    const neededCount = TARGET_RESULTS - filteredInternal.length
+    const neededCount = Math.min(MAX_EXTERNAL, TARGET_RESULTS - limitedInternal.length)
+    
+    console.log(`[QUEST] Fetching ${neededCount} external games, searching with query: "${searchQuery}"`)
     
     externalResults = await searchExternalGames({
       query: searchQuery,
       limit: neededCount,
     })
+    
+    console.log(`[QUEST] External search returned ${externalResults.length} results`)
   } catch (error) {
     console.error('[QUEST] External search failed, continuing with internal only:', error)
     // Continue with internal results only if external search fails
@@ -320,7 +325,7 @@ export async function generateQuestRecommendations(
 
   // Combine results: internal first, then external
   const combined: QuestGameResult[] = [
-    ...filteredInternal,
+    ...limitedInternal,
     ...externalResults,
   ]
 
@@ -334,14 +339,16 @@ export async function generateQuestRecommendations(
       // Within same source, sort by score descending
       return b.score - a.score
     })
-    .slice(0, TARGET_RESULTS)
+    .slice(0, TARGET_RESULTS) // Max 8 total
     .map((game, index) => ({ ...game, matchRank: index + 1 }))
+  
+  console.log(`[QUEST] Final results: ${finalResults.filter(g => g.source === 'internal').length} internal, ${finalResults.filter(g => g.source === 'external').length} external, total: ${finalResults.length}`)
 
   // Fallback: if no internal results and no external results, return top games by likes
   if (finalResults.length === 0) {
     const fallbackGames = products
       .sort((a, b) => b._count.votes - a._count.votes)
-      .slice(0, TARGET_RESULTS)
+      .slice(0, MAX_INTERNAL) // Max 4 in fallback too
       .map((product, index) => {
         const maxLikesForFallback = Math.max(...products.map(p => p._count.votes), 1)
         return convertInternalProductToQuestResult(

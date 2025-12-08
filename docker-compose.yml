@@ -61,6 +61,8 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - AUTH_TRUST_HOST=true
+      - SEARCHAPI_API_KEY=${SEARCHAPI_API_KEY}
+      - SEARCHAPI_BASE_URL=${SEARCHAPI_BASE_URL:-https://www.searchapi.io/api/v1/search}
     depends_on:
       postgres:
         condition: service_healthy
