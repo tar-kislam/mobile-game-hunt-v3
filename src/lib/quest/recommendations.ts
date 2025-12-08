@@ -141,7 +141,22 @@ export async function generateQuestRecommendations(
     }
   }
 
-  // Fetch ALL candidate products (will be filtered again after scoring)
+  // CRITICAL: Add genre/category filter at DB level if we have preferred genres
+  // This ensures we only fetch games that match the user's genre preference
+  if (profile.preferredGenres.length > 0) {
+    where.categories = {
+      some: {
+        category: {
+          name: {
+            in: profile.preferredGenres
+          }
+        }
+      }
+    }
+    console.log(`[QUEST] Genre filter applied at DB level: ${profile.preferredGenres.slice(0, 5).join(', ')}`)
+  }
+
+  // Fetch candidate products (already filtered by platform, monetization, and genre)
   const products = await prisma.product.findMany({
     where,
     select: {
@@ -189,6 +204,20 @@ export async function generateQuestRecommendations(
   })
 
   console.log(`[QUEST] Found ${products.length} candidate games from DB`)
+  
+  // Log genre distribution for debugging
+  if (profile.preferredGenres.length > 0) {
+    const genreCounts = new Map<string, number>()
+    products.forEach(p => {
+      p.categories.forEach(pc => {
+        const catName = pc.category.name
+        if (profile.preferredGenres.includes(catName)) {
+          genreCounts.set(catName, (genreCounts.get(catName) || 0) + 1)
+        }
+      })
+    })
+    console.log(`[QUEST] Genre distribution in candidates:`, Object.fromEntries(genreCounts))
+  }
 
   // Calculate max likes for normalization
   const maxLikes = Math.max(...products.map(p => p._count.votes), 1)
@@ -224,8 +253,13 @@ export async function generateQuestRecommendations(
   // Sort by score descending
   scoredProducts.sort((a, b) => b.score - a.score)
 
-  // Filter out low scores
-  const filteredScored = scoredProducts.filter(item => item.score >= QUEST_CONFIG.minScoreThreshold)
+  // CRITICAL: For internal games, be more lenient with score threshold
+  // Internal games should be prioritized even if they score slightly lower
+  // Only filter out games with very low scores (below 1.0) to avoid completely irrelevant games
+  const internalScoreThreshold = Math.max(1.0, QUEST_CONFIG.minScoreThreshold * 0.5) // More lenient for internal
+  const filteredScored = scoredProducts.filter(item => item.score >= internalScoreThreshold)
+
+  console.log(`[QUEST] Internal games after scoring: ${filteredScored.length} (threshold: ${internalScoreThreshold.toFixed(2)})`)
 
   // Convert to QuestGameResult format
   const internalCandidates: QuestGameResult[] = filteredScored.map(({ product, score, matchReason }) => {
@@ -242,16 +276,35 @@ export async function generateQuestRecommendations(
   
   console.log(`[QUEST] Internal games after platform filter: ${filteredInternal.length} (from ${internalCandidates.length})`)
 
-  // Sort internal games by score and limit to INTERNAL_LIMIT
+  // CRITICAL: Sort internal games by score and limit to INTERNAL_LIMIT
+  // Internal games MUST appear first, regardless of external game scores
   const sortedInternal = filteredInternal
-    .sort((a, b) => b.score - a.score)
+    .sort((a, b) => {
+      // Primary sort: score descending
+      if (Math.abs(b.score - a.score) > 0.1) {
+        return b.score - a.score
+      }
+      // Secondary sort: likes (popularity) for tie-breaking
+      return (b.metrics?.likes || 0) - (a.metrics?.likes || 0)
+    })
     .slice(0, INTERNAL_LIMIT)
 
   console.log(`[QUEST] Internal results: ${sortedInternal.length} (max: ${INTERNAL_LIMIT})`)
+  if (sortedInternal.length > 0) {
+    console.log(`[QUEST] Top internal game: "${sortedInternal[0].title}" (score: ${sortedInternal[0].score.toFixed(2)})`)
+  }
 
   // Calculate remaining slots for external games
+  // CRITICAL: If we have fewer than INTERNAL_LIMIT internal games, we can fill more external slots
+  // But total should never exceed TOTAL_LIMIT
   const remainingSlots = Math.max(0, TOTAL_LIMIT - sortedInternal.length)
-  console.log(`[QUEST] Remaining slots for external games: ${remainingSlots}`)
+  console.log(`[QUEST] Remaining slots for external games: ${remainingSlots} (internal: ${sortedInternal.length}/${INTERNAL_LIMIT}, total limit: ${TOTAL_LIMIT})`)
+  
+  // If we have very few internal games (0-2), we can show more external games
+  // This ensures users always get 8 recommendations when possible
+  const effectiveExternalLimit = sortedInternal.length < 2 
+    ? Math.min(remainingSlots + (INTERNAL_LIMIT - sortedInternal.length), TOTAL_LIMIT - sortedInternal.length)
+    : remainingSlots
 
   // Fetch external games
   let externalCandidates: QuestGameResult[] = []
@@ -290,33 +343,50 @@ export async function generateQuestRecommendations(
   // Select external games based on platform answer
   let sortedExternal: QuestGameResult[] = []
   
-  if (remainingSlots > 0 && filteredExternal.length > 0) {
+  if (effectiveExternalLimit > 0 && filteredExternal.length > 0) {
     if (platformAnswer === 'MOBILE_BOTH') {
       // Use balanced selection for MOBILE_BOTH to ensure iOS/Android mix
-      sortedExternal = buildBalancedExternalForMobile(filteredExternal, remainingSlots)
-      console.log(`[QUEST] Balanced external selection: ${sortedExternal.length} games (iOS/Android mix)`)
+      sortedExternal = buildBalancedExternalForMobile(filteredExternal, effectiveExternalLimit)
+      console.log(`[QUEST] Balanced external selection: ${sortedExternal.length} games (iOS/Android mix, limit: ${effectiveExternalLimit})`)
     } else {
       // For other platform answers, simple sort + slice
       sortedExternal = filteredExternal
         .sort((a, b) => b.score - a.score)
-        .slice(0, remainingSlots)
-      console.log(`[QUEST] External results: ${sortedExternal.length} (max: ${remainingSlots})`)
+        .slice(0, effectiveExternalLimit)
+      console.log(`[QUEST] External results: ${sortedExternal.length} (max: ${effectiveExternalLimit})`)
     }
+  } else if (effectiveExternalLimit > 0 && filteredExternal.length === 0) {
+    console.warn(`[QUEST] No external games available to fill ${effectiveExternalLimit} remaining slots`)
   }
 
-  // Combine: internal first, then external (strict order)
+  // CRITICAL: Combine with strict ordering - internal first, then external
+  // This ensures internal games ALWAYS appear before external games
   const finalMatches: QuestGameResult[] = [
     ...sortedInternal,
     ...sortedExternal,
   ]
 
   // Assign match ranks (1, 2, 3...)
+  // Rank 1-4 should be internal (if available), then external
   const finalResults = finalMatches.map((game, index) => ({
     ...game,
     matchRank: index + 1,
   }))
   
   console.log(`[QUEST] Final results: ${finalResults.filter(g => g.source === 'internal').length} internal, ${finalResults.filter(g => g.source === 'external').length} external, total: ${finalResults.length}`)
+  
+  // CRITICAL: Validate internal games appear first
+  const internalCount = finalResults.filter(g => g.source === 'internal').length
+  const externalCount = finalResults.filter(g => g.source === 'external').length
+  if (internalCount > 0 && externalCount > 0) {
+    const firstExternalIndex = finalResults.findIndex(g => g.source === 'external')
+    const lastInternalIndex = finalResults.map((g, i) => g.source === 'internal' ? i : -1).filter(i => i >= 0).pop() ?? -1
+    if (firstExternalIndex <= lastInternalIndex) {
+      console.error(`[QUEST] ORDERING VIOLATION: External game at index ${firstExternalIndex}, last internal at ${lastInternalIndex}`)
+    } else {
+      console.log(`[QUEST] ✅ Ordering correct: ${internalCount} internal (ranks 1-${internalCount}), then ${externalCount} external (ranks ${firstExternalIndex + 1}-${finalResults.length})`)
+    }
+  }
 
   // CRITICAL: Validate platform filter (runtime check)
   if (platformAnswer !== 'ANY') {
@@ -356,25 +426,92 @@ export async function generateQuestRecommendations(
     }
   }
 
-  // Fallback: if no results, return top games by likes (still respecting platform filter)
+  // Fallback: if no results, return top games by likes (still respecting platform and genre filters)
   if (finalResults.length === 0) {
     console.warn('[QUEST] No results found, falling back to top games by likes')
-    const fallbackCandidates = products
-      .sort((a, b) => b._count.votes - a._count.votes)
-      .slice(0, INTERNAL_LIMIT)
-      .map((product) => {
-        const emptyMatchReason: QuestMatchReason = {
-          platforms: product.platforms || [],
-          genresMatched: [],
-          tagsMatched: [],
+    console.warn(`[QUEST] Fallback: platform=${platformAnswer}, genres=${profile.preferredGenres.join(', ') || 'none'}`)
+    
+    // Build fallback query with same filters
+    const fallbackWhere: any = {
+      status: 'PUBLISHED'
+    }
+    
+    // Apply platform filter
+    if (platformAnswer !== 'ANY' && allowedPlatforms.length > 0) {
+      fallbackWhere.platforms = {
+        hasSome: allowedPlatforms.map(p => p.toLowerCase())
+      }
+    }
+    
+    // Try to include genre filter if we have preferred genres
+    if (profile.preferredGenres.length > 0) {
+      fallbackWhere.categories = {
+        some: {
+          category: {
+            name: {
+              in: profile.preferredGenres
+            }
+          }
         }
-        return convertInternalProductToQuestResult(
-          product,
-          1,
-          emptyMatchReason,
-          maxLikes
-        )
-      })
+      }
+    }
+    
+    const fallbackProducts = await prisma.product.findMany({
+      where: fallbackWhere,
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        tagline: true,
+        description: true,
+        thumbnail: true,
+        image: true,
+        platforms: true,
+        categories: {
+          include: {
+            category: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        },
+        _count: {
+          select: {
+            votes: true,
+            comments: true
+          }
+        }
+      },
+      orderBy: [
+        {
+          votes: {
+            _count: 'desc'
+          }
+        },
+        {
+          createdAt: 'desc'
+        }
+      ],
+      take: TOTAL_LIMIT
+    })
+    
+    const fallbackCandidates = fallbackProducts.map((product) => {
+      const emptyMatchReason: QuestMatchReason = {
+        platforms: product.platforms || [],
+        genresMatched: product.categories.map(pc => pc.category.name).filter(name => 
+          profile.preferredGenres.includes(name)
+        ),
+        tagsMatched: [],
+      }
+      return convertInternalProductToQuestResult(
+        product,
+        1,
+        emptyMatchReason,
+        Math.max(...fallbackProducts.map(p => p._count.votes), 1)
+      )
+    })
 
     const filteredFallback = filterByPlatform(fallbackCandidates, platformAnswer)
     return filteredFallback.map((game, index) => ({ ...game, matchRank: index + 1 }))

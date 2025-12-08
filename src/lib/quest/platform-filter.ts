@@ -177,24 +177,35 @@ export function buildBalancedExternalForMobile<T extends GameWithPlatformsAndSco
   }
 
   // 2) Then alternate between iosOnly and androidOnly to keep balance
-  let i = 0
-  while (result.length < max && (iosOnly[i] || androidOnly[i])) {
-    // Alternate: iOS first, then Android
-    if (iosOnly[i]) {
-      result.push(iosOnly[i])
+  // Start with the platform that has more games to ensure better distribution
+  let iosIndex = 0
+  let androidIndex = 0
+  let turn: 'ios' | 'android' = iosOnly.length >= androidOnly.length ? 'ios' : 'android'
+  
+  while (result.length < max && (iosIndex < iosOnly.length || androidIndex < androidOnly.length)) {
+    if (turn === 'ios' && iosIndex < iosOnly.length) {
+      result.push(iosOnly[iosIndex++])
       if (result.length >= max) break
-    }
-    if (androidOnly[i]) {
-      result.push(androidOnly[i])
+      turn = 'android' // Switch to Android next
+    } else if (turn === 'android' && androidIndex < androidOnly.length) {
+      result.push(androidOnly[androidIndex++])
       if (result.length >= max) break
+      turn = 'ios' // Switch to iOS next
+    } else {
+      // Current turn has no more games, switch to the other
+      turn = turn === 'ios' ? 'android' : 'ios'
+      // If both are exhausted, break
+      if (iosIndex >= iosOnly.length && androidIndex >= androidOnly.length) break
     }
-    i++
   }
 
   // 3) If still slots left, fill with any remaining highest-scored
+  // Continue alternating if possible, otherwise fill from highest scores
+  const remainingIos = iosOnly.slice(iosIndex)
+  const remainingAndroid = androidOnly.slice(androidIndex)
   const remainingPool = [
-    ...iosOnly.slice(i),
-    ...androidOnly.slice(i)
+    ...remainingIos,
+    ...remainingAndroid
   ].sort((a, b) => b.score - a.score)
   
   for (const g of remainingPool) {
@@ -204,6 +215,17 @@ export function buildBalancedExternalForMobile<T extends GameWithPlatformsAndSco
       result.push(g)
     }
   }
+  
+  console.log(`[BALANCED_EXTERNAL] Selected ${result.length} games: ${result.filter(g => {
+    const p = (g.platforms || []).map(p => p.toLowerCase())
+    return p.includes('ios') && p.includes('android')
+  }).length} both, ${result.filter(g => {
+    const p = (g.platforms || []).map(p => p.toLowerCase())
+    return p.includes('ios') && !p.includes('android')
+  }).length} iOS-only, ${result.filter(g => {
+    const p = (g.platforms || []).map(p => p.toLowerCase())
+    return p.includes('android') && !p.includes('ios')
+  }).length} Android-only`)
 
   return result
 }

@@ -60,6 +60,7 @@ export function computePlatformMatch(
 
 /**
  * Compute genre match score (0-1)
+ * CRITICAL: This must work for ALL genres including Puzzle, Strategy, etc.
  */
 export function computeGenreMatch(
   profile: UserQuestProfile,
@@ -69,19 +70,24 @@ export function computeGenreMatch(
     return 0.5 // No genre preference = neutral
   }
 
-  const gameGenres = game.categories.map(c => c.name)
-  const preferredGenres = profile.preferredGenres
+  // Normalize to lowercase for case-insensitive matching
+  const gameGenres = game.categories.map(c => c.name.toLowerCase().trim())
+  const preferredGenres = profile.preferredGenres.map(g => g.toLowerCase().trim())
 
-  // Check for exact matches
-  const exactMatches = preferredGenres.filter(g => gameGenres.includes(g))
+  // Check for exact matches (case-insensitive)
+  const exactMatches = preferredGenres.filter(prefGenre => 
+    gameGenres.some(gameGenre => gameGenre === prefGenre)
+  )
   
   if (exactMatches.length > 0) {
     // Multiple genre matches = bonus
     const matchRatio = exactMatches.length / preferredGenres.length
-    return Math.min(1.0, 0.8 + (matchRatio * 0.2)) // 0.8-1.0 range
+    // Strong boost for genre matches (0.9-1.0 range)
+    // This ensures games with matching genres score highly
+    return Math.min(1.0, 0.9 + (matchRatio * 0.1)) // 0.9-1.0 range
   }
 
-  // No exact match = 0
+  // No exact match = 0 (strict genre matching)
   return 0
 }
 
