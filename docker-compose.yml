@@ -11,9 +11,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres-init:/docker-entrypoint-initdb.d
-    # SECURITY: Port mapping removed - database only accessible via internal network
-    # ports:
-    #   - "5432:5432"
     networks:
       - app-network
     healthcheck:
@@ -27,10 +24,6 @@ services:
     image: redis:7-alpine
     container_name: mobile-game-hunt-redis
     restart: unless-stopped
-    # SECURITY: Port mapping removed - Redis only accessible via internal network
-    # If external access needed, add Redis password authentication
-    # ports:
-    #   - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -70,24 +63,35 @@ services:
         condition: service_healthy
     networks:
       - app-network
+
+    # ✅ Upload açık (rw) ama çalıştırma/ayrıcalık yok
     volumes:
-      - app_uploads:/app/public/uploads
+      - app_uploads:/app/public/uploads:rw,noexec,nosuid,nodev
+
+    # ✅ En kritik: non-root
+    user: "1001:1001"
+
+    # ✅ Root filesystem kilitli (uploads volume + cache/tmp tmpfs)
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+
     healthcheck:
       test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000/api/healthz', r => process.exit(r.statusCode===200?0:1)).on('error', () => process.exit(1))\""]
       interval: 30s
       timeout: 10s
       retries: 3
-    # SECURITY: Hardening options enabled
+
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    # Note: read_only and tmpfs commented out as they require careful testing
-    # Uncomment after verifying all write operations work correctly:
-    # read_only: true
-    # tmpfs:
-    #   - /tmp
-    #   - /app/.next/cache
+
+    # Fail-safe limitler
+    pids_limit: 200
+    mem_limit: 1g
+    cpus: "1.5"
 
   # NGINX Reverse Proxy
   nginx:
@@ -101,7 +105,7 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - certbot_certs:/etc/letsencrypt:ro
       - certbot_www:/var/www/certbot
-      - app_uploads:/usr/share/nginx/uploads:ro   
+      - app_uploads:/usr/share/nginx/uploads:ro
     depends_on:
       - app
     networks:
@@ -116,7 +120,6 @@ services:
       - certbot_www:/var/www/certbot
     networks:
       - app-network
-    # İlk sertifika alımı; canlıda --staging kullanma
     command: certonly --webroot --webroot-path=/var/www/certbot --email ${SSL_EMAIL} --agree-tos --no-eff-email -d ${DOMAIN}
 
 networks:
