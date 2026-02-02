@@ -585,22 +585,28 @@ export default function NewSubmitPage({ productId }: { productId?: string } = {}
           credentials: 'include'
         })
         if (!res.ok) throw new Error('Update failed')
+        const data = await res.json()
         toast.success('✅ Your game has been updated!')
         try { localStorage.removeItem('submit-autosave') } catch {}
-        window.location.href = '/dashboard'
+        const slug = data?.product?.slug
+        setTimeout(() => {
+          window.location.href = slug ? `/product/${slug}` : '/dashboard'
+        }, 800)
       } else {
         const res = await submitApprovalAction(values)
         if (res.ok) {
-          toast.success('Submitted for approval!')
+          toast.success('🎉 Game added successfully!')
           try { localStorage.removeItem('submit-autosave') } catch {}
-          window.location.href = '/dashboard'
+          setTimeout(() => {
+            window.location.href = res.slug ? `/product/${res.slug}` : '/dashboard'
+          }, 800)
         } else {
-          toast.error('Failed to submit for approval')
+          toast.error(res.error || 'Failed to submit for approval')
+          setIsSubmitting(false)
         }
       }
     } catch (error) {
       toast.error('Failed to submit for approval')
-    } finally {
       setIsSubmitting(false)
     }
   }

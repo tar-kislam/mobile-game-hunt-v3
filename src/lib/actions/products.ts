@@ -549,7 +549,7 @@ export async function submitApprovalAction(data: ProductFullInput) {
     }
 
     revalidatePath('/')
-    return { ok: true, productId: product.id }
+    return { ok: true, productId: product.id, slug: product.slug }
   } catch (error) {
     console.error('Error submitting for approval:', error)
     return { ok: false, error: 'Failed to submit for approval' }
